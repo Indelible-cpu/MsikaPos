@@ -32,8 +32,8 @@ const LoginPage: React.FC = () => {
       toast.success('System Ready!', { id: 'init-sync' });
       
       navigate('/pos');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Login failed');
+    } catch (err: unknown) {
+      toast.error((err as any).response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -50,8 +50,8 @@ const LoginPage: React.FC = () => {
           <div className="inline-flex p-4 rounded-2xl bg-primary-600/20 text-primary-400 mb-4">
             <Lock className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-black mb-2">POS ACCESS</h1>
-          <p className="text-slate-500">Sign in to initialize local database</p>
+          <h1 className="text-3xl font-black mb-2">Pos Access</h1>
+          <p className="text-slate-500">Please Sign In To Continue</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
                 type="text" 
                 required
                 className="input-field w-full pl-12"
-                placeholder="Manager or Cashier ID"
+                placeholder="eg Banda"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -89,7 +89,7 @@ const LoginPage: React.FC = () => {
             disabled={loading}
             className="w-full btn-primary h-14 flex items-center justify-center gap-3 text-lg"
           >
-            {loading ? <Loader2 className="animate-spin" /> : 'INITIALIZE SYSTEM'}
+            {loading ? <Loader2 className="animate-spin" /> : 'Sign In'}
           </button>
         </form>
       </motion.div>
