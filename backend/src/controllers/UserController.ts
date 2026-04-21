@@ -39,7 +39,13 @@ export const loginUser = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Login failed', error: error.message });
+    console.error('Login Error Details:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Login failed', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+    });
   }
 };
 
