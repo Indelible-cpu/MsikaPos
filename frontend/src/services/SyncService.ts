@@ -32,7 +32,7 @@ export const SyncService = {
         await db.salesQueue.where('id').anyOf(saleIds).modify({ synced: 1 });
         
         // Process delta updates from server (Products/Categories)
-        const { products, categories, serverTime } = response.data.updates;
+        const { products, categories } = response.data.updates;
         
         if (products.length > 0) {
           await db.products.bulkPut(products);
