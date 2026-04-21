@@ -34,8 +34,9 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <div className="min-h-screen bg-slate-950 text-white selection:bg-primary-500/30">
+      <div className="min-h-screen selection:bg-primary-500/30">
         <Toaster position="top-right" />
+
         
         {/* Connectivity Banner */}
         {!isOnline && (

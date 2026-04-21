@@ -16,38 +16,59 @@
   --color-accent-success: #10b981;
   --color-accent-danger: #ef4444;
 
-  --color-surface-dark: #0f172a;
-  --color-surface-card: #1e293b;
+  --color-surface-bg: var(--bg-main);
+  --color-surface-text: var(--text-main);
+  --color-surface-card: var(--bg-card);
+  --color-surface-border: var(--border-color);
 
   --blur-xs: 2px;
 }
 
-
 :root {
+  --bg-main: #f8fafc;
+  --text-main: #0f172a;
+  --bg-card: #ffffff;
+  --bg-card-rgb: 255, 255, 255;
+  --border-color: #e2e8f0;
+  
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: dark light;
+  color-scheme: light dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark {
+  --bg-main: #020617;
+  --text-main: #f8fafc;
+  --bg-card: #0f172a;
+  --bg-card-rgb: 15, 23, 42;
+  --border-color: #1e293b;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  @apply bg-slate-950 text-slate-100;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @layer components {
   .glass-panel {
-    @apply bg-slate-900/40 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-xl;
+    @apply backdrop-blur-md border rounded-2xl shadow-xl transition-all duration-300;
+    background-color: rgba(var(--bg-card-rgb), 0.4);
+    border-color: var(--border-color);
   }
   
   .glass-card {
-    @apply bg-slate-800/50 backdrop-blur-sm border border-slate-700/30 rounded-xl hover:border-primary-500/50 transition-all duration-300;
+    @apply backdrop-blur-sm border rounded-xl hover:border-primary-500/50 transition-all duration-300;
+    background-color: rgba(var(--bg-card-rgb), 0.5);
+    border-color: var(--border-color);
   }
   
   .btn-primary {
@@ -55,7 +76,9 @@ body {
   }
   
   .input-field {
-    @apply bg-slate-900/50 border border-slate-700 rounded-xl py-3 px-4 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all;
+    @apply border rounded-xl py-3 px-4 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all;
+    background-color: rgba(var(--bg-card-rgb), 0.5);
+    border-color: var(--border-color);
   }
 }
 
@@ -64,8 +87,11 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-slate-950;
+  background-color: var(--bg-main);
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full hover:bg-slate-700;
+  background-color: var(--border-color);
+  @apply rounded-full hover:opacity-80;
 }
+
+
