@@ -17,7 +17,9 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_BASE = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000';
+      const API_URL = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+      
       const response = await axios.post(`${API_URL}/auth/login`, { username, password });
       
       localStorage.setItem('token', response.data.token);
@@ -33,7 +35,8 @@ const LoginPage: React.FC = () => {
       
       navigate('/pos');
     } catch (err: unknown) {
-      toast.error((err as any).response?.data?.message || 'Login failed');
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -56,7 +59,7 @@ const LoginPage: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Username</label>
+            <label className="text-xs font-bold text-slate-400 tracking-widest pl-1">Username</label>
             <div className="relative">
               <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
               <input 
@@ -71,7 +74,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Password</label>
+            <label className="text-xs font-bold text-slate-400 tracking-widest pl-1">Password</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
               <input 
