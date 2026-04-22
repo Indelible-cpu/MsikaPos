@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Lock, User as UserIcon, Loader2, Eye, EyeOff, Fingerprint } from 'lucide-react';
@@ -13,6 +13,30 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const navigate = useNavigate();
+
+  const handleBiometricLogin = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Please sign in with password once to enable biometrics');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      if (window.PublicKeyCredential) {
+        toast.loading('Verifying identity...', { id: 'biometric-auth' });
+        // Simulating WebAuthn/Biometric success for this PWA environment
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        toast.success('Identity verified!', { id: 'biometric-auth' });
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Biometric error:', err);
+      toast.error('Biometric verification failed, please use your password');
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
 
   useEffect(() => {
     // Check for biometric availability
@@ -29,7 +53,7 @@ const LoginPage: React.FC = () => {
           }
         });
     }
-  }, []);
+  }, [handleBiometricLogin]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,30 +104,6 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleBiometricLogin = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.error('Please sign in with password once to enable biometrics');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      if (window.PublicKeyCredential) {
-        toast.loading('Verifying identity...', { id: 'biometric-auth' });
-        // Simulating WebAuthn/Biometric success for this PWA environment
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        toast.success('Identity verified!', { id: 'biometric-auth' });
-        navigate('/dashboard');
-      }
-    } catch (err) {
-      console.error('Biometric error:', err);
-      toast.error('Biometric verification failed, please use your password');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center p-0 md:p-6 bg-surface-bg text-surface-text">
       <motion.div 
@@ -116,7 +116,7 @@ const LoginPage: React.FC = () => {
             <Lock className="w-8 h-8" />
           </div>
           <h1 className="text-sm font-black mb-1 uppercase tracking-widest text-primary-400">Smart Pos</h1>
-          <p className="text-surface-text/40 text-xs font-bold uppercase tracking-tighter">Please sign in to continue</p>
+          <p className="text-surface-text/40 text-xs font-bold tracking-tighter">Please sign in to continue</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">

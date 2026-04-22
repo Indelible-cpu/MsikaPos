@@ -83,6 +83,16 @@ export interface LocalUser {
   createdAt: string;
 }
 
+export interface LocalAuditLog {
+  id: string;
+  userId: string;
+  username: string;
+  action: string;
+  details: string;
+  type: 'INFO' | 'WARNING' | 'ERROR';
+  createdAt: string;
+}
+
 export class POSDatabase extends Dexie {
   products!: Table<LocalProduct>;
   categories!: Table<{ id: number; title: string; slug: string }>;
@@ -92,18 +102,20 @@ export class POSDatabase extends Dexie {
   debtPayments!: Table<LocalDebtPayment>;
   expenses!: Table<LocalExpense>;
   users!: Table<LocalUser>;
+  auditLogs!: Table<LocalAuditLog>;
 
   constructor() {
     super('JEF_POS_DB');
-    this.version(5).stores({
+    this.version(6).stores({
       products: 'id, categoryId, sku, name',
       categories: 'id, slug',
-      salesQueue: 'id, invoiceNo, synced, customerId',
+      salesQueue: 'id, status, createdAt',
       settings: 'key',
       customers: 'id, name, phone, idNumber',
-      debtPayments: 'id, customerId',
+      debtPayments: 'id, customerId, createdAt',
       expenses: 'id, category, date',
-      users: 'id, username, role'
+      users: 'id, username, role',
+      auditLogs: 'id, userId, action, createdAt'
     });
   }
 }
