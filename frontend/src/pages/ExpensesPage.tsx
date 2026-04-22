@@ -4,10 +4,7 @@ import { db, type LocalExpense } from '../db/posDB';
 import { 
   Plus, 
   Search, 
-  Calendar, 
   Trash2, 
-  X, 
-  AlertCircle,
   ArrowDownCircle,
   FileText,
   Wallet
