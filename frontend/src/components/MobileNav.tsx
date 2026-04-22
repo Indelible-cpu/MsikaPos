@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Package, Receipt, Settings, User } from 'lucide-react';
+import { Home, Package, Receipt, Settings, ShoppingCart } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const MobileNav: React.FC = () => {
