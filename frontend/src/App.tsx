@@ -13,6 +13,8 @@ import TransactionsPage from './pages/TransactionsPage';
 import UsersPage from './pages/UsersPage';
 import { SyncService } from './services/SyncService';
 import MainLayout from './components/MainLayout';
+import { db } from './db/posDB';
+import { initDB } from './db/seedData';
 
 const App: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -27,6 +29,15 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    const init = async () => {
+      try {
+        await initDB(db);
+      } catch (e) {
+        console.error("Seed failed", e);
+      }
+    };
+    init();
+
     const handleStatusChange = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', handleStatusChange);
     window.addEventListener('offline', handleStatusChange);
