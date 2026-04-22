@@ -67,16 +67,18 @@ export default function Dashboard() {
 
   // Sync tab with URL
   useEffect(() => {
-    const path = location.pathname.split('/')[1];
-    if (path === 'dashboard') setActiveTab('dashboard');
-    else if (path === 'pos') setActiveTab('pos');
-    else if (path === 'inventory') setActiveTab('inventory');
-    else if (path === 'history') setActiveTab('transactions');
-    else if (path === 'credits') setActiveTab('credits');
-    else if (path === 'expenses') setActiveTab('expenses');
-    else if (path === 'staff') setActiveTab('users');
-    else if (path === 'branches') setActiveTab('branches');
-    else if (path === 'settings') setActiveTab('settings');
+    setTimeout(() => {
+      const path = location.pathname.split('/')[1];
+      if (path === 'dashboard') setActiveTab('dashboard');
+      else if (path === 'pos') setActiveTab('pos');
+      else if (path === 'inventory') setActiveTab('inventory');
+      else if (path === 'history') setActiveTab('transactions');
+      else if (path === 'credits') setActiveTab('credits');
+      else if (path === 'expenses') setActiveTab('expenses');
+      else if (path === 'staff') setActiveTab('users');
+      else if (path === 'branches') setActiveTab('branches');
+      else if (path === 'settings') setActiveTab('settings');
+    }, 0);
   }, [location]);
 
   const handleTabChange = (id: string) => {

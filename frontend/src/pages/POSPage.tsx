@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct } from '../db/posDB';
@@ -42,6 +42,20 @@ const POSPage: React.FC = () => {
     [custSearch]
   );
 
+  const filteredProducts = selectedCategory
+    ? products?.filter(p => p.categoryId === selectedCategory)
+    : products;
+
+  const addToCart = useCallback((product: LocalProduct) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.product.id === product.id);
+      if (existing) {
+        return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+  }, []);
+
   useEffect(() => {
     let barcodeBuffer = '';
     let lastKeyTime = Date.now();
@@ -72,21 +86,7 @@ const POSPage: React.FC = () => {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
-
-  const filteredProducts = selectedCategory
-    ? products?.filter(p => p.categoryId === selectedCategory)
-    : products;
-
-  const addToCart = (product: LocalProduct) => {
-    setCart(prev => {
-      const existing = prev.find(item => item.product.id === product.id);
-      if (existing) {
-        return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
-      }
-      return [...prev, { product, quantity: 1 }];
-    });
-  };
+  }, [addToCart]);
 
   const cartTotal = cart.reduce((sum, item) => sum + (item.product.sellPrice * item.quantity), 0);
 

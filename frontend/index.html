@@ -51,27 +51,31 @@
       <img id="splash-logo" src="/pwa-192x192.png" alt="Company Logo" title="Loading..." />
     </div>
   </div>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+
   <script>
     try {
       const storedLogo = localStorage.getItem('companyLogo');
       if (storedLogo) {
-        document.getElementById('splash-logo').src = storedLogo;
+        const splash = document.getElementById('splash-logo');
+        if (splash) splash.src = storedLogo;
       }
     } catch(e) {}
     
-    // Hide loader when React mounts
+    // Hide loader when page is fully loaded and React has started
     window.addEventListener('load', () => {
       setTimeout(() => {
         const loader = document.getElementById('global-loader');
         if (loader) {
           loader.style.opacity = '0';
-          setTimeout(() => loader.remove(), 300);
+          setTimeout(() => {
+            if (loader.parentNode) loader.remove();
+          }, 300);
         }
-      }, 500); // Give React time to render
+      }, 500);
     });
   </script>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
 </body>
 
 </html>

@@ -21,19 +21,21 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ isOnline, isSyncing }) => {
   }, []);
 
   useEffect(() => {
-    const path = location.pathname.split('/')[1] || '';
-    switch (path) {
-      case 'dashboard': setPageTitle('Dashboard'); break;
-      case 'pos': setPageTitle('Point of Sale'); break;
-      case 'inventory': setPageTitle('Inventory'); break;
-      case 'sales': setPageTitle('Sales Records'); break;
-      case 'debt': setPageTitle('Debt Book'); break;
-      case 'expenses': setPageTitle('Expenses'); break;
-      case 'transactions': setPageTitle('Transactions'); break;
-      case 'users': setPageTitle('Team'); break;
-      case 'settings': setPageTitle('Settings'); break;
-      default: setPageTitle('Jims POS');
-    }
+    setTimeout(() => {
+      const path = location.pathname.split('/')[1] || '';
+      switch (path) {
+        case 'dashboard': setPageTitle('Dashboard'); break;
+        case 'pos': setPageTitle('Point of Sale'); break;
+        case 'inventory': setPageTitle('Inventory'); break;
+        case 'sales': setPageTitle('Sales Records'); break;
+        case 'debt': setPageTitle('Debt Book'); break;
+        case 'expenses': setPageTitle('Expenses'); break;
+        case 'transactions': setPageTitle('Transactions'); break;
+        case 'users': setPageTitle('Team'); break;
+        case 'settings': setPageTitle('Settings'); break;
+        default: setPageTitle('Jims POS');
+      }
+    }, 0);
   }, [location]);
 
   return (
