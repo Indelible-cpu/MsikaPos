@@ -61,6 +61,9 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     
+    let userData: any;
+    let userToken: string;
+
     try {
       try {
         const response = await api.post('/auth/login', { username, password });
@@ -109,10 +112,10 @@ const LoginPage: React.FC = () => {
         className="w-full max-w-md glass-panel p-8"
       >
         <div className="text-center mb-10">
-          <div className="inline-flex p-4 rounded-2xl bg-primary-600/20 text-primary-400 mb-4">
-            <Lock className="w-8 h-8" />
+          <div className="inline-flex w-16 h-16 rounded-full border-2 border-primary-500/30 overflow-hidden mb-4 shadow-xl shadow-primary-500/10">
+            <img src="/vendrax-logo.png" alt="Vendrax" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-sm font-black mb-1 text-primary-400">Smart Pos</h1>
+          <h1 className="text-xl font-black mb-1 text-primary-400 tracking-tighter">Vendrax</h1>
           <p className="text-surface-text/40 text-xs font-bold tracking-tighter">Please sign in to continue</p>
         </div>
 

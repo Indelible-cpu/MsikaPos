@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       <div className="min-h-screen flex items-center justify-center bg-zinc-50">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-zinc-500 font-bold animate-pulse">Initializing JIMS...</p>
+          <p className="text-zinc-500 font-bold animate-pulse">Initializing Vendrax...</p>
         </div>
       </div>
     );

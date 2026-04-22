@@ -12,7 +12,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, invoiceNo, date 
   return (
     <div className="receipt p-8 bg-white text-black font-mono w-[80mm] mx-auto text-sm">
       <div className="text-center border-b-2 border-black pb-4 mb-4">
-        <h1 className="text-xl font-bold">Jims POS</h1>
+        <h1 className="text-xl font-bold">Vendrax POS</h1>
         <p className="text-xs">Excellence in Service</p>
         <p className="text-xs mt-2">123 Business Street, Lilongwe</p>
         <p className="text-xs">Tel: +265 999 000 000</p>

@@ -58,7 +58,7 @@ const ForgotPasswordPage: React.FC = () => {
                 type="text" 
                 required
                 className="input-field w-full pl-12"
-                placeholder="e.g. 088... or mail@jims.com"
+                placeholder="e.g. 088... or mail@Vendrax.com"
                 value={emailOrPhone}
                 onChange={(e) => setEmailOrPhone(e.target.value)}
               />

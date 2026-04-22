@@ -111,6 +111,6 @@ export const initDB = async (db: POSDatabase) => {
 
   const hoursSetting = await db.settings.get('lockout_hours');
   if (!hoursSetting) {
-    await db.settings.put({ key: 'lockout_hours', value: { start: '20:00', end: '06:00' } });
+    await db.settings.put({ key: 'lockout_hours', value: { start: '23:59', end: '06:00' } });
   }
 };

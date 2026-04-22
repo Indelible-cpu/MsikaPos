@@ -30,7 +30,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               'bg-zinc-900 text-white border-zinc-700'
             }`}
           >
-            <p className="font-bold text-[13px] tracking-wide flex-1">{toast.message}</p>
+            <p className="font-medium text-[13px] tracking-wide flex-1">{toast.message}</p>
             <button title="Dismiss" onClick={() => removeToast(toast.id)} className="p-2 hover:bg-white/10 rounded-xl transition-colors shrink-0">
                <X className="w-4 h-4 text-zinc-400" />
             </button>

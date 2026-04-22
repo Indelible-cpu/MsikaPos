@@ -18,7 +18,7 @@ const LockedPage: React.FC = () => {
         
         <h1 className="text-2xl font-black tracking-tight mb-4">System locked</h1>
         <p className="text-surface-text/40 text-xs font-bold leading-relaxed mb-8">
-          Access to Jims POS is currently restricted by the Super Administrator or due to non-working hours.
+          Access to Vendrax POS is currently restricted by the Super Administrator or due to non-working hours.
         </p>
         
         <div className="flex items-center justify-center gap-3 py-4 px-6 bg-surface-card border border-surface-border rounded-2xl text-[10px] font-bold text-surface-text/30">

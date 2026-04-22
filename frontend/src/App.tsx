@@ -79,6 +79,12 @@ const App: React.FC = () => {
     const init = async () => {
       try {
         await initDB(db);
+        // Force unlock if it was set to the old 20:00 lock time
+        const hours = await db.settings.get('lockout_hours');
+        const val = hours?.value as { start: string; end: string } | undefined;
+        if (val?.start === '20:00') {
+          await db.settings.put({ key: 'lockout_hours', value: { start: '23:59', end: '06:00' } });
+        }
       } catch (e) {
         console.error("Seed failed", e);
       }
