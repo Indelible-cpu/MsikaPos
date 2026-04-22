@@ -14,8 +14,18 @@ export interface LocalProduct {
   updatedAt: string;
 }
 
+export interface LocalSaleItem {
+  productId: number;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  discount: number;
+  lineTotal: number;
+  profit: number;
+}
+
 export interface LocalSale {
-  id: string; // cuid generated on device
+  id: string; 
   invoiceNo: string;
   subtotal: number;
   discount: number;
@@ -25,15 +35,15 @@ export interface LocalSale {
   paymentMode: string;
   itemsCount: number;
   createdAt: string;
-  synced: number; // 0 for false, 1 for true (IndexedDB integer indexing)
-  items: any[];
+  synced: number; 
+  items: LocalSaleItem[];
 }
 
 export class POSDatabase extends Dexie {
   products!: Table<LocalProduct>;
   categories!: Table<{ id: number; title: string; slug: string }>;
   salesQueue!: Table<LocalSale>;
-  settings!: Table<{ key: string; value: any }>;
+  settings!: Table<{ key: string; value: string | number | boolean | object }>;
 
   constructor() {
     super('JEF_POS_DB');

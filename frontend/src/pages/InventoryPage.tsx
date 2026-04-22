@@ -177,6 +177,7 @@ const InventoryPage: React.FC = () => {
                     <div className="flex gap-1">
                     <button 
                       title="Edit Product"
+                      aria-label="Edit Product"
                       onClick={() => openEditModal(product)} 
                       className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors text-primary-400"
                     >
@@ -184,6 +185,7 @@ const InventoryPage: React.FC = () => {
                     </button>
                     <button 
                       title="Delete Product"
+                      aria-label="Delete Product"
                       onClick={() => deleteProduct(product.id)} 
                       className="p-2 hover:bg-accent-danger/10 rounded-lg transition-colors text-accent-danger"
                     >
@@ -262,6 +264,7 @@ const InventoryPage: React.FC = () => {
                        <label className="text-[10px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Category</label>
                        <select 
                          title="Select Product Category"
+                         aria-label="Product Category"
                          className="input-field w-full appearance-none bg-surface-bg"
                          value={formData.categoryId}
                          onChange={(e) => setFormData({...formData, categoryId: parseInt(e.target.value)})}
@@ -278,9 +281,11 @@ const InventoryPage: React.FC = () => {
                        <label className="text-[10px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Cost (MK)</label>
                        <input 
                          title="Enter Cost Price"
+                         aria-label="Cost Price"
                          required
                          type="number" 
                          className="input-field w-full text-center"
+                         placeholder="0.00"
                          value={formData.costPrice}
                          onChange={(e) => setFormData({...formData, costPrice: parseFloat(e.target.value)})}
                        />
@@ -289,9 +294,11 @@ const InventoryPage: React.FC = () => {
                        <label className="text-[10px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Sell (MK)</label>
                        <input 
                          title="Enter Selling Price"
+                         aria-label="Selling Price"
                          required
                          type="number" 
                          className="input-field w-full text-center font-black text-primary-400"
+                         placeholder="0.00"
                          value={formData.sellPrice}
                          onChange={(e) => setFormData({...formData, sellPrice: parseFloat(e.target.value)})}
                        />
@@ -300,9 +307,11 @@ const InventoryPage: React.FC = () => {
                        <label className="text-[10px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Stock</label>
                        <input 
                          title="Enter Stock Quantity"
+                         aria-label="Stock Quantity"
                          required
                          type="number" 
                          className="input-field w-full text-center font-bold"
+                         placeholder="0"
                          value={formData.quantity}
                          onChange={(e) => setFormData({...formData, quantity: parseInt(e.target.value)})}
                        />
