@@ -5,7 +5,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
 import { AuditService } from '../services/AuditService';
-import { Lock, ShieldAlert, History } from 'lucide-react';
+import { ShieldAlert, History } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const SettingsPage: React.FC = () => {
       await AuditService.log(isLocked ? 'SYSTEM_LOCKED' : 'SYSTEM_UNLOCKED', `System manually ${isLocked ? 'locked' : 'unlocked'} by ${user.username}`);
       toast.success(`System ${isLocked ? 'Locked' : 'Unlocked'}`);
       window.location.reload();
-    } catch (err) {
+    } catch {
       toast.error('Failed to update system lock');
     }
   };

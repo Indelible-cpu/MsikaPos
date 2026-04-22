@@ -62,18 +62,18 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleSync = async () => {
+  const handleSync = useCallback(async () => {
     if (navigator.onLine) {
       setIsSyncing(true);
       try {
         await SyncService.pushSales();
         await AuditService.log('SYNC', 'Background sync completed successfully');
-      } catch (err) {
+      } catch {
         await AuditService.log('SYNC_ERROR', 'Background sync failed', 'ERROR');
       }
       setTimeout(() => setIsSyncing(false), 2000); // Keep indicator for a bit
     }
-  };
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -89,8 +89,10 @@ const App: React.FC = () => {
     window.addEventListener('online', handleStatusChange);
     window.addEventListener('offline', handleStatusChange);
 
-    handleSync();
-    checkSystemLock();
+    setTimeout(() => {
+      handleSync();
+      checkSystemLock();
+    }, 100);
 
     const syncInterval = setInterval(handleSync, 60000);
     const lockInterval = setInterval(checkSystemLock, 300000); // Check lock every 5 mins
@@ -101,7 +103,7 @@ const App: React.FC = () => {
       clearInterval(syncInterval);
       clearInterval(lockInterval);
     };
-  }, []);
+  }, [handleSync, checkSystemLock]);
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
