@@ -30,7 +30,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, isOnline, isSyncing =
       {/* Dynamic Mobile Header */}
       {!hideNav && <MobileHeader isOnline={isOnline} isSyncing={isSyncing} />}
 
-      {/* Main Content Area */}
+      {/* Main Content Area - Mobile Gutter 0 */}
       <main className={clsx(
         "flex-1 w-full mx-auto pb-20 md:pb-0 transition-all",
         "px-0 md:px-6 max-w-screen-2xl"
