@@ -42,15 +42,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* System-level Dark Mode Implementation (Normal Dark) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-main: #000000; /* Normal black/dark as requested */
-    --text-main: #ffffff;
-    --bg-card: #121212;
-    --bg-card-rgb: 18, 18, 18;
-    --border-color: #2a2a2a;
-  }
+.dark {
+  --bg-main: #020617;
+  --text-main: #f1f5f9;
+  --bg-card: #0f172a;
+  --bg-card-rgb: 15, 23, 42;
+  --border-color: #1e293b;
 }
 
 body {
@@ -59,30 +56,30 @@ body {
   min-height: 100vh;
   background-color: var(--bg-main);
   color: var(--text-main);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   overflow-x: hidden;
 }
 
 @layer components {
   .glass-panel {
-    @apply border rounded-2xl shadow-xl transition-all duration-300;
-    background-color: var(--bg-card);
+    @apply backdrop-blur-md border rounded-2xl shadow-xl transition-all duration-300;
+    background-color: rgba(var(--bg-card-rgb), 0.4);
     border-color: var(--border-color);
   }
   
   .glass-card {
-    @apply border rounded-xl hover:border-primary-500/50 transition-all duration-300;
-    background-color: var(--bg-card);
+    @apply backdrop-blur-sm border rounded-xl hover:border-primary-500/50 transition-all duration-300;
+    background-color: rgba(var(--bg-card-rgb), 0.5);
     border-color: var(--border-color);
   }
   
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-500 text-white font-semibold py-3 px-6 rounded-xl shadow-lg active:scale-95 transition-all;
+    @apply bg-primary-600 hover:bg-primary-500 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-primary-900/20 active:scale-95 transition-all;
   }
   
   .input-field {
     @apply border rounded-xl py-3 px-4 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all;
-    background-color: var(--bg-main);
+    background-color: rgba(var(--bg-card-rgb), 0.5);
     border-color: var(--border-color);
   }
 }
@@ -98,3 +95,5 @@ body {
   background-color: var(--border-color);
   @apply rounded-full hover:opacity-80;
 }
+
+

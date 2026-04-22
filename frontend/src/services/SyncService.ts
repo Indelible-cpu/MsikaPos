@@ -10,11 +10,14 @@ export const SyncService = {
       .equals(0)
       .toArray();
 
+    if (unsyncedSales.length === 0) return;
+
     const token = localStorage.getItem('token');
     const deviceId = localStorage.getItem('deviceId') || 'unknown';
-    const lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp');
 
     try {
+      const lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp');
+      
       const response = await axios.post(`${API_BASE_URL}/sync`, {
         sales: unsyncedSales,
         deviceId,
@@ -25,24 +28,17 @@ export const SyncService = {
 
       if (response.data.success) {
         // Mark as synced locally
-        if (unsyncedSales.length > 0) {
-          const saleIds = unsyncedSales.map(s => s.id);
-          await db.salesQueue.where('id').anyOf(saleIds).modify({ synced: 1 });
-        }
+        const saleIds = unsyncedSales.map(s => s.id);
+        await db.salesQueue.where('id').anyOf(saleIds).modify({ synced: 1 });
         
         // Process delta updates from server (Products/Categories)
         const { products, categories } = response.data.updates;
         
-        if (products && products.length > 0) {
-          // Normalize Decimal to Number for Dexie if needed, but Prisma Decimal usually returns as String or Number
-          await db.products.bulkPut(products.map((p: any) => ({
-            ...p,
-            costPrice: Number(p.costPrice),
-            sellPrice: Number(p.sellPrice)
-          })));
+        if (products.length > 0) {
+          await db.products.bulkPut(products);
         }
         
-        if (categories && categories.length > 0) {
+        if (categories.length > 0) {
           await db.categories.bulkPut(categories);
         }
 
@@ -50,19 +46,9 @@ export const SyncService = {
         return true;
       }
     } catch (error) {
-      console.error('Failed to sync data:', error);
+      console.error('Failed to sync sales:', error);
       return false;
     }
-  },
-
-  // Pull initial data if DB is empty
-  async pullInitialData() {
-    const productCount = await db.products.count();
-    if (productCount === 0) {
-      console.log('DB empty, triggering initial sync...');
-      return await this.pushSales();
-    }
-    return true;
   },
 
   async checkConnection() {

@@ -90,7 +90,6 @@ const ExpensesPage: React.FC = () => {
             <h1 className="text-2xl font-black tracking-tighter uppercase">Expenses</h1>
           </div>
           <button 
-            title="Add Expense"
             onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
             className="btn-primary !px-4 !py-2 text-[10px] font-black uppercase tracking-widest bg-red-500 hover:bg-red-600 shadow-red-900/20"
           >
@@ -111,7 +110,6 @@ const ExpensesPage: React.FC = () => {
            <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
               <input 
-                title="Search Expenses"
                 type="text" 
                 placeholder="Search description or category..."
                 className="input-field w-full pl-11 text-sm h-full"
@@ -143,7 +141,7 @@ const ExpensesPage: React.FC = () => {
                        <div className="text-base font-black text-red-500">MK {exp.amount.toLocaleString()}</div>
                        <div className="text-[9px] text-surface-text/30 font-black uppercase tracking-widest">{exp.paymentMethod}</div>
                     </div>
-                    <button title="Delete Expense" onClick={() => handleDelete(exp.id)} className="p-2 text-surface-text/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                    <button onClick={() => handleDelete(exp.id)} className="p-2 text-surface-text/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
                        <Trash2 className="w-4 h-4" />
                     </button>
                  </div>
@@ -161,23 +159,23 @@ const ExpensesPage: React.FC = () => {
         <form onSubmit={handleSave} className="p-8 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1 col-span-2">
-              <label htmlFor="description" className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Description</label>
-              <input id="description" required type="text" className="input-field w-full" placeholder="e.g. Electricity Bill" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Description</label>
+              <input required type="text" className="input-field w-full" placeholder="e.g. Electricity Bill" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
             </div>
             <div className="space-y-1">
-              <label htmlFor="category" className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Category</label>
-              <select id="category" title="Select Category" className="input-field w-full appearance-none bg-surface-bg" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Category</label>
+              <select className="input-field w-full appearance-none bg-surface-bg" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label htmlFor="date" className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Date</label>
-              <input id="date" type="date" className="input-field w-full" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Date</label>
+              <input type="date" className="input-field w-full" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
             </div>
           </div>
           <div className="space-y-1">
-            <label htmlFor="amount" className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Amount (MK)</label>
-            <input id="amount" required type="number" className="input-field w-full text-2xl font-black text-red-500" placeholder="0.00" value={formData.amount} onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})} />
+            <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Amount (MK)</label>
+            <input required type="number" className="input-field w-full text-2xl font-black text-red-500" placeholder="0.00" value={formData.amount} onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})} />
           </div>
           <div className="flex gap-4 pt-4">
             <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black uppercase tracking-widest">Cancel</button>
