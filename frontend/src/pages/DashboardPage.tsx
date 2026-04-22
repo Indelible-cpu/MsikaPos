@@ -30,8 +30,8 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
       <header className="p-6 bg-surface-card border-b border-surface-border">
-        <h1 className="text-2xl font-black tracking-tighter uppercase">Overview</h1>
-        <p className="text-xs text-surface-text/40 font-bold uppercase tracking-widest mt-1">Real-time performance metrics</p>
+        <h1 className="text-2xl font-black tracking-tighter">Overview</h1>
+        <p className="text-xs text-surface-text/40 font-bold mt-1">Real-time performance metrics</p>
       </header>
 
       <div className="p-6 md:p-10 space-y-10">
@@ -63,8 +63,8 @@ const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
            <div className="bg-surface-card border border-surface-border rounded-3xl p-8">
               <div className="flex justify-between items-center mb-8">
-                 <h3 className="text-sm font-black uppercase tracking-widest">Recent Sales</h3>
-                 <button className="text-[10px] font-black text-primary-400 uppercase hover:underline">View All</button>
+                 <h3 className="text-sm font-black tracking-widest">Recent sales</h3>
+                 <button className="text-[10px] font-black text-primary-400 uppercase hover:underline">View all</button>
               </div>
               <div className="space-y-4">
                  {sales?.slice(-5).reverse().map((sale, i) => (
@@ -93,7 +93,15 @@ const DashboardPage: React.FC = () => {
            <div className="bg-surface-card border border-surface-border rounded-3xl p-8">
               <div className="flex justify-between items-center mb-8">
                  <h3 className="text-sm font-black uppercase tracking-widest">Low Stock Alert</h3>
-                 <button className="text-[10px] font-black text-primary-400 uppercase hover:underline">Manage Inventory</button>
+                    <div className="p-10 text-center text-surface-text/20 font-black text-xs tracking-widest">No recent activity</div>
+                 )}
+              </div>
+           </div>
+
+           <div className="bg-surface-card border border-surface-border rounded-3xl p-8">
+              <div className="flex justify-between items-center mb-8">
+                 <h3 className="text-sm font-black tracking-widest">Low Stock Alert</h3>
+                 <button className="text-[10px] font-black text-primary-400 hover:underline">Manage Inventory</button>
               </div>
               <div className="space-y-4">
                  {products?.filter(p => p.quantity <= 5).slice(0, 5).map((p, i) => (
@@ -103,13 +111,13 @@ const DashboardPage: React.FC = () => {
                             <Package className="w-5 h-5" />
                          </div>
                          <div>
-                            <div className="text-xs font-black uppercase">{p.name}</div>
-                            <div className="text-[9px] text-surface-text/30 font-bold uppercase">SKU: {p.sku}</div>
+                            <div className="text-xs font-black">{p.name}</div>
+                            <div className="text-[9px] text-surface-text/30 font-bold">SKU: {p.sku}</div>
                          </div>
                       </div>
                       <div className="text-right">
                          <div className="text-sm font-black text-red-500">{p.quantity}</div>
-                         <div className="text-[8px] text-surface-text/20 font-black uppercase">Left in stock</div>
+                         <div className="text-[8px] text-surface-text/20 font-black">Left in stock</div>
                       </div>
                    </div>
                  ))}
