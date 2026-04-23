@@ -9,7 +9,8 @@ import {
   Phone, 
   Search, 
   Trash2, 
-  User as UserIcon
+  User as UserIcon,
+  ShieldCheck
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
@@ -19,7 +20,6 @@ const UsersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<LocalUser | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState({
     username: '',
     fullname: '',
@@ -97,64 +97,75 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="p-6 bg-surface-card border-b border-surface-border sticky top-0 z-30">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6" />
+      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="hidden md:flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6" />
+              </div>
+              <h1 className="text-2xl font-black tracking-tighter uppercase italic">Team</h1>
             </div>
-            <h1 className="text-2xl font-black tracking-tighter">Team</h1>
+            <button 
+              onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
+              className="btn-primary !px-6 !py-4 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2 w-full md:w-auto justify-center"
+            >
+              <UserPlus className="w-4 h-4 mr-1" /> Add staff
+            </button>
           </div>
-          <button 
-            onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
-            className="btn-primary !px-4 !py-2 text-[10px] font-bold"
-          >
-            <UserPlus className="w-4 h-4 mr-1" /> Add staff
-          </button>
-        </div>
 
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
-          <input 
-            type="text" 
-            placeholder="Search by name or username..."
-            className="input-field w-full pl-11 text-sm h-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search by name or username..."
+              className="input-field w-full pl-11 text-sm font-bold shadow-inner"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </header>
 
-      <div className="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="p-0 md:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-6">
          {users?.length === 0 ? (
-            <div className="col-span-full py-20 text-center text-surface-text/20 font-bold text-xs">No team members found</div>
+            <div className="col-span-full py-20 text-center text-surface-text/20 font-black text-xs uppercase tracking-widest">No team members found</div>
          ) : (
            users?.map(u => (
-             <div key={u.id} className="bg-surface-card border border-surface-border p-8 rounded-3xl group hover:border-primary-500/30 transition-all relative overflow-hidden">
+             <div key={u.id} className="bg-surface-card md:border border-surface-border p-8 md:rounded-3xl group hover:border-primary-500/30 transition-all relative overflow-hidden border-b border-surface-border/50">
                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
                    <button title="Edit User" aria-label="Edit User" onClick={() => handleEdit(u)} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-400 transition-colors"><Edit2 className="w-4 h-4" /></button>
                    <button title="Delete User" aria-label="Delete User" onClick={() => handleDelete(u.id)} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                 </div>
 
                 <div className="flex flex-col items-center text-center">
-                   <div className="w-20 h-20 bg-primary-600/10 text-primary-400 rounded-2xl flex items-center justify-center mb-6 border border-primary-500/20 group-hover:scale-105 transition-transform">
-                      <UserIcon className="w-10 h-10" />
+                   <div className="w-24 h-24 bg-primary-600/10 text-primary-400 rounded-3xl flex items-center justify-center mb-6 border-2 border-primary-500/10 group-hover:border-primary-500/30 group-hover:scale-105 transition-all shadow-xl shadow-primary-500/5 relative">
+                      {u.role === 'SuperAdmin' && (
+                        <div className="absolute -top-2 -right-2 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg border-4 border-surface-card">
+                          <ShieldCheck className="w-3 h-3" />
+                        </div>
+                      )}
+                      <UserIcon className="w-12 h-12" />
                    </div>
-                   <h3 className="text-lg font-black tracking-tight">{u.fullname}</h3>
-                   <p className="text-[10px] font-bold text-surface-text/30 mb-6">@{u.username}</p>
+                   <h3 className="text-xl font-black tracking-tight">{u.fullname}</h3>
+                   <p className="text-[10px] font-black text-surface-text/30 mb-6 uppercase tracking-[0.2em]">@{u.username}</p>
                    
-                   <div className="px-4 py-1 bg-primary-600/10 text-primary-400 border border-primary-500/20 rounded-full text-[9px] font-bold mb-8">
+                   <div className="px-4 py-1 bg-primary-600/10 text-primary-400 border border-primary-500/20 rounded-full text-[9px] font-black uppercase tracking-widest mb-8">
                       {u.role}
                    </div>
 
                    <div className="w-full pt-6 border-t border-surface-border space-y-4">
                       <div className="flex items-center gap-3 text-surface-text/40">
-                         <Mail className="w-3 h-3" />
-                         <span className="text-[10px] font-bold truncate">{u.email || 'No email'}</span>
+                         <div className="w-8 h-8 bg-surface-bg border border-surface-border rounded-lg flex items-center justify-center">
+                            <Mail className="w-3.5 h-3.5" />
+                         </div>
+                         <span className="text-[10px] font-bold truncate">{u.email || 'No email registered'}</span>
                       </div>
                       <div className="flex items-center gap-3 text-surface-text/40">
-                         <Phone className="w-3 h-3" />
-                         <span className="text-[10px] font-bold">{u.phone || 'No phone'}</span>
+                         <div className="w-8 h-8 bg-surface-bg border border-surface-border rounded-lg flex items-center justify-center">
+                            <Phone className="w-3.5 h-3.5" />
+                         </div>
+                         <span className="text-[10px] font-bold">{u.phone || 'No phone registered'}</span>
                       </div>
                    </div>
                 </div>
@@ -167,22 +178,23 @@ const UsersPage: React.FC = () => {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         title={editingUser ? 'Edit Staff' : 'New Staff'}
+        maxWidth="max-w-xl"
       >
         <form onSubmit={handleSave} className="p-8 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[9px] font-bold text-surface-text/30 ml-1">Username</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Username</label>
               <input required type="text" className="input-field w-full" placeholder="staff.user" value={formData.username} onChange={(e) => setFormData({...formData, username: e.target.value})} />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-bold text-surface-text/30 ml-1">Full name</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Full name</label>
               <input required type="text" className="input-field w-full" placeholder="John Doe" value={formData.fullname} onChange={(e) => setFormData({...formData, fullname: e.target.value})} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
              <div className="space-y-1">
-                <label htmlFor="role" className="text-[9px] font-bold text-surface-text/30 ml-1">Role</label>
-                <select id="role" name="role" aria-label="Role" title="Select Role" className="input-field w-full appearance-none bg-surface-bg" value={formData.roleId} onChange={(e) => {
+                <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Role</label>
+                <select className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.roleId} onChange={(e) => {
                    const r = roles.find(rl => rl.id === Number(e.target.value));
                    setFormData({...formData, roleId: r!.id, role: r!.name});
                 }}>
@@ -190,17 +202,17 @@ const UsersPage: React.FC = () => {
                 </select>
              </div>
              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-surface-text/30 ml-1">Phone</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Phone</label>
                 <input type="text" className="input-field w-full" placeholder="+265..." value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
              </div>
           </div>
           <div className="space-y-1">
-            <label className="text-[9px] font-bold text-surface-text/30 ml-1">Email (optional)</label>
+            <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/30 ml-1">Email address</label>
             <input type="email" className="input-field w-full" placeholder="staff@example.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
           </div>
           <div className="flex gap-4 pt-4">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-bold">Cancel</button>
-            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-bold">Save staff</button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black uppercase tracking-widest">Cancel</button>
+            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary-500/20">Save staff member</button>
           </div>
         </form>
       </Modal>

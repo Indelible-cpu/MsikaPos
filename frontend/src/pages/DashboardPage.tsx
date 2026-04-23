@@ -29,12 +29,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="p-6 bg-surface-card border-b border-surface-border">
-        <h1 className="text-2xl font-black tracking-tighter">Overview</h1>
-        <p className="text-xs text-surface-text/40 font-bold mt-1">Real-time performance metrics</p>
-      </header>
-
-      <div className="p-6 md:p-10 space-y-10">
+      <div className="p-0 md:p-8 space-y-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, i) => (

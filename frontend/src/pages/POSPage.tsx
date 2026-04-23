@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct } from '../db/posDB';
-import { Search, ShoppingCart, Power, RefreshCw, Users, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, Power, RefreshCw, Users, ChevronRight, Plus, Minus, Trash2, X, Fingerprint, PackageSearch } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
+import { soundService } from '../services/SoundService';
 import clsx from 'clsx';
 
 import { Receipt } from '../components/Receipt';
@@ -15,13 +16,13 @@ const generateInvoiceNo = () => `INV-${Math.random().toString(36).substring(2, 8
 
 const POSPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [paymentMode, setPaymentMode] = useState<'CASH' | 'CREDIT'>('CASH');
   const [cart, setCart] = useState<{ product: LocalProduct; quantity: number }[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showCustomerSelector, setShowCustomerSelector] = useState(false);
   const [custSearch, setCustSearch] = useState('');
+  const [showMobileCart, setShowMobileCart] = useState(false);
 
   const [showReceipt, setShowReceipt] = useState<{
     items: { product: LocalProduct; quantity: number }[];
@@ -33,27 +34,32 @@ const POSPage: React.FC = () => {
   } | null>(null);
 
   const products = useLiveQuery(
-    () => db.products.where('name').startsWithIgnoreCase(searchTerm).toArray(),
+    () => searchTerm.length >= 2 
+      ? db.products.where('name').startsWithIgnoreCase(searchTerm).toArray()
+      : Promise.resolve([]),
     [searchTerm]
   );
-  const categories = useLiveQuery(() => db.categories.toArray());
+  
   const customers = useLiveQuery(
     () => db.customers.where('name').startsWithIgnoreCase(custSearch).toArray(),
     [custSearch]
   );
 
-  const filteredProducts = selectedCategory
-    ? products?.filter(p => p.categoryId === selectedCategory)
-    : products;
-
   const addToCart = useCallback((product: LocalProduct) => {
+    soundService.playBeep();
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
+        if (existing.quantity >= product.quantity) {
+          soundService.playError();
+          toast.error(`Out of stock! only ${product.quantity} left`, { id: 'stock-error' });
+          return prev;
+        }
         return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
       }
       return [...prev, { product, quantity: 1 }];
     });
+    toast.success(`${product.name} added`, { id: 'scan-success', duration: 1000 });
   }, []);
 
   useEffect(() => {
@@ -72,12 +78,12 @@ const POSPage: React.FC = () => {
           const product = await db.products.where('sku').equals(barcodeBuffer).first();
           if (product) {
             addToCart(product);
-            barcodeBuffer = '';
           } else {
-            toast.error(`Barcode ${barcodeBuffer} not found`, { id: 'scanner-error' });
+            soundService.playError();
+            toast.error(`SKU ${barcodeBuffer} not found`, { id: 'scanner-error' });
           }
+          barcodeBuffer = '';
         }
-        barcodeBuffer = '';
       } else if (e.key.length === 1) {
         barcodeBuffer += e.key;
       }
@@ -99,83 +105,88 @@ const POSPage: React.FC = () => {
 
     try {
       const invoiceNo = generateInvoiceNo();
-      const now = new Date().toISOString();
-
-      await db.salesQueue.add({
+      const itemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      
+      const saleData = {
         id: crypto.randomUUID(),
-        invoiceNo,
-        subtotal: cartTotal,
-        discount: 0,
-        total: cartTotal,
-        paid: paymentMode === 'CASH' ? cartTotal : 0,
-        changeDue: 0,
-        paymentMode,
-        itemsCount: cart.length,
-        createdAt: now,
-        synced: 0,
-        customerId: selectedCustomerId || undefined,
         items: cart.map(item => ({
           productId: item.product.id,
           productName: item.product.name,
-          unitPrice: item.product.sellPrice,
           quantity: item.quantity,
-          discount: 0,
+          unitPrice: item.product.sellPrice,
+          costPrice: item.product.costPrice,
           lineTotal: item.product.sellPrice * item.quantity,
           profit: (item.product.sellPrice - item.product.costPrice) * item.quantity
-        }))
-      });
+        })),
+        total: cartTotal,
+        itemsCount,
+        paymentMode,
+        customerId: selectedCustomerId || undefined,
+        invoiceNo,
+        createdAt: new Date().toISOString(),
+        status: 'PENDING'
+      };
 
-      if (paymentMode === 'CREDIT' && selectedCustomerId) {
+      await db.salesQueue.add(saleData);
+
+      for (const item of cart) {
+        await db.products.update(item.product.id, {
+          quantity: item.product.quantity - item.quantity,
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      let customerName = undefined;
+      if (selectedCustomerId) {
         const customer = await db.customers.get(selectedCustomerId);
         if (customer) {
+          customerName = customer.name;
           await db.customers.update(selectedCustomerId, {
-            balance: customer.balance + cartTotal,
-            updatedAt: now
+            balance: customer.balance + (paymentMode === 'CREDIT' ? cartTotal : 0),
+            updatedAt: new Date().toISOString()
           });
         }
       }
 
-      const receiptData = {
-        items: [...cart],
+      soundService.playSaleComplete();
+      setShowReceipt({
+        items: cart,
         total: cartTotal,
         invoiceNo,
-        date: now,
+        date: new Date().toLocaleString(),
         mode: paymentMode,
-        customerName: paymentMode === 'CREDIT' ? (await db.customers.get(selectedCustomerId!))?.name : undefined
-      };
+        customerName
+      });
 
-      SyncService.pushSales();
-      setShowReceipt(receiptData);
       setCart([]);
       setSelectedCustomerId(null);
       setShowCustomerSelector(false);
+      toast.success('Sale Completed!');
     } catch (err) {
+      soundService.playError();
       console.error(err);
       toast.error('Failed to save sale');
     }
   };
 
-  const handlePrint = () => window.print();
-
   return (
-    <div className={clsx('flex', 'flex-col', 'lg:flex-row', 'min-h-[calc(100vh-4rem)]', 'lg:h-[calc(100vh-64px)]', 'overflow-hidden')}>
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] md:h-screen overflow-hidden bg-surface-bg">
       <AnimatePresence>
         {showCustomerSelector && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-surface-bg/90 backdrop-blur-md">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card border border-surface-border rounded-3xl w-full max-w-md shadow-2xl flex flex-col max-h-[80vh]">
               <div className="p-6 border-b border-surface-border bg-surface-bg/30">
-                <h3 className="text-xl font-black tracking-tighter mb-4">Select customer</h3>
+                <h3 className="text-xl font-black tracking-tighter mb-4">Select Customer</h3>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
-                  <input autoFocus type="text" placeholder="Search name..." className="input-field w-full pl-10" value={custSearch} onChange={(e) => setCustSearch(e.target.value)} />
+                  <input autoFocus type="text" placeholder="Search customer..." className="input-field w-full pl-10" value={custSearch} onChange={(e) => setCustSearch(e.target.value)} />
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto p-2 divide-y divide-surface-border/50">
                  {customers?.length === 0 ? (
-                   <div className="p-8 text-center text-surface-text/40 font-bold text-[10px] leading-loose">
-                      No matching customers found.<br/>
-                      <button className="mt-4 text-primary-400 border border-primary-500/20 px-4 py-2 rounded-lg">Manage debt book</button>
-                   </div>
+                    <div className="p-8 text-center text-surface-text/40 font-bold text-[10px] leading-loose">
+                       No matching customers found.
+                    </div>
                  ) : (
                    customers?.map(c => (
                      <button key={c.id} onClick={() => { setSelectedCustomerId(c.id); handleCheckout(); }} className="w-full p-4 flex justify-between items-center hover:bg-primary-500/5 transition-colors group">
@@ -194,29 +205,31 @@ const POSPage: React.FC = () => {
                  )}
               </div>
               <div className="p-6 border-t border-surface-border bg-surface-bg/30 flex gap-4">
-                 <button onClick={() => setShowCustomerSelector(false)} className="flex-1 py-3 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-bold">Cancel</button>
+                 <button onClick={() => setShowCustomerSelector(false)} className="flex-1 py-3 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-bold uppercase tracking-widest">Cancel</button>
               </div>
             </motion.div>
           </motion.div>
         )}
 
         {showReceipt && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={clsx('fixed', 'inset-0', 'z-50', 'flex', 'items-center', 'justify-center', 'p-4', 'bg-surface-bg/90', 'backdrop-blur-md')}>
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className={clsx('glass-panel', 'max-w-lg', 'w-full', 'p-8', 'flex', 'flex-col', 'items-center')}>
-              <div className={clsx('w-16', 'h-16', 'bg-primary-600/20', 'text-primary-400', 'rounded-full', 'flex', 'items-center', 'justify-center', 'mb-6')}>
-                <ShoppingCart className={clsx('w-8', 'h-8')} />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card max-w-lg w-full p-8 rounded-3xl flex flex-col items-center shadow-2xl">
+              <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-6 border-2 border-emerald-500/20">
+                <ShoppingCart className="w-8 h-8" />
               </div>
-              <h2 className={clsx('text-3xl', 'font-black', 'mb-2')}>Sale completed</h2>
-              <p className={clsx('text-surface-text/40', 'mb-8', 'text-center', 'text-[10px]', 'font-bold')}>Mode: {showReceipt.mode} {showReceipt.customerName && `| Customer: ${showReceipt.customerName}`}</p>
-              <div className={clsx('w-full', 'bg-white', 'rounded-xl', 'overflow-hidden', 'mb-8', 'shadow-2xl')}>
+              <h2 className="text-2xl font-black mb-2 tracking-tight">Sale Completed</h2>
+              <p className="text-surface-text/40 mb-8 text-center text-[10px] font-black uppercase tracking-widest">Invoice: {showReceipt.invoiceNo}</p>
+              
+              <div className="w-full bg-white rounded-2xl overflow-hidden mb-8 shadow-inner border border-zinc-100 p-4">
                 {showReceipt.mode === 'CASH' ? <Receipt {...showReceipt} /> : <Invoice {...showReceipt} />}
               </div>
-              <div className={clsx('flex', 'gap-4', 'w-full')}>
-                <button onClick={handlePrint} className={clsx('flex-1', 'px-6', 'py-4', 'bg-surface-card', 'hover:opacity-80', 'rounded-xl', 'font-bold', 'transition-all', 'flex', 'items-center', 'justify-center', 'gap-2', 'border', 'border-surface-border', 'text-surface-text')}>
-                  <RefreshCw className={clsx('w-5', 'h-5')} /> Print
+              
+              <div className="flex gap-4 w-full">
+                <button onClick={() => window.print()} className="flex-1 px-6 py-4 bg-surface-bg hover:bg-surface-border/50 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-surface-border">
+                  <RefreshCw className="w-4 h-4" /> Print
                 </button>
-                <button onClick={() => setShowReceipt(null)} className={clsx('flex-1', 'btn-primary', 'py-4', 'font-black', 'tracking-tighter')}>
-                  New transaction
+                <button onClick={() => setShowReceipt(null)} className="flex-1 btn-primary !py-4 font-black text-[11px] uppercase tracking-widest">
+                  New Transaction
                 </button>
               </div>
             </motion.div>
@@ -224,114 +237,159 @@ const POSPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className={clsx('flex-1', 'flex', 'flex-col', 'min-w-0')}>
-        <header className={clsx('p-4', 'bg-surface-card', 'border-b', 'border-surface-border')}>
-          <div className={clsx('flex', 'items-center', 'gap-4')}>
-            <div className={clsx('relative', 'flex-1')}>
-              <Search className={clsx('absolute', 'left-3', 'top-1/2', '-translate-y-1/2', 'text-surface-text/40', 'w-5', 'h-5')} />
-              <input type="text" placeholder="Search products..." className={clsx('input-field', 'w-full', 'pl-11')} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+      <div className="flex-1 flex flex-col min-w-0 bg-surface-bg/50">
+        <header className="p-4 md:p-6 border-b border-surface-border bg-surface-card shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Search products or scan barcode..." 
+                className="input-field w-full pl-12 h-14 text-sm font-bold shadow-sm" 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+              />
             </div>
-            <button title="Sync sales data" aria-label="Sync sales data" onClick={async () => {
+            <button 
+              onClick={async () => {
                 setIsSyncing(true);
-                const results = await SyncService.pushSales();
+                await SyncService.pushSales();
                 setIsSyncing(false);
-                if (results) toast.success('Data synced');
-              }} className={`p-3 glass-card ${isSyncing ? 'animate-spin' : ''}`}>
-              <RefreshCw className={clsx('w-5', 'h-5', 'text-primary-400')} />
+                toast.success('Synced');
+              }} 
+              className={clsx("p-4 bg-surface-card border border-surface-border rounded-2xl text-primary-500 hover:border-primary-500 transition-all", isSyncing && "animate-spin")}
+            >
+              <RefreshCw className="w-6 h-6" />
             </button>
-          </div>
-          <div className={clsx('flex', 'gap-2', 'mt-4', 'overflow-x-auto', 'pb-2', 'no-scrollbar')}>
-            <button onClick={() => setSelectedCategory(null)} className={`px-4 py-2 rounded-full whitespace-nowrap transition-all font-medium ${!selectedCategory ? 'bg-primary-600 shadow-lg shadow-primary-900/40 text-white' : 'bg-surface-card text-surface-text/60 hover:text-surface-text border border-surface-border'}`}>
-              All items
-            </button>
-            {categories?.map(cat => (
-              <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`px-4 py-2 rounded-full whitespace-nowrap transition-all font-medium ${selectedCategory === cat.id ? 'bg-primary-600 shadow-lg shadow-primary-900/40 text-white' : 'bg-surface-card text-surface-text/60 hover:text-surface-text border border-surface-border'}`}>
-                {cat.title}
-              </button>
-            ))}
           </div>
         </header>
 
-        <div className={clsx('flex-1', 'overflow-y-auto', 'p-2', 'md:p-4', 'grid', 'grid-cols-2', 'md:grid-cols-3', 'xl:grid-cols-4', 'gap-2', 'md:gap-4')}>
-          <AnimatePresence mode="popLayout">
-            {filteredProducts?.map(product => (
-              <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} key={product.id} onClick={() => addToCart(product)} className={clsx('glass-card', 'p-4', 'cursor-pointer', 'active:scale-95', 'flex', 'flex-col', 'group', 'overflow-hidden', 'border-surface-border/50', 'hover:bg-surface-card/40')}>
-                <div className={clsx('text-[10px]', 'text-surface-text/40', 'mb-1', 'font-bold')}>{product.sku}</div>
-                <div className={clsx('font-bold', 'text-surface-text', 'group-hover:text-primary-400', 'transition-colors', 'line-clamp-2')}>{product.name}</div>
-                <div className={clsx('mt-auto', 'pt-4', 'flex', 'justify-between', 'items-end')}>
-                  <div className={clsx('text-lg', 'font-black', 'text-primary-400')}>MK {product.sellPrice.toLocaleString()}</div>
-                  <div className={clsx('text-[10px]', 'px-2', 'py-1', 'bg-surface-bg/50', 'rounded', 'text-surface-text/60', 'font-bold', 'border', 'border-surface-border')}>{product.quantity} in stock</div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          {searchTerm.length < 2 ? (
+            <div className="h-full flex flex-col items-center justify-center opacity-30">
+               <div className="w-32 h-32 bg-surface-card border-2 border-dashed border-surface-border rounded-full flex items-center justify-center mb-6">
+                  <PackageSearch className="w-12 h-12" />
+               </div>
+               <h2 className="text-xl font-black uppercase tracking-widest">Ready to scan</h2>
+               <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2">Scan a product or search to begin</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+              <AnimatePresence mode="popLayout">
+                {products?.map(product => (
+                  <motion.div 
+                    layout 
+                    initial={{ opacity: 0, scale: 0.9 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    exit={{ opacity: 0, scale: 0.9 }} 
+                    key={product.id} 
+                    onClick={() => addToCart(product)} 
+                    className="bg-surface-card border border-surface-border p-4 rounded-3xl cursor-pointer active:scale-95 transition-all group hover:border-primary-500/40 hover:shadow-xl hover:shadow-primary-500/5 flex flex-col relative overflow-hidden h-48"
+                  >
+                    <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <div className="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center">
+                          <Plus className="w-5 h-5" />
+                       </div>
+                    </div>
+                    <div className="text-[9px] font-black text-surface-text/30 mb-2 uppercase tracking-widest">{product.sku}</div>
+                    <div className="font-black text-sm text-surface-text group-hover:text-primary-500 transition-colors line-clamp-2 leading-tight">{product.name}</div>
+                    <div className="mt-auto flex flex-col gap-1">
+                      <div className="text-lg font-black text-primary-500">MK {product.sellPrice.toLocaleString()}</div>
+                      <div className={clsx(
+                        "text-[9px] font-black uppercase tracking-widest",
+                        product.quantity <= 5 ? "text-red-500" : "text-surface-text/30"
+                      )}>Stock: {product.quantity}</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className={clsx('w-full', 'lg:w-96', 'bg-surface-card', 'border-l', 'border-surface-border', 'hidden', 'lg:flex', 'flex-col', 'shrink-0')}>
-        <div className={clsx('p-6', 'border-b', 'border-surface-border', 'flex', 'justify-between', 'items-center', 'bg-surface-card/30')}>
-          <h2 className={clsx('text-xl', 'font-black', 'flex', 'items-center', 'gap-3', 'tracking-tighter')}>
-            <ShoppingCart className={clsx('w-6', 'h-6', 'text-primary-400')} />
-            Current order
-          </h2>
-          <span className={clsx('bg-primary-500/10', 'text-primary-400', 'border', 'border-primary-500/20', 'px-3', 'py-1', 'rounded-full', 'text-[10px]', 'font-bold')}>
-            {cart.length} items
-          </span>
+      <div className="hidden lg:flex flex-col w-96 bg-surface-card border-l border-surface-border shadow-2xl relative z-10">
+        <div className="p-6 border-b border-surface-border flex items-center justify-between bg-surface-bg/30">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 text-primary-500 rounded-xl flex items-center justify-center">
+                <ShoppingCart className="w-5 h-5" />
+             </div>
+             <h2 className="text-xl font-black tracking-tighter uppercase italic">Current Order</h2>
+          </div>
+          <button onClick={() => setCart([])} className="p-2 text-surface-text/20 hover:text-red-500 transition-colors">
+            <Trash2 className="w-5 h-5" />
+          </button>
         </div>
 
-        <div className={clsx('flex-1', 'overflow-y-auto', 'p-4', 'space-y-3')}>
-          <AnimatePresence initial={false}>
-            {cart.length === 0 ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={clsx('h-full', 'flex', 'flex-col', 'items-center', 'justify-center', 'text-surface-text/40')}>
-                <div className={clsx('w-20', 'h-20', 'bg-surface-bg', 'rounded-full', 'flex', 'items-center', 'justify-center', 'mb-4', 'border', 'border-surface-border')}>
-                  <ShoppingCart className={clsx('w-8', 'h-8', 'opacity-20')} />
-                </div>
-                <p className={clsx('font-bold', 'tracking-tight', 'text-surface-text/40', 'text-xs')}>Ready for new transaction</p>
-              </motion.div>
-            ) : (
-              cart.map((item) => (
-                <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} key={item.product.id} className={clsx('flex', 'justify-between', 'items-start', 'gap-4', 'p-4', 'bg-surface-card/40', 'rounded-2xl', 'border', 'border-surface-border', 'group', 'hover:border-primary-500/30', 'transition-all')}>
-                  <div className={clsx('flex-1', 'min-w-0')}>
-                    <div className={clsx('font-bold', 'text-sm', 'leading-tight', 'text-surface-text', 'line-clamp-1')}>{item.product.name}</div>
-                    <div className={clsx('text-xs', 'text-surface-text/60', 'mt-1', 'flex', 'items-center', 'gap-2', 'font-medium')}>
-                      <span>MK {item.product.sellPrice.toLocaleString()}</span>
-                      <span className="text-surface-text/20">•</span>
-                      <span className="text-primary-400/80">Qty: {item.quantity}</span>
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+          {cart.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
+              <ShoppingCart className="w-12 h-12 mb-4" />
+              <p className="text-xs font-black uppercase tracking-widest">Cart is empty</p>
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {cart.map((item, idx) => (
+                <motion.div layout initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} key={item.product.id} className="p-4 bg-surface-bg/50 border border-surface-border rounded-2xl group">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="font-black text-sm leading-tight">{item.product.name}</div>
+                      <div className="text-[10px] font-bold text-surface-text/30 mt-1 uppercase tracking-widest">MK {item.product.sellPrice.toLocaleString()} / unit</div>
                     </div>
+                    <button onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="p-1 text-surface-text/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  <div className={clsx('font-black', 'text-primary-400', 'text-sm', 'whitespace-nowrap')}>
-                    MK {(item.product.sellPrice * item.quantity).toLocaleString()}
+                  <div className="flex items-center justify-between pt-3 border-t border-surface-border/50">
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => setCart(prev => prev.map(i => i.product.id === item.product.id ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))}
+                        className="w-8 h-8 bg-surface-card border border-surface-border rounded-lg flex items-center justify-center hover:border-primary-500 transition-colors"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <div className="w-10 text-center font-black text-sm">{item.quantity}</div>
+                      <button 
+                        onClick={() => addToCart(item.product)}
+                        className="w-8 h-8 bg-surface-card border border-surface-border rounded-lg flex items-center justify-center hover:border-primary-500 transition-colors"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <div className="font-black text-primary-500">MK {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
                   </div>
                 </motion.div>
-              ))
-            )}
-          </AnimatePresence>
+              ))}
+            </AnimatePresence>
+          )}
         </div>
 
-        <div className={clsx('p-6', 'bg-surface-card/60', 'backdrop-blur-2xl', 'border-t', 'border-surface-border', 'space-y-6')}>
-          <div className={clsx('flex', 'p-1', 'bg-surface-bg', 'rounded-xl', 'border', 'border-surface-border')}>
-            <button onClick={() => setPaymentMode('CASH')} className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${paymentMode === 'CASH' ? 'bg-primary-600 text-white shadow-lg' : 'text-surface-text/40 hover:text-surface-text'}`}>
-              Cash payment
-            </button>
-            <button onClick={() => setPaymentMode('CREDIT')} className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${paymentMode === 'CREDIT' ? 'bg-accent-vibrant text-black shadow-lg' : 'text-surface-text/40 hover:text-surface-text'}`}>
-              Credit / debt
-            </button>
+        <div className="p-6 bg-surface-card border-t border-surface-border space-y-4 shadow-[0_-10px_20px_rgba(0,0,0,0.1)]">
+          <div className="flex gap-2 p-1 bg-surface-bg rounded-xl border border-surface-border">
+            <button onClick={() => setPaymentMode('CASH')} className={clsx("flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all", paymentMode === 'CASH' ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40")}>Cash</button>
+            <button onClick={() => setPaymentMode('CREDIT')} className={clsx("flex-1 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all", paymentMode === 'CREDIT' ? "bg-amber-500 text-white shadow-lg shadow-amber-500/20" : "text-surface-text/40")}>Credit</button>
           </div>
-          <div className="space-y-2">
-            <div className={clsx('flex', 'justify-between', 'items-center', 'text-surface-text/40', 'font-bold', 'text-[10px]')}>
-              <span>Subtotal</span>
-              <span>MK {cartTotal.toLocaleString()}</span>
-            </div>
-            <div className={clsx('flex', 'justify-between', 'items-center', 'text-3xl', 'font-black', 'text-surface-text')}>
-              <span className="tracking-tighter">Total</span>
-              <span className={`transition-colors ${paymentMode === 'CREDIT' ? 'text-accent-vibrant' : 'text-primary-400'}`}>
+
+          <div className="space-y-1">
+             <div className="flex justify-between text-[10px] font-black text-surface-text/30 uppercase tracking-widest">
+               <span>Total amount</span>
+               <span>{cart.length} items</span>
+             </div>
+             <div className={clsx("text-4xl font-black tracking-tighter", paymentMode === 'CREDIT' ? 'text-amber-500' : 'text-primary-500')}>
                 MK {cartTotal.toLocaleString()}
-              </span>
-            </div>
+             </div>
           </div>
-          <button disabled={cart.length === 0} onClick={handleCheckout} className={`w-full !py-5 text-lg font-black tracking-tighter disabled:opacity-30 disabled:hover:scale-100 flex items-center justify-center gap-3 group transition-all rounded-2xl shadow-2xl active:scale-95 ${paymentMode === 'CREDIT' ? 'bg-accent-vibrant text-black hover:bg-amber-400 shadow-amber-900/20' : 'btn-primary'}`}>
-            {paymentMode === 'CREDIT' ? 'Generate invoice' : 'Complete transaction'}
-            <Power className={clsx('w-5', 'h-5', 'group-hover:rotate-12', 'transition-transform')} />
+
+          <button 
+            disabled={cart.length === 0}
+            onClick={handleCheckout} 
+            className={clsx(
+              "w-full py-6 rounded-3xl font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-[0.98] disabled:opacity-50 disabled:grayscale",
+              paymentMode === 'CASH' ? "bg-primary-500 text-white shadow-primary-500/20" : "bg-amber-500 text-white shadow-amber-500/20"
+            )}
+          >
+            <Power className="w-5 h-5" />
+            Complete Sale
           </button>
         </div>
       </div>

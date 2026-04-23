@@ -13,6 +13,8 @@ import TransactionsPage from './pages/TransactionsPage';
 import UsersPage from './pages/UsersPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import LockedPage from './pages/LockedPage';
+import ReportsPage from './pages/ReportsPage';
+import BranchesPage from './pages/BranchesPage';
 import { SyncService } from './services/SyncService';
 import MainLayout from './components/MainLayout';
 import { db } from './db/posDB';
@@ -26,6 +28,18 @@ const App: React.FC = () => {
 
   const checkSystemLock = useCallback(async () => {
     try {
+      const overrideSetting = await db.settings.get('lockout_override');
+      if (overrideSetting && overrideSetting.value === true) {
+        const lastActive = parseInt(localStorage.getItem('lastActivity') || '0', 10);
+        if (Date.now() - lastActive > 30 * 60 * 1000) {
+          // Expired
+          await db.settings.put({ key: 'lockout_override', value: false });
+        } else {
+          setIsLocked(false);
+          return;
+        }
+      }
+
       const lockSetting = await db.settings.get('system_lock');
       if (lockSetting && lockSetting.value === true) {
         setIsLocked(true);
@@ -43,7 +57,6 @@ const App: React.FC = () => {
         const startTime = startH * 60 + startM;
         const endTime = endH * 60 + endM;
 
-        // Logic for overnight lockout
         if (startTime > endTime) {
            if (currentTime >= startTime || currentTime <= endTime) {
              setIsLocked(true);
@@ -76,6 +89,13 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const handleActivity = () => {
+      localStorage.setItem('lastActivity', Date.now().toString());
+    };
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
     const init = async () => {
       try {
         await initDB(db);
@@ -101,11 +121,14 @@ const App: React.FC = () => {
     }, 100);
 
     const syncInterval = setInterval(handleSync, 60000);
-    const lockInterval = setInterval(checkSystemLock, 300000); // Check lock every 5 mins
+    const lockInterval = setInterval(checkSystemLock, 60000); // Check lock every min
 
     return () => {
       window.removeEventListener('online', handleStatusChange);
       window.removeEventListener('offline', handleStatusChange);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
       clearInterval(syncInterval);
       clearInterval(lockInterval);
     };
@@ -115,8 +138,14 @@ const App: React.FC = () => {
   const user = userStr ? JSON.parse(userStr) : null;
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
-  if (isLocked && !isSuperAdmin) {
-    return <LockedPage />;
+  const handleUnlock = async () => {
+    await db.settings.put({ key: 'lockout_override', value: true });
+    localStorage.setItem('lastActivity', Date.now().toString());
+    checkSystemLock();
+  };
+
+  if (isLocked) {
+    return <LockedPage isSuperAdmin={isSuperAdmin} onUnlock={handleUnlock} />;
   }
 
   return (
@@ -157,6 +186,8 @@ const App: React.FC = () => {
                     <Route path="transactions" element={<TransactionsPage />} />
                     <Route path="users" element={<UsersPage />} />
                     <Route path="settings" element={<SettingsPage />} />
+                    <Route path="reports" element={<ReportsPage />} />
+                    <Route path="branches" element={<BranchesPage />} />
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </MainLayout>

@@ -1,254 +1,129 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../api/client';
+import React, { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/posDB';
 import { 
-  Building2, 
+  Store, 
   MapPin, 
   Phone, 
   Plus, 
-  Search, 
-  Trash2, 
-  Edit2, 
-  X, 
-  AlertCircle,
-  Network
+  MoreVertical, 
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
-import { useToast } from '../hooks/useToast';
+import { motion } from 'framer-motion';
 
-interface Branch {
-  id: number;
-  name: string;
-  location: string;
-  phone: string | null;
-  is_active: boolean;
-  staff_count: number;
-  created_at: string;
-}
-
-export default function BranchesPage() {
-  const { showToast } = useToast();
-  const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
+const BranchesPage: React.FC = () => {
+  const branches = useLiveQuery(() => db.branches.toArray());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingBranch, setEditingBranch] = useState<Partial<Branch> | null>(null);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
 
-  const { data: branches, isLoading } = useQuery<Branch[]>({
-    queryKey: ['branches', searchTerm],
-    queryFn: async () => {
-      const res = await api.get(`/branches?q=${searchTerm}`);
-      return (res.data.data as Branch[]) || [];
-    }
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: (data: Partial<Branch>) => api.post('/branches', data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['branches'] });
-      setIsModalOpen(false);
-      showToast('Branch network updated', 'success');
-    },
-    onError: (err: unknown) => {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      showToast(axiosErr.response?.data?.message || 'Failed to sync branch', 'error');
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.delete(`/branches/${id}`),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['branches'] });
-      setIsConfirmOpen(false);
-      showToast('Branch removed from network', 'success');
-    }
-  });
-
-  const handleAdd = () => {
-    setEditingBranch({
-      name: '',
-      location: '',
-      phone: '',
-      is_active: true
-    });
-    setIsModalOpen(true);
-  };
+  const stats = [
+    { label: 'Total Branches', value: (branches?.length || 0).toString(), icon: Store, color: 'text-primary-500' },
+    { label: 'Main HQ', value: 'Domasi', icon: ShieldCheck, color: 'text-emerald-500' },
+    { label: 'Active Region', value: 'Zomba', icon: MapPin, color: 'text-amber-500' },
+  ];
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8 h-full w-full animate-fade-in overflow-hidden font-sans">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-           <div className="w-16 h-16 bg-primary/10 text-primary rounded-[2rem] flex items-center justify-center shadow-xl shadow-primary/5">
-              <Network className="w-8 h-8" />
-           </div>
-           <div>
-              <h2 className="text-3xl font-black text-foreground tracking-tighter italic">Branch management</h2>
-              <p className="text-muted-foreground font-bold text-xs opacity-60">Architect and manage your multi-location network</p>
-           </div>
+    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
+      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="hidden md:block">
+              <h1 className="text-2xl font-black tracking-tighter uppercase italic">Branch Management</h1>
+              <p className="text-[10px] text-surface-text/40 font-black uppercase tracking-widest mt-1">Configure and manage your business outlets</p>
+            </div>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="btn-primary !px-6 !py-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/10 w-full md:w-auto justify-center"
+            >
+              <Plus className="w-4 h-4" /> Add Branch
+            </button>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-2 md:gap-4">
+            {stats.map((stat, i) => (
+              <div key={i} className="bg-surface-bg border border-surface-border p-3 md:p-4 rounded-2xl md:rounded-3xl shadow-inner">
+                <div className={`p-1.5 rounded-lg bg-surface-card border border-surface-border w-fit mb-2 ${stat.color}`}>
+                  <stat.icon className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-base md:text-lg font-black leading-none">{stat.value}</div>
+                <div className="text-[7px] md:text-[9px] font-black text-surface-text/30 uppercase tracking-widest mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <button onClick={handleAdd} className="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs">
-          <Plus className="w-5 h-5" /> Establish branch
-        </button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <div className="bg-card p-6 md:p-8 rounded-[2.5rem] border border-border shadow-sm group">
-            <p className="text-[10px] font-bold text-muted-foreground mb-2">Total locations</p>
-            <p className="text-3xl font-black text-foreground tracking-tighter">{branches?.length ?? 0}</p>
-         </div>
-         <div className="bg-card p-6 md:p-8 rounded-[2.5rem] border border-border shadow-sm group">
-            <p className="text-[10px] font-bold text-muted-foreground mb-2">Active nodes</p>
-            <p className="text-3xl font-black text-green-500 tracking-tighter">{branches?.filter(b => b.is_active).length ?? 0}</p>
-         </div>
-         <div className="bg-card p-6 md:p-8 rounded-[2.5rem] border border-border shadow-sm group">
-            <p className="text-[10px] font-bold text-muted-foreground mb-2">Network capacity</p>
-            <p className="text-3xl font-black text-primary tracking-tighter">Unlimited</p>
-         </div>
-      </div>
-
-      <div className="bg-card p-4 md:p-6 rounded-3xl border border-border shadow-lg flex flex-col md:flex-row gap-4 items-center bg-muted/20">
-        <div className="relative flex-1 w-full group">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 group-focus-within:text-primary transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Search branch name or location..." 
-            value={searchTerm} 
-            onChange={e => setSearchTerm(e.target.value)} 
-            className="w-full pl-14 pr-6 py-4 bg-card border-none rounded-2xl outline-none font-bold text-sm shadow-sm transition-all focus:ring-2 focus:ring-primary/20" 
-          />
-        </div>
-      </div>
-
-      <div className="flex-1 bg-card rounded-[2.5rem] border border-border shadow-2xl overflow-hidden flex flex-col min-h-0">
-         <div className="flex-1 overflow-auto custom-scrollbar">
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {isLoading ? (
-                  <div className="col-span-full p-20 text-center"><div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto" /></div>
-               ) : branches?.map(branch => (
-                  <div key={branch.id} className="bg-muted/30 border border-border rounded-[2rem] p-8 hover:border-primary/30 transition-all group relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-6">
-                        <div className={`w-3 h-3 rounded-full ${branch.is_active ? 'bg-green-500 animate-pulse' : 'bg-muted'}`} title={branch.is_active ? 'Online' : 'Offline'} />
-                     </div>
-                     
-                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-14 h-14 bg-card rounded-2xl flex items-center justify-center border border-border group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                           <Building2 className="w-7 h-7" />
-                        </div>
-                        <div>
-                           <h4 className="font-black text-foreground text-lg tracking-tight leading-none mb-1">{branch.name}</h4>
-                           <p className="text-[10px] font-bold text-muted-foreground">ID: Br-{branch.id.toString().padStart(3, '0')}</p>
-                        </div>
-                     </div>
-
-                     <div className="space-y-4 mb-8">
-                        <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-                           <MapPin className="w-4 h-4 text-primary" /> {branch.location}
-                        </div>
-                        <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-                           <Phone className="w-4 h-4 text-primary" /> {branch.phone || 'No contact info'}
-                        </div>
-                     </div>
-
-                     <div className="flex items-center justify-between pt-6 border-t border-border">
-                        <div className="text-[10px] font-bold text-muted-foreground bg-muted px-3 py-1.5 rounded-full">
-                           {branch.staff_count} Active staff
-                        </div>
-                        <div className="flex gap-2">
-                           <button onClick={() => { setEditingBranch(branch); setIsModalOpen(true); }} title="Edit Branch" className="p-2 text-muted-foreground hover:text-primary transition-colors"><Edit2 className="w-4 h-4" /></button>
-                           <button onClick={() => { setSelectedBranchId(branch.id); setIsConfirmOpen(true); }} title="Delete Branch" className="p-2 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                     </div>
-                  </div>
-               ))}
+      <div className="p-0 md:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-6">
+        {branches?.map((branch, i) => (
+          <motion.div
+            key={branch.id}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.1 }}
+            className="bg-surface-card md:border border-surface-border md:rounded-3xl overflow-hidden group hover:border-primary-500/30 transition-all border-b border-surface-border/50"
+          >
+            <div className="h-28 bg-gradient-to-br from-primary-600/10 to-primary-900/40 relative">
+               <div className="absolute -bottom-6 left-6 w-14 h-14 bg-surface-card border-2 border-primary-500/10 rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform group-hover:border-primary-500/30">
+                  <Store className="w-7 h-7 text-primary-500" />
+               </div>
+               <button className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 rounded-full text-white backdrop-blur-md transition-all">
+                  <MoreVertical className="w-4 h-4" />
+               </button>
             </div>
-         </div>
+            
+            <div className="p-6 pt-12">
+              <h3 className="text-xl font-black tracking-tight mb-1">{branch.name}</h3>
+              <div className="flex items-center gap-2 text-surface-text/40 mb-6">
+                 <MapPin className="w-3 h-3" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">{branch.address || 'Location not set'}</span>
+              </div>
+              
+              <div className="space-y-4 pt-6 border-t border-surface-border">
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 bg-surface-bg border border-surface-border rounded-lg flex items-center justify-center">
+                          <Phone className="w-3.5 h-3.5 text-surface-text/20" />
+                       </div>
+                       <span className="text-[9px] font-black uppercase tracking-widest text-surface-text/60">Support Contact</span>
+                    </div>
+                    <span className="text-[10px] font-black tracking-widest">{branch.phone || 'N/A'}</span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 bg-surface-bg border border-surface-border rounded-lg flex items-center justify-center">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500/40" />
+                       </div>
+                       <span className="text-[9px] font-black uppercase tracking-widest text-surface-text/60">Operational Status</span>
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Active</span>
+                 </div>
+              </div>
+
+              <div className="flex gap-3 mt-8">
+                 <button className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-500/5 transition-all active:scale-95 shadow-sm">
+                    Settings
+                 </button>
+                 <button className="p-4 bg-primary-500 text-white rounded-2xl shadow-xl shadow-primary-500/20 active:scale-95 transition-all">
+                    <ExternalLink className="w-5 h-5" />
+                 </button>
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-background/80 backdrop-blur-md p-4 animate-fade-in">
-           <div className="bg-card w-full max-w-lg rounded-[3rem] shadow-2xl border border-border overflow-hidden animate-fade-up">
-              <header className="px-10 py-8 border-b border-border flex justify-between items-center bg-muted/30">
-                 <h3 className="text-2xl font-black text-foreground italic tracking-tighter">{editingBranch?.id ? 'Configure branch' : 'New branch node'}</h3>
-                 <button onClick={() => setIsModalOpen(false)} title="Close Modal" className="p-3 text-muted-foreground hover:bg-card rounded-2xl shadow-sm transition-all"><X className="w-6 h-6" /></button>
-              </header>
-
-              <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(editingBranch!); }} className="p-10 space-y-6">
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground px-1">Branch name</label>
-                    <input 
-                      type="text" 
-                      required
-                      placeholder="e.g. Blantyre Head Office"
-                      className="w-full px-6 py-4 bg-muted/50 border-border border-2 focus:border-primary rounded-2xl outline-none font-bold transition-all"
-                      value={editingBranch?.name}
-                      onChange={(e) => setEditingBranch({...editingBranch!, name: e.target.value})}
-                    />
-                 </div>
-
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-muted-foreground px-1">Physical location</label>
-                    <textarea 
-                      required
-                      placeholder="Full address of this branch"
-                      className="w-full px-6 py-4 bg-muted/50 border-border border-2 focus:border-primary rounded-2xl outline-none font-bold transition-all min-h-[100px]"
-                      value={editingBranch?.location}
-                      onChange={(e) => setEditingBranch({...editingBranch!, location: e.target.value})}
-                    />
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-bold text-muted-foreground px-1">Contact phone</label>
-                       <input 
-                          type="text" 
-                          placeholder="+265..."
-                          className="w-full px-6 py-4 bg-muted/50 border-border border-2 focus:border-primary rounded-2xl outline-none font-bold transition-all"
-                          value={editingBranch?.phone || ''}
-                          onChange={(e) => setEditingBranch({...editingBranch!, phone: e.target.value})}
-                       />
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-bold text-muted-foreground px-1">Status</label>
-                       <div className="flex items-center gap-4 py-4">
-                          <button 
-                            type="button"
-                            title={editingBranch?.is_active ? 'Deactivate Branch' : 'Activate Branch'}
-                            onClick={() => setEditingBranch({...editingBranch!, is_active: !editingBranch?.is_active})}
-                            className={`w-14 h-8 rounded-full transition-all relative ${editingBranch?.is_active ? 'bg-primary' : 'bg-muted'}`}
-                          >
-                             <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${editingBranch?.is_active ? 'right-1' : 'left-1'}`} />
-                          </button>
-                          <span className="text-xs font-bold">{editingBranch?.is_active ? 'Active' : 'Inactive'}</span>
-                       </div>
-                    </div>
-                 </div>
-
-                  <div className="pt-4 flex gap-4">
-                     <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-5 bg-muted hover:bg-muted/80 text-foreground rounded-2xl font-bold text-xs transition-all">Cancel</button>
-                     <button type="submit" className="flex-[2] py-5 bg-primary text-primary-foreground rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs">
-                        {saveMutation.isPending ? 'Syncing...' : 'Deploy branch'}
-                     </button>
-                  </div>
-              </form>
+      {branches?.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center py-20 text-center opacity-40">
+           <div className="w-24 h-24 bg-surface-card border border-surface-border rounded-full flex items-center justify-center mb-6 shadow-inner">
+             <Store className="w-10 h-10" />
            </div>
-        </div>
-      )}
-
-      {isConfirmOpen && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 animate-fade-in">
-           <div className="bg-card w-full max-w-sm rounded-[2.5rem] shadow-2xl border border-border p-10 text-center">
-              <div className="w-20 h-20 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-8">
-                 <AlertCircle className="w-10 h-10" />
-              </div>
-              <h3 className="text-2xl font-black text-foreground mb-2">Decommission Branch?</h3>
-              <p className="text-sm font-bold text-muted-foreground mb-10 opacity-60">This will remove the branch from the network. Staff and inventory assigned here will need to be reallocated.</p>
-              <div className="flex gap-4">
-                 <button onClick={() => setIsConfirmOpen(false)} className="flex-1 py-4 bg-muted text-foreground rounded-2xl font-bold text-xs">Cancel</button>
-                 <button onClick={() => deleteMutation.mutate(selectedBranchId!)} className="flex-1 py-4 bg-destructive text-white rounded-2xl font-bold text-xs shadow-xl shadow-destructive/20">Remove</button>
-              </div>
-           </div>
+           <h2 className="text-xl font-black uppercase tracking-widest italic">No branches found</h2>
+           <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-2">Add your first business location to get started</p>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default BranchesPage;

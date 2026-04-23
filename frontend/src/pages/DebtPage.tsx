@@ -187,35 +187,37 @@ const DebtPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="p-4 md:p-6 bg-surface-card border-b border-surface-border sticky top-0 z-30">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6" />
+      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="hidden md:flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6" />
+              </div>
+              <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase italic">Debt book</h1>
             </div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter">Debt book</h1>
+            <button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="btn-primary !px-6 !py-4 text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary-500/10 w-full md:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-2 inline" /> Add customer
+            </button>
           </div>
-          <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="btn-primary !px-4 !py-2 text-[10px] font-bold"
-          >
-            Add customer
-          </button>
-        </div>
 
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
-          <input 
-            type="text" 
-            placeholder="Search customers..."
-            className="input-field w-full pl-11 text-sm font-medium"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search customers..."
+              className="input-field w-full pl-11 text-sm font-bold shadow-inner"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </header>
 
-      <div className="p-0 md:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
+      <div className="p-0 md:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4">
         <AnimatePresence mode="popLayout">
           {customers?.map(customer => (
             <motion.div

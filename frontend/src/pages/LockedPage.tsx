@@ -1,8 +1,13 @@
 import React from 'react';
-import { Lock, Clock } from 'lucide-react';
+import { Lock, Clock, Key } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const LockedPage: React.FC = () => {
+interface LockedPageProps {
+  isSuperAdmin?: boolean;
+  onUnlock?: () => void;
+}
+
+const LockedPage: React.FC<LockedPageProps> = ({ isSuperAdmin, onUnlock }) => {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-surface-bg text-surface-text">
       <motion.div 
@@ -18,12 +23,24 @@ const LockedPage: React.FC = () => {
         
         <h1 className="text-2xl font-black tracking-tight mb-4">System locked</h1>
         <p className="text-surface-text/40 text-xs font-bold leading-relaxed mb-8">
-          Access to Vendrax POS is currently restricted by the Super Administrator or due to non-working hours.
+          Access to Vendrax is currently restricted by the Super Administrator or due to non-working hours.
         </p>
         
-        <div className="flex items-center justify-center gap-3 py-4 px-6 bg-surface-card border border-surface-border rounded-2xl text-[10px] font-bold text-surface-text/30">
-          <Clock className="w-4 h-4" />
-          Operating hours enforcement active
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex items-center justify-center gap-3 py-4 px-6 bg-surface-card border border-surface-border rounded-2xl text-[10px] font-bold text-surface-text/30 w-full">
+            <Clock className="w-4 h-4" />
+            Operating hours enforcement active
+          </div>
+          
+          {isSuperAdmin && onUnlock && (
+            <button 
+              onClick={onUnlock}
+              className="flex items-center justify-center gap-2 w-full py-4 bg-primary-600/10 text-primary-500 hover:bg-primary-500 hover:text-white border border-primary-500/20 rounded-2xl font-bold transition-all"
+            >
+              <Key className="w-5 h-5" />
+              Unlock system temporarily (30m)
+            </button>
+          )}
         </div>
       </motion.div>
     </div>

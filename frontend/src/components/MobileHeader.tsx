@@ -10,7 +10,7 @@ interface MobileHeaderProps {
 
 const MobileHeader: React.FC<MobileHeaderProps> = ({ isOnline, isSyncing }) => {
   const location = useLocation();
-  const [pageTitle, setPageTitle] = useState('Vendrax POS');
+  const [pageTitle, setPageTitle] = useState('Vendrax');
   const [logo, setLogo] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,20 +33,23 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ isOnline, isSyncing }) => {
         case 'transactions': setPageTitle('Transactions'); break;
         case 'users': setPageTitle('Team'); break;
         case 'settings': setPageTitle('Settings'); break;
-        default: setPageTitle('Vendrax POS');
+        default: setPageTitle('Vendrax');
       }
     }, 0);
   }, [location]);
 
   return (
-    <header className="sticky top-0 z-50 md:hidden bg-surface-card border-b border-surface-border px-6 py-4 flex items-center justify-between backdrop-blur-md bg-opacity-80">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full border border-surface-border overflow-hidden shrink-0 bg-zinc-50">
-          <img src={logo || '/vendrax-logo.png'} alt="Vendrax" className="w-full h-full object-cover" />
+    <header className="sticky top-0 z-50 md:hidden bg-surface-card border-b border-surface-border px-5 py-3 flex items-center justify-between backdrop-blur-xl bg-opacity-90">
+      {/* Decorative subtle element */}
+      <div className="absolute inset-0 bg-gradient-to-r from-primary-500/5 via-transparent to-primary-500/5 pointer-events-none" />
+      
+      <div className="flex items-center gap-3 relative z-10">
+        <div className="w-10 h-10 rounded-full border border-primary-500/30 overflow-hidden shrink-0 bg-surface-bg flex items-center justify-center shadow-lg shadow-primary-500/10">
+          <img src={logo || '/vendrax-logo.png'} alt="Vendrax" className="w-full h-full object-cover scale-[1.2]" />
         </div>
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-primary-400 leading-none mb-1">Vendrax</span>
-          <h1 className="text-lg font-black tracking-tighter text-surface-text">{pageTitle}</h1>
+        <div className="flex flex-col justify-center">
+          <span className="text-[17px] font-black text-primary-500 leading-none mb-0.5 tracking-tighter italic">VENDRAX</span>
+          <h1 className="text-[9px] font-black tracking-[0.1em] text-surface-text/40 uppercase leading-none">{pageTitle}</h1>
         </div>
       </div>
 

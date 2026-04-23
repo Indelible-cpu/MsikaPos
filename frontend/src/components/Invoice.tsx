@@ -16,7 +16,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, invoiceNo, date 
       </div>
       
       <div className="text-center border-b-2 border-black pb-4 mb-4">
-        <h1 className="text-xl font-bold">Vendrax POS</h1>
+        <h1 className="text-xl font-bold">Vendrax</h1>
         <p className="text-xs">Excellence in Service</p>
         <p className="text-xs mt-2">123 Business Street, Lilongwe</p>
       </div>

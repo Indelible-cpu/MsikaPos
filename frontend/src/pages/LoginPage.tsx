@@ -16,42 +16,50 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleBiometricLogin = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.error('Please sign in with password once to enable biometrics');
-      return;
-    }
-
     try {
       setLoading(true);
       if (window.PublicKeyCredential) {
         toast.loading('Verifying identity...', { id: 'biometric-auth' });
-        // Simulating WebAuthn/Biometric success for this PWA environment
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        await AuditService.log('BIOMETRIC_LOGIN', 'User signed in using biometrics');
-        toast.success('Identity verified!', { id: 'biometric-auth' });
-        navigate('/dashboard');
+        
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        
+        await navigator.credentials.get({
+          publicKey: {
+            challenge,
+            rpId: window.location.hostname,
+            userVerification: 'required'
+          }
+        });
+
+        const userDataStr = localStorage.getItem('user');
+        if (userDataStr) {
+          await AuditService.log('BIOMETRIC_LOGIN', 'User signed in using biometrics');
+          toast.success('Identity verified!', { id: 'biometric-auth' });
+          navigate('/dashboard');
+        } else {
+          throw new Error('No user data found. Please login with password first.');
+        }
       }
     } catch (err) {
       console.error('Biometric error:', err);
-      toast.error('Biometric verification failed, please use your password');
+      toast.error('Biometric verification failed. Please use your password.', { id: 'biometric-auth' });
     } finally {
       setLoading(false);
     }
   }, [navigate]);
 
   useEffect(() => {
-    // Check for biometric availability
     if (window.PublicKeyCredential) {
       PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
         .then(available => {
           setIsBiometricAvailable(available);
-          
-          // Auto-trigger if enabled and preferred
-          const isBiometricPreferred = localStorage.getItem('biometricEnabled') === 'true';
-          const token = localStorage.getItem('token');
-          if (available && isBiometricPreferred && token) {
-            handleBiometricLogin();
+          const isRegistered = localStorage.getItem('biometricRegistered') === 'true';
+          if (available && isRegistered) {
+            // Give the UI a moment to breathe
+            setTimeout(() => {
+              handleBiometricLogin();
+            }, 500);
           }
         });
     }
@@ -71,7 +79,6 @@ const LoginPage: React.FC = () => {
         userToken = response.data.token;
       } catch (apiErr) {
         console.warn('API login failed, attempting offline fallback...', apiErr);
-        // Fallback to local DB or default admin for offline use
         if (username.toLowerCase() === 'admin' || password === 'admin') {
            userData = { id: 'admin', username: 'admin', role: 'SUPER_ADMIN', fullname: 'System Admin' };
            userToken = 'offline-admin-token';
@@ -87,8 +94,28 @@ const LoginPage: React.FC = () => {
       await AuditService.log('LOGIN', `User ${username} signed in successfully`);
       toast.success('Welcome back!');
       
-      if (isBiometricAvailable) {
-        localStorage.setItem('biometricEnabled', 'true');
+      if (isBiometricAvailable && window.PublicKeyCredential && localStorage.getItem('biometricRegistered') !== 'true') {
+        try {
+          const challenge = new Uint8Array(32);
+          crypto.getRandomValues(challenge);
+          const userId = new Uint8Array(16);
+          crypto.getRandomValues(userId);
+          
+          await navigator.credentials.create({
+            publicKey: {
+              challenge,
+              rp: { name: 'Vendrax', id: window.location.hostname },
+              user: { id: userId, name: username, displayName: userData.fullname || username },
+              pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+              authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', requireResidentKey: true },
+              timeout: 60000
+            }
+          });
+          localStorage.setItem('biometricRegistered', 'true');
+          toast.success('Biometrics registered successfully!');
+        } catch (bioErr) {
+          console.error('Failed to register biometrics:', bioErr);
+        }
       }
 
       toast.loading('Syncing inventory...', { id: 'init-sync' });
