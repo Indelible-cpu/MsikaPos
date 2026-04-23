@@ -48,6 +48,7 @@ const POSPage: React.FC = () => {
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
+  const [custSearch, setCustSearch] = useState('');
   
   const [showScanner, setShowScanner] = useState(false);
   const [amountReceived, setAmountReceived] = useState<string>('');
