@@ -64,36 +64,53 @@ const LoginPage: React.FC = () => {
 
   const registerBiometrics = async () => {
     try {
+      if (!window.PublicKeyCredential) return;
       setLoading(true);
-      const challenge = new Uint8Array(32);
-      crypto.getRandomValues(challenge);
       
       const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const challenge = new Uint8Array(32);
+      window.crypto.getRandomValues(challenge);
+      
+      // Use a consistent, safe ID (must be unique per user but stable)
+      const userId = Uint8Array.from(String(user.id || '1'), c => c.charCodeAt(0));
 
-      await navigator.credentials.create({
+      const credential = await navigator.credentials.create({
         publicKey: {
           challenge,
           rp: { name: 'Vendrax POS', id: window.location.hostname },
           user: {
-            id: Uint8Array.from(user.id || '1', (c: string) => c.charCodeAt(0)),
+            id: userId,
             name: user.username || 'user',
             displayName: user.fullname || 'User'
           },
-          pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
-          authenticatorSelection: { userVerification: 'required' },
+          pubKeyCredParams: [
+            { alg: -7, type: 'public-key' }, 
+            { alg: -257, type: 'public-key' }
+          ],
+          authenticatorSelection: { 
+            userVerification: 'required',
+            residentKey: 'preferred'
+          },
           timeout: 60000
         }
       });
 
-      localStorage.setItem('biometricRegistered', 'true');
-      setIsBiometricAvailable(true);
-      setShowBiometricPrompt(false);
-      toast.success('Biometric login enabled for this device!');
-      navigate('/dashboard');
+      if (credential) {
+        localStorage.setItem('biometricRegistered', 'true');
+        setIsBiometricAvailable(true);
+        setShowBiometricPrompt(false);
+        toast.success('Biometric login enabled for this device!');
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       console.error('Registration error:', err);
-      toast.error('Could not register biometrics.');
-      navigate('/dashboard'); // Still navigate even if it fails
+      if (err.name === 'NotAllowedError') {
+        toast.error('Registration canceled or not allowed.');
+      } else {
+        toast.error('Could not register biometrics.');
+      }
+      setShowBiometricPrompt(false);
+      navigate('/dashboard');
     } finally {
       setLoading(false);
     }

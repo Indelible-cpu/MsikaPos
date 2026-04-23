@@ -24,8 +24,8 @@ async function main() {
       role: RoleName.SUPER_ADMIN,
     },
     {
-      username: 'james',
-      password: 'james2025',
+      username: 'James',
+      password: 'James2025@',
       role: RoleName.ADMIN,
     },
     {
