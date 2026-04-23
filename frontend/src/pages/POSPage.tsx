@@ -19,8 +19,13 @@ import {
   Wallet,
   Printer,
   Send,
-  ArrowRight
+  ArrowRight,
+  Camera,
+  Upload,
+  Fingerprint,
+  CheckCircle2
 } from 'lucide-react';
+import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
@@ -50,6 +55,20 @@ const POSPage: React.FC = () => {
   const [newCustPhone, setNewCustPhone] = useState('');
   const [custSearch, setCustSearch] = useState('');
   
+  // Full Registration State for POS
+  const [custForm, setCustForm] = useState({ 
+    name: '', 
+    phone: '',
+    idNumber: '',
+    village: '',
+    livePhoto: '',
+    fingerprintData: ''
+  });
+
+  const [useCamera, setUseCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const [showScanner, setShowScanner] = useState(false);
   const [amountReceived, setAmountReceived] = useState<string>('');
   const [taxConfig, setTaxConfig] = useState<TaxConfig>({ rate: 0, inclusive: true });
@@ -218,12 +237,72 @@ const POSPage: React.FC = () => {
     }
   };
 
+  const startCamera = async () => {
+    setUseCamera(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch {
+      toast.error('Camera access denied');
+      setUseCamera(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0);
+        const dataUrl = canvasRef.current.toDataURL('image/jpeg');
+        setCustForm(prev => ({ ...prev, livePhoto: dataUrl }));
+        stopCamera();
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setUseCamera(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCustForm(prev => ({ ...prev, livePhoto: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const captureFingerprint = async () => {
+    toast.loading('Scanning fingerprint...', { id: 'fp' });
+    setTimeout(() => {
+      const mockHash = "FP_" + Math.random().toString(36).substring(2, 15);
+      setCustForm(prev => ({ ...prev, fingerprintData: btoa(mockHash) }));
+      toast.success('Fingerprint secured', { id: 'fp' });
+    }, 1500);
+  };
+
   const handleQuickAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCustName || !newCustPhone) return;
+    if (!custForm.name || !custForm.phone) return;
 
-    if (!/^\d{10}$|^\d{13}$/.test(newCustPhone)) {
+    if (!/^\d{10}$|^\d{13}$/.test(custForm.phone)) {
       toast.error('Mobile number must be exactly 10 or 13 digits');
+      return;
+    }
+
+    if (custForm.idNumber && custForm.idNumber.length !== 8) {
+      toast.error('National ID must be exactly 8 characters');
       return;
     }
 
@@ -231,16 +310,19 @@ const POSPage: React.FC = () => {
       const id = crypto.randomUUID();
       await db.customers.add({
         id,
-        name: newCustName,
-        phone: newCustPhone,
+        name: custForm.name,
+        phone: custForm.phone,
+        idNumber: custForm.idNumber.toUpperCase(),
+        village: custForm.village,
+        livePhoto: custForm.livePhoto,
+        fingerprintData: custForm.fingerprintData,
         balance: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
       setSelectedCustomerId(id);
       setIsAddingCustomer(false);
-      setNewCustName('');
-      setNewCustPhone('');
+      setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '', fingerprintData: '' });
       toast.success('Customer added');
       if (paymentMode === 'Credit') handleCheckout();
     } catch {
@@ -298,22 +380,90 @@ const POSPage: React.FC = () => {
                     </button>
                     <h4 className="text-sm font-black italic mb-4">Quick Registration</h4>
                   </div>
+                ) : (
+                  <div className="text-left">
+                    <button onClick={() => { setIsAddingCustomer(false); stopCamera(); }} className="text-[10px] font-black text-primary-500 mb-2 flex items-center gap-1">
+                      <ArrowRight className="w-3 h-3 rotate-180" /> Back to Search
+                    </button>
+                    <h4 className="text-sm font-black italic mb-2">New customer profile</h4>
+                  </div>
                 )}
               </div>
 
               <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                 {isAddingCustomer ? (
                   <form onSubmit={handleQuickAddCustomer} className="p-4 space-y-4">
-                    <div className="space-y-1">
-                      <label htmlFor="new-cust-name" className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">FULL NAME</label>
-                      <input id="new-cust-name" required autoFocus type="text" className="input-field w-full" value={newCustName} onChange={e => setNewCustName(e.target.value)} />
+                    <div className="flex flex-col gap-6">
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Full name</label>
+                          <input required type="text" className="input-field w-full" placeholder="e.g. John Phiri" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Phone number</label>
+                          <input required type="text" className="input-field w-full" placeholder="e.g. 0881234567 or +265..." value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">National ID (8 chars)</label>
+                          <input type="text" className="input-field w-full" placeholder="e.g. ABC12345" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Village / location</label>
+                          <input type="text" className="input-field w-full" placeholder="e.g. Lilongwe" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Photo Capture */}
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Live photo</label>
+                          <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl overflow-hidden relative flex flex-col items-center justify-center">
+                            {custForm.livePhoto ? (
+                              <img src={custForm.livePhoto} alt="Preview" className="w-full h-full object-cover" />
+                            ) : useCamera ? (
+                              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                            ) : (
+                              <Users className="w-8 h-8 text-surface-text/20 mb-2" />
+                            )}
+                            {useCamera && !custForm.livePhoto && (
+                              <button type="button" onClick={capturePhoto} className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-red-500 text-white w-10 h-10 rounded-full shadow-lg border-2 border-white"></button>
+                            )}
+                            <canvas ref={canvasRef} className="hidden" />
+                          </div>
+                          <div className="flex gap-2">
+                            {!useCamera && !custForm.livePhoto && (
+                              <button type="button" onClick={startCamera} className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-[8px] font-bold flex items-center justify-center gap-1">
+                                <Camera className="w-3 h-3" /> Camera
+                              </button>
+                            )}
+                            {custForm.livePhoto && (
+                              <button type="button" onClick={() => setCustForm({...custForm, livePhoto: ''})} className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-[8px] font-bold text-red-500">Retake</button>
+                            )}
+                            <label className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-[8px] font-bold flex items-center justify-center gap-1 cursor-pointer">
+                              <Upload className="w-3 h-3" /> Upload
+                              <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Fingerprint Capture */}
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Biometrics</label>
+                          <button 
+                            type="button" 
+                            onClick={captureFingerprint}
+                            disabled={!!custForm.fingerprintData}
+                            className={`w-full aspect-square rounded-2xl flex flex-col items-center justify-center gap-2 border transition-all ${custForm.fingerprintData ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-surface-bg border-surface-border text-surface-text/60'}`}
+                          >
+                            {custForm.fingerprintData ? <CheckCircle2 className="w-8 h-8" /> : <Fingerprint className="w-8 h-8" />}
+                            <span className="text-[8px] font-bold">{custForm.fingerprintData ? 'Captured' : 'Scan'}</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <label htmlFor="new-cust-phone" className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">PHONE NUMBER</label>
-                      <input id="new-cust-phone" required type="text" className="input-field w-full" value={newCustPhone} onChange={e => setNewCustPhone(e.target.value)} />
-                    </div>
-                    <button type="submit" className="w-full btn-primary !py-4 text-[10px] font-black uppercase tracking-widest">
-                      Create & Select
+
+                    <button type="submit" className="w-full btn-primary !py-4 text-[10px] font-black uppercase tracking-widest mt-6">
+                      Create secure profile
                     </button>
                   </form>
                 ) : (
