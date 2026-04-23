@@ -34,6 +34,10 @@ const BranchesPage: React.FC = () => {
 
   const handleAddBranch = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!/^\d{10}$|^\d{13}$/.test(formData.phone)) {
+      toast.error('Branch contact number must be exactly 10 or 13 digits');
+      return;
+    }
     try {
       await db.branches.add({
         id: crypto.randomUUID(),

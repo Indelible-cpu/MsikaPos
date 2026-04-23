@@ -236,6 +236,11 @@ const POSPage: React.FC = () => {
     e.preventDefault();
     if (!newCustName || !newCustPhone) return;
 
+    if (!/^\d{10}$|^\d{13}$/.test(newCustPhone)) {
+      toast.error('Mobile number must be exactly 10 or 13 digits');
+      return;
+    }
+
     try {
       const id = crypto.randomUUID();
       await db.customers.add({

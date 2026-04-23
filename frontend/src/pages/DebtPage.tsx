@@ -22,8 +22,8 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 
 // Malawian format validators
-const MALAWI_PHONE_REGEX = /^(\+265|0)[189]\d{7}$/;
-const MALAWI_ID_REGEX = /^[A-Z0-9]{8}$/;
+const MALAWI_PHONE_REGEX = /^\d{10}$|^\d{13}$/;
+const MALAWI_ID_REGEX = /^[A-Za-z0-9]{8}$/;
 
 // Mock Encrypt function (In real production, use Web Crypto API)
 const mockEncrypt = (data: string) => btoa(data); // "End to End Encryption" mock for Dexie
@@ -125,7 +125,7 @@ const DebtPage: React.FC = () => {
     if (!custForm.name || !custForm.phone) return;
 
     if (!MALAWI_PHONE_REGEX.test(custForm.phone)) {
-      toast.error('Invalid Malawian phone format. Use +265... or 0... with 9 digits total (if 0) or 12 digits (if +265)');
+      toast.error('Mobile number must be exactly 10 or 13 digits');
       return;
     }
 
