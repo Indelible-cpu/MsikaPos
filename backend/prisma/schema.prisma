@@ -52,6 +52,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deleted   Boolean  @default(false)
+
+  @@index([roleId])
+  @@index([branchId])
+  @@index([deleted])
 }
 
 model Branch {
@@ -98,6 +102,12 @@ model Product {
   updatedAt   DateTime  @updatedAt
 
   saleItems   SaleItem[]
+
+  @@index([categoryId])
+  @@index([branchId])
+  @@index([deleted])
+  @@index([sku])
+  @@index([name])
 }
 
 model Customer {
@@ -149,6 +159,14 @@ model Sale {
   deviceId     String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([branchId])
+  @@index([customerId])
+  @@index([paymentMode])
+  @@index([status])
+  @@index([createdAt])
+  @@index([invoiceNo])
 }
 
 model SaleItem {
@@ -166,6 +184,9 @@ model SaleItem {
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([saleId])
+  @@index([productId])
 }
 
 model Expense {
@@ -180,6 +201,10 @@ model Expense {
   branchId      Int?
   branch        Branch?  @relation(fields: [branchId], references: [id])
   createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([branchId])
+  @@index([expenseDate])
 }
 
 model SyncLog {
