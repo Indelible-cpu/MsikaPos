@@ -193,17 +193,20 @@ async function main() {
   }
 
   // 7. Migrate Transactions (Sales) - Extracting some from SQL
+  const jamesUser = await prisma.user.findUnique({ where: { username: 'James' } });
+  const jamesDbId = jamesUser ? jamesUser.id : 1;
+
   const transactions = [
-    { id: '933', invoiceNo: 'Z7Q0O8', receiptNo: 'Y3O4V8', userId: 25, branchId: 1, subtotal: 4500.00, discount: 0.00, total: 4500.00, paid: 4500.00, changeDue: 0.00, profit: 2000.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-04 20:52:51') },
-    { id: '934', invoiceNo: 'I4Y2X0', receiptNo: 'B2N2F8', userId: 25, branchId: 1, subtotal: 10500.00, discount: 0.00, total: 10500.00, paid: 10500.00, changeDue: 0.00, profit: 8000.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-05 15:25:51') },
-    { id: '935', invoiceNo: 'L5V4Y2', receiptNo: 'H2E6T1', userId: 25, branchId: 1, subtotal: 1500.00, discount: 0.00, total: 1500.00, paid: 1500.00, changeDue: 0.00, profit: 1200.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-05 15:26:29') },
-    { id: '937', invoiceNo: 'U4E6O3', receiptNo: 'E2E0G7', userId: 25, branchId: 1, subtotal: 10500.00, discount: 0.00, total: 10500.00, paid: 10500.00, changeDue: 0.00, profit: 8000.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-05 16:47:18') },
-    { id: '938', invoiceNo: 'F7O6W4', receiptNo: 'R2E1F3', userId: 25, branchId: 1, subtotal: 10500.00, discount: 0.00, total: 10500.00, paid: 10500.00, changeDue: 0.00, profit: 8000.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-05 16:49:28') },
+    { id: '933', invoiceNo: 'Z7Q0O8', receiptNo: 'Y3O4V8', userId: jamesDbId, branchId: 1, subtotal: 4500.00, discount: 0.00, total: 4500.00, paid: 4500.00, changeDue: 0.00, profit: 2000.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-04 20:52:51') },
+    { id: '934', invoiceNo: 'I4Y2X0', receiptNo: 'B2N2F8', userId: jamesDbId, branchId: 1, subtotal: 10500.00, discount: 0.00, total: 10500.00, paid: 10500.00, changeDue: 0.00, profit: 8000.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-05 15:25:51') },
+    { id: '935', invoiceNo: 'L5V4Y2', receiptNo: 'H2E6T1', userId: jamesDbId, branchId: 1, subtotal: 1500.00, discount: 0.00, total: 1500.00, paid: 1500.00, changeDue: 0.00, profit: 1200.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-05 15:26:29') },
+    { id: '937', invoiceNo: 'U4E6O3', receiptNo: 'E2E0G7', userId: jamesDbId, branchId: 1, subtotal: 10500.00, discount: 0.00, total: 10500.00, paid: 10500.00, changeDue: 0.00, profit: 8000.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-05 16:47:18') },
+    { id: '938', invoiceNo: 'F7O6W4', receiptNo: 'R2E1F3', userId: jamesDbId, branchId: 1, subtotal: 10500.00, discount: 0.00, total: 10500.00, paid: 10500.00, changeDue: 0.00, profit: 8000.00, paymentMode: PaymentMode.CASH, status: SaleStatus.COMPLETED, itemsCount: 1, createdAt: new Date('2026-02-05 16:49:28') },
   ];
 
   for (const sale of transactions) {
     await prisma.sale.upsert({
-      where: { id: sale.id },
+      where: { invoiceNo: sale.invoiceNo },
       update: sale as any,
       create: sale as any,
     });
