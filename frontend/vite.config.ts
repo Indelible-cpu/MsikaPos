@@ -18,7 +18,7 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: 'vendrax-icon.png',
+            src: 'icon.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

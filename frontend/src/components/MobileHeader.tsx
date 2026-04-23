@@ -5,15 +5,12 @@ import { motion } from 'framer-motion';
 
 export default function MobileHeader() {
   const location = useLocation();
-  const [shopName, setShopName] = useState('VENDRAX');
-  const [logo, setLogo] = useState<string | null>(null);
+  const [shopName, setShopName] = useState('Vendrax');
 
   useEffect(() => {
     const updateHeader = () => {
       const storedName = localStorage.getItem('companyName');
-      const storedLogo = localStorage.getItem('companyLogo');
       if (storedName) setShopName(storedName);
-      if (storedLogo) setLogo(storedLogo);
     };
 
     updateHeader();
@@ -47,11 +44,7 @@ export default function MobileHeader() {
             animate={{ scale: 1, opacity: 1 }}
             className="w-9 h-9 rounded-xl border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0"
           >
-            {logo ? (
-              <img src={logo} alt="Logo" className="w-full h-full object-contain" />
-            ) : (
-              <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-xs font-black">V</div>
-            )}
+            <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
           </motion.div>
         ) : (
           <button 

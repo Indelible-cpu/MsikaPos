@@ -113,16 +113,13 @@ const LoginPage: React.FC = () => {
         className="w-full max-w-md p-8 md:glass-panel"
       >
         <div className="text-center mb-10">
-          <div className="inline-flex w-24 h-24 rounded-3xl border border-primary-500/20 overflow-hidden mb-6 shadow-2xl shadow-primary-500/10 bg-surface-card flex items-center justify-center p-0">
-            <img 
-              src="/vendrax-logo.png" 
-              alt="Vendrax" 
-              className="w-full h-full object-cover" 
-              onError={(e) => {
-                e.currentTarget.src = localStorage.getItem('companyLogo') || '';
-              }}
-            />
-          </div>
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-24 h-24 mx-auto rounded-3xl border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 mb-6 shadow-2xl shadow-primary-500/10"
+          >
+            <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
+          </motion.div>
           <h1 className="text-3xl font-black text-primary-500 tracking-tighter italic">Vendrax</h1>
           <p className="text-surface-text/40 text-[10px] font-black uppercase tracking-widest mt-1">Cloud POS System</p>
         </div>
