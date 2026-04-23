@@ -169,8 +169,6 @@ const InventoryPage: React.FC = () => {
         id: generateNumericId(),
         title: newCategoryTitle,
         slug: slug,
-        itemCount: 0,
-        createdAt: new Date().toISOString(),
       });
       setNewCategoryTitle('');
       toast.success('Category created');
@@ -194,12 +192,16 @@ const InventoryPage: React.FC = () => {
               <button 
                 onClick={() => setIsCategoryModalOpen(true)}
                 className="px-6 py-4 bg-surface-bg border border-surface-border hover:bg-primary-500/5 transition-all text-surface-text rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                title="Open Category Manager"
+                aria-label="Open Category Manager"
               >
                 Categories
               </button>
               <button 
                 onClick={() => openAddModal()}
                 className="btn-primary !px-6 !py-4 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary-500/20"
+                title="Add New Product"
+                aria-label="Add New Product"
               >
                 <Plus className="w-4 h-4 mr-1 inline" /> Add Product
               </button>
@@ -212,6 +214,8 @@ const InventoryPage: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Search by name or SKU..."
+                title="Search products"
+                aria-label="Search products"
                 className="input-field w-full pl-11 h-14 text-sm font-bold shadow-inner"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -224,6 +228,8 @@ const InventoryPage: React.FC = () => {
                   "px-6 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                   !selectedCategory ? "bg-primary-500 border-primary-500 text-white shadow-lg" : "bg-surface-bg border-surface-border text-surface-text/40"
                 )}
+                title="Show all categories"
+                aria-label="Show all categories"
               >
                 All items
               </button>
@@ -235,6 +241,8 @@ const InventoryPage: React.FC = () => {
                     "px-6 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                     selectedCategory === cat.id ? "bg-primary-500 border-primary-500 text-white shadow-lg" : "bg-surface-bg border-surface-border text-surface-text/40"
                   )}
+                  title={`Filter by ${cat.title}`}
+                  aria-label={`Filter by ${cat.title}`}
                 >
                   {cat.title}
                 </button>
@@ -260,10 +268,20 @@ const InventoryPage: React.FC = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="text-[9px] font-black text-surface-text/30 uppercase tracking-widest">{product.sku}</div>
                     <div className="flex gap-1">
-                      <button onClick={() => openEditModal(product)} className="p-2 hover:bg-primary-500/10 rounded-xl transition-colors text-primary-400">
+                      <button 
+                        onClick={() => openEditModal(product)} 
+                        className="p-2 hover:bg-primary-500/10 rounded-xl transition-colors text-primary-400"
+                        title="Edit product"
+                        aria-label="Edit product"
+                      >
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => deleteProduct(product.id)} className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500">
+                      <button 
+                        onClick={() => deleteProduct(product.id)} 
+                        className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
+                        title="Delete product"
+                        aria-label="Delete product"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -295,38 +313,38 @@ const InventoryPage: React.FC = () => {
         <form onSubmit={handleSaveProduct} className="p-8 space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-1 col-span-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Product name</label>
-              <input required type="text" className="input-field w-full" placeholder="e.g. Coca Cola 300ml" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1" htmlFor="product-name">Product name</label>
+              <input required id="product-name" type="text" className="input-field w-full" placeholder="e.g. Coca Cola 300ml" title="Product name" aria-label="Product name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1">SKU / Barcode</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1" htmlFor="product-sku">SKU / Barcode</label>
               <div className="relative">
                 <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/30" />
-                <input required type="text" className="input-field w-full pl-10" placeholder="Scan or type..." value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
+                <input required id="product-sku" type="text" className="input-field w-full pl-10" placeholder="Scan or type..." title="SKU / Barcode" aria-label="SKU / Barcode" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Category</label>
-              <select className="input-field w-full font-bold" value={formData.categoryId} onChange={(e) => setFormData({...formData, categoryId: Number(e.target.value)})}>
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1" htmlFor="product-category">Category</label>
+              <select id="product-category" className="input-field w-full font-bold" title="Product category" aria-label="Product category" value={formData.categoryId} onChange={(e) => setFormData({...formData, categoryId: Number(e.target.value)})}>
                 {categories?.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Cost price</label>
-              <input required type="number" className="input-field w-full font-bold" value={formData.costPrice} onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1" htmlFor="product-cost">Cost price</label>
+              <input required id="product-cost" type="number" className="input-field w-full font-bold" title="Cost price" aria-label="Cost price" value={formData.costPrice} onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Sell price</label>
-              <input required type="number" className="input-field w-full font-black text-primary-500" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1" htmlFor="product-sell">Sell price</label>
+              <input required id="product-sell" type="number" className="input-field w-full font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
             </div>
             <div className="space-y-1 col-span-2">
-              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Opening Stock Quantity</label>
-              <input required type="number" className="input-field w-full font-black" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1" htmlFor="product-qty">Opening Stock Quantity</label>
+              <input required id="product-qty" type="number" className="input-field w-full font-black" title="Opening Stock Quantity" aria-label="Opening Stock Quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
             </div>
           </div>
           <div className="flex gap-4 pt-4">
-            <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black uppercase tracking-widest">Cancel</button>
-            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black uppercase tracking-widest">Save product</button>
+            <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black uppercase tracking-widest" title="Cancel" aria-label="Cancel">Cancel</button>
+            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black uppercase tracking-widest" title="Save product" aria-label="Save product">Save product</button>
           </div>
         </form>
       </Modal>
@@ -335,10 +353,10 @@ const InventoryPage: React.FC = () => {
       <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} title="Manage Categories">
         <div className="p-8 space-y-8">
           <div className="space-y-2">
-            <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Create new category</label>
+            <label className="text-[9px] font-black uppercase tracking-widest text-surface-text/40 ml-1" htmlFor="new-category">Create new category</label>
             <div className="flex gap-2">
-              <input type="text" className="input-field flex-1" placeholder="Category name..." value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
-              <button onClick={handleAddCategory} className="btn-primary !px-6 !py-3 font-black text-[10px] uppercase tracking-widest">Add</button>
+              <input id="new-category" type="text" className="input-field flex-1" placeholder="Category name..." title="New category name" aria-label="New category name" value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
+              <button onClick={handleAddCategory} className="btn-primary !px-6 !py-3 font-black text-[10px] uppercase tracking-widest" title="Add category" aria-label="Add category">Add</button>
             </div>
           </div>
           <div className="space-y-2">
@@ -347,7 +365,14 @@ const InventoryPage: React.FC = () => {
                 {categories?.map(cat => (
                   <div key={cat.id} className="p-4 flex justify-between items-center group hover:bg-primary-500/5 transition-colors">
                     <span className="font-bold text-sm">{cat.title}</span>
-                    <button onClick={() => db.categories.delete(cat.id)} className="p-2 text-surface-text/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-4 h-4" /></button>
+                    <button 
+                      onClick={() => db.categories.delete(cat.id)} 
+                      className="p-2 text-surface-text/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                      title={`Delete ${cat.title} category`}
+                      aria-label={`Delete ${cat.title} category`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
              </div>

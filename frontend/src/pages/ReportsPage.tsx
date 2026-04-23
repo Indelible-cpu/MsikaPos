@@ -4,18 +4,17 @@ import { db } from '../db/posDB';
 import { 
   TrendingUp, 
   Users, 
-  Package, 
   DollarSign, 
   ArrowUpRight, 
-  BarChart3,
-  Calendar,
-  ChevronDown
+  BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
+type ReportTab = 'FINANCIAL' | 'STAFF' | 'CUSTOMER';
+
 const ReportsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'FINANCIAL' | 'STAFF' | 'CUSTOMER'>('FINANCIAL');
+  const [activeTab, setActiveTab] = useState<ReportTab>('FINANCIAL');
   
   const sales = useLiveQuery(() => db.salesQueue.toArray());
   const customers = useLiveQuery(() => db.customers.toArray());
@@ -113,10 +112,10 @@ const ReportsPage: React.FC = () => {
           </div>
           
           <div className="flex gap-2 p-1 bg-surface-card border border-surface-border rounded-2xl overflow-x-auto no-scrollbar">
-            {['FINANCIAL', 'STAFF', 'CUSTOMER'].map((tab) => (
+            {(['FINANCIAL', 'STAFF', 'CUSTOMER'] as ReportTab[]).map((tab) => (
               <button 
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() => setActiveTab(tab)}
                 className={clsx(
                   "px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                   activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg"

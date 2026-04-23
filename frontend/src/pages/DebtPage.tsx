@@ -12,7 +12,8 @@ import {
   Camera,
   Fingerprint,
   Upload,
-  CheckCircle2
+  CheckCircle2,
+  Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';

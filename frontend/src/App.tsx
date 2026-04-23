@@ -22,8 +22,6 @@ import { initDB } from './db/seedData';
 import { AuditService } from './services/AuditService';
 
 const App: React.FC = () => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
 
   const checkSystemLock = useCallback(async () => {
@@ -77,14 +75,12 @@ const App: React.FC = () => {
 
   const handleSync = useCallback(async () => {
     if (navigator.onLine) {
-      setIsSyncing(true);
       try {
         await SyncService.pushSales();
         await AuditService.log('SYNC', 'Background sync completed successfully');
       } catch {
         await AuditService.log('SYNC_ERROR', 'Background sync failed', 'ERROR');
       }
-      setTimeout(() => setIsSyncing(false), 2000); // Keep indicator for a bit
     }
   }, []);
 
@@ -111,10 +107,6 @@ const App: React.FC = () => {
     };
     init();
 
-    const handleStatusChange = () => setIsOnline(navigator.onLine);
-    window.addEventListener('online', handleStatusChange);
-    window.addEventListener('offline', handleStatusChange);
-
     setTimeout(() => {
       handleSync();
       checkSystemLock();
@@ -124,8 +116,6 @@ const App: React.FC = () => {
     const lockInterval = setInterval(checkSystemLock, 60000); // Check lock every min
 
     return () => {
-      window.removeEventListener('online', handleStatusChange);
-      window.removeEventListener('offline', handleStatusChange);
       window.removeEventListener('mousemove', handleActivity);
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('touchstart', handleActivity);
@@ -175,7 +165,7 @@ const App: React.FC = () => {
             path="/*" 
             element={
               localStorage.getItem('token') ? (
-                <MainLayout isOnline={isOnline} isSyncing={isSyncing}>
+                <MainLayout>
                   <Routes>
                     <Route path="dashboard" element={<DashboardPage />} />
                     <Route path="pos" element={<POSPage />} />

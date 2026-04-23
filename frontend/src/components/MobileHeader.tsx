@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bell, ChevronLeft, User } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -38,7 +39,7 @@ export default function MobileHeader() {
   const isBasePage = ['/dashboard', '/pos', '/stock', '/sales', '/reports'].includes(location.pathname);
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-surface-card border-b border-surface-border flex items-center justify-between px-4 z-[50] safe-top shadow-sm">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-surface-card/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[50] safe-top shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
       <div className="flex items-center gap-3 overflow-hidden">
         {isBasePage ? (
           <motion.div 
@@ -64,10 +65,10 @@ export default function MobileHeader() {
         )}
         
         <div className="flex flex-col min-w-0">
-          <span className="text-[14px] font-black tracking-tighter uppercase italic text-primary-500 leading-none truncate">
+          <span className="text-[16px] font-black tracking-tighter uppercase italic text-primary-500 leading-none truncate">
             {shopName}
           </span>
-          <span className="text-[10px] font-bold text-surface-text/40 uppercase tracking-widest leading-none mt-0.5 truncate">
+          <span className="text-[9px] font-black text-surface-text/30 uppercase tracking-[0.2em] leading-none mt-1 truncate">
             {getPageTitle(location.pathname)}
           </span>
         </div>

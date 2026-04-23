@@ -6,9 +6,9 @@ import { clsx } from 'clsx';
 const MobileNav: React.FC = () => {
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: Home, path: '/dashboard' },
-    { id: 'inventory', label: 'Stock', icon: Package, path: '/inventory' },
+    { id: 'sales', label: 'Logs', icon: Receipt, path: '/sales' },
     { id: 'pos', label: 'POS', icon: ShoppingCart, path: '/pos', isCenter: true },
-    { id: 'sales', label: 'Sales', icon: Receipt, path: '/sales' },
+    { id: 'inventory', label: 'Stock', icon: Package, path: '/inventory' },
     { id: 'settings', label: 'Menu', icon: Settings, path: '/settings' },
   ];
 

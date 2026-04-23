@@ -7,6 +7,13 @@ import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
 
+interface UserData {
+  id: string;
+  username: string;
+  role: string;
+  fullname: string;
+}
+
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -75,17 +82,17 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     
-    let userData: any;
-    let userToken: string;
+    let userData: UserData | null = null;
+    let userToken: string | null = null;
 
     try {
       try {
         const response = await api.post('/auth/login', { username, password });
         userData = response.data.user;
         userToken = response.data.token;
-      } catch (apiErr) {
-        console.warn('Fallback login');
-        if (username.toLowerCase() === 'admin' || password === 'admin') {
+      } catch (err) {
+        console.warn('Fallback login', err);
+        if (username.toLowerCase() === 'admin' && password === 'admin') {
            userData = { id: 'admin', username: 'admin', role: 'SUPER_ADMIN', fullname: 'System Admin' };
            userToken = 'offline-admin-token';
         } else {
@@ -93,46 +100,49 @@ const LoginPage: React.FC = () => {
         }
       }
       
-      localStorage.setItem('token', userToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      await AuditService.log('LOGIN', `User ${username} signed in`);
-      toast.success('Welcome back!');
-      
-      // Prompt for biometric registration if not yet registered
-      if (isBiometricAvailable && localStorage.getItem('biometricRegistered') !== 'true') {
-        const register = window.confirm('Would you like to enable biometrics for faster login?');
-        if (register) {
-          try {
-            const challenge = new Uint8Array(32);
-            crypto.getRandomValues(challenge);
-            const userId = new Uint8Array(16);
-            crypto.getRandomValues(userId);
-            
-            await navigator.credentials.create({
-              publicKey: {
-                challenge,
-                rp: { name: 'Vendrax', id: window.location.hostname },
-                user: { id: userId, name: username, displayName: userData.fullname || username },
-                pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-                authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
-                timeout: 60000
-              }
-            });
-            localStorage.setItem('biometricRegistered', 'true');
-            toast.success('Biometrics enabled!');
-          } catch (bioErr) {
-            console.error('Bio registration failed:', bioErr);
+      if (userToken && userData) {
+        localStorage.setItem('token', userToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        await AuditService.log('LOGIN', `User ${username} signed in`);
+        toast.success('Welcome back!');
+        
+        // Prompt for biometric registration if not yet registered
+        if (isBiometricAvailable && localStorage.getItem('biometricRegistered') !== 'true') {
+          const register = window.confirm('Would you like to enable biometrics for faster login?');
+          if (register) {
+            try {
+              const challenge = new Uint8Array(32);
+              crypto.getRandomValues(challenge);
+              const userId = new Uint8Array(16);
+              crypto.getRandomValues(userId);
+              
+              await navigator.credentials.create({
+                publicKey: {
+                  challenge,
+                  rp: { name: 'Vendrax', id: window.location.hostname },
+                  user: { id: userId, name: username, displayName: userData.fullname || username },
+                  pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+                  authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+                  timeout: 60000
+                }
+              });
+              localStorage.setItem('biometricRegistered', 'true');
+              toast.success('Biometrics enabled!');
+            } catch (bioErr) {
+              console.error('Bio registration failed:', bioErr);
+              localStorage.setItem('biometricDeclined', 'true'); // Don't ask again
+            }
+          } else {
             localStorage.setItem('biometricDeclined', 'true'); // Don't ask again
           }
-        } else {
-          localStorage.setItem('biometricDeclined', 'true'); // Don't ask again
         }
-      }
 
-      navigate('/dashboard');
-    } catch (err: any) {
-      toast.error(err.message || 'Login failed');
+        navigate('/dashboard');
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -241,7 +251,7 @@ const LoginPage: React.FC = () => {
             </form>
 
             <div className="mt-12 text-center">
-              <Link to="/forgot-password" size="sm" className="text-[10px] font-black uppercase tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
+              <Link to="/forgot-password" className="text-[10px] font-black uppercase tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
                  Emergency Recovery
               </Link>
             </div>
