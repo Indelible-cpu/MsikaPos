@@ -28,9 +28,10 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0">
-      <div className="p-8">
-        <div className="flex items-center gap-4 mb-10">
+    <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0 overflow-hidden">
+      {/* Brand Header - Fixed */}
+      <div className="p-8 pb-4 shrink-0">
+        <div className="flex items-center gap-4">
           <div className="w-12 h-12 flex items-center justify-center overflow-hidden flex-shrink-0 rounded-full bg-surface-bg border border-surface-border shadow-inner">
             <img src="/icon.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
@@ -39,36 +40,38 @@ const Sidebar: React.FC = () => {
             <p className="text-surface-text font-black text-[9px] tracking-widest mt-1 opacity-60">Cloud POS System</p>
           </div>
         </div>
-
-        <nav className="space-y-2">
-          {tabs.map((tab) => (
-            <NavLink
-              key={tab.id}
-              to={tab.path}
-              className={({ isActive }) => clsx(
-                "flex items-center gap-4 px-4 h-14 rounded-2xl font-black tracking-widest text-[15px] transition-all group",
-                isActive 
-                  ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" 
-                  : "text-surface-text hover:text-primary-500 hover:bg-surface-bg border border-transparent hover:border-surface-border"
-              )}
-            >
-              {({ isActive }) => (
-                <>
-                  <tab.icon className={clsx("w-6 h-6 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 2.5 : 2} />
-                  {tab.label}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
       </div>
 
-      <div className="mt-auto p-8 border-t border-surface-border">
+      {/* Navigation - Scrollable */}
+      <nav className="flex-1 overflow-y-auto px-8 py-4 space-y-2 custom-scrollbar">
+        {tabs.map((tab) => (
+          <NavLink
+            key={tab.id}
+            to={tab.path}
+            className={({ isActive }) => clsx(
+              "flex items-center gap-4 px-4 h-14 rounded-2xl font-black tracking-widest text-[15px] transition-all group shrink-0",
+              isActive 
+                ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" 
+                : "text-surface-text hover:text-primary-500 hover:bg-surface-bg border border-transparent hover:border-surface-border"
+            )}
+          >
+            {({ isActive }) => (
+              <>
+                <tab.icon className={clsx("w-6 h-6 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="truncate">{tab.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Footer - Fixed */}
+      <div className="p-8 border-t border-surface-border shrink-0">
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-4 px-4 h-14 w-full rounded-2xl font-black tracking-widest text-[13px] text-red-500 hover:text-red-600 hover:bg-red-500/5 transition-all group border border-transparent hover:border-red-500/10"
+          className="flex items-center gap-4 px-4 h-14 w-full rounded-2xl font-black tracking-widest text-[13px] text-red-500 hover:text-red-600 hover:bg-red-500/5 transition-all group border border-transparent hover:border-red-500/10 shrink-0"
         >
-          <LogOut className="w-6 h-6 transition-transform group-hover:scale-110" />
+          <LogOut className="w-6 h-6 transition-transform group-hover:scale-110" strokeWidth={2.5} />
           Sign Out
         </button>
       </div>
