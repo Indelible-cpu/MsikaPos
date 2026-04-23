@@ -50,9 +50,10 @@ const LoginPage: React.FC = () => {
           throw new Error('Please login with password first.');
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn('Biometric error:', err);
-      if (err.name !== 'NotAllowedError') {
+      const error = err as Error;
+      if (error.name !== 'NotAllowedError') {
         toast.error('Biometric verification failed.', { id: 'biometric-auth' });
       } else {
         toast.dismiss('biometric-auth');
@@ -102,9 +103,10 @@ const LoginPage: React.FC = () => {
         toast.success('Biometric login enabled for this device!');
         navigate('/dashboard');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Registration error:', err);
-      if (err.name === 'NotAllowedError') {
+      const error = err as Error;
+      if (error.name === 'NotAllowedError') {
         toast.error('Registration canceled or not allowed.');
       } else {
         toast.error('Could not register biometrics.');
@@ -142,7 +144,7 @@ const LoginPage: React.FC = () => {
         const response = await api.post('/auth/login', { username, password });
         userData = response.data.user;
         userToken = response.data.token;
-      } catch (err) {
+      } catch {
         if (username.toLowerCase() === 'admin' && password === 'admin') {
            userData = { id: 'admin', username: 'admin', role: 'SUPER_ADMIN', fullname: 'System Admin' };
            userToken = 'offline-admin-token';
@@ -168,8 +170,9 @@ const LoginPage: React.FC = () => {
           navigate('/dashboard');
         }
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Login failed');
+    } catch (err: unknown) {
+      const error = err as Error;
+      toast.error(error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
