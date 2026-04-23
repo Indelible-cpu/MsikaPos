@@ -46,8 +46,12 @@ const Sidebar: React.FC = () => {
                   : "text-black hover:text-primary-500 hover:bg-surface-bg border border-transparent hover:border-surface-border"
               )}
             >
-              <tab.icon className={clsx("w-6 h-6 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 2.5 : 2} />
-              {tab.label}
+              {({ isActive }) => (
+                <>
+                  <tab.icon className={clsx("w-6 h-6 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 2.5 : 2} />
+                  {tab.label}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
