@@ -25,7 +25,7 @@ const Sidebar: React.FC = () => {
     <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0">
       <div className="p-8">
         <div className="flex items-center gap-4 mb-10">
-          <div className="w-10 h-10 rounded-2xl border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xl shadow-primary-500/10">
+          <div className="w-10 h-10 flex items-center justify-center overflow-hidden flex-shrink-0">
             <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <div>

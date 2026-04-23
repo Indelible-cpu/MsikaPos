@@ -181,7 +181,7 @@ const LoginPage: React.FC = () => {
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-20 h-20 mx-auto rounded-3xl border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 mb-6 shadow-2xl shadow-primary-500/10"
+            className="w-20 h-20 mx-auto flex items-center justify-center overflow-hidden flex-shrink-0 mb-6"
           >
             <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
           </motion.div>
