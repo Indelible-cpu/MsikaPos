@@ -117,13 +117,17 @@ const LoginPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (window.PublicKeyCredential) {
-      PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
-        .then(available => {
-          const registered = localStorage.getItem('biometricRegistered') === 'true';
-          setIsBiometricAvailable(available && registered);
-        });
-    }
+    const checkBiometrics = async () => {
+      const isMobile = window.innerWidth < 768;
+      if (window.PublicKeyCredential && isMobile) {
+        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        const registered = localStorage.getItem('biometricRegistered') === 'true';
+        setIsBiometricAvailable(available && registered);
+      } else {
+        setIsBiometricAvailable(false);
+      }
+    };
+    checkBiometrics();
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -152,8 +156,9 @@ const LoginPage: React.FC = () => {
         localStorage.setItem('user', JSON.stringify(userData));
         await AuditService.log('LOGIN', `User ${username} signed in`);
         
-        // Check for biometric registration
-        const canRegister = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        // Check for biometric registration (Mobile Only)
+        const isMobile = window.innerWidth < 768;
+        const canRegister = isMobile && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         const alreadyRegistered = localStorage.getItem('biometricRegistered') === 'true';
         
         if (canRegister && !alreadyRegistered) {
@@ -181,7 +186,7 @@ const LoginPage: React.FC = () => {
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-20 h-20 mx-auto flex items-center justify-center overflow-hidden flex-shrink-0 mb-6"
+            className="w-24 h-24 mx-auto flex items-center justify-center overflow-hidden flex-shrink-0 mb-6 rounded-full bg-surface-bg border border-surface-border shadow-xl p-2"
           >
             <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
           </motion.div>
