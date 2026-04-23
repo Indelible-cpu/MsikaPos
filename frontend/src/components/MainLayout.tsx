@@ -5,6 +5,7 @@ import MobileNav from './MobileNav';
 import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
 import { clsx } from 'clsx';
+import toast from 'react-hot-toast';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -43,6 +44,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       setIsRefreshing(true);
       setPullDistance(50);
       // Reload the page
+      toast.loading('Refreshing data...', { id: 'refreshing' });
       setTimeout(() => {
         window.location.reload();
       }, 600);
