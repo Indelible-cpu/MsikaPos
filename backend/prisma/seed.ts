@@ -40,17 +40,16 @@ async function main() {
   const users = [
     { id: 23, username: 'aubrey', password: '$2y$10$ceI2En/tMo0O1cmRL41juekKBLog6hHjjCeF0CLk9Xe8S.a9PONOu', roleId: 2, branchId: 1, createdAt: new Date('2026-02-04T18:34:49Z') },
     { id: 24, username: 'aub', password: '$2y$10$Sd5q6rwIGnJEnFJJrDwxPeYOQ.eEnPqLegmRCDJ1gAPn4kSdBP4Dy', roleId: 3, branchId: 1, createdAt: new Date('2026-02-04T18:38:06Z') },
-    { id: 25, username: 'James', password: '$2y$10$75zg4wOj9LN5O6vVt9YWiuEwhV1NArmQ73bTAjQP0uXKFXxDBV7RG', roleId: 1, branchId: 1, createdAt: new Date('2026-02-04T18:46:58Z') },
+    { id: 25, username: 'James', password: '$2b$10$HDy2lIyL12ge6q8MC6Fyb.CrFy0HkqOfv6eDLWp09wgwigg7Rhqga', roleId: 1, branchId: 1, createdAt: new Date('2026-02-04T18:46:58Z') },
     { id: 27, username: 'Lonje', password: '$2y$10$8B8req.rShgs8dVcCtFCXObunN0yUulz07BfBIxTZGUPP/b9nb0Wu', roleId: 2, branchId: 1, createdAt: new Date('2026-03-07T01:42:14Z') },
     { id: 29, username: 'inno', password: '$2y$10$fLFeM068S.BgqsipuJj8Q.Us4mEp74v1VsqV6cQvImr9QGenj9MPO', roleId: 3, branchId: 1, createdAt: new Date('2026-03-24T10:16:11Z') },
-    { id: 30, username: 'admin', password: '$2y$10$7rEV9Vw9P2.P5P9V4hO.oefH9P4Jp8Y9V4hO.oefH9P4Jp8Y9V', roleId: 1, branchId: 1, createdAt: new Date('2026-04-18T21:21:43Z') },
+    { id: 30, username: 'admin', password: '$2b$10$frUR6MRqZ7Ur0GgCgLxfOuLFT5pYXb0eFkd5AvFC43MmZ5rD1TGIi', roleId: 1, branchId: 1, createdAt: new Date('2026-04-18T21:21:43Z') },
   ];
 
   for (const user of users) {
     await prisma.user.upsert({
       where: { username: user.username },
       update: {
-        password: user.password,
         roleId: user.roleId,
         branchId: user.branchId,
       },

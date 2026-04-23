@@ -16,7 +16,9 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    // Handle PHP bcrypt hashes ($2y$) by converting to Node-compatible ($2a$)
+    const normalizedHash = user.password.replace(/^\$2y\$/, '$2a$');
+    const validPassword = await bcrypt.compare(password, normalizedHash);
     if (!validPassword) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
