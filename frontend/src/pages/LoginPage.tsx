@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import { Lock, User as UserIcon, Loader2, Eye, EyeOff, Fingerprint, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
@@ -190,7 +190,7 @@ const LoginPage: React.FC = () => {
             </button>
           )}
 
-          <Link to="/forgot-password" size="sm" className="text-[10px] font-black  tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
+          <Link to="/forgot-password" className="text-[10px] font-black  tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
              Forgot Password?
           </Link>
         </div>
