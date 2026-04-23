@@ -417,7 +417,7 @@ const POSPage: React.FC = () => {
                               <Users className="w-8 h-8 text-surface-text/20 mb-2" />
                             )}
                             {useCamera && !custForm.livePhoto && (
-                              <button type="button" onClick={capturePhoto} className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-red-500 text-white w-10 h-10 rounded-full shadow-lg border-2 border-white"></button>
+                              <button type="button" title="Capture photo" aria-label="Capture photo" onClick={capturePhoto} className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-red-500 text-white w-10 h-10 rounded-full shadow-lg border-2 border-white"></button>
                             )}
                             <canvas ref={canvasRef} className="hidden" />
                           </div>
