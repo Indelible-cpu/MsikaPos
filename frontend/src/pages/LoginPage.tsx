@@ -195,12 +195,14 @@ const LoginPage: React.FC = () => {
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-24 h-24 mx-auto flex items-center justify-center overflow-hidden flex-shrink-0 mb-6 rounded-full bg-surface-bg border border-surface-border shadow-xl p-2"
+            className="w-32 h-32 mx-auto flex items-center justify-center overflow-hidden flex-shrink-0 mb-6 rounded-full bg-surface-bg border border-surface-border shadow-2xl p-1"
           >
-            <img src="/icon.png" alt="Logo" className="w-full h-full object-contain" />
+            <img src="/icon.png" alt="Vendrax Icon" className="w-full h-full object-contain" />
           </motion.div>
-          <h1 className="text-3xl font-black text-primary-500 tracking-tighter italic">Vendrax</h1>
-          <p className="text-surface-text/40 text-[10px] font-black  tracking-widest mt-1">Cloud POS System</p>
+          <div className="space-y-1">
+            <div className="text-[10px] font-black text-primary-500 tracking-[0.4em] uppercase opacity-60 italic">Vendrax Cloud POS</div>
+            <div className="w-16 h-1 bg-primary-500/10 mx-auto rounded-full"></div>
+          </div>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">

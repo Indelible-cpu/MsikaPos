@@ -30,15 +30,13 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0 overflow-hidden">
       {/* Brand Header - Fixed */}
-      <div className="p-4 pb-4 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 flex items-center justify-center overflow-hidden flex-shrink-0 rounded-full bg-surface-bg border border-surface-border shadow-inner">
-            <img src="/icon.png" alt="Logo" className="w-full h-full object-cover" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-primary-500 tracking-tighter italic leading-none">Vendrax</h1>
-            <p className="text-surface-text font-black text-[9px] tracking-widest mt-1 opacity-60">Cloud POS System</p>
-          </div>
+      <div className="p-8 pb-4 shrink-0 flex flex-col items-center text-center">
+        <div className="w-24 h-24 flex items-center justify-center overflow-hidden flex-shrink-0 rounded-full bg-surface-bg border border-surface-border shadow-2xl p-1 mb-4 group-hover:scale-105 transition-transform">
+          <img src="/icon.png" alt="Vendrax Logo" className="w-full h-full object-contain" />
+        </div>
+        <div className="space-y-1">
+          <div className="text-[10px] font-black text-primary-500 tracking-[0.3em] uppercase opacity-80">Cloud POS</div>
+          <div className="w-12 h-1 bg-primary-500/20 mx-auto rounded-full"></div>
         </div>
       </div>
 
