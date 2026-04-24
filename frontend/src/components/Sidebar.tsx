@@ -1,14 +1,11 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Receipt, ShoppingCart, LogOut, Users, Wallet, Package, LayoutGrid } from 'lucide-react';
+import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, LayoutGrid } from 'lucide-react';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
-import MoreSheet from './MoreSheet';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
-  const [isMoreOpen, setIsMoreOpen] = React.useState(false);
-
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
     { id: 'pos', label: 'POS Terminal', icon: ShoppingCart, path: '/pos' },
@@ -16,8 +13,11 @@ const Sidebar: React.FC = () => {
     { id: 'debt', label: 'Debt Management', icon: Users, path: '/debt' },
     { id: 'expenses', label: 'Expenses Tracking', icon: Wallet, path: '/expenses' },
     { id: 'inventory', label: 'Stock Management', icon: Package, path: '/inventory' },
+    { id: 'team', label: 'Team Management', icon: UserCheck, path: '/users' },
+    { id: 'branches', label: 'Branch Management', icon: Building2, path: '/branches' },
     { id: 'transactions', label: 'Transactions History', icon: BarChart3, path: '/transactions' },
     { id: 'reports', label: 'Sales Reports', icon: BarChart3, path: '/reports' },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
   ];
 
   const handleLogout = () => {
@@ -61,15 +61,6 @@ const Sidebar: React.FC = () => {
             )}
           </NavLink>
         ))}
-
-        {/* More Button */}
-        <button
-          onClick={() => setIsMoreOpen(true)}
-          className="flex items-center gap-4 px-5 h-14 w-full rounded-[1.5rem] font-black tracking-widest text-[13px] text-surface-text/40 hover:text-primary-500 hover:bg-primary-500/5 border border-transparent hover:border-primary-500/10 transition-all group shrink-0 uppercase"
-        >
-          <LayoutGrid className="w-5 h-5 transition-transform group-hover:scale-110" strokeWidth={2} />
-          <span>More</span>
-        </button>
       </nav>
 
       {/* Footer - Fixed */}
@@ -82,8 +73,6 @@ const Sidebar: React.FC = () => {
           Sign Out
         </button>
       </div>
-
-      <MoreSheet isOpen={isMoreOpen} onClose={() => setIsMoreOpen(false)} />
     </aside>
   );
 };
