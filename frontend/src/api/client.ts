@@ -15,16 +15,19 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  const { data: { session } } = await supabase.auth.getSession();
-  const { data: { user } } = await supabase.auth.getUser();
+  const token = localStorage.getItem('token');
   
-  if (user) {
-    console.log('Supabase User ID:', user.id);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    console.log('Using Vendrax Backend Token');
+  } else {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
+      console.log('Using Supabase Token');
+    }
   }
-
-  if (session?.access_token) {
-    config.headers.Authorization = `Bearer ${session.access_token}`;
-  }
+  
   return config;
 });
 
