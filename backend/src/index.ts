@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { authenticate } from './middleware/auth.js';
@@ -35,7 +34,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(morgan('dev'));
 
 // Health Check
-app.get('/ping', (req, res) => res.send('pong'));
+app.get('/ping', (_req, res) => res.send('pong'));
 
 // Public Routes
 app.post('/api/auth/login', UserCtrl.loginUser as any);
