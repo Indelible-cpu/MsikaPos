@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: jims-pos-backend
+    name: vendrax-backend
     runtime: node
     rootDir: backend
     plan: free
