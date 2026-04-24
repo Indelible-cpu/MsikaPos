@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct } from '../db/posDB';
@@ -244,65 +244,64 @@ const InventoryPage: React.FC = () => {
           </div>
         </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
-            <div className="bg-surface-bg border border-surface-border p-8 rounded-[2rem] shadow-sm">
-              <div className="card-label">Total Stock Cost</div>
-              <div className="text-2xl font-black tracking-tighter italic">MK {analytics.totalCost.toLocaleString()}</div>
-            </div>
-            <div className="bg-surface-bg border border-surface-border p-8 rounded-[2rem] shadow-sm">
-              <div className="card-label !text-emerald-500">Expected Profit</div>
-              <div className="text-2xl font-black tracking-tighter italic text-emerald-500">MK {analytics.totalProfit.toLocaleString()}</div>
-            </div>
-            <div className="bg-surface-bg border border-surface-border p-8 rounded-[2rem] shadow-sm">
-              <div className="card-label !text-red-500">Est. Ageing Loss</div>
-              <div className="text-2xl font-black tracking-tighter italic text-red-500">MK {analytics.totalLoss.toLocaleString()}</div>
-            </div>
-            <div className="bg-surface-bg border border-surface-border p-8 rounded-[2rem] shadow-sm">
-              <div className="card-label !text-primary-500">Low Stock (Real)</div>
-              <div className="text-2xl font-black tracking-tighter italic text-primary-500">{analytics.lowStock} <span className="text-[10px] text-surface-text/20">Items</span></div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
+          <div className="bg-surface-bg border border-surface-border p-8 rounded-[2rem] shadow-sm">
+            <div className="card-label">Total Stock Cost</div>
+            <div className="text-2xl font-black tracking-tighter italic">MK {analytics.totalCost.toLocaleString()}</div>
           </div>
+          <div className="bg-surface-bg border border-surface-border p-8 rounded-[2rem] shadow-sm">
+            <div className="card-label !text-emerald-500">Expected Profit</div>
+            <div className="text-2xl font-black tracking-tighter italic text-emerald-500">MK {analytics.totalProfit.toLocaleString()}</div>
+          </div>
+          <div className="bg-surface-bg border border-surface-border p-8 rounded-[2rem] shadow-sm">
+            <div className="card-label !text-red-500">Est. Ageing Loss</div>
+            <div className="text-2xl font-black tracking-tighter italic text-red-500">MK {analytics.totalLoss.toLocaleString()}</div>
+          </div>
+          <div className="bg-surface-bg border border-surface-border p-8 rounded-[2rem] shadow-sm">
+            <div className="card-label !text-primary-500">Low Stock (Real)</div>
+            <div className="text-2xl font-black tracking-tighter italic text-primary-500">{analytics.lowStock} <span className="text-[10px] text-surface-text/20">Items</span></div>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-            <div className="relative group">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search by name or SKU..."
-                title="Search products"
-                aria-label="Search products"
-                className="input-field w-full pl-14 shadow-sm"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar py-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <div className="relative group">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Search by name or SKU..."
+              title="Search products"
+              aria-label="Search products"
+              className="input-field w-full pl-14 shadow-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-3 overflow-x-auto no-scrollbar py-2">
+            <button 
+              onClick={() => setSelectedCategory(null)}
+              className={clsx(
+                "px-8 py-3 rounded-2xl border text-[10px] font-black tracking-widest transition-all whitespace-nowrap",
+                !selectedCategory ? "bg-primary-500 border-primary-500 text-white shadow-lg" : "bg-surface-bg border-surface-border text-surface-text/40"
+              )}
+              title="Show all categories"
+              aria-label="Show all categories"
+            >
+              ALL ITEMS
+            </button>
+            {categories?.map(cat => (
               <button 
-                onClick={() => setSelectedCategory(null)}
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
                 className={clsx(
                   "px-8 py-3 rounded-2xl border text-[10px] font-black tracking-widest transition-all whitespace-nowrap",
-                  !selectedCategory ? "bg-primary-500 border-primary-500 text-white shadow-lg" : "bg-surface-bg border-surface-border text-surface-text/40"
+                  selectedCategory === cat.id ? "bg-primary-500 border-primary-500 text-white shadow-lg" : "bg-surface-bg border-surface-border text-surface-text/40"
                 )}
-                title="Show all categories"
-                aria-label="Show all categories"
+                title={`Filter by ${cat.title}`}
+                aria-label={`Filter by ${cat.title}`}
               >
-                ALL ITEMS
+                {cat.title.toUpperCase()}
               </button>
-              {categories?.map(cat => (
-                <button 
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={clsx(
-                    "px-8 py-3 rounded-2xl border text-[10px] font-black tracking-widest transition-all whitespace-nowrap",
-                    selectedCategory === cat.id ? "bg-primary-500 border-primary-500 text-white shadow-lg" : "bg-surface-bg border-surface-border text-surface-text/40"
-                  )}
-                  title={`Filter by ${cat.title}`}
-                  aria-label={`Filter by ${cat.title}`}
-                >
-                  {cat.title.toUpperCase()}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </header>

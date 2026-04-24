@@ -17,7 +17,6 @@ const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('Financial');
   
   const sales = useLiveQuery(() => db.salesQueue.toArray());
-  const products = useLiveQuery(() => db.products.toArray());
 
   const totalRevenue = sales?.reduce((sum, s) => sum + s.total, 0) || 0;
   const totalSalesCount = sales?.length || 0;

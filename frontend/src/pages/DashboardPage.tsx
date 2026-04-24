@@ -185,7 +185,7 @@ const DashboardPage: React.FC = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData}>
                     <Bar dataKey="customers" radius={[10, 10, 0, 0]}>
-                      {chartData.map((entry, index) => (
+                      {chartData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={index === chartData.length - 1 ? 'var(--color-primary-500)' : 'rgba(255,255,255,0.1)'} />
                       ))}
                     </Bar>

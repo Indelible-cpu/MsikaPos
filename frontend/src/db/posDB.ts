@@ -38,6 +38,8 @@ export interface LocalSale {
   synced: number; 
   customerId?: string;
   items: LocalSaleItem[];
+  sellerName?: string;
+  branchId?: string;
 }
 
 export interface LocalCustomer {
