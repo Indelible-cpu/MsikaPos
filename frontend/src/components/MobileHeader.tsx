@@ -85,6 +85,8 @@ export default function MobileHeader() {
           <button 
             onClick={() => setIsMoreOpen(true)}
             className="w-10 h-10 rounded-xl border border-surface-border bg-surface-bg flex items-center justify-center overflow-hidden active:scale-95 transition-all text-surface-text/40 hover:text-primary-500 hover:border-primary-500/20"
+            title="More Options"
+            aria-label="More Options"
           >
              <LayoutGrid className="w-5 h-5" />
           </button>

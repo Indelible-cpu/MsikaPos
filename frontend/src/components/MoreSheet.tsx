@@ -57,6 +57,8 @@ const MoreSheet: React.FC<MoreSheetProps> = ({ isOpen, onClose }) => {
                 <button 
                   onClick={onClose}
                   className="w-10 h-10 rounded-full bg-surface-bg flex items-center justify-center border border-surface-border"
+                  title="Close"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5 text-surface-text/40" />
                 </button>
