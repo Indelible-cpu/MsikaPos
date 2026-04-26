@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon } from 'lucide-react';
-import { db } from '../db/posDB';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
 
 export const PublicStorefront: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [shopName, setShopName] = useState('Msika');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -16,16 +16,28 @@ export const PublicStorefront: React.FC = () => {
 
   useEffect(() => {
     const loadStorefront = async () => {
-      // Load products & services
-      const allItems = await db.products.toArray();
-      // Only show products with stock or services
-      setProducts(allItems.filter(p => p.isService || p.quantity > 0)); 
+      setLoading(true);
+      try {
+        // Fetch products from Supabase via backend API (no auth needed)
+        const [productsRes, settingsRes] = await Promise.all([
+          api.get('/public/products'),
+          api.get('/public/settings'),
+        ]);
 
-      const company = await db.settings.get('company_config');
-      if (company?.value) {
-        setShopName((company.value as any).name || 'Msika');
+        if (productsRes.data.success) {
+          setProducts(productsRes.data.data);
+        }
+
+        if (settingsRes.data.success && settingsRes.data.data?.companyName) {
+          setShopName(settingsRes.data.data.companyName);
+        }
+      } catch (err) {
+        console.error('Storefront load error:', err);
+      } finally {
+        setLoading(false);
       }
 
+      // Restore logged-in customer session if any
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const u = JSON.parse(storedUser);
@@ -130,7 +142,12 @@ export const PublicStorefront: React.FC = () => {
 
       {/* Product Grid */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12">
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <div className="py-20 text-center flex flex-col items-center gap-4">
+            <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
+            <p className="text-[10px] font-black tracking-widest text-surface-text/30 uppercase">Loading marketplace...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
             <Package className="w-16 h-16 text-surface-text/10 mb-4" />
             <p className="text-[10px] font-black tracking-widest text-surface-text/30 uppercase">No items found</p>

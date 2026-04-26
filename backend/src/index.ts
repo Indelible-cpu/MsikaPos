@@ -52,6 +52,33 @@ app.post('/api/auth/forgot-password', UserCtrl.forgotPassword as any);
 app.post('/api/customer/register', CustomerCtrl.registerCustomer as any);
 app.post('/api/customer/login', CustomerCtrl.loginCustomer as any);
 
+// Public Storefront Routes (No Auth Required)
+app.get('/api/public/products', async (req, res) => {
+  const { prisma } = await import('./lib/prisma.js');
+  try {
+    const products = await prisma.product.findMany({
+      where: { deleted: false },
+      include: { category: true },
+      orderBy: { name: 'asc' },
+    });
+    // Only return products with stock OR services
+    const visible = products.filter((p: any) => p.isService || p.quantity > 0);
+    res.json({ success: true, data: visible });
+  } catch (e: any) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+app.get('/api/public/settings', async (_req, res) => {
+  const { prisma } = await import('./lib/prisma.js');
+  try {
+    const settings = await prisma.companySettings.findFirst();
+    res.json({ success: true, data: settings });
+  } catch (e: any) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 // Protected Routes (Require Authentication)
 app.use('/api', authenticate as any);
 
