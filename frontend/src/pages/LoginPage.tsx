@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
-import { Lock, User as UserIcon, Loader2, Eye, EyeOff, Fingerprint, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Lock, User as UserIcon, Loader2, Eye, EyeOff, Fingerprint, ChevronRight, ShieldCheck, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';

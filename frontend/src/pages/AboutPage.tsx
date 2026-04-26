@@ -4,13 +4,12 @@ import {
   ChevronLeft, 
   HelpCircle, 
   ShieldCheck, 
-  FileText, 
-  Tool, 
   MessageSquare,
   ExternalLink,
   Info,
   Phone,
-  Mail
+  Mail,
+  Wrench
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -31,7 +30,7 @@ const AboutPage: React.FC = () => {
     {
       id: 'troubleshooting',
       title: 'Troubleshooting Guide',
-      icon: <Info className="w-5 h-5 text-orange-500" />,
+      icon: <Wrench className="w-5 h-5 text-orange-500" />,
       items: [
         { q: "Sync is stuck?", a: "Ensure your internet connection is active. You can force a manual sync by clicking the 'Sync' icon in the top header." },
         { q: "Receipt printer not working?", a: "Check if the printer is connected via USB or Bluetooth. MsikaPos uses standard browser printing; ensure the correct printer is selected in the print dialog." },
@@ -70,7 +69,7 @@ const AboutPage: React.FC = () => {
           </div>
         </section>
 
-        {sections.map((section, idx) => (
+        {sections.map((section) => (
           <motion.section 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
