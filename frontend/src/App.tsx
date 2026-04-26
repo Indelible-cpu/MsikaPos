@@ -187,6 +187,7 @@ const App: React.FC = () => {
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="reports" element={<ReportsPage />} />
                         <Route path="branches" element={<BranchesPage />} />
+                        <Route path="about" element={<AboutPage />} />
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
                       </Routes>
                     </MainLayout>
