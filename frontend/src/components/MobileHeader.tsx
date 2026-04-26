@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bell, ChevronLeft, LayoutGrid } from 'lucide-react';
+import { Bell, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
-import MoreSheet from './MoreSheet';
 
 export default function MobileHeader() {
   const location = useLocation();
   const [shopName, setShopName] = useState('MsikaPos');
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
   useEffect(() => {
     const updateHeader = () => {

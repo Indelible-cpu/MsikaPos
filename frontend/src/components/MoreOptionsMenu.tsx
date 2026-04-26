@@ -25,7 +25,6 @@ interface MoreOptionsMenuProps {
 }
 
 const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
   
   const options = [
     { id: 'debt', label: 'Debt', icon: Users, path: '/debt', color: 'bg-orange-500' },
