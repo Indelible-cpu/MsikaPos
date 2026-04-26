@@ -245,9 +245,13 @@ const UsersPage: React.FC = () => {
             </div>
             <button 
               onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
-              className="btn-primary !px-6 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2 w-full md:w-auto justify-center"
+              className="w-12 h-12 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/20 active:scale-95 transition-all flex items-center justify-center relative group"
+              title="Add staff"
             >
-              <UserPlus className="w-4 h-4 mr-1" /> Add staff
+              <Users className="w-5 h-5" />
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-surface-bg flex items-center justify-center shadow-sm">
+                <Plus className="w-3 h-3" />
+              </div>
             </button>
           </div>
 
@@ -290,10 +294,10 @@ const UsersPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col items-center text-center">
-                   <div className="w-24 h-24 bg-primary-600/10 text-primary-400 rounded-none flex items-center justify-center mb-6 border-2 border-primary-500/10 group-hover:border-primary-500/30 group-hover:scale-105 transition-all relative">
+                   <div className="w-24 h-24 bg-primary-600/10 text-primary-400 rounded-full flex items-center justify-center mb-6 border-2 border-primary-500/10 group-hover:border-primary-500/30 group-hover:scale-105 transition-all relative">
                       {u.role === 'SUPER_ADMIN' && (
-                        <div className="absolute -top-2 -right-2 bg-emerald-500 text-white p-1.5 rounded-full border-4 border-surface-bg">
-                          <ShieldCheck className="w-3 h-3" />
+                        <div className="absolute -top-1 -right-1 bg-emerald-500 text-white p-2 rounded-full border-4 border-surface-bg shadow-sm">
+                          <ShieldCheck className="w-3.5 h-3.5" />
                         </div>
                       )}
                       <UserIcon className="w-12 h-12" />
