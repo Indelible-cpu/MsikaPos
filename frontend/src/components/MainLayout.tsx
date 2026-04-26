@@ -43,11 +43,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     if (pullDistance >= PULL_THRESHOLD && !isRefreshing) {
       setIsRefreshing(true);
       setPullDistance(50);
-      // Reload the page
-      toast.loading('Refreshing data...', { id: 'refreshing' });
-      setTimeout(() => {
-        window.location.reload();
-      }, 600);
+      
+      const refreshToast = toast.loading('Syncing data in background...', { id: 'refreshing' });
+      
+      // Perform background sync
+      handleSync().then(() => {
+        setIsRefreshing(false);
+        setPullDistance(0);
+        toast.success('System up to date', { id: 'refreshing' });
+      }).catch(() => {
+        setIsRefreshing(false);
+        setPullDistance(0);
+        toast.error('Sync failed. Check connection.', { id: 'refreshing' });
+      });
     } else {
       setPullDistance(0);
     }
