@@ -24,6 +24,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
   const options = [
     { id: 'inventory', label: 'Inventory', icon: Package, path: '/inventory', color: 'bg-emerald-500' },
     { id: 'debt', label: 'Debt', icon: Users, path: '/debt', color: 'bg-orange-500' },
+    { id: 'customers', label: 'Customers', icon: Users, path: '/customers', color: 'bg-sky-500' },
     { id: 'expenses', label: 'Expenses', icon: Wallet, path: '/expenses', color: 'bg-rose-500' },
     { id: 'team', label: 'Staff', icon: Users, path: '/users', color: 'bg-primary-500' },
     { id: 'branches', label: 'Branches', icon: Building2, path: '/branches', color: 'bg-blue-500' },
