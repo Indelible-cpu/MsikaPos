@@ -8,7 +8,7 @@ import {
   Building2,
   Info,
   LogOut,
-  X
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -57,17 +57,9 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed bottom-0 left-0 right-0 bg-surface-card border-t border-surface-border rounded-t-[3rem] z-[70] p-8 pb-12 max-h-[90vh] overflow-y-auto"
           >
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-2xl font-black tracking-tighter italic">More Options</h2>
-                <p className="text-[10px] font-black tracking-widest text-surface-text/30 uppercase mt-1">Management & Support</p>
-              </div>
-              <button 
-                onClick={onClose}
-                className="w-12 h-12 bg-surface-bg border border-surface-border rounded-full flex items-center justify-center active:scale-90 transition-all"
-              >
-                <X className="w-6 h-6" />
-              </button>
+            <div className="text-center mb-8">
+               <h2 className="text-2xl font-black tracking-tighter italic">More Options</h2>
+               <p className="text-[10px] font-black tracking-widest text-surface-text/30 uppercase mt-1">Management & Support</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -91,6 +83,14 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
               >
                 <LogOut className="w-6 h-6" />
                 <span className="text-sm font-black tracking-widest uppercase italic">Sign Out</span>
+              </button>
+              
+              <button
+                onClick={onClose}
+                className="col-span-2 flex items-center justify-center gap-3 p-6 bg-surface-bg border border-surface-border rounded-[2rem] text-surface-text/40 active:scale-95 transition-all mt-2 group"
+              >
+                <ChevronDown className="w-6 h-6 group-hover:translate-y-1 transition-transform" />
+                <span className="text-xs font-black tracking-widest uppercase italic">Close Options</span>
               </button>
             </div>
 

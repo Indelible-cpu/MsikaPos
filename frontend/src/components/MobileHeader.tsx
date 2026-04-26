@@ -63,7 +63,7 @@ export default function MobileHeader() {
           )}
           
           <div className="flex flex-col min-w-0">
-            <span className="text-[14px] font-black tracking-tighter italic text-primary-500 leading-none truncate uppercase">
+            <span className="text-[14px] font-black tracking-tighter italic text-primary-500 leading-none truncate">
               {shopName}
             </span>
             <span className="card-label !mb-0 truncate">
