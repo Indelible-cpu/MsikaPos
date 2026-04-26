@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/client';
+import { OTPInput } from '../components/OTPInput';
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -378,16 +379,10 @@ const OnboardingPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                  <label htmlFor="v-code" className="sr-only">Verification Code</label>
-                  <input 
-                    id="v-code"
-                    type="text" 
-                    title="Enter the 6-digit code from your email"
-                    maxLength={6}
-                    className="w-full h-20 bg-surface-bg border-2 border-surface-border rounded-3xl text-4xl font-black text-center tracking-[0.5em] focus:border-primary-500 focus:outline-none transition-all"
-                    placeholder="000000"
+                  <OTPInput 
                     value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
+                    onChange={setVerificationCode}
+                    disabled={loading}
                   />
                   
                   <button 

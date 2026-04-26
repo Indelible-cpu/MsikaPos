@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, User, ShieldCheck, Loader2, ChevronRight, ArrowLeft, Lock, Check } from 'lucide-react';
 import api from '../api/client';
 import toast from 'react-hot-toast';
+import { OTPInput } from '../components/OTPInput';
 
 const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -140,14 +141,10 @@ const ForgotPasswordPage: React.FC = () => {
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1 uppercase">6-Digit Code</label>
-                  <input 
-                    type="text" 
-                    maxLength={6}
-                    required
-                    className="w-full h-16 bg-surface-bg border border-surface-border rounded-2xl text-2xl font-black text-center tracking-[0.5em] focus:border-primary-500 focus:outline-none transition-all"
-                    placeholder="000000"
+                  <OTPInput 
                     value={code}
-                    onChange={(e) => setCode(e.target.value)}
+                    onChange={setCode}
+                    disabled={loading}
                   />
                 </div>
 
