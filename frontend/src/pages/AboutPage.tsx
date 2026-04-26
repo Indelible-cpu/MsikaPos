@@ -8,7 +8,9 @@ import {
   Tool, 
   MessageSquare,
   ExternalLink,
-  Info
+  Info,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -104,16 +106,42 @@ const AboutPage: React.FC = () => {
           </motion.section>
         ))}
 
-        <footer className="text-center pt-10 space-y-4">
-          <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] uppercase">Built for Indelible-cpu</p>
-          <div className="flex justify-center gap-6">
-            <a href="#" className="text-[10px] font-bold text-primary-500 hover:underline flex items-center gap-1">
-              Support Portal <ExternalLink className="w-3 h-3" />
-            </a>
-            <a href="#" className="text-[10px] font-bold text-primary-500 hover:underline flex items-center gap-1">
-              Contact Admin <ExternalLink className="w-3 h-3" />
-            </a>
+        <footer className="text-center pt-10 space-y-8">
+          <div className="space-y-2">
+            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] uppercase">Technical Support</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md mx-auto">
+              <a href="https://wa.me/265993732694" className="p-4 bg-surface-card border border-surface-border rounded-2xl flex items-center gap-3 hover:border-primary-500/30 transition-all">
+                <MessageSquare className="w-5 h-5 text-emerald-500" />
+                <div className="text-left">
+                  <div className="text-[10px] font-black uppercase tracking-tighter opacity-40">WhatsApp / Call</div>
+                  <div className="text-xs font-black">+265 993 732 694</div>
+                </div>
+              </a>
+              <a href="tel:+265885892269" className="p-4 bg-surface-card border border-surface-border rounded-2xl flex items-center gap-3 hover:border-primary-500/30 transition-all">
+                <Phone className="w-5 h-5 text-primary-500" />
+                <div className="text-left">
+                  <div className="text-[10px] font-black uppercase tracking-tighter opacity-40">Calls Only</div>
+                  <div className="text-xs font-black">+265 885 892 269</div>
+                </div>
+              </a>
+              <a href="mailto:msikaposmw@gmail.com" className="p-4 bg-surface-card border border-surface-border rounded-2xl flex items-center gap-3 hover:border-primary-500/30 transition-all">
+                <Mail className="w-5 h-5 text-orange-500" />
+                <div className="text-left">
+                  <div className="text-[10px] font-black uppercase tracking-tighter opacity-40">Email Support</div>
+                  <div className="text-xs font-black italic">msikaposmw@gmail.com</div>
+                </div>
+              </a>
+              <a href="https://facebook.com/JEFInvestment" target="_blank" rel="noreferrer" className="p-4 bg-surface-card border border-surface-border rounded-2xl flex items-center gap-3 hover:border-primary-500/30 transition-all">
+                <ExternalLink className="w-5 h-5 text-blue-500" />
+                <div className="text-left">
+                  <div className="text-[10px] font-black uppercase tracking-tighter opacity-40">Facebook Page</div>
+                  <div className="text-xs font-black">JEF Investment</div>
+                </div>
+              </a>
+            </div>
           </div>
+          
+          <p className="text-[9px] font-black text-surface-text/10 tracking-[0.4em] uppercase pb-10">© 2026 MsikaPos • Indelible-cpu</p>
         </footer>
       </main>
     </div>
