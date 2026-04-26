@@ -6,7 +6,6 @@ import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
-import { SyncService } from '../services/SyncService';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -19,16 +18,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const startY = useRef(0);
   const mainRef = useRef<HTMLElement>(null);
-
-  const handleSync = async () => {
-    try {
-      await SyncService.pushSales();
-      return true;
-    } catch (err) {
-      console.error('Refresh sync failed:', err);
-      throw err;
-    }
-  };
 
   const hideNav = location.pathname === '/login';
 
@@ -55,19 +44,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       setIsRefreshing(true);
       setPullDistance(50);
       
-      toast.loading('Syncing data in background...', { id: 'refreshing' });
+      toast.loading('Refreshing app...', { id: 'refresh' });
       
-      // Perform background sync
-      handleSync().then(() => {
-        setIsRefreshing(false);
-        setPullDistance(0);
-        toast.success('System up to date', { id: 'refreshing' });
-      }).catch((err) => {
-        setIsRefreshing(false);
-        setPullDistance(0);
-        const msg = err.response?.data?.message || err.message || 'Check connection';
-        toast.error(`Sync failed: ${msg}`, { id: 'refreshing' });
-      });
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } else {
       setPullDistance(0);
     }
