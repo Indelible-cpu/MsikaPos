@@ -1,11 +1,13 @@
 import React from 'react';
-import { User, Store, Smartphone, Building2, Settings, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { User, Store, Smartphone, Building2, Settings, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus, Wallet } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
 import { AuditService } from '../services/AuditService';
 
 const SettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const isSuperAdmin = user.role === 'SUPER_ADMIN';

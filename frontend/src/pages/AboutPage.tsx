@@ -1,7 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
-  ChevronLeft, 
   HelpCircle, 
   ShieldCheck, 
   MessageSquare,
@@ -13,8 +11,6 @@ import {
 import { motion } from 'framer-motion';
 
 const AboutPage: React.FC = () => {
-  const navigate = useNavigate();
-
   const sections = [
     {
       id: 'faq',
@@ -74,7 +70,7 @@ const AboutPage: React.FC = () => {
               <h3 className="text-lg font-black tracking-tight">{section.title}</h3>
             </div>
 
-            <div className="bg-surface-card border border-surface-border rounded-[2rem] overflow-hidden">
+            <div className="bg-surface-card border border-surface-border rounded-[2.5rem] overflow-hidden">
               {section.items ? (
                 <div className="divide-y divide-surface-border">
                   {section.items.map((item, i) => (
