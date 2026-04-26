@@ -217,7 +217,7 @@ const InventoryPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
+    <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0">
       <header className="px-4 py-4 md:px-10 md:py-10 bg-surface-card md:border-b border-surface-border sticky top-0 z-30 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <h2 className="section-title !mb-0">
