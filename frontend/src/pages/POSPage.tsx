@@ -599,16 +599,16 @@ const POSPage: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)} 
               />
             </div>
-            <button onClick={() => setShowScanner(true)} className="p-4 bg-primary-500 text-white rounded-none active:scale-95 transition-all" title="Scan Barcode" aria-label="Scan Barcode">
-              <Scan className="w-6 h-6" />
+            <button onClick={() => setShowScanner(true)} className="p-3 bg-primary-500 text-white rounded-2xl active:scale-95 transition-all shadow-lg shadow-primary-500/20" title="Scan Barcode" aria-label="Scan Barcode">
+              <Scan className="w-5 h-5" />
             </button>
             <button onClick={async () => {
                 setIsSyncing(true);
                 await SyncService.pushSales();
                 setIsSyncing(false);
                 toast.success('Synced');
-              }} className={clsx("p-4 bg-transparent border border-surface-border rounded-none text-primary-500", isSyncing && "animate-spin")} title="Sync Sales" aria-label="Sync Sales">
-              <RefreshCw className="w-6 h-6" />
+              }} className={clsx("p-3 bg-surface-card border border-surface-border rounded-2xl text-primary-500 shadow-sm", isSyncing && "animate-spin")} title="Sync Sales" aria-label="Sync Sales">
+              <RefreshCw className="w-5 h-5" />
             </button>
           </div>
         </header>
