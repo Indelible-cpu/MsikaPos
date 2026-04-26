@@ -34,12 +34,27 @@ const LoginPage: React.FC = () => {
         const challenge = new Uint8Array(32);
         crypto.getRandomValues(challenge);
         
+        const credentialId = localStorage.getItem('biometricCredentialId');
+        const allowCredentials: any[] = [];
+        
+        if (credentialId) {
+          // Convert base64 back to Uint8Array
+          const binaryId = Uint8Array.from(atob(credentialId), c => c.charCodeAt(0));
+          allowCredentials.push({
+            id: binaryId,
+            type: 'public-key',
+            transports: ['internal']
+          });
+        }
+
         await navigator.credentials.get({
           publicKey: {
             challenge,
             rpId: window.location.hostname,
-            userVerification: 'required'
-          }
+            userVerification: 'required',
+            allowCredentials
+          },
+          mediation: 'required'
         });
 
         const userDataStr = localStorage.getItem('user');
@@ -63,7 +78,7 @@ const LoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, []);
 
   const registerBiometrics = async () => {
     try {
@@ -74,7 +89,6 @@ const LoginPage: React.FC = () => {
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
       
-      // Use a consistent, safe ID (must be unique per user but stable)
       const userId = Uint8Array.from(String(user.id || '1'), c => c.charCodeAt(0));
 
       const credential = await navigator.credentials.create({
@@ -99,6 +113,11 @@ const LoginPage: React.FC = () => {
       });
 
       if (credential) {
+        const pubKeyCred = credential as PublicKeyCredential;
+        // Store the credential ID as base64
+        const idBase64 = btoa(String.fromCharCode(...new Uint8Array(pubKeyCred.rawId)));
+        
+        localStorage.setItem('biometricCredentialId', idBase64);
         localStorage.setItem('biometricRegistered', 'true');
         setIsBiometricAvailable(true);
         setShowBiometricPrompt(false);
@@ -160,7 +179,6 @@ const LoginPage: React.FC = () => {
         localStorage.setItem('user', JSON.stringify(userData));
         await AuditService.log('LOGIN', `User ${username} signed in`);
         
-        // Check for biometric registration (Mobile Only)
         const isMobile = window.innerWidth < 768;
         const canRegister = isMobile && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         const alreadyRegistered = localStorage.getItem('biometricRegistered') === 'true';

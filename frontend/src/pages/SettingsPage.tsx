@@ -514,18 +514,6 @@ const SettingsPage: React.FC = () => {
                  </button>
               </div>
             )}
-
-            {/* Logout Action */}
-            <div className="p-6 md:px-0 md:hidden">
-               <button 
-                  onClick={handleSignOut}
-                  className="w-full py-5 bg-accent-danger/10 hover:bg-accent-danger text-accent-danger hover:text-white border border-accent-danger/20 rounded-3xl font-black  tracking-widest flex items-center justify-center gap-3 transition-all duration-300 active:scale-95 shadow-xl shadow-red-900/5"
-                  title="Sign out of the system"
-               >
-                  <LogOut className="w-6 h-6" />
-                  Sign out
-               </button>
-            </div>
           </div>
        </div>
     </div>
