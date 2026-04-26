@@ -40,6 +40,7 @@ const UsersPage: React.FC = () => {
   const [branches, setBranches] = useState<{id: number, name: string}[]>([]);
   const [loading, setLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [magicToken, setMagicToken] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -84,6 +85,7 @@ const UsersPage: React.FC = () => {
       
       if (!editingUser && res.data.data?.tempPassword) {
         setTempPassword(res.data.data.tempPassword);
+        setMagicToken(res.data.data.magicToken);
       } else {
         setIsModalOpen(false);
         toast.success(editingUser ? 'User updated' : 'User created');
@@ -135,6 +137,7 @@ const UsersPage: React.FC = () => {
       branchId: ''
     });
     setTempPassword(null);
+    setMagicToken(null);
   };
 
   const filteredUsers = users.filter(u => 
@@ -289,33 +292,59 @@ const UsersPage: React.FC = () => {
           </form>
         ) : (
           <div className="p-10 text-center space-y-6">
-            <div className="w-20 h-20 rounded-3xl bg-primary-500/10 flex items-center justify-center mx-auto">
-              <Key className="w-10 h-10 text-primary-500" />
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto">
+              <Check className="w-8 h-8 text-emerald-500" />
             </div>
             <div>
-              <h2 className="text-2xl font-black italic tracking-tighter text-primary-500 mb-2">Temporary Password</h2>
-              <p className="text-surface-text/40 text-xs px-4">Provide this password to the user. They will be required to change it upon first login.</p>
+              <h2 className="text-2xl font-black italic tracking-tighter text-emerald-500 mb-2">Account Ready</h2>
+              <p className="text-surface-text/40 text-xs px-4">Provide these details to the user to complete their profile.</p>
             </div>
 
-            <div className="p-6 bg-surface-bg rounded-3xl border-2 border-primary-500/20 flex items-center justify-between group">
-              <span className="text-3xl font-black tracking-widest text-primary-500">{tempPassword}</span>
-              <button 
-                title="Copy Password"
-                onClick={() => {
-                  navigator.clipboard.writeText(tempPassword);
-                  toast.success('Copied to clipboard');
-                }}
-                className="p-3 bg-primary-500 text-white rounded-xl hover:scale-110 transition-all shadow-lg shadow-primary-500/20"
-              >
-                <Copy className="w-5 h-5" />
-              </button>
+            <div className="space-y-4">
+              <div className="space-y-1 text-left">
+                <label className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1 uppercase">Temporary Password</label>
+                <div className="p-4 bg-surface-bg rounded-2xl border border-surface-border flex items-center justify-between">
+                  <span className="font-black tracking-widest text-primary-500">{tempPassword}</span>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(tempPassword || '');
+                      toast.success('Password copied');
+                    }}
+                    className="p-2 text-surface-text/20 hover:text-primary-500 transition-all"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {magicToken && (
+                <div className="space-y-1 text-left">
+                  <label className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1 uppercase">Magic Invite Link</label>
+                  <div className="p-4 bg-surface-bg rounded-2xl border border-surface-border flex items-center justify-between gap-3">
+                    <span className="text-[10px] font-bold text-surface-text/50 truncate">
+                      {window.location.origin}/onboarding?magicToken={magicToken}
+                    </span>
+                    <button 
+                      onClick={() => {
+                        const link = `${window.location.origin}/onboarding?magicToken=${magicToken}`;
+                        navigator.clipboard.writeText(link);
+                        toast.success('Magic link copied');
+                      }}
+                      className="p-2 bg-primary-500 text-white rounded-xl hover:scale-110 transition-all shadow-lg shadow-primary-500/20"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="text-[8px] font-bold text-emerald-500/60 mt-1">This link expires in 7 days and skips the login password.</p>
+                </div>
+              )}
             </div>
 
             <button 
               onClick={() => {
                 setIsModalOpen(false);
                 setTempPassword(null);
-                toast.success('User account ready');
+                setMagicToken(null);
               }}
               className="btn-primary w-full h-16 shadow-xl shadow-primary-500/20"
             >

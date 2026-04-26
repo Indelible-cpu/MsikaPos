@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -118,10 +119,8 @@ export const saveUser = async (req: Request, res: Response) => {
       });
 
       return res.status(200).json({ success: true, message: "User updated" });
-    } else {
-      // Create with temporary password if not provided
-      const tempPassword = password || Math.random().toString(36).slice(-8);
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      const magicToken = crypto.randomBytes(32).toString('hex');
+      const magicTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
       const newUser = await prisma.user.create({
         data: {
@@ -130,14 +129,20 @@ export const saveUser = async (req: Request, res: Response) => {
           roleId: parseInt(roleId),
           branchId: branchId ? parseInt(branchId) : null,
           mustChangePassword: true,
-          isVerified: false
+          isVerified: false,
+          magicToken,
+          magicTokenExpires
         },
       });
 
       return res.status(201).json({
         success: true,
         message: "User created",
-        data: { username, tempPassword: password ? undefined : tempPassword }
+        data: { 
+          username, 
+          tempPassword: password ? undefined : tempPassword,
+          magicToken 
+        }
       });
     }
   } catch (error: any) {
@@ -160,16 +165,17 @@ export const updateOnboarding = async (req: Request, res: Response) => {
   } = req.body;
 
   try {
-    const data: any = {
-      fullname,
       nationalId,
       phone,
       email,
       profilePic,
       homeAddress,
+      nextOfKinName,
       nextOfKinPhone,
       relationship,
-      verificationCode: Math.floor(100000 + Math.random() * 900000).toString()
+      verificationCode: Math.floor(100000 + Math.random() * 900000).toString(),
+      magicToken: null, // Clear magic token once used/profile updated
+      magicTokenExpires: null
     };
 
     if (newPassword) {
@@ -307,5 +313,46 @@ export const deleteUser = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, message: "User deleted" });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Failed to delete user', error: error.message });
+  }
+};
+
+export const magicLogin = async (req: Request, res: Response) => {
+  const { token } = req.body;
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        magicToken: token,
+        magicTokenExpires: { gt: new Date() },
+        deleted: false
+      },
+      include: { role: true }
+    });
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid or expired magic link' });
+    }
+
+    const jwtToken = jwt.sign(
+      { id: user.id, username: user.username, role: user.role.name, branchId: user.branchId },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '24h' }
+    );
+
+    return res.status(200).json({
+      success: true,
+      token: jwtToken,
+      user: {
+        id: user.id,
+        username: user.username,
+        fullname: user.fullname,
+        role: user.role.name,
+        branchId: user.branchId,
+        isVerified: user.isVerified,
+        mustChangePassword: user.mustChangePassword
+      }
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: 'Magic login failed', error: error.message });
   }
 };

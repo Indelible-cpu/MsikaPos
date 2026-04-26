@@ -38,6 +38,7 @@ app.get('/ping', (_req, res) => res.send('pong'));
 
 // Public Routes
 app.post('/api/auth/login', UserCtrl.loginUser as any);
+app.post('/api/auth/magic-login', UserCtrl.magicLogin as any);
 app.post('/api/auth/forgot-password', UserCtrl.forgotPassword as any);
 
 // Protected Routes (Require Authentication)

@@ -12,16 +12,22 @@ import {
   Check, 
   Loader2, 
   Camera,
-  ShieldCheck
+  ShieldCheck,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import { OTPInput } from '../components/OTPInput';
+import { useSearchParams } from 'react-router-dom';
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Form States
@@ -30,12 +36,34 @@ const OnboardingPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [homeAddress, setHomeAddress] = useState('');
+  const [nextOfKinName, setNextOfKinName] = useState('');
   const [nextOfKinPhone, setNextOfKinPhone] = useState('');
   const [relationship, setRelationship] = useState('');
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+
+  // Magic Link Detection
+  React.useEffect(() => {
+    const magicToken = searchParams.get('magicToken');
+    if (magicToken && !localStorage.getItem('token')) {
+      const handleMagicLogin = async () => {
+        try {
+          const res = await api.post('/auth/magic-login', { token: magicToken });
+          localStorage.setItem('token', res.data.token);
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+          toast.success("Welcome! Please complete your profile.");
+        } catch (err) {
+          toast.error("Invalid or expired magic link");
+          navigate('/login');
+        }
+      };
+      handleMagicLogin();
+    }
+  }, [searchParams, navigate]);
+
+  const malawianPhoneRegex = /^(\+265|0)[89]\d{8}$/;
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,8 +96,8 @@ const OnboardingPage: React.FC = () => {
       if (!/^[A-Z0-9]{8}$/.test(nationalId.toUpperCase())) {
         return toast.error("National ID must be 8 alphanumeric characters");
       }
-      if (!/^\+?265\d{9}$|^\d{10}$/.test(phone)) {
-        return toast.error("Phone must be 10 digits or 13 with +265");
+      if (!malawianPhoneRegex.test(phone)) {
+        return toast.error("Phone must be a valid Malawian number (e.g., 088... or 099...)");
       }
     }
     setStep(prev => prev + 1);
@@ -81,8 +109,8 @@ const OnboardingPage: React.FC = () => {
       return toast.error("Passwords don't match");
     }
 
-    if (nextOfKinPhone && !/^\+?265\d{9}$|^\d{10}$/.test(nextOfKinPhone)) {
-      return toast.error("Next of Kin Phone must be valid");
+    if (nextOfKinPhone && !malawianPhoneRegex.test(nextOfKinPhone)) {
+      return toast.error("Next of Kin Phone must be a valid Malawian number");
     }
 
     setLoading(true);
@@ -94,6 +122,7 @@ const OnboardingPage: React.FC = () => {
         phone,
         profilePic,
         homeAddress,
+        nextOfKinName,
         nextOfKinPhone,
         relationship,
         newPassword: newPassword || undefined
@@ -279,6 +308,21 @@ const OnboardingPage: React.FC = () => {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
+                    <label htmlFor="nok-name" className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1 uppercase">Next of Kin Name</label>
+                    <div className="relative">
+                      <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
+                      <input 
+                        id="nok-name"
+                        type="text" 
+                        title="Enter next of kin name"
+                        className="input-field w-full pl-10 h-12 text-sm font-bold" 
+                        placeholder="Full Name"
+                        value={nextOfKinName}
+                        onChange={(e) => setNextOfKinName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
                     <label htmlFor="nok-phone" className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1 uppercase">Next of Kin Phone</label>
                     <div className="relative">
                       <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
@@ -287,7 +331,7 @@ const OnboardingPage: React.FC = () => {
                         type="tel" 
                         title="Enter next of kin phone number"
                         className="input-field w-full pl-10 h-12 text-sm font-bold" 
-                        placeholder="+265..."
+                        placeholder="088... or 099..."
                         value={nextOfKinPhone}
                         onChange={(e) => setNextOfKinPhone(e.target.value)}
                       />
@@ -318,13 +362,20 @@ const OnboardingPage: React.FC = () => {
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
                         <input 
                           id="newPassword"
-                          type="password" 
+                          type={showPassword ? "text" : "password"} 
                           title="Enter a strong new password"
-                          className="input-field w-full pl-10 h-12 text-sm font-bold" 
+                          className="input-field w-full pl-10 pr-12 h-12 text-sm font-bold" 
                           placeholder="••••••••"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                         />
+                        <button 
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-text/20 hover:text-surface-text transition-all"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -333,13 +384,20 @@ const OnboardingPage: React.FC = () => {
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
                         <input 
                           id="confirmPassword"
-                          type="password" 
+                          type={showConfirmPassword ? "text" : "password"} 
                           title="Repeat your new password"
-                          className="input-field w-full pl-10 h-12 text-sm font-bold" 
+                          className="input-field w-full pl-10 pr-12 h-12 text-sm font-bold" 
                           placeholder="••••••••"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                         />
+                        <button 
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-text/20 hover:text-surface-text transition-all"
+                        >
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                       </div>
                     </div>
                   </div>
