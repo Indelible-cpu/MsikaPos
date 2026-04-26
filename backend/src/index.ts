@@ -11,6 +11,7 @@ import * as SyncCtrl from './controllers/SyncController.js';
 import * as ReportCtrl from './controllers/ReportController.js';
 import * as DashboardCtrl from './controllers/DashboardController.js';
 import * as CreditCtrl from './controllers/CreditController.js';
+import * as CustomerCtrl from './controllers/CustomerController.js';
 
 dotenv.config();
 
@@ -41,6 +42,8 @@ app.get('/api/ping', (_req, res) => res.send('pong'));
 app.post('/api/auth/login', UserCtrl.loginUser as any);
 app.post('/api/auth/magic-login', UserCtrl.magicLogin as any);
 app.post('/api/auth/forgot-password', UserCtrl.forgotPassword as any);
+app.post('/api/customer/register', CustomerCtrl.registerCustomer as any);
+app.post('/api/customer/login', CustomerCtrl.loginCustomer as any);
 
 // Protected Routes (Require Authentication)
 app.use('/api', authenticate as any);
@@ -76,6 +79,11 @@ app.get('/api/reports/summary', ReportCtrl.getSummary);
 // Credits
 app.get('/api/credits', CreditCtrl.listCredits);
 app.post('/api/credits/payment', CreditCtrl.recordPayment);
+
+// Inquiries
+app.post('/api/inquiries', CustomerCtrl.createInquiry as any);
+app.get('/api/inquiries', CustomerCtrl.listInquiries as any);
+app.put('/api/inquiries/:id', CustomerCtrl.updateInquiryStatus as any);
 
 app.listen(PORT, () => {
   console.log(`🚀 POS Backend running on http://localhost:${PORT}`);

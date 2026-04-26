@@ -1,34 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, Loader2, CheckCircle2, User as UserIcon } from 'lucide-react';
 import { db } from '../db/posDB';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
+import api from '../api/client';
+import CustomerAuthModal from '../components/CustomerAuthModal';
 
 export const PublicStorefront: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [shopName, setShopName] = useState('Storefront');
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [customer, setCustomer] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   useEffect(() => {
     const loadStorefront = async () => {
       // Load products (mocking public fetch with local indexedDB for now)
       const allProducts = await db.products.where('isService').equals(0).toArray();
-      setProducts(allProducts.filter(p => p.quantity > 0)); // Only show in-stock
+      setProducts(allProducts.filter(p => p.quantity > 0)); 
 
       const company = await db.settings.get('company_config');
       if (company?.value) {
         setShopName((company.value as any).name || 'Storefront');
       }
+
+      const storedUser = localStorage.getItem('customerUser');
+      if (storedUser) setCustomer(JSON.parse(storedUser));
     };
     loadStorefront();
   }, []);
 
-  const handleInteraction = () => {
-    toast('Create a quick account to send inquiries and chat with the shop', {
-      icon: '👋',
-      duration: 4000,
-    });
-    // TODO: Open quick registration modal
+  const handleInquiry = async (product: any) => {
+    const token = localStorage.getItem('customerToken');
+    if (!token) {
+      setSelectedProduct(product);
+      setIsAuthOpen(true);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await api.post('/inquiries', {
+        items: [{ id: product.id, name: product.name, price: product.price }]
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Inquiry sent successfully!');
+    } catch (error) {
+      toast.error('Failed to send inquiry');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAuthSuccess = (token: string, user: any) => {
+    setCustomer(user);
+    if (selectedProduct) {
+      handleInquiry(selectedProduct);
+      setSelectedProduct(null);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('customerToken');
+    localStorage.removeItem('customerUser');
+    setCustomer(null);
+    toast.success('Signed out');
   };
 
   const filteredProducts = products.filter(p => 
@@ -47,12 +86,30 @@ export const PublicStorefront: React.FC = () => {
             <h1 className="text-xl font-black tracking-tighter italic">{shopName}</h1>
           </div>
           
-          <button 
-            onClick={handleInteraction}
-            className="px-6 py-3 bg-surface-card border border-surface-border rounded-full text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all shadow-sm"
-          >
-            My Inquiries
-          </button>
+          <div className="flex items-center gap-3">
+            {customer ? (
+              <div className="flex items-center gap-4">
+                <div className="text-right hidden md:block">
+                  <p className="text-[9px] font-black tracking-widest text-surface-text/30">LOGGED IN AS</p>
+                  <p className="text-xs font-black">{customer.fullname}</p>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="w-10 h-10 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all"
+                  title="Sign Out"
+                >
+                  <UserIcon className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setIsAuthOpen(true)}
+                className="px-6 py-3 bg-primary-500 text-white rounded-full text-[10px] font-black tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary-500/20"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -102,10 +159,11 @@ export const PublicStorefront: React.FC = () => {
                   <p className="text-xl font-black text-primary-500 italic tracking-tighter mb-6">MK {p.price.toLocaleString()}</p>
                   
                   <button 
-                    onClick={handleInteraction}
+                    onClick={() => handleInquiry(p)}
+                    disabled={submitting}
                     className="w-full py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest hover:bg-primary-500 hover:text-white hover:border-primary-500 transition-all flex items-center justify-center gap-2"
                   >
-                    <MessageSquare className="w-4 h-4" />
+                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4" />}
                     Inquire Now
                   </button>
                 </div>
@@ -114,6 +172,12 @@ export const PublicStorefront: React.FC = () => {
           </div>
         )}
       </main>
+
+      <CustomerAuthModal 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
+        onSuccess={handleAuthSuccess}
+      />
 
       {/* Footer */}
       <footer className="bg-surface-card border-t border-surface-border py-8 text-center">

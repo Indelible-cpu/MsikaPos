@@ -7,9 +7,12 @@ import { db } from '../db/posDB';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
+  const [pendingCount, setPendingCount] = React.useState(0);
+
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/staff/dashboard' },
     { id: 'pos', label: 'POS Terminal', icon: ShoppingCart, path: '/staff/pos' },
+    { id: 'inquiries', label: 'Inquiries', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
     { id: 'sales', label: 'Daily Sales', icon: Receipt, path: '/staff/sales' },
     { id: 'debt', label: 'Debt Management', icon: Users, path: '/staff/debt' },
     { id: 'expenses', label: 'Expenses Tracking', icon: Wallet, path: '/staff/expenses' },
@@ -21,6 +24,14 @@ const Sidebar: React.FC = () => {
     { id: 'settings', label: 'Settings', icon: Settings, path: '/staff/settings' },
     { id: 'about', label: 'Support & About', icon: Info, path: '/staff/about' },
   ];
+
+  const fetchPending = React.useCallback(async () => {
+    try {
+      const res = await api.get('/inquiries');
+      const pending = res.data.data.filter((i: any) => i.status === 'PENDING').length;
+      setPendingCount(pending);
+    } catch { /* silent */ }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -39,9 +50,12 @@ const Sidebar: React.FC = () => {
       }
       const storedLogo = localStorage.getItem('companyLogo');
       if (storedLogo) setShopLogo(storedLogo);
+      fetchPending();
     };
     loadSidebar();
-  }, []);
+    const interval = setInterval(fetchPending, 15000); // Poll every 15s
+    return () => clearInterval(interval);
+  }, [fetchPending]);
 
   return (
     <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0 overflow-hidden">
@@ -63,7 +77,7 @@ const Sidebar: React.FC = () => {
             key={tab.id}
             to={tab.path}
             className={({ isActive }) => clsx(
-              "flex items-center gap-4 px-5 h-14 rounded-[1.5rem] font-black tracking-widest text-[13px] transition-all group shrink-0",
+              "flex items-center gap-4 px-5 h-14 rounded-[1.5rem] font-black tracking-widest text-[13px] transition-all group shrink-0 relative",
               isActive 
                 ? "bg-primary-500 text-white shadow-xl shadow-primary-500/20 scale-[1.02]" 
                 : "text-surface-text/40 hover:text-primary-500 hover:bg-primary-500/5 border border-transparent hover:border-primary-500/10"
@@ -73,6 +87,11 @@ const Sidebar: React.FC = () => {
               <>
                 <tab.icon className={clsx("w-5 h-5 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 3 : 2} />
                 <span className="truncate">{tab.label}</span>
+                {tab.badge ? (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[8px] font-black border-2 border-surface-card animate-pulse shadow-lg shadow-rose-500/20">
+                    {tab.badge}
+                  </span>
+                ) : null}
               </>
             )}
           </NavLink>
