@@ -1,13 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
-  Home, 
-  BarChart3, 
-  Receipt, 
   Settings, 
-  ShoppingCart, 
-  MoreHorizontal,
-  Package,
   Users,
   Wallet,
   Building2,
