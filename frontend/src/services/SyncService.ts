@@ -10,7 +10,7 @@ export const SyncService = {
       .equals(0)
       .toArray();
 
-    if (unsyncedSales.length === 0) return;
+    // Still proceed to get updates even if no local sales to push
 
     const token = localStorage.getItem('token');
     const deviceId = localStorage.getItem('deviceId') || 'unknown';

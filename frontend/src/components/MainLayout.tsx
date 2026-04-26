@@ -6,6 +6,7 @@ import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
+import { SyncService } from '../services/SyncService';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const startY = useRef(0);
   const mainRef = useRef<HTMLElement>(null);
+
+  const handleSync = async () => {
+    try {
+      await SyncService.pushSales();
+      return true;
+    } catch (err) {
+      console.error('Refresh sync failed:', err);
+      throw err;
+    }
+  };
 
   const hideNav = location.pathname === '/login';
 
@@ -44,7 +55,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       setIsRefreshing(true);
       setPullDistance(50);
       
-      const refreshToast = toast.loading('Syncing data in background...', { id: 'refreshing' });
+      toast.loading('Syncing data in background...', { id: 'refreshing' });
       
       // Perform background sync
       handleSync().then(() => {
