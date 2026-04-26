@@ -58,10 +58,18 @@ const LoginPage: React.FC = () => {
 
         const userDataStr = localStorage.getItem('user');
         if (userDataStr) {
+          const userData = JSON.parse(userDataStr);
           await AuditService.log('BIOMETRIC_LOGIN', 'User signed in using biometrics');
           toast.success('Welcome back!', { id: 'biometric-auth' });
           SyncService.pushSales().catch(console.error);
-          window.location.href = '/dashboard';
+          
+          if (userData.role === 'CUSTOMER') {
+            window.location.href = '/';
+          } else if (userData.role === 'CASHIER') {
+            window.location.href = '/staff/pos';
+          } else {
+            window.location.href = '/staff/dashboard';
+          }
         } else {
           throw new Error('Please login with password first.');
         }
@@ -121,7 +129,14 @@ const LoginPage: React.FC = () => {
         setIsBiometricAvailable(true);
         setShowBiometricPrompt(false);
         toast.success('Biometric login enabled for this device!');
-        window.location.href = '/dashboard';
+        
+        if (user.role === 'CUSTOMER') {
+          window.location.href = '/';
+        } else if (user.role === 'CASHIER') {
+          window.location.href = '/staff/pos';
+        } else {
+          window.location.href = '/staff/dashboard';
+        }
       }
     } catch (err: unknown) {
       console.error('Registration error:', err);
@@ -132,7 +147,15 @@ const LoginPage: React.FC = () => {
         toast.error('Could not register biometrics.');
       }
       setShowBiometricPrompt(false);
-      window.location.href = '/dashboard';
+      
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user.role === 'CUSTOMER') {
+        window.location.href = '/';
+      } else if (user.role === 'CASHIER') {
+        window.location.href = '/staff/pos';
+      } else {
+        window.location.href = '/staff/dashboard';
+      }
     } finally {
       setLoading(false);
     }
@@ -186,10 +209,15 @@ const LoginPage: React.FC = () => {
           setShowBiometricPrompt(true);
         } else {
           toast.success('Welcome back!');
-          if (!userData.isVerified || userData.mustChangePassword) {
-            window.location.href = '/onboarding';
+          
+          if (userData.role === 'CUSTOMER') {
+            window.location.href = '/';
+          } else if (!userData.isVerified || userData.mustChangePassword) {
+            window.location.href = '/staff/onboarding';
+          } else if (userData.role === 'CASHIER') {
+            window.location.href = '/staff/pos';
           } else {
-            window.location.href = '/dashboard';
+            window.location.href = '/staff/dashboard';
           }
         }
       }

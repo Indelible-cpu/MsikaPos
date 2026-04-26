@@ -44,6 +44,7 @@ model User {
   magicToken         String?   @unique
   magicTokenExpires  DateTime?
 
+  customer           Customer?
   expenses           Expense[]
   sales              Sale[]
   branch             Branch?   @relation(fields: [branchId], references: [id])
@@ -115,10 +116,10 @@ model Customer {
   village       String?
   locationId    String?
   livePhoto     String?
-  username      String?  @unique
-  password      String?
+  userId        Int?     @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  user          User?    @relation(fields: [userId], references: [id])
   sales         Sale[]
   inquiries     Inquiry[]
 }
@@ -240,6 +241,7 @@ enum RoleName {
   SUPER_ADMIN
   ADMIN
   CASHIER
+  CUSTOMER
 }
 
 enum BranchStatus {

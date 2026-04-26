@@ -16,24 +16,45 @@ export const registerCustomer = async (req: Request, res: Response) => {
   const { username, password, fullname, phone } = req.body;
 
   try {
-    const existing = await prisma.customer.findUnique({ where: { username: username } });
+    const existing = await prisma.user.findUnique({ where: { username } });
     if (existing) {
       await securityAlert(req.ip || 'unknown', 'RECONNAISSANCE', `Registration attempt with existing username: ${username}`);
       return res.status(400).json({ success: false, message: 'Username already taken' });
     }
 
+    // Get Customer Role ID
+    const customerRole = await prisma.role.findUnique({ where: { name: 'CUSTOMER' } });
+    if (!customerRole) return res.status(500).json({ message: 'Customer role not configured' });
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const customer = await prisma.customer.create({
-      data: {
-        username,
-        password: hashedPassword,
-        fullname: fullname || username,
-        phone: phone || '',
-      }
+    
+    // Create User and Customer in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          username,
+          password: hashedPassword,
+          roleId: customerRole.id,
+          fullname,
+          phone,
+          isVerified: true,
+          mustChangePassword: false,
+        }
+      });
+
+      const customer = await tx.customer.create({
+        data: {
+          fullname: fullname || username,
+          phone: phone || '',
+          userId: user.id
+        }
+      });
+
+      return { user, customer };
     });
 
     const token = jwt.sign(
-      { id: customer.id, username: customer.username, role: 'CUSTOMER' },
+      { id: result.user.id, username: result.user.username, role: 'CUSTOMER' },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '30d' }
     );
@@ -43,9 +64,9 @@ export const registerCustomer = async (req: Request, res: Response) => {
       message: 'Registration successful',
       token,
       customer: {
-        id: customer.id,
-        username: customer.username,
-        fullname: customer.fullname,
+        id: result.customer.id,
+        username: result.user.username,
+        fullname: result.customer.fullname,
         role: 'CUSTOMER'
       }
     });
@@ -58,20 +79,30 @@ export const loginCustomer = async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
   try {
-    const customer = await prisma.customer.findUnique({ where: { username } });
-    if (!customer || !customer.password) {
-      await securityAlert(req.ip || 'unknown', 'BRUTE_FORCE', `Customer login failed: ${username}`);
+    const user = await prisma.user.findUnique({ 
+      where: { username },
+      include: { role: true, customer: true }
+    });
+
+    if (!user || user.deleted) {
+      await securityAlert(req.ip || 'unknown', 'BRUTE_FORCE', `Unified login failed: ${username}`);
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const validPassword = await bcrypt.compare(password, customer.password);
+    const normalizedHash = user.password.replace(/^\$2y\$/, '$2a$');
+    const validPassword = await bcrypt.compare(password, normalizedHash);
+    
     if (!validPassword) {
-      await securityAlert(req.ip || 'unknown', 'BRUTE_FORCE', `Customer incorrect password: ${username}`);
+      await securityAlert(req.ip || 'unknown', 'BRUTE_FORCE', `Unified incorrect password: ${username}`);
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    if (user.status !== 'ACTIVE') {
+      return res.status(403).json({ success: false, message: `Account is ${user.status.toLowerCase()}` });
     }
 
     const token = jwt.sign(
-      { id: customer.id, username: customer.username, role: 'CUSTOMER' },
+      { id: user.id, username: user.username, role: user.role.name, branchId: user.branchId },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '30d' }
     );
@@ -79,11 +110,12 @@ export const loginCustomer = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       token,
+      role: user.role.name,
       customer: {
-        id: customer.id,
-        username: customer.username,
-        fullname: customer.fullname,
-        role: 'CUSTOMER'
+        id: user.customer?.id || user.id,
+        username: user.username,
+        fullname: user.fullname,
+        role: user.role.name
       }
     });
   } catch (error: any) {

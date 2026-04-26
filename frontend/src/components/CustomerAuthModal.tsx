@@ -23,15 +23,29 @@ const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({ isOpen, onClose, 
     e.preventDefault();
     setLoading(true);
     try {
+      // All logins/registrations now hit the unified backend
       const endpoint = isLogin ? '/customer/login' : '/customer/register';
       const res = await api.post(endpoint, formData);
       
       if (res.data.success) {
-        localStorage.setItem('customerToken', res.data.token);
-        localStorage.setItem('customerUser', JSON.stringify(res.data.customer));
-        onSuccess(res.data.token, res.data.customer);
-        toast.success(isLogin ? 'Welcome back!' : 'Account created!');
-        onClose();
+        // Shared token and user storage
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.customer));
+
+        if (res.data.role === 'CUSTOMER') {
+          onSuccess(res.data.token, res.data.customer);
+          toast.success(isLogin ? 'Welcome back!' : 'Account created!');
+          onClose();
+        } else {
+          // Staff member logged in via storefront (role-aware)
+          toast.success(`Welcome ${res.data.role}, redirecting to portal...`);
+          if (res.data.role === 'CASHIER') {
+            window.location.href = '/staff/pos';
+          } else {
+            window.location.href = '/staff/dashboard';
+          }
+          onClose();
+        }
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Authentication failed');

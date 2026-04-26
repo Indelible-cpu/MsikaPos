@@ -26,14 +26,17 @@ export const PublicStorefront: React.FC = () => {
         setShopName((company.value as any).name || 'Msika');
       }
 
-      const storedUser = localStorage.getItem('customerUser');
-      if (storedUser) setCustomer(JSON.parse(storedUser));
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const u = JSON.parse(storedUser);
+        if (u.role === 'CUSTOMER') setCustomer(u);
+      }
     };
     loadStorefront();
   }, []);
 
   const handleInquiry = async (product: any) => {
-    const token = localStorage.getItem('customerToken');
+    const token = localStorage.getItem('token');
     if (!token) {
       setSelectedProduct(product);
       setIsAuthOpen(true);
@@ -64,8 +67,8 @@ export const PublicStorefront: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('customerToken');
-    localStorage.removeItem('customerUser');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setCustomer(null);
     toast.success('Signed out');
   };

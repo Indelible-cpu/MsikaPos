@@ -171,6 +171,7 @@ const App: React.FC = () => {
           <Route path="/" element={<PublicStorefront />} />
 
           {/* Staff Auth */}
+          <Route path="/staff" element={<Navigate to="/staff/login" replace />} />
           <Route path="/staff/login" element={<LoginPage />} />
           <Route path="/staff/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/staff/onboarding" element={localStorage.getItem('token') ? <OnboardingPage /> : <Navigate to="/staff/login" replace />} />
@@ -182,9 +183,16 @@ const App: React.FC = () => {
               localStorage.getItem('token') ? (
                 (() => {
                   const u = JSON.parse(localStorage.getItem('user') || '{}');
+                  
+                  // STRICT ROLE CHECK: Customers cannot access staff portal
+                  if (u.role === 'CUSTOMER') {
+                    return <Navigate to="/" replace />;
+                  }
+
                   if (!u.isVerified || u.mustChangePassword) {
                     return <Navigate to="/staff/onboarding" replace />;
                   }
+                  
                   return (
                     <MainLayout>
                       <Routes>
