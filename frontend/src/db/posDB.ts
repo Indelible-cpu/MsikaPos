@@ -40,6 +40,10 @@ export interface LocalSale {
   items: LocalSaleItem[];
   sellerName?: string;
   branchId?: string;
+  tax?: number;
+  bankName?: string;
+  accountNumber?: string;
+  amountReceived?: number;
 }
 
 export interface LocalCustomer {

@@ -74,7 +74,7 @@ const InquiriesPage: React.FC = () => {
               <MessageSquare className="w-8 h-8 text-primary-500" />
               Customer Inquiries
             </h1>
-            <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/30 uppercase mt-1">Live Request Management</p>
+            <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/30 italic mt-1">Live Request Management</p>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -111,12 +111,12 @@ const InquiriesPage: React.FC = () => {
         {loading && inquiries.length === 0 ? (
           <div className="py-40 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-            <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 uppercase">Awaiting customer signals...</p>
+            <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 italic">Awaiting customer signals...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
             <MessageSquare className="w-16 h-16 text-surface-text/5 mb-4" />
-            <p className="text-[10px] font-black tracking-widest text-surface-text/20 uppercase">No matching inquiries found</p>
+            <p className="text-[10px] font-black tracking-widest text-surface-text/20 italic">No matching inquiries found</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -132,16 +132,16 @@ const InquiriesPage: React.FC = () => {
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-xl font-black tracking-tight truncate">{i.customer?.fullname || 'Unknown Customer'}</h3>
-                        <p className="text-[10px] font-black text-surface-text/30 mb-3 tracking-widest uppercase">@{i.customer?.user?.username || i.customer?.username || 'user'}</p>
-                        <div className={clsx("inline-flex px-3 py-1 rounded-full text-[8px] font-black tracking-widest border uppercase", getStatusColor(i.status))}>
-                          {i.status}
+                        <p className="text-[10px] font-black text-surface-text/30 mb-3 tracking-widest italic">@{i.customer?.user?.username || i.customer?.username || 'user'}</p>
+                        <div className={clsx("inline-flex px-3 py-1 rounded-full text-[8px] font-black tracking-widest border italic", getStatusColor(i.status))}>
+                          {i.status.charAt(0) + i.status.slice(1).toLowerCase()}
                         </div>
                       </div>
                     </div>
 
                     {/* Inquiry Details */}
                     <div className="flex-1 space-y-4">
-                      <div className="flex items-center gap-3 text-[10px] font-black tracking-[0.2em] text-surface-text/20 uppercase">
+                      <div className="flex items-center gap-3 text-[10px] font-black tracking-[0.2em] text-surface-text/20 italic">
                         <Package className="w-4 h-4" />
                         Inquiry Items
                       </div>
@@ -159,17 +159,17 @@ const InquiriesPage: React.FC = () => {
                     <div className="flex flex-col justify-center gap-3 lg:w-48">
                       {i.status === 'PENDING' && (
                         <button onClick={() => updateStatus(i.id, 'SEEN')} className="w-full py-3 bg-blue-500 text-white rounded-xl text-[9px] font-black tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all">
-                          <Eye className="w-3.5 h-3.5" /> MARK AS SEEN
+                          <Eye className="w-3.5 h-3.5" /> Mark as Seen
                         </button>
                       )}
                       {(i.status === 'PENDING' || i.status === 'SEEN') && (
                         <button onClick={() => updateStatus(i.id, 'IN_PROGRESS')} className="w-full py-3 bg-primary-500 text-white rounded-xl text-[9px] font-black tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all">
-                          <Clock className="w-3.5 h-3.5" /> START WORK
+                          <Clock className="w-3.5 h-3.5" /> Start Work
                         </button>
                       )}
                       {i.status !== 'COMPLETED' && (
                         <button onClick={() => updateStatus(i.id, 'COMPLETED')} className="w-full py-3 bg-emerald-500 text-white rounded-xl text-[9px] font-black tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> COMPLETE
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Complete
                         </button>
                       )}
                     </div>

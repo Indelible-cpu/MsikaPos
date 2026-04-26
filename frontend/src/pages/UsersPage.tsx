@@ -272,7 +272,7 @@ const UsersPage: React.FC = () => {
          {loading && users.length === 0 ? (
             <div className="col-span-full py-40 flex flex-col items-center justify-center gap-4">
                <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-               <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 uppercase">Retrieving Team Intelligence...</p>
+               <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 italic">Retrieving Team Intelligence...</p>
             </div>
          ) : filteredUsers.length === 0 ? (
             <div className="col-span-full py-20 text-center text-surface-text/20 font-black text-xs tracking-widest">No team members found</div>

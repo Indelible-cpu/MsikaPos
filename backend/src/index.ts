@@ -9,6 +9,7 @@ import * as ProductCtrl from './controllers/ProductController.js';
 import * as BranchCtrl from './controllers/BranchController.js';
 import * as SyncCtrl from './controllers/SyncController.js';
 import * as ReportCtrl from './controllers/ReportController.js';
+import * as SettingsCtrl from './controllers/SettingsController.js';
 import * as DashboardCtrl from './controllers/DashboardController.js';
 import * as CreditCtrl from './controllers/CreditController.js';
 import * as CustomerCtrl from './controllers/CustomerController.js';
@@ -124,6 +125,9 @@ app.delete('/api/expenses/:id', ExpenseCtrl.deleteExpense as any);
 app.post('/api/inquiries', CustomerCtrl.createInquiry as any);
 app.get('/api/inquiries', CustomerCtrl.listInquiries as any);
 app.put('/api/inquiries/:id', CustomerCtrl.updateInquiryStatus as any);
+
+// Settings
+app.post('/api/settings', SettingsCtrl.saveSettings);
 
 app.listen(PORT, () => {
   console.log(`🚀 POS Backend running on http://localhost:${PORT}`);

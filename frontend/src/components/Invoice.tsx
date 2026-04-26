@@ -121,19 +121,6 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
         <div className="mt-4 opacity-30 text-[7px] font-bold tracking-widest">Powered by MsikaPos Cloud POS</div>
       </div>
       
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          body * { visibility: hidden; }
-          .invoice, .invoice * { visibility: visible; }
-          .invoice { 
-            margin: 0 auto;
-            width: 80mm;
-            padding: 20px;
-            box-shadow: none;
-          }
-          @page { size: 80mm auto; margin: 0; }
-        }
-      `}} />
     </div>
   );
 };

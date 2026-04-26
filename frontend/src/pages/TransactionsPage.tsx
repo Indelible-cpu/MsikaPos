@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
+import { Receipt } from '../components/Receipt';
+import { Invoice } from '../components/Invoice';
 
 const TransactionsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -122,6 +124,36 @@ const TransactionsPage: React.FC = () => {
             <div className="bg-surface-bg p-6 rounded-2xl border border-surface-border flex justify-between items-center shadow-inner">
                <div className="text-sm font-black  tracking-widest">Grand total</div>
                <div className="text-3xl font-black text-primary-400">MK {selectedSale.total.toLocaleString()}</div>
+            </div>
+
+            {/* Hidden for screen, visible for print */}
+            <div className="hidden">
+              {selectedSale.paymentMode === 'Credit' ? (
+                <Invoice 
+                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as any, quantity: item.quantity }))}
+                  total={selectedSale.total}
+                  subtotal={selectedSale.subtotal || selectedSale.total}
+                  discount={selectedSale.discount || 0}
+                  tax={selectedSale.tax || 0}
+                  invoiceNo={selectedSale.invoiceNo}
+                  date={selectedSale.createdAt}
+                />
+              ) : (
+                <Receipt 
+                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as any, quantity: item.quantity }))}
+                  total={selectedSale.total}
+                  subtotal={selectedSale.subtotal || selectedSale.total}
+                  discount={selectedSale.discount || 0}
+                  tax={selectedSale.tax || 0}
+                  invoiceNo={selectedSale.invoiceNo}
+                  date={selectedSale.createdAt}
+                  paid={selectedSale.amountReceived || selectedSale.total}
+                  change={selectedSale.changeDue || 0}
+                  mode={selectedSale.paymentMode}
+                  bankName={selectedSale.bankName}
+                  accountNumber={selectedSale.accountNumber}
+                />
+              )}
             </div>
 
             <div className="flex gap-4">

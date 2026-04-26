@@ -188,6 +188,7 @@ const POSPage: React.FC = () => {
         paymentMode,
         bankName: (paymentMode === 'Card' || paymentMode === 'Momo') ? bankName : undefined,
         accountNumber: (paymentMode === 'Card' || paymentMode === 'Momo') ? accountNumber : undefined,
+        amountReceived: parseFloat(amountReceived) || paid,
         customerId: selectedCustomerId || undefined,
         createdAt: new Date().toISOString(),
         synced: 0
@@ -235,7 +236,9 @@ const POSPage: React.FC = () => {
       toast.success('Sale Completed!');
       
       if (printReceipt) {
-        setTimeout(() => window.print(), 500);
+        setTimeout(() => {
+          window.print();
+        }, 800);
       }
     } catch (err) {
       soundService.playError();

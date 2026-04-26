@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type LocalSale, type LocalSaleItem } from '../db/posDB';
 import { 
-  Receipt, 
+  Receipt as ReceiptIcon, 
   Search, 
   TrendingUp, 
   DollarSign, 
@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
+import { Receipt } from '../components/Receipt';
+import { Invoice } from '../components/Invoice';
 
 const SalesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,7 +58,7 @@ const SalesPage: React.FC = () => {
           </div>
           <div className="hidden lg:block bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
              <div className="flex items-center gap-2 mb-2 text-surface-text/40">
-                <Receipt className="w-3 h-3" />
+                <ReceiptIcon className="w-3 h-3" />
                 <span className="text-[10px] font-bold">Orders</span>
              </div>
              <div className="text-xl font-black">{todaySales.length}</div>
@@ -80,7 +82,7 @@ const SalesPage: React.FC = () => {
         <div className="bg-surface-card border-y md:border md:rounded-3xl border-surface-border overflow-hidden divide-y divide-surface-border">
           {filteredSales?.length === 0 ? (
             <div className="p-20 flex flex-col items-center justify-center text-surface-text/20 font-bold text-sm">
-              <Receipt className="w-16 h-16 mb-4 opacity-20" /> No transactions found
+              <ReceiptIcon className="w-16 h-16 mb-4 opacity-20" /> No transactions found
             </div>
           ) : (
             filteredSales?.map((sale) => (
@@ -133,6 +135,36 @@ const SalesPage: React.FC = () => {
                 <span className="text-lg font-black tracking-tighter">Grand total</span>
                 <span className="text-2xl font-black text-primary-400">MK {selectedSale.total.toLocaleString()}</span>
               </div>
+            </div>
+
+            {/* Hidden for screen, visible for print */}
+            <div className="hidden">
+              {selectedSale.paymentMode === 'Credit' ? (
+                <Invoice 
+                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as any, quantity: item.quantity }))}
+                  total={selectedSale.total}
+                  subtotal={selectedSale.subtotal || selectedSale.total}
+                  discount={selectedSale.discount || 0}
+                  tax={selectedSale.tax || 0}
+                  invoiceNo={selectedSale.invoiceNo}
+                  date={selectedSale.createdAt}
+                />
+              ) : (
+                <Receipt 
+                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as any, quantity: item.quantity }))}
+                  total={selectedSale.total}
+                  subtotal={selectedSale.subtotal || selectedSale.total}
+                  discount={selectedSale.discount || 0}
+                  tax={selectedSale.tax || 0}
+                  invoiceNo={selectedSale.invoiceNo}
+                  date={selectedSale.createdAt}
+                  paid={selectedSale.amountReceived || selectedSale.total}
+                  change={selectedSale.changeDue || 0}
+                  mode={selectedSale.paymentMode}
+                  bankName={selectedSale.bankName}
+                  accountNumber={selectedSale.accountNumber}
+                />
+              )}
             </div>
 
             <div className="flex gap-4">

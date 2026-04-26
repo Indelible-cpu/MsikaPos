@@ -86,7 +86,7 @@ const Sidebar: React.FC = () => {
           >
             {({ isActive }) => (
               <>
-                <tab.icon className={clsx("w-5 h-5 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 3 : 2} />
+                <tab.icon className={clsx("w-6 h-6 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 3 : 2} />
                 <span className="truncate">{tab.label}</span>
                 {tab.badge ? (
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[8px] font-black border-2 border-surface-card animate-pulse shadow-lg shadow-rose-500/20">

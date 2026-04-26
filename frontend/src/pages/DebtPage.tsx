@@ -274,7 +274,7 @@ const DebtPage: React.FC = () => {
                 )}
               </div>
               <div className="bg-surface-bg/50 p-6 rounded-none border border-surface-border flex flex-col justify-center items-center text-center opacity-40 italic">
-                <div className="text-[10px] font-bold text-surface-text/30 mb-2 tracking-widest uppercase">Manual Credit Blocked</div>
+                <div className="text-[10px] font-bold text-surface-text/30 mb-2 tracking-widest italic">Manual Credit Blocked</div>
                 <div className="text-[8px] font-bold">Credit must only be added through POS Terminal for audit security.</div>
               </div>
             </div>

@@ -49,7 +49,7 @@ const MobileNav: React.FC = () => {
                     "transition-all duration-300 flex items-center justify-center relative",
                     isActive ? "scale-110 opacity-100" : "opacity-60"
                   )}>
-                    <tab.icon className={clsx("w-5 h-5")} strokeWidth={isActive ? 3 : 2} />
+                    <tab.icon className={clsx("w-6 h-6")} strokeWidth={isActive ? 3 : 2} />
                     {tab.badge ? (
                       <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center text-[7px] font-black border border-surface-card animate-pulse shadow-lg shadow-rose-500/20">
                         {tab.badge}
@@ -57,7 +57,7 @@ const MobileNav: React.FC = () => {
                     ) : null}
                   </div>
                   <span className={clsx(
-                    "text-[8px] font-black tracking-[0.2em] mt-1.5 transition-all italic",
+                    "text-[9px] font-black tracking-[0.2em] mt-1.5 transition-all italic",
                     isActive ? "text-black dark:text-white opacity-100" : "text-surface-text opacity-80"
                   )}>
                     {tab.label}

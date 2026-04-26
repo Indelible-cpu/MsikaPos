@@ -24,6 +24,7 @@ import MainLayout from './components/MainLayout';
 import { db } from './db/posDB';
 import { initDB } from './db/seedData';
 import { AuditService } from './services/AuditService';
+import api from './api/client';
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
@@ -105,6 +106,25 @@ const App: React.FC = () => {
         if (val?.start === '20:00' || val?.start === '23:59') {
           await db.settings.put({ key: 'lockout_hours', value: { start: '05:00', end: '06:00' } });
         }
+        
+        // Sync Company Settings with Cloud
+        try {
+          const res = await api.get('/public/settings');
+          if (res.data?.success && res.data.data) {
+            const settings = res.data.data;
+            if (settings.companyName) {
+              await db.settings.put({ key: 'company_config', value: { name: settings.companyName } });
+              localStorage.setItem('companyName', settings.companyName);
+            }
+            if (settings.logo) {
+              localStorage.setItem('companyLogo', settings.logo);
+            }
+            window.dispatchEvent(new Event('storage'));
+          }
+        } catch (err) {
+          console.error("Failed to sync remote settings", err);
+        }
+
       } catch (e) {
         console.error("Seed failed", e);
       }
@@ -159,7 +179,6 @@ const App: React.FC = () => {
             fontSize: '13px',
             letterSpacing: '0.05em',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            textTransform: 'uppercase',
             fontStyle: 'italic'
           },
           duration: 3000,

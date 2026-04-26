@@ -5,6 +5,7 @@ import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
 import { AuditService } from '../services/AuditService';
+import api from '../api/client';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -59,7 +60,16 @@ const SettingsPage: React.FC = () => {
     try {
       await db.settings.put({ key: 'company_config', value: { name: companyName } });
       localStorage.setItem('companyName', companyName);
+      
+      const token = localStorage.getItem('token');
+      if (token) {
+        await api.post('/settings', { companyName }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
       toast.success('Company information updated');
+      window.dispatchEvent(new Event('storage'));
     } catch {
       toast.error('Failed to save company info');
     }
@@ -145,13 +155,25 @@ const SettingsPage: React.FC = () => {
                          const file = e.target.files?.[0];
                          if (file) {
                             const reader = new FileReader();
-                            reader.onloadend = () => {
-                               const updatedUser = { ...user, profile_pic: reader.result as string };
-                               localStorage.setItem('user', JSON.stringify(updatedUser));
-                               toast.success('Profile picture updated');
-                               window.location.reload();
-                            };
-                            reader.readAsDataURL(file);
+                            reader.onloadend = async () => {
+                                    const base64Logo = reader.result as string;
+                                    localStorage.setItem('companyLogo', base64Logo);
+                                    
+                                    try {
+                                      const token = localStorage.getItem('token');
+                                      if (token) {
+                                        await api.post('/settings', { logo: base64Logo }, {
+                                          headers: { Authorization: `Bearer $token` }
+                                        });
+                                      }
+                                      toast.success('Logo updated');
+                                      window.dispatchEvent(new Event('storage'));
+                                      window.location.reload();
+                                    } catch (err) {
+                                      toast.error('Failed to save logo to database');
+                                    }
+                                 };
+                                 reader.readAsDataURL(file);
                          }
                       }}
                    />
@@ -178,9 +200,9 @@ const SettingsPage: React.FC = () => {
                 {isSuperAdmin && (
                   <div className="p-8 border-b border-surface-border/50 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 group hover:bg-primary-500/5 transition-colors">
                     <div className="flex items-center gap-6">
-                       <div className="w-20 h-20 rounded-full border-2 border-primary-500/40 overflow-hidden bg-surface-bg flex items-center justify-center shrink-0 shadow-xl shadow-primary-500/5 group-hover:border-primary-500 transition-all p-1">
+                       <div className="w-20 h-20 flex items-center justify-center shrink-0">
                           {localStorage.getItem('companyLogo') ? (
-                             <img src={localStorage.getItem('companyLogo')!} alt="Company Logo" className="w-full h-full object-contain rounded-full" />
+                             <img src={localStorage.getItem('companyLogo')!} alt="Company Logo" className="w-full h-full object-contain" />
                           ) : (
                              <Store className="w-8 h-8 text-surface-text/20" />
                           )}
@@ -202,13 +224,25 @@ const SettingsPage: React.FC = () => {
                              const file = e.target.files?.[0];
                              if (file) {
                                 const reader = new FileReader();
-                                reader.onloadend = () => {
-                                   localStorage.setItem('companyLogo', reader.result as string);
-                                   toast.success('Logo updated');
-                                   window.dispatchEvent(new Event('storage'));
-                                   window.location.reload();
-                                };
-                                reader.readAsDataURL(file);
+                                reader.onloadend = async () => {
+                                    const base64Logo = reader.result as string;
+                                    localStorage.setItem('companyLogo', base64Logo);
+                                    
+                                    try {
+                                      const token = localStorage.getItem('token');
+                                      if (token) {
+                                        await api.post('/settings', { logo: base64Logo }, {
+                                          headers: { Authorization: `Bearer ${token}` }
+                                        });
+                                      }
+                                      toast.success('Logo updated');
+                                      window.dispatchEvent(new Event('storage'));
+                                      window.location.reload();
+                                    } catch (err) {
+                                      toast.error('Failed to save logo to database');
+                                    }
+                                 };
+                                 reader.readAsDataURL(file);
                              }
                           }} 
                        />
@@ -481,3 +515,4 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
+
