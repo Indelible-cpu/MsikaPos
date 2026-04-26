@@ -285,6 +285,10 @@ const LoginPage: React.FC = () => {
           <Link to="/about" className="hidden md:block text-[10px] font-black tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
             About MsikaPos
           </Link>
+
+          <div className="pt-4 text-center">
+            <p className="text-[8px] font-black tracking-[0.3em] text-surface-text/10 uppercase italic">Developed by James Dickson Petro</p>
+          </div>
         </div>
 
         {/* Biometric Registration Prompt */}

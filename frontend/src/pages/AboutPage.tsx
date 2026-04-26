@@ -141,6 +141,11 @@ const AboutPage: React.FC = () => {
             </div>
           </div>
           
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] uppercase italic">System Developer</p>
+            <p className="text-sm font-black italic tracking-tight text-primary-500">James Dickson Petro</p>
+          </div>
+          
           <p className="text-[9px] font-black text-surface-text/10 tracking-[0.4em] uppercase pb-10">© 2026 MsikaPos • Indelible-cpu</p>
         </footer>
       </main>
