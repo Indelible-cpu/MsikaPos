@@ -112,7 +112,7 @@ const ReportsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-4 md:px-8 pt-6">
+    <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0 px-4 md:px-8 pt-6">
       <header className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>

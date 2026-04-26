@@ -30,7 +30,7 @@ const SalesPage: React.FC = () => {
   }, 0);
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
+    <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0">
       <header className="p-6 bg-surface-card border-b border-surface-border sticky top-0 z-30">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
