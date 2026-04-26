@@ -90,7 +90,7 @@ export const PublicStorefront: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            {customer ? (
+            {customer && (
               <div className="flex items-center gap-4">
                 <div className="text-right hidden md:block">
                   <p className="text-[9px] font-black tracking-widest text-surface-text/30">LOGGED IN AS</p>
@@ -104,13 +104,6 @@ export const PublicStorefront: React.FC = () => {
                   <UserIcon className="w-5 h-5" />
                 </button>
               </div>
-            ) : (
-              <button 
-                onClick={() => setIsAuthOpen(true)}
-                className="px-6 py-3 bg-primary-500 text-white rounded-full text-[10px] font-black tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary-500/20"
-              >
-                Sign In
-              </button>
             )}
           </div>
         </div>
