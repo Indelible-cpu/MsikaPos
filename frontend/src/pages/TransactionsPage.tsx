@@ -5,7 +5,6 @@ import {
   Search, 
   ArrowLeftRight, 
   Download, 
-  History,
   ArrowRightCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -36,12 +35,7 @@ const TransactionsPage: React.FC = () => {
       <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <div className="hidden md:flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
-                <History className="w-6 h-6" />
-              </div>
-              <h1 className="text-2xl font-black tracking-tighter  italic">Transactions</h1>
-            </div>
+            <div className="flex-1"></div>
             <button className="btn-primary !px-6 !py-4 text-[10px] font-black  tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2 w-full md:w-auto justify-center">
               <Download className="w-4 h-4" /> Export report
             </button>

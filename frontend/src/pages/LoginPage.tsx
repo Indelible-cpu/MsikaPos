@@ -323,7 +323,7 @@ const LoginPage: React.FC = () => {
             About MsikaPos
           </Link>
 
-          <Link to="/forgot-password" className="text-[10px] font-black  tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
+          <Link to="/staff/forgot-password" className="text-[10px] font-black  tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
              Forgot Password?
           </Link>
 

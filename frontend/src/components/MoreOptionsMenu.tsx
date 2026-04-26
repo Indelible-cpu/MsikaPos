@@ -8,7 +8,8 @@ import {
   Building2,
   Info,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -28,6 +29,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
     { id: 'expenses', label: 'Expenses', icon: Wallet, path: '/staff/expenses', color: 'bg-rose-500' },
     { id: 'team', label: 'Staff', icon: Users, path: '/staff/users', color: 'bg-primary-500' },
     { id: 'branches', label: 'Branches', icon: Building2, path: '/staff/branches', color: 'bg-blue-500' },
+    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/staff/reports', color: 'bg-violet-500' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/staff/settings', color: 'bg-slate-500' },
     { id: 'about', label: 'Support', icon: Info, path: '/staff/about', color: 'bg-indigo-500' },
   ];
@@ -57,12 +59,8 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed bottom-0 left-0 right-0 bg-surface-card border-t border-surface-border rounded-t-[3rem] z-[70] p-0 pb-12 max-h-[90vh] overflow-y-auto"
           >
-            <div className="text-center mb-8">
-               <h2 className="text-2xl font-black tracking-tighter italic">More Options</h2>
-               <p className="text-[10px] font-black tracking-widest text-surface-text/30 mt-1">Management & Support</p>
-            </div>
-
-            <div className="grid grid-cols-4 gap-y-10 gap-x-2 px-6">
+            {/* Top padding to account for removed header */}
+            <div className="pt-8 grid grid-cols-4 gap-y-10 gap-x-2 px-6">
               {options.map((opt) => (
                 <NavLink
                   key={opt.id}

@@ -227,11 +227,7 @@ const InventoryPage: React.FC = () => {
   return (
     <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0">
       <div className="p-0">
-        <header className="hidden md:flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <h2 className="section-title !mb-0">
-            <Package className="w-6 h-6 text-primary-500" />
-            Inventory Intelligence
-          </h2>
+        <header className="hidden md:flex flex-row justify-end gap-6 mb-10">
           <div className="flex items-center gap-3">
               <button 
                 onClick={() => setIsCategoryModalOpen(true)}

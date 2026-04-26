@@ -30,7 +30,8 @@ export default function MobileHeader() {
   }, []);
 
   const getPageTitle = (pathname: string) => {
-    switch (pathname) {
+    const path = pathname.replace('/staff', '');
+    switch (path) {
       case '/dashboard': return 'Overview';
       case '/pos': return 'Point of Sale';
       case '/inventory': return 'Stock Management';
@@ -44,6 +45,7 @@ export default function MobileHeader() {
       case '/users': return 'Team Management';
       case '/onboarding': return 'Setup';
       case '/about': return 'About MsikaPos';
+      case '/inquiries': return 'Inquiries';
       default: return 'System';
     }
   };
@@ -52,7 +54,7 @@ export default function MobileHeader() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[50] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
+      <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[50] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
         <div className="flex items-center gap-3 overflow-hidden">
           {isBasePage ? (
             <motion.div 
@@ -77,7 +79,7 @@ export default function MobileHeader() {
             <span className="text-[14px] font-black tracking-tighter italic text-primary-500 leading-none truncate">
               {shopName}
             </span>
-            <span className="card-label !mb-0 truncate">
+            <span className="text-[10px] font-black tracking-[0.2em] text-surface-text/60 italic uppercase truncate !mb-0">
               {getPageTitle(location.pathname)}
             </span>
           </div>

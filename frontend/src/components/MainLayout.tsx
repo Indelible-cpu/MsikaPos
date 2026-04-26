@@ -20,19 +20,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {!hideNav && <Sidebar />}
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        {/* Dynamic Mobile Header */}
-        {!hideNav && (
-          <div className="md:hidden">
-            <MobileHeader />
-          </div>
-        )}
+        {/* Dynamic Global Header */}
+        {!hideNav && <MobileHeader />}
 
         {/* Main Content Area */}
         <main 
           ref={mainRef}
           className={clsx(
             "flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth",
-            "pb-24 md:pb-0 pt-[calc(64px+env(safe-area-inset-top))] md:pt-0",
+            "pb-24 md:pb-0 pt-0",
             "px-0 max-w-full transition-transform duration-300 ease-out"
           )}
         >

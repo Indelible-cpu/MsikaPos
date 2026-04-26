@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Store, Smartphone, Building2, Settings, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus, Wallet } from 'lucide-react';
+import { User, Store, Smartphone, Building2, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus, Wallet } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
@@ -120,13 +120,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full bg-surface-bg transition-all pb-32">
-       {/* Desktop Header Only - Mobile uses MainLayout header */}
-       <header className="hidden md:flex px-10 py-10 bg-transparent border-b border-surface-border sticky top-0 z-30">
-          <h2 className="section-title !mb-0">
-            <Settings className="w-6 h-6 text-primary-500" />
-            Account & System Settings
-          </h2>
-       </header>
+
 
        <div className="p-4 md:p-10 space-y-6 md:space-y-10">
           {/* User Profile Section */}

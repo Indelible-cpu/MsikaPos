@@ -167,8 +167,9 @@ const App: React.FC = () => {
       />
       <div className="min-h-screen selection:bg-primary-500/30">
         <Routes>
-          {/* Public Storefront */}
+          {/* Public Routes */}
           <Route path="/" element={<PublicStorefront />} />
+          <Route path="/about" element={<AboutPage />} />
 
           {/* Staff Auth */}
           <Route path="/staff" element={<Navigate to="/staff/login" replace />} />
