@@ -169,20 +169,21 @@ const InventoryPage: React.FC = () => {
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const productData = {
+        ...formData,
+        quantity: formData.isService ? 1 : formData.quantity,
+        updatedAt: new Date().toISOString()
+      };
+
       if (editingProduct) {
-        await db.products.update(editingProduct.id, {
-          ...formData,
-          updatedAt: new Date().toISOString(),
-        });
+        await db.products.update(editingProduct.id, productData);
         toast.success('Product updated');
       } else {
-        const newId = generateNumericId();
         await db.products.add({
-          ...formData,
-          id: newId,
+          ...productData,
+          id: generateNumericId(),
           status: 'ACTIVE',
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         });
         toast.success('Product added to inventory');
       }
@@ -368,13 +369,17 @@ const InventoryPage: React.FC = () => {
                     "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black  tracking-widest",
                     product.quantity <= 5 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                   )}>
-                    {product.quantity <= 5 ? <AlertTriangle className="w-3 h-3" /> : <Package className="w-3 h-3" />}
-                    {product.quantity} in stock
+                    {product.isService ? <CheckCircle2 className="w-3 h-3" /> : (product.quantity <= 5 ? <AlertTriangle className="w-3 h-3" /> : <Package className="w-3 h-3" />)}
+                    {product.isService ? 'Service Item' : `${product.quantity} in stock`}
                   </div>
                 </div>
                 <div className="px-6 py-4 bg-surface-bg/30 border-t border-surface-border flex justify-between items-center text-[9px] font-black  tracking-widest text-surface-text/40">
-                  <span>Stock Profit: MK {((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
-                  <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                  {!product.isService && (
+                    <>
+                      <span>Stock Profit: MK {((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
+                      <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+                    </>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -411,10 +416,12 @@ const InventoryPage: React.FC = () => {
               <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-sell">Sell price</label>
               <input required id="product-sell" type="number" className="input-field w-full font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
             </div>
-            <div className="space-y-1 col-span-2">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-qty">Opening Stock Quantity</label>
-              <input required id="product-qty" type="number" className="input-field w-full font-black" title="Opening Stock Quantity" aria-label="Opening Stock Quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
-            </div>
+            {!formData.isService && (
+              <div className="space-y-1 col-span-2">
+                <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-qty">Opening Stock Quantity</label>
+                <input required id="product-qty" type="number" className="input-field w-full font-black" title="Opening Stock Quantity" aria-label="Opening Stock Quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              </div>
+            )}
             <div className="space-y-1 col-span-2">
               <label className="flex items-center gap-3 p-4 bg-surface-bg border border-surface-border rounded-2xl cursor-pointer group hover:border-primary-500/20 transition-all">
                 <input 
@@ -439,7 +446,7 @@ const InventoryPage: React.FC = () => {
 
       {/* Category Modal */}
       <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} title="Manage Categories">
-        <div className="p-8 space-y-8">
+        <div className="w-full space-y-10 px-4 md:px-10">
           <div className="space-y-2">
             <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="new-category">Create new category</label>
             <div className="flex gap-2">

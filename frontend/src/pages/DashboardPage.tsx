@@ -74,7 +74,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <div className="p-4 md:p-10 space-y-10">
+      <div className="px-0 py-0 md:px-0 md:py-0">
         <div className="flex items-center justify-between">
            <h2 className="section-title !mb-0">
              <TrendingUp className="w-6 h-6 text-primary-500" />
@@ -282,7 +282,7 @@ const DashboardPage: React.FC = () => {
               <h3 className="text-sm font-black italic text-surface-text/40">Active Credits</h3>
               <button onClick={() => navigate('/debt')} className="text-[10px] font-black text-primary-400 hover:underline">Manage all</button>
            </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+           <div className="p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
               {creditCustomers?.slice(0, 6).map((customer, i) => (
                 <div key={i} className="flex justify-between items-center p-4 bg-surface-bg/50 rounded-2xl border border-surface-border group hover:border-amber-500/20 transition-all">
                    <div className="flex items-center gap-3">

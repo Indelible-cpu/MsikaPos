@@ -92,6 +92,7 @@ export interface LocalBranch {
   phone: string;
   email?: string;
   facebook?: string;
+  whatsapp?: string;
   logo?: string;
   slogan?: string;
   status: 'ACTIVE' | 'INACTIVE';
@@ -122,7 +123,7 @@ export class POSDatabase extends Dexie {
 
   constructor() {
     super('JEF_POS_DB');
-    this.version(7).stores({
+    this.version(8).stores({
       products: 'id, categoryId, sku, name',
       categories: 'id, slug',
       salesQueue: 'id, status, synced, createdAt',

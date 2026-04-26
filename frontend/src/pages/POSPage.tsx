@@ -356,14 +356,11 @@ const POSPage: React.FC = () => {
         )}
 
         {showCustomerSelector && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card border border-surface-border rounded-3xl w-full max-w-md shadow-2xl flex flex-col max-h-[80vh] overflow-hidden">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[120] flex items-center justify-center md:p-4 bg-black/60 backdrop-blur-md">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card md:border md:border-surface-border md:rounded-3xl w-full max-w-md h-full md:h-auto md:max-h-[80vh] shadow-2xl flex flex-col overflow-hidden">
               <div className="p-6 border-b border-surface-border bg-surface-bg/30">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-black tracking-tighter italic">Attach Customer</h3>
-                  <button onClick={() => setShowCustomerSelector(false)} className="p-2 hover:bg-surface-bg rounded-xl" title="Close" aria-label="Close">
-                    <X className="w-5 h-5"/>
-                  </button>
                 </div>
                 
                 {!isAddingCustomer ? (
@@ -491,10 +488,10 @@ const POSPage: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div className="p-4 border-t border-surface-border bg-surface-bg/10">
+              <div className="border-t border-surface-border bg-surface-bg/10">
                 <button 
                   onClick={() => { setShowCustomerSelector(false); stopCamera(); }}
-                  className="w-full py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all active:scale-[0.98]"
+                  className="w-full h-14 bg-surface-bg text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all active:scale-[0.98]"
                 >
                   Cancel & Close
                 </button>
@@ -592,7 +589,7 @@ const POSPage: React.FC = () => {
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-8">
+        <main className="w-full p-4 md:p-10 space-y-10">
           {/* Products Results Section */}
           {/* Products Results Section */}
           {searchTerm.length >= 2 && (
@@ -625,7 +622,7 @@ const POSPage: React.FC = () => {
           )}
 
           {/* Cart Section - Naturally follows products flow */}
-          <div className="max-w-4xl mx-auto pb-32">
+          <div className="w-full pb-32 px-4 md:px-10">
             <div className="flex items-center justify-between mb-10 px-4">
                <h2 className="section-title !mb-0">
                   <ShoppingCart className="w-6 h-6 text-primary-500" />

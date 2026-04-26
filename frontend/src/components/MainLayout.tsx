@@ -94,11 +94,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           className={clsx(
             "flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth",
             "pb-24 md:pb-0 pt-[calc(64px+env(safe-area-inset-top))] md:pt-0",
-            "px-0 md:px-[0.1rem] max-w-full",
+            "px-0 max-w-full",
             isPulling ? "transition-none" : "transition-transform duration-300 ease-out"
           )}
         >
-          <div className="w-full mx-auto mt-[0.1rem] py-0 min-h-full">
+          <div className="w-full mx-auto py-0 min-h-full">
             {children}
           </div>
         </main>

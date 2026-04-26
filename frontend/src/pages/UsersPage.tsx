@@ -88,8 +88,11 @@ const UsersPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
-    fetchBranches();
+    const init = async () => {
+      await fetchUsers();
+      await fetchBranches();
+    };
+    init();
   }, [fetchUsers, fetchBranches]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -112,7 +115,7 @@ const UsersPage: React.FC = () => {
       fetchUsers();
       setEditingUser(null);
     } catch (err: unknown) {
-      const error = err as any;
+      const error = err as { response?: { data?: { message?: string } } };
       toast.error(error.response?.data?.message || 'Failed to save user');
     } finally {
       setLoading(false);
@@ -155,7 +158,7 @@ const UsersPage: React.FC = () => {
   const handleAction = async () => {
     if (!actionModal.user || !actionModal.type) return;
     
-    let finalReason = actionModal.reason;
+    const finalReason = actionModal.reason;
     if (actionModal.type !== 'REACTIVATE' && !finalReason) {
       return toast.error("Please provide a reason");
     }
@@ -170,7 +173,7 @@ const UsersPage: React.FC = () => {
           }
         });
       } else {
-        const statusMap: any = {
+        const statusMap: Record<string, string> = {
           SUSPEND: 'SUSPENDED',
           DEACTIVATE: 'DEACTIVATED',
           REACTIVATE: 'ACTIVE'
@@ -185,8 +188,9 @@ const UsersPage: React.FC = () => {
       toast.success("Action completed successfully");
       setActionModal({ isOpen: false, type: null, user: null, reason: '' });
       fetchUsers();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Action failed");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Action failed");
     } finally {
       setLoading(false);
     }
@@ -226,7 +230,7 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
+      <header className="px-0 py-0 md:px-0 md:py-0 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="hidden md:flex items-center gap-3">
@@ -256,7 +260,7 @@ const UsersPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="p-0 md:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-6">
+      <div className="p-0 md:p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
          {filteredUsers.length === 0 ? (
             <div className="col-span-full py-20 text-center text-surface-text/20 font-black text-xs tracking-widest">No team members found</div>
          ) : (
@@ -399,6 +403,8 @@ const UsersPage: React.FC = () => {
                 <div className="p-4 bg-surface-bg rounded-2xl border border-surface-border flex items-center justify-between">
                   <span className="font-black tracking-widest text-primary-500">{tempPassword}</span>
                   <button 
+                    title="Copy Password"
+                    aria-label="Copy Password"
                     onClick={() => {
                       navigator.clipboard.writeText(tempPassword || '');
                       toast.success('Password copied');
@@ -418,6 +424,8 @@ const UsersPage: React.FC = () => {
                       {window.location.origin}/onboarding?magicToken={magicToken}
                     </span>
                     <button 
+                      title="Copy Magic Link"
+                      aria-label="Copy Magic Link"
                       onClick={() => {
                         const link = `${window.location.origin}/onboarding?magicToken=${magicToken}`;
                         navigator.clipboard.writeText(link);
@@ -469,6 +477,8 @@ const UsersPage: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black tracking-widest text-surface-text/30 ml-1">Select Reason</label>
                 <select 
+                  title="Select Reason"
+                  aria-label="Select Reason"
                   className="input-field w-full h-14 text-sm font-bold bg-surface-bg appearance-none"
                   value={PREDEFINED_REASONS[actionModal.type as keyof typeof PREDEFINED_REASONS]?.includes(actionModal.reason) ? actionModal.reason : "Other (Type manually)"}
                   onChange={(e) => {

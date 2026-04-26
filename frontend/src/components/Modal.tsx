@@ -24,34 +24,27 @@ const Modal: React.FC<ModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-900/60 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-center justify-center md:p-4 bg-zinc-900/60 backdrop-blur-md"
         >
           <motion.div 
             onClick={(e) => e.stopPropagation()}
             initial={{ y: 20, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 20, opacity: 0, scale: 0.95 }}
-            className={`bg-surface-card border border-surface-border rounded-3xl w-full ${maxWidth} shadow-2xl overflow-hidden flex flex-col`}
+            className={`bg-surface-card md:border md:border-surface-border md:rounded-3xl w-full ${maxWidth} h-full md:h-auto md:max-h-[90vh] shadow-2xl overflow-hidden flex flex-col`}
           >
             <div className="p-6 border-b border-surface-border flex justify-between items-center bg-surface-bg/30">
               <h2 className="text-xl font-black tracking-tighter">{title}</h2>
-              <button 
-                onClick={onClose}
-                title="Close"
-                className="p-2 hover:bg-surface-bg rounded-xl transition-colors"
-              >
-                <X className="w-5 h-5 text-surface-text/40" />
-              </button>
             </div>
             
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {children}
             </div>
 
-            <div className="p-4 border-t border-surface-border bg-surface-bg/10">
+            <div className="border-t border-surface-border bg-surface-bg/10">
               <button 
                 onClick={onClose}
-                className="w-full py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all active:scale-[0.98]"
+                className="w-full h-14 bg-surface-bg text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all active:scale-[0.98]"
               >
                 Close Window
               </button>
