@@ -8,6 +8,9 @@ export const SyncService = {
       .equals(0)
       .toArray();
 
+    const deviceId = localStorage.getItem('deviceId') || 'unknown';
+    const lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp');
+
     try {
       // 1. Check if server is alive first
       try {
