@@ -30,11 +30,9 @@ const DashboardPage: React.FC = () => {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [credits, setCredits] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
       try {
         const [dashRes, expRes, prodRes, credRes] = await Promise.all([
           api.get('/dashboard/stats'),
@@ -48,8 +46,6 @@ const DashboardPage: React.FC = () => {
         if (credRes.data.success) setCredits(credRes.data.data);
       } catch (e) {
         console.error('Dashboard load error:', e);
-      } finally {
-        setLoading(false);
       }
     };
     load();
@@ -188,7 +184,7 @@ const DashboardPage: React.FC = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={chartData}>
                     <Bar dataKey="customers" radius={[10, 10, 0, 0]}>
-                      {chartData.map((_, index) => (
+                      {chartData.map((_: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={index === chartData.length - 1 ? 'var(--color-primary-500)' : 'rgba(255,255,255,0.1)'} />
                       ))}
                     </Bar>
