@@ -125,14 +125,17 @@ export const loginCustomer = async (req: Request, res: Response) => {
 
 export const createInquiry = async (req: AuthRequest, res: Response) => {
   const { items } = req.body;
-  const customerId = req.user?.id;
+  const userId = req.user?.id;
 
-  if (!customerId) return res.status(401).json({ message: 'Unauthorized' });
+  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
+    const customer = await prisma.customer.findUnique({ where: { userId } });
+    if (!customer) return res.status(404).json({ message: 'Customer profile not found' });
+
     const inquiry = await prisma.inquiry.create({
       data: {
-        customerId,
+        customerId: customer.id,
         items: JSON.stringify(items),
         status: 'PENDING'
       },
@@ -146,20 +149,27 @@ export const createInquiry = async (req: AuthRequest, res: Response) => {
 };
 
 export const listInquiries = async (req: AuthRequest, res: Response) => {
-  const customerId = req.user?.id;
+  const userId = req.user?.id;
   const role = req.user?.role;
 
   try {
     let inquiries;
     if (role === 'CUSTOMER') {
+      const customer = await prisma.customer.findUnique({ where: { userId } });
+      if (!customer) return res.status(200).json({ success: true, data: [] });
+
       inquiries = await prisma.inquiry.findMany({
-        where: { customerId },
+        where: { customerId: customer.id },
         orderBy: { createdAt: 'desc' }
       });
     } else {
       // Staff view
       inquiries = await prisma.inquiry.findMany({
-        include: { customer: true },
+        include: { 
+          customer: {
+            include: { user: true }
+          }
+        },
         orderBy: { createdAt: 'desc' }
       });
     }

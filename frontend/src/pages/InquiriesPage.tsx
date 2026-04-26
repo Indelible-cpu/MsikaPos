@@ -47,8 +47,10 @@ const InquiriesPage: React.FC = () => {
   };
 
   const filtered = inquiries.filter(i => {
-    const matchesSearch = i.customer?.fullname.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          i.customer?.username.toLowerCase().includes(searchTerm.toLowerCase());
+    const fullname = i.customer?.fullname || '';
+    const username = i.customer?.user?.username || i.customer?.username || '';
+    const matchesSearch = fullname.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          username.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || i.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -129,8 +131,8 @@ const InquiriesPage: React.FC = () => {
                         <User className="w-8 h-8" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-xl font-black tracking-tight truncate">{i.customer?.fullname}</h3>
-                        <p className="text-[10px] font-black text-surface-text/30 mb-3 tracking-widest uppercase">@{i.customer?.username}</p>
+                        <h3 className="text-xl font-black tracking-tight truncate">{i.customer?.fullname || 'Unknown Customer'}</h3>
+                        <p className="text-[10px] font-black text-surface-text/30 mb-3 tracking-widest uppercase">@{i.customer?.user?.username || i.customer?.username || 'user'}</p>
                         <div className={clsx("inline-flex px-3 py-1 rounded-full text-[8px] font-black tracking-widest border uppercase", getStatusColor(i.status))}>
                           {i.status}
                         </div>
