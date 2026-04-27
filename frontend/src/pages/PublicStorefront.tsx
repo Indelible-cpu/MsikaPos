@@ -20,6 +20,7 @@ export const PublicStorefront: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
+  const categoryNavRef = useRef<HTMLDivElement>(null);
 
   const CUSTOM_CATEGORIES = [
     'Phone Accessories',
@@ -42,6 +43,21 @@ export const PublicStorefront: React.FC = () => {
     localStorage.setItem('theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
+
+  const checkCategoryScroll = () => {
+    const el = categoryNavRef.current;
+    if (!el) return;
+    const leftFade = document.getElementById('fade-left');
+    const rightFade = document.getElementById('fade-right');
+    if (leftFade) leftFade.style.opacity = el.scrollLeft > 20 ? '1' : '0';
+    if (rightFade) rightFade.style.opacity = el.scrollLeft < (el.scrollWidth - el.clientWidth - 20) ? '1' : '0';
+  };
+
+  useEffect(() => {
+    checkCategoryScroll();
+    window.addEventListener('resize', checkCategoryScroll);
+    return () => window.removeEventListener('resize', checkCategoryScroll);
+  }, [categories]);
 
   const toggleLike = (id: number) => {
     const newLiked = new Set(likedItems);
@@ -274,19 +290,14 @@ export const PublicStorefront: React.FC = () => {
 
       {/* Category Filter Bar (Fixed) */}
       <div className="w-full bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border relative">
-        {/* Dynamic Fading Edges */}
-        <div id="fade-left" className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-surface-bg to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300"></div>
-        <div id="fade-right" className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-surface-bg to-transparent z-10 pointer-events-none transition-opacity duration-300"></div>
+        {/* Dynamic Fading Edges - Increased Intensity */}
+        <div id="fade-left" className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-surface-bg via-surface-bg/60 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-500"></div>
+        <div id="fade-right" className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-surface-bg via-surface-bg/60 to-transparent z-10 pointer-events-none transition-opacity duration-500"></div>
 
         <div 
+          ref={categoryNavRef}
           className="w-full px-6 md:px-12 py-3 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth relative"
-          onScroll={(e) => {
-            const el = e.currentTarget;
-            const left = document.getElementById('fade-left');
-            const right = document.getElementById('fade-right');
-            if (left) left.style.opacity = el.scrollLeft > 20 ? '1' : '0';
-            if (right) right.style.opacity = el.scrollLeft < (el.scrollWidth - el.clientWidth - 20) ? '1' : '0';
-          }}
+          onScroll={checkCategoryScroll}
         >
           <button 
             onClick={() => setSelectedCategory('All')}
