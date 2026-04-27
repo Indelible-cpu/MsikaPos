@@ -391,12 +391,12 @@ export const PublicStorefront: React.FC = () => {
               >
                 {/* Top Actions */}
                 <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
-                  <div className={`px-2 md:px-4 py-1 md:py-1.5 rounded-full text-[7px] md:text-[8px] font-black tracking-[0.2em] italic backdrop-blur-md border pointer-events-auto ${
+                  <div className={`px-3 md:px-5 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] font-black tracking-[0.2em] uppercase italic backdrop-blur-md shadow-xl pointer-events-auto border-2 ${
                     p.isService 
-                      ? 'bg-primary-500/10 text-primary-500 border-primary-500/20' 
-                      : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                      ? 'bg-primary-500 text-white border-white/20' 
+                      : 'bg-emerald-600 text-white border-white/20'
                   }`}>
-                    {p.isService ? 'Service' : 'Product'}
+                    {p.isService ? 'SERVICE' : 'PRODUCT'}
                   </div>
                   
                   <div className="flex flex-col gap-2 pointer-events-auto">
