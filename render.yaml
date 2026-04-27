@@ -15,3 +15,13 @@ services:
         sync: false # You will paste your Supabase URL in the Render dashboard
       - key: JWT_SECRET
         generateValue: true # Render will generate a fresh secure key for you!
+
+  - type: web
+    name: msikapos-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://msikapos.onrender.com # Change this to your actual backend URL after first deploy
