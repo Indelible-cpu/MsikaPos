@@ -13,9 +13,27 @@ export const PublicStorefront: React.FC = () => {
   const [customer, setCustomer] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [cartCount, setCartCount] = useState(0);
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
 
   const toggleLike = (id: number) => {
     const newLiked = new Set(likedItems);
@@ -50,7 +68,13 @@ export const PublicStorefront: React.FC = () => {
         ]);
 
         if (productsRes.data.success) {
-          setProducts(productsRes.data.data);
+          const data = productsRes.data.data;
+          setProducts(data);
+          
+          // Better category extraction
+          const cats = Array.from(new Set(data.map((p: any) => p.category?.name || 'Uncategorized')))
+            .filter((c: any) => c !== 'Uncategorized') as string[];
+          setCategories(cats);
         }
 
         if (settingsRes.data.success && settingsRes.data.data?.companyName) {
@@ -58,6 +82,7 @@ export const PublicStorefront: React.FC = () => {
         }
       } catch (err) {
         console.error('Storefront load error:', err);
+        toast.error('Failed to load marketplace. Please refresh.');
       } finally {
         setLoading(false);
       }
@@ -114,15 +139,17 @@ export const PublicStorefront: React.FC = () => {
     toast.success('Signed out');
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || p.category?.name === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-surface-bg text-surface-text transition-colors duration-300">
       {/* Edge-to-Edge Header */}
       <header className="sticky top-0 z-40 bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="w-full px-6 md:px-12 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center border border-primary-500/20">
               <ShoppingBag className="w-5 h-5" />
@@ -146,15 +173,24 @@ export const PublicStorefront: React.FC = () => {
                 </button>
               </div>
             )}
-            <div className="relative">
-              <div className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-500/20">
-                <ShoppingCart className="w-5 h-5" />
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={toggleTheme}
+                className="w-10 h-10 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all"
+                title="Toggle Theme"
+              >
+                {theme === 'light' ? '🌙' : '☀️'}
+              </button>
+              <div className="relative">
+                <div className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-500/20">
+                  <ShoppingCart className="w-5 h-5" />
+                </div>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-surface-bg animate-bounce">
+                    {cartCount}
+                  </span>
+                )}
               </div>
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-surface-bg animate-bounce">
-                  {cartCount}
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -162,11 +198,13 @@ export const PublicStorefront: React.FC = () => {
 
       {/* Hero Search */}
       <div className="w-full bg-surface-bg border-b border-surface-border transition-colors">
-        <div className="max-w-5xl mx-auto px-6 py-12 text-center">
-          <h2 className="text-3xl md:text-5xl font-black tracking-tighter italic mb-4">Marketplace</h2>
-          <p className="text-sm font-bold text-surface-text/40 mb-8 max-w-md mx-auto">Explore premium products and professional services. Quality guaranteed at {shopName}.</p>
+        <div className="w-full px-6 md:px-12 py-12 text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="max-w-xl">
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic mb-4 leading-none">Marketplace</h2>
+            <p className="text-sm md:text-base font-bold text-surface-text/40 mb-0">Explore premium products and professional services. Quality guaranteed at {shopName}.</p>
+          </div>
           
-          <div className="relative max-w-xl mx-auto">
+          <div className="relative w-full md:max-w-md">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5" />
             <input 
               type="text" 
@@ -179,8 +217,37 @@ export const PublicStorefront: React.FC = () => {
         </div>
       </div>
 
+      {/* Category Filter Bar */}
+      <div className="w-full bg-surface-bg border-b border-surface-border/50 overflow-x-auto no-scrollbar">
+        <div className="w-full px-6 md:px-12 py-6 flex items-center gap-3">
+          <button 
+            onClick={() => setSelectedCategory('All')}
+            className={`px-8 py-3 rounded-full text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${
+              selectedCategory === 'All' 
+                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
+            }`}
+          >
+            ALL ITEMS
+          </button>
+          {categories.map(cat => (
+            <button 
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-8 py-3 rounded-full text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${
+                selectedCategory === cat 
+                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                  : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
+              }`}
+            >
+              {cat.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Product Grid */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12">
+      <main className="flex-1 w-full px-4 md:px-12 py-8 md:py-12">
         {loading ? (
           <div className="py-20 text-center flex flex-col items-center gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
@@ -192,7 +259,7 @@ export const PublicStorefront: React.FC = () => {
             <p className="text-[10px] font-black tracking-widest text-surface-text/30 italic">No items found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-8">
             {filteredProducts.map(p => (
               <div key={p.id} className="group relative bg-surface-card border border-surface-border rounded-[2rem] md:rounded-[2.5rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full">
                 {/* Top Actions */}
@@ -232,7 +299,7 @@ export const PublicStorefront: React.FC = () => {
                 <div className="aspect-square md:aspect-[4/3] bg-surface-bg border-b border-surface-border/30 flex items-center justify-center p-6 md:p-12 relative overflow-hidden shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-zinc-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <img 
-                    src={p.imageUrl || "C:/Users/J DICKSON PETRO/.gemini/antigravity/brain/459f5821-6e86-4ca8-8e90-078deacb32e9/premium_pos_product_1777282670264.png"} 
+                    src={p.imageUrl || "/premium-item.png"} 
                     alt={p.name} 
                     className="w-full h-full object-contain drop-shadow-2xl scale-110 group-hover:scale-125 transition-transform duration-700" 
                   />
