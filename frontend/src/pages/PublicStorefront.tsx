@@ -30,6 +30,17 @@ export const PublicStorefront: React.FC = () => {
   ];
 
   useEffect(() => {
+    // 1. Don't show if already installed (standalone mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isStandalone) return;
+
+    // 2. Don't show if user dismissed it recently (e.g., in last 7 days)
+    const lastDismissed = localStorage.getItem('pwa-prompt-dismissed');
+    if (lastDismissed) {
+      const daysSinceDismissal = (Date.now() - parseInt(lastDismissed)) / (1000 * 60 * 60 * 24);
+      if (daysSinceDismissal < 7) return;
+    }
+
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -45,6 +56,11 @@ export const PublicStorefront: React.FC = () => {
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
     }
+  };
+
+  const handleDismissInstall = () => {
+    setDeferredPrompt(null);
+    localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
   };
 
   useEffect(() => {
@@ -243,6 +259,12 @@ export const PublicStorefront: React.FC = () => {
       {deferredPrompt && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[90] w-[90%] max-w-md bg-surface-card border-2 border-primary-500 p-4 rounded-[2rem] shadow-2xl flex items-center justify-between animate-in slide-in-from-bottom-10">
           <div className="flex items-center gap-3">
+            <button 
+              onClick={handleDismissInstall}
+              className="w-8 h-8 flex items-center justify-center text-surface-text/20 hover:text-rose-500 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
             <div className="w-10 h-10 bg-primary-500 text-white rounded-2xl flex items-center justify-center">
               <ShoppingBag className="w-5 h-5" />
             </div>
