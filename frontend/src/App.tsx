@@ -202,16 +202,22 @@ const App: React.FC = () => {
             element={
               localStorage.getItem('token') ? (
                 (() => {
-                  const u = JSON.parse(localStorage.getItem('user') || '{}');
-                  
-                  // STRICT ROLE CHECK: Customers cannot access staff portal
-                  if (u.role === 'CUSTOMER') {
-                    return <Navigate to="/" replace />;
-                  }
-
-                  if (!u.isVerified || u.mustChangePassword) {
-                    return <Navigate to="/staff/onboarding" replace />;
-                  }
+                    let u;
+                    try {
+                      u = JSON.parse(localStorage.getItem('user') || '{}');
+                    } catch {
+                      return <Navigate to="/staff/login" replace />;
+                    }
+                    
+                    // STRICT ROLE CHECK: Only Staff can access staff portal
+                    const isStaff = ['SUPER_ADMIN', 'ADMIN', 'CASHIER'].includes(u.role);
+                    if (!isStaff) {
+                      return <Navigate to="/" replace />;
+                    }
+  
+                    if (!u.isVerified || u.mustChangePassword) {
+                      return <Navigate to="/staff/onboarding" replace />;
+                    }
                   
                   return (
                     <MainLayout>

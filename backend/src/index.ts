@@ -1,7 +1,7 @@
 import express from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { authenticate } from './middleware/auth.js';
+import { authenticate, authorize } from './middleware/auth.js';
 
 // Controllers
 import * as UserCtrl from './controllers/UserController.js';
@@ -84,50 +84,54 @@ app.get('/api/public/settings', async (_req, res) => {
 // Protected Routes (Require Authentication)
 app.use('/api', authenticate as any);
 
+// Staff-Only Middleware
+const staffOnly = authorize(['SUPER_ADMIN', 'ADMIN', 'CASHIER']);
+const adminOnly = authorize(['SUPER_ADMIN', 'ADMIN']);
+
 // Dashboard
-app.get('/api/dashboard/stats', DashboardCtrl.getDashboardStats);
+app.get('/api/dashboard/stats', staffOnly, DashboardCtrl.getDashboardStats);
 
 // Users
-app.get('/api/users', UserCtrl.fetchUsers);
-app.post('/api/users', UserCtrl.saveUser);
-app.post('/api/users/status', UserCtrl.updateUserStatus);
-app.delete('/api/users/:id', UserCtrl.deleteUser);
-app.post('/api/users/onboarding', UserCtrl.updateOnboarding);
-app.post('/api/users/verify', UserCtrl.verifyEmail);
+app.get('/api/users', adminOnly, UserCtrl.fetchUsers);
+app.post('/api/users', adminOnly, UserCtrl.saveUser);
+app.post('/api/users/status', adminOnly, UserCtrl.updateUserStatus);
+app.delete('/api/users/:id', adminOnly, UserCtrl.deleteUser);
+app.post('/api/users/onboarding', UserCtrl.updateOnboarding); // Self-service
+app.post('/api/users/verify', UserCtrl.verifyEmail); // Self-service
 
 // Branches
-app.get('/api/branches', BranchCtrl.fetchBranches);
-app.post('/api/branches', BranchCtrl.saveBranch);
-app.delete('/api/branches/:id', BranchCtrl.deleteBranch);
+app.get('/api/branches', adminOnly, BranchCtrl.fetchBranches);
+app.post('/api/branches', adminOnly, BranchCtrl.saveBranch);
+app.delete('/api/branches/:id', adminOnly, BranchCtrl.deleteBranch);
 
 // Products
-app.get('/api/products', ProductCtrl.listProducts);
-app.get('/api/products/search', ProductCtrl.searchProducts);
-app.get('/api/products/totals', ProductCtrl.getProductTotals);
-app.post('/api/products/sku', ProductCtrl.generateSku);
-app.post('/api/products', ProductCtrl.saveProduct);
+app.get('/api/products', staffOnly, ProductCtrl.listProducts);
+app.get('/api/products/search', staffOnly, ProductCtrl.searchProducts);
+app.get('/api/products/totals', staffOnly, ProductCtrl.getProductTotals);
+app.post('/api/products/sku', staffOnly, ProductCtrl.generateSku);
+app.post('/api/products', staffOnly, ProductCtrl.saveProduct);
 
 // Sales & Sync
-app.post('/api/sync', SyncCtrl.syncData);
-app.get('/api/reports/transactions', ReportCtrl.fetchTransactions);
-app.get('/api/reports/summary', ReportCtrl.getSummary);
+app.post('/api/sync', staffOnly, SyncCtrl.syncData);
+app.get('/api/reports/transactions', staffOnly, ReportCtrl.fetchTransactions);
+app.get('/api/reports/summary', adminOnly, ReportCtrl.getSummary);
 
 // Credits
-app.get('/api/credits', CreditCtrl.listCredits);
-app.post('/api/credits/payment', CreditCtrl.recordPayment);
+app.get('/api/credits', staffOnly, CreditCtrl.listCredits);
+app.post('/api/credits/payment', staffOnly, CreditCtrl.recordPayment);
 
 // Expenses
-app.get('/api/expenses', ExpenseCtrl.listExpenses as any);
-app.post('/api/expenses', ExpenseCtrl.saveExpense as any);
-app.delete('/api/expenses/:id', ExpenseCtrl.deleteExpense as any);
+app.get('/api/expenses', staffOnly, ExpenseCtrl.listExpenses as any);
+app.post('/api/expenses', staffOnly, ExpenseCtrl.saveExpense as any);
+app.delete('/api/expenses/:id', staffOnly, ExpenseCtrl.deleteExpense as any);
 
-// Inquiries
+// Inquiries (Multi-role, handled in controller)
 app.post('/api/inquiries', CustomerCtrl.createInquiry as any);
 app.get('/api/inquiries', CustomerCtrl.listInquiries as any);
-app.put('/api/inquiries/:id', CustomerCtrl.updateInquiryStatus as any);
+app.put('/api/inquiries/:id', staffOnly, CustomerCtrl.updateInquiryStatus as any);
 
 // Settings
-app.post('/api/settings', SettingsCtrl.saveSettings);
+app.post('/api/settings', adminOnly, SettingsCtrl.saveSettings);
 
 // Role Initialization
 const initRoles = async () => {
