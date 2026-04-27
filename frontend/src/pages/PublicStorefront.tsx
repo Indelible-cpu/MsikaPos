@@ -222,34 +222,34 @@ export const PublicStorefront: React.FC = () => {
       {/* Fixed Header & Navigation */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <header className="bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border">
-        <div className="w-full px-6 md:px-12 py-4 flex items-center justify-between">
+        <div className="w-full px-6 md:px-12 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center border border-primary-500/20">
-              <ShoppingBag className="w-5 h-5" />
+            <div className="w-8 h-8 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center border border-primary-500/20">
+              <ShoppingBag className="w-4 h-4" />
             </div>
-            <h1 className="text-xl font-black tracking-tighter italic">{shopName}</h1>
+            <h1 className="text-lg font-black tracking-tighter italic">{shopName}</h1>
           </div>
           
           <div className="flex items-center gap-3">
             {customer && (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div className="text-right hidden md:block">
-                  <p className="text-[9px] font-black tracking-widest text-surface-text/30 italic">Logged in as</p>
-                  <p className="text-xs font-black">{customer.fullname}</p>
+                  <p className="text-[8px] font-black tracking-widest text-surface-text/30 uppercase italic">Active</p>
+                  <p className="text-[10px] font-black">{customer.fullname}</p>
                 </div>
                 <button 
                   onClick={handleLogout}
-                  className="w-10 h-10 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all"
+                  className="w-8 h-8 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all"
                   title="Sign Out"
                 >
-                  <UserIcon className="w-5 h-5" />
+                  <UserIcon className="w-4 h-4" />
                 </button>
               </div>
             )}
             <div className="flex items-center gap-2">
               <button 
                 onClick={toggleTheme}
-                className="w-10 h-10 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all"
+                className="w-8 h-8 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all text-xs"
                 title="Toggle Theme"
               >
                 {theme === 'light' ? '🌙' : '☀️'}
@@ -258,11 +258,11 @@ export const PublicStorefront: React.FC = () => {
                 onClick={() => setIsCartOpen(true)}
                 className="relative group"
               >
-                <div className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
-                  <ShoppingCart className="w-5 h-5" />
+                <div className="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
+                  <ShoppingCart className="w-4 h-4" />
                 </div>
                 {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-surface-bg animate-bounce">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-surface-bg animate-bounce">
                     {cartItems.length}
                   </span>
                 )}
@@ -274,12 +274,12 @@ export const PublicStorefront: React.FC = () => {
 
       {/* Category Filter Bar (Fixed) */}
       <div className="w-full bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border overflow-x-auto no-scrollbar scroll-smooth">
-        <div className="w-full px-6 md:px-12 py-6 flex items-center gap-3 flex-nowrap min-w-max">
+        <div className="w-full px-6 md:px-12 py-3 flex items-center gap-2 flex-nowrap min-w-max">
           <button 
             onClick={() => setSelectedCategory('All')}
-            className={`px-8 py-3 rounded-full text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${
+            className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap ${
               selectedCategory === 'All' 
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30' 
                 : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
             }`}
           >
@@ -289,9 +289,9 @@ export const PublicStorefront: React.FC = () => {
             <button 
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-8 py-3 rounded-full text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${
+              className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap ${
                 selectedCategory === cat 
-                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                  ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30' 
                   : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
               }`}
             >
@@ -316,21 +316,21 @@ export const PublicStorefront: React.FC = () => {
     </div>
 
     {/* Main Content (Scrollable) */}
-    <main className="flex-1 w-full pt-[160px] md:pt-[180px]">
-      {/* Hero Search */}
-      <div className="w-full bg-surface-bg border-b border-surface-border transition-colors">
-        <div className="w-full px-6 md:px-12 py-12 text-center md:text-left flex flex-col md:flex-row md:items-center justify-between gap-8">
+    <main className="flex-1 w-full pt-[130px] md:pt-[150px]">
+      {/* Compact Hero Search */}
+      <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
+        <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic mb-4 leading-none">Marketplace</h2>
-            <p className="text-sm md:text-base font-bold text-surface-text/40 mb-0">Explore premium products and professional services. Quality guaranteed at {shopName}.</p>
+            <h2 className="text-2xl md:text-3xl font-black tracking-tighter italic leading-none text-primary-500 uppercase">Marketplace</h2>
+            <p className="text-[10px] md:text-xs font-bold text-surface-text/40 mt-1 uppercase tracking-widest">Premium Products & Services</p>
           </div>
           
-          <div className="relative w-full md:max-w-md">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5" />
+          <div className="relative w-full md:max-w-sm">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
             <input 
               type="text" 
-              placeholder="Search products & services..."
-              className="w-full py-5 pl-14 pr-6 bg-surface-card border border-surface-border rounded-full outline-none focus:border-primary-500 font-bold text-sm shadow-xl shadow-surface-text/5 transition-all"
+              placeholder="Search MsikaPos..."
+              className="w-full py-4 pl-14 pr-6 bg-surface-card border border-surface-border rounded-full outline-none focus:border-primary-500 font-bold text-xs shadow-lg transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -338,7 +338,7 @@ export const PublicStorefront: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-6 md:px-12 py-12">
+      <div className="px-6 md:px-12 py-8">
         {loading ? (
           <div className="py-32 text-center flex flex-col items-center gap-8">
             <div className="relative">
