@@ -454,7 +454,8 @@ export const PublicStorefront: React.FC = () => {
             ))}
           </div>
         )}
-      </main>
+      </div>
+    </main>
 
       {/* Cart Modal */}
       {isCartOpen && (
