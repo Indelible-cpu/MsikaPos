@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Star, Bookmark, Plus, ShoppingCart } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Star, Bookmark, Plus, ShoppingCart, X, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
@@ -15,10 +15,18 @@ export const PublicStorefront: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [cartCount, setCartCount] = useState(0);
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  const CUSTOM_CATEGORIES = [
+    'Phone Accessories',
+    'Stationery Services',
+    'Stationery Items',
+    'Phone Tech Solutions'
+  ];
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -51,10 +59,32 @@ export const PublicStorefront: React.FC = () => {
     toast.success(newSaved.has(id) ? 'Saved for later' : 'Removed from saved');
   };
 
-  const addToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCartCount(prev => prev + 1);
-    toast.success('Added to cart');
+  const addToCart = (product: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setCartItems(prev => {
+      const exists = prev.find(item => item.id === product.id);
+      if (exists) return prev;
+      toast.success(`${product.name} added to cart`);
+      return [...prev, product];
+    });
+  };
+
+  const removeFromCart = (id: number, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setCartItems(prev => prev.filter(item => item.id !== id));
+    toast.success('Removed from cart');
+  };
+
+  const scrollToProduct = (id: number) => {
+    setIsCartOpen(false);
+    const element = document.getElementById(`product-${id}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('ring-4', 'ring-primary-500', 'ring-opacity-50');
+      setTimeout(() => {
+        element.classList.remove('ring-4', 'ring-primary-500', 'ring-opacity-50');
+      }, 2000);
+    }
   };
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -171,7 +201,8 @@ export const PublicStorefront: React.FC = () => {
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || p.category?.name === selectedCategory;
+    const catName = p.category?.title || p.category?.name || 'Uncategorized';
+    const matchesCategory = selectedCategory === 'All' || catName === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -223,16 +254,19 @@ export const PublicStorefront: React.FC = () => {
               >
                 {theme === 'light' ? '🌙' : '☀️'}
               </button>
-              <div className="relative">
-                <div className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-500/20">
+              <button 
+                onClick={() => setIsCartOpen(true)}
+                className="relative group"
+              >
+                <div className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
                   <ShoppingCart className="w-5 h-5" />
                 </div>
-                {cartCount > 0 && (
+                {cartItems.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-surface-bg animate-bounce">
-                    {cartCount}
+                    {cartItems.length}
                   </span>
                 )}
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -272,7 +306,20 @@ export const PublicStorefront: React.FC = () => {
           >
             ALL ITEMS
           </button>
-          {categories.map(cat => (
+          {CUSTOM_CATEGORIES.map(cat => (
+            <button 
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-8 py-3 rounded-full text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${
+                selectedCategory === cat 
+                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                  : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
+              }`}
+            >
+              {cat.toUpperCase()}
+            </button>
+          ))}
+          {categories.filter(c => !CUSTOM_CATEGORIES.includes(c)).map(cat => (
             <button 
               key={cat}
               onClick={() => setSelectedCategory(cat)}
@@ -311,7 +358,11 @@ export const PublicStorefront: React.FC = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-8">
             {filteredProducts.map(p => (
-              <div key={p.id} className="group relative bg-surface-card border border-surface-border rounded-[2rem] md:rounded-[2.5rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full">
+              <div 
+                key={p.id} 
+                id={`product-${p.id}`}
+                className="group relative bg-surface-card border border-surface-border rounded-[2rem] md:rounded-[2.5rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full"
+              >
                 {/* Top Actions */}
                 <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
                   <div className={`px-2 md:px-4 py-1 md:py-1.5 rounded-full text-[7px] md:text-[8px] font-black tracking-[0.2em] italic backdrop-blur-md border pointer-events-auto ${
@@ -380,7 +431,7 @@ export const PublicStorefront: React.FC = () => {
                       </div>
                       
                       <button 
-                        onClick={addToCart}
+                        onClick={(e) => addToCart(p, e)}
                         className="w-8 md:w-12 h-8 md:h-12 bg-primary-500/10 text-primary-500 rounded-xl md:rounded-2xl flex items-center justify-center hover:bg-primary-500 hover:text-white transition-all active:scale-90"
                       >
                         <Plus className="w-4 md:w-5 h-4 md:h-5" />
@@ -403,6 +454,82 @@ export const PublicStorefront: React.FC = () => {
         )}
       </main>
 
+      {/* Cart Modal */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+          <div className="absolute inset-0 bg-surface-bg/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsCartOpen(false)}></div>
+          
+          <div className="relative w-full max-w-xl bg-surface-card border border-surface-border rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-surface-border flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-black italic tracking-tighter">Your Selection</h3>
+                <p className="text-[10px] font-black tracking-widest text-surface-text/30 uppercase mt-1">Review items in your cart</p>
+              </div>
+              <button 
+                onClick={() => setIsCartOpen(false)}
+                className="w-10 h-10 bg-surface-bg border border-surface-border rounded-full flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto p-6 md:p-8 space-y-4 no-scrollbar">
+              {cartItems.length === 0 ? (
+                <div className="py-20 text-center flex flex-col items-center">
+                  <ShoppingBag className="w-12 h-12 text-surface-text/10 mb-4" />
+                  <p className="text-[10px] font-black tracking-widest text-surface-text/30 italic">Your cart is empty</p>
+                </div>
+              ) : (
+                cartItems.map(item => (
+                  <div 
+                    key={item.id} 
+                    className="group bg-surface-bg border border-surface-border p-4 rounded-3xl flex items-center gap-4 hover:border-primary-500/30 transition-all cursor-pointer"
+                    onClick={() => scrollToProduct(item.id)}
+                  >
+                    <div className="w-16 h-16 bg-surface-card border border-surface-border rounded-2xl overflow-hidden shrink-0">
+                      <img src={item.imageUrl || '/premium-item.png'} className="w-full h-full object-cover" alt="" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-0.5">{item.category?.name || 'Item'}</p>
+                      <h4 className="font-black text-sm truncate">{item.name}</h4>
+                      <p className="text-xs font-bold text-surface-text/40">MK {(item.sellPrice ?? 0).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); scrollToProduct(item.id); }}
+                        className="w-8 h-8 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={(e) => removeFromCart(item.id, e)}
+                        className="w-8 h-8 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="p-8 bg-surface-bg/50 border-t border-surface-border flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-black text-surface-text/40 italic">Estimated Total</p>
+                <p className="text-2xl font-black text-primary-500 tracking-tighter italic">
+                  MK {cartItems.reduce((acc, item) => acc + (item.sellPrice ?? 0), 0).toLocaleString()}
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsCartOpen(false)}
+                className="w-full py-5 bg-primary-500 text-white rounded-3xl text-xs font-black tracking-[0.2em] shadow-xl shadow-primary-500/30 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                PROCEED TO CHECKOUT
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <CustomerAuthModal 
         isOpen={isAuthOpen} 
         onClose={() => setIsAuthOpen(false)} 
@@ -413,6 +540,7 @@ export const PublicStorefront: React.FC = () => {
         <p className="text-[10px] font-black text-surface-text/20 tracking-widest italic">© {new Date().getFullYear()} {shopName}. All rights reserved.</p>
       </footer>
     </div>
+
   );
 };
 
