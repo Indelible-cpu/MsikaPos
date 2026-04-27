@@ -25,9 +25,45 @@ import { db } from './db/posDB';
 import { initDB } from './db/seedData';
 import { AuditService } from './services/AuditService';
 import api from './api/client';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    // 1. Don't show if already installed (standalone mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (isStandalone) return;
+
+    // 2. Don't show if user dismissed it recently (e.g., in last 7 days)
+    const lastDismissed = localStorage.getItem('pwa-prompt-dismissed');
+    if (lastDismissed) {
+      const daysSinceDismissal = (Date.now() - parseInt(lastDismissed)) / (1000 * 60 * 60 * 24);
+      if (daysSinceDismissal < 7) return;
+    }
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
+  const handleDismissInstall = () => {
+    setDeferredPrompt(null);
+    localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
+  };
 
   const checkSystemLock = useCallback(async () => {
     try {
@@ -249,6 +285,11 @@ const App: React.FC = () => {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <PWAInstallPrompt 
+          deferredPrompt={deferredPrompt} 
+          onInstall={handleInstallClick} 
+          onDismiss={handleDismissInstall} 
+        />
       </div>
     </Router>
   );
