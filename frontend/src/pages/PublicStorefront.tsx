@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Star, Bookmark, Plus, ShoppingCart, X, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/client';

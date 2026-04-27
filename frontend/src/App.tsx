@@ -36,7 +36,7 @@ const App: React.FC = () => {
   const {
     updateServiceWorker
   } = useRegisterSW({
-    onRegistered(r) {
+    onRegistered(r: ServiceWorkerRegistration | undefined) {
       // Check for updates every 10 minutes
       if (r) {
         setInterval(() => {
