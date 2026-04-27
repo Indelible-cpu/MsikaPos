@@ -273,8 +273,21 @@ export const PublicStorefront: React.FC = () => {
       </header>
 
       {/* Category Filter Bar (Fixed) */}
-      <div className="w-full bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border overflow-x-auto no-scrollbar scroll-smooth">
-        <div className="w-full px-6 md:px-12 py-3 flex items-center gap-2 flex-nowrap min-w-max">
+      <div className="w-full bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border relative">
+        {/* Dynamic Fading Edges */}
+        <div id="fade-left" className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-surface-bg to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-300"></div>
+        <div id="fade-right" className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-surface-bg to-transparent z-10 pointer-events-none transition-opacity duration-300"></div>
+
+        <div 
+          className="w-full px-6 md:px-12 py-3 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth relative"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const left = document.getElementById('fade-left');
+            const right = document.getElementById('fade-right');
+            if (left) left.style.opacity = el.scrollLeft > 20 ? '1' : '0';
+            if (right) right.style.opacity = el.scrollLeft < (el.scrollWidth - el.clientWidth - 20) ? '1' : '0';
+          }}
+        >
           <button 
             onClick={() => setSelectedCategory('All')}
             className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap ${
@@ -302,9 +315,9 @@ export const PublicStorefront: React.FC = () => {
             <button 
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-8 py-3 rounded-full text-[10px] font-black tracking-widest transition-all whitespace-nowrap ${
+              className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap ${
                 selectedCategory === cat 
-                  ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30' 
+                  ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30' 
                   : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
               }`}
             >
