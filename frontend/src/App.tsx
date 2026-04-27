@@ -26,10 +26,29 @@ import { initDB } from './db/seedData';
 import { AuditService } from './services/AuditService';
 import api from './api/client';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  // PWA Auto-Update Logic
+  const {
+    updateServiceWorker
+  } = useRegisterSW({
+    onRegistered(r) {
+      // Check for updates every 10 minutes
+      if (r) {
+        setInterval(() => {
+          r.update();
+        }, 10 * 60 * 1000);
+      }
+    },
+    onNeedRefresh() {
+      // Automatically update and reload when a new version is found
+      updateServiceWorker(true);
+    }
+  });
 
   useEffect(() => {
     // 1. Don't show if already installed (standalone mode)
@@ -132,6 +151,16 @@ const App: React.FC = () => {
     window.addEventListener('mousemove', handleActivity);
     window.addEventListener('keydown', handleActivity);
     window.addEventListener('touchstart', handleActivity);
+
+    const handleFocus = () => {
+      // Check for updates whenever user returns to the app
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(registration => {
+          if (registration) registration.update();
+        });
+      }
+    };
+    window.addEventListener('focus', handleFocus);
 
     const init = async () => {
       try {
