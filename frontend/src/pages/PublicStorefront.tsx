@@ -17,16 +17,35 @@ export const PublicStorefront: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const CUSTOM_CATEGORIES = [
     'Phone Accessories',
     'Stationery Services',
     'Stationery Items',
-    'Phone Tech Solutions'
+    'Phones and Computer Tech Solutions'
   ];
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -214,9 +233,30 @@ export const PublicStorefront: React.FC = () => {
     >
       {/* Background Refresh Indicator */}
       {isRefreshing && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-surface-card border border-surface-border px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
-          <Loader2 className="w-3.5 h-3.5 animate-spin text-primary-500" />
-          <span className="text-[9px] font-black tracking-widest text-surface-text/60 uppercase">Syncing...</span>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary-500 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500 border-2 border-white/20">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span className="text-[10px] font-black tracking-[0.2em] uppercase">Smart Syncing MsikaPos...</span>
+        </div>
+      )}
+
+      {/* PWA Install Prompt */}
+      {deferredPrompt && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[90] w-[90%] max-w-md bg-surface-card border-2 border-primary-500 p-4 rounded-[2rem] shadow-2xl flex items-center justify-between animate-in slide-in-from-bottom-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary-500 text-white rounded-2xl flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black">Install MsikaPos App</p>
+              <p className="text-[9px] font-bold text-surface-text/40 italic">Shop faster on your home screen</p>
+            </div>
+          </div>
+          <button 
+            onClick={handleInstallClick}
+            className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20"
+          >
+            INSTALL
+          </button>
         </div>
       )}
 
