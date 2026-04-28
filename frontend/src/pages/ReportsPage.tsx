@@ -162,27 +162,27 @@ const ReportsPage: React.FC = () => {
   }, [localSales, serverStats]);
 
   const stats = [
-    { label: 'Revenue', value: `MK ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500' },
+    { label: 'Revenue', value: `MK${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500' },
     { label: 'Transactions', value: totalSalesCount.toString(), icon: TrendingUp, color: 'text-primary-500' },
-    { label: 'Total Profit', value: `MK ${totalProfit.toLocaleString()}`, icon: ArrowUpRight, color: 'text-blue-500' },
-    { label: 'Avg Sale', value: `MK ${(totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0).toLocaleString()}`, icon: Users, color: 'text-amber-500' },
+    { label: 'Total Profit', value: `MK${totalProfit.toLocaleString()}`, icon: ArrowUpRight, color: 'text-blue-500' },
+    { label: 'Avg Sale', value: `MK${(totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0).toLocaleString()}`, icon: Users, color: 'text-amber-500' },
   ];
 
 
   return (
-    <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0 md:px-0 pt-0">
-      <div className="mb-8 flex items-center justify-between gap-4 p-1 bg-surface-card border border-surface-border rounded-2xl overflow-x-auto no-scrollbar">
-        <div className="flex gap-2">
+    <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 mb-8 flex items-center justify-between gap-4 sticky top-0 z-30">
+        <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl overflow-x-auto no-scrollbar">
           {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
             <button 
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={clsx(
                 "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap",
-                activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg"
+                activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg/50"
               )}
             >
-              {tab}
+              {tab.toUpperCase()}
             </button>
           ))}
         </div>
@@ -192,52 +192,54 @@ const ReportsPage: React.FC = () => {
             <span className="text-[8px] font-black tracking-widest text-primary-500">REFRESHING...</span>
           </div>
         )}
-      </div>
+      </header>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-surface-card border border-surface-border p-5 rounded-3xl group hover:border-primary-500/30 transition-all shadow-sm shadow-primary-500/5"
-          >
-            <div className={`p-2.5 rounded-xl bg-surface-bg border border-surface-border w-fit mb-4 ${stat.color}`}>
-              <stat.icon className="w-5 h-5" />
-            </div>
-            <div className="text-lg font-black tracking-tighter">{stat.value}</div>
-            <div className="text-[9px] font-black text-surface-text/30 tracking-[0.15em] mt-1">{stat.label}</div>
-          </motion.div>
-        ))}
-      </div>
+      <div className="px-6 md:px-12">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {stats.map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-surface-card border border-surface-border p-5 rounded-3xl group hover:border-primary-500/30 transition-all shadow-sm shadow-primary-500/5"
+            >
+              <div className={`p-2.5 rounded-xl bg-surface-bg border border-surface-border w-fit mb-4 ${stat.color}`}>
+                <stat.icon className="w-5 h-5" />
+              </div>
+              <div className="text-lg font-black tracking-tighter">{stat.value}</div>
+              <div className="text-[9px] font-black text-surface-text/30 tracking-[0.15em] mt-1 uppercase">{stat.label}</div>
+            </motion.div>
+          ))}
+        </div>
 
-      <div className="flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {activeTab === 'Financial' && <BarChart data={analyticsData.weekly} label="Weekly Revenue Breakdown" valuePrefix="MK " />}
-            {activeTab === 'Staff' && <BarChart data={analyticsData.staff} label="Top Performing Cashiers" valuePrefix="MK " />}
-            {activeTab === 'Branches' && <BarChart data={analyticsData.branches} label="Top Performing Branches" valuePrefix="MK " />}
-            {activeTab === 'Payment' && <BarChart data={analyticsData.payment} label="Payment Mode Flow" />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+        <div className="flex-1 mb-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {activeTab === 'Financial' && <BarChart data={analyticsData.weekly} label="Weekly Revenue Breakdown" valuePrefix="MK" />}
+              {activeTab === 'Staff' && <BarChart data={analyticsData.staff} label="Top Performing Cashiers" valuePrefix="MK" />}
+              {activeTab === 'Branches' && <BarChart data={analyticsData.branches} label="Top Performing Branches" valuePrefix="MK" />}
+              {activeTab === 'Payment' && <BarChart data={analyticsData.payment} label="Payment Mode Flow" />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-      <div className="mt-8 bg-surface-card border border-surface-border rounded-3xl p-6">
-        <h4 className="text-[10px] font-black tracking-widest text-surface-text/30 mb-4">Market Intelligence</h4>
-        <p className="text-xs font-bold leading-relaxed text-surface-text/60">
-          Revenue is primarily driven by <span className="text-primary-500">{analyticsData.payment[0]?.label || 'Cash'}</span>. 
-          {analyticsData.staff[0] && <span> The top cashier is <span className="text-emerald-500 font-black">{analyticsData.staff[0].label}</span>. </span>}
-          {analyticsData.branches[0] && <span> The leading location is <span className="text-amber-500 font-black">{analyticsData.branches[0].label}</span>. </span>}
-          This data assists Super Admins in performance-based promotions and multi-branch resource allocation.
-        </p>
+        <div className="bg-surface-card border border-surface-border rounded-3xl p-6">
+          <h4 className="text-[10px] font-black tracking-widest text-surface-text/30 mb-4 uppercase">Market Intelligence</h4>
+          <p className="text-xs font-bold leading-relaxed text-surface-text/60">
+            Revenue is primarily driven by <span className="text-primary-500">{analyticsData.payment[0]?.label || 'Cash'}</span>. 
+            {analyticsData.staff[0] && <span> The top cashier is <span className="text-emerald-500 font-black">{analyticsData.staff[0].label}</span>. </span>}
+            {analyticsData.branches[0] && <span> The leading location is <span className="text-amber-500 font-black">{analyticsData.branches[0].label}</span>. </span>}
+            This data assists Super Admins in performance-based promotions and multi-branch resource allocation.
+          </p>
+        </div>
       </div>
     </div>
   );

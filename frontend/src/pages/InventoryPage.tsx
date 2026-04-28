@@ -13,7 +13,8 @@ import {
   Barcode,
   CheckCircle2,
   Image as ImageIcon,
-  Upload
+  Upload,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -21,12 +22,16 @@ import { clsx } from 'clsx';
 import AiAssistant from '../components/AiAssistant';
 import Modal from '../components/Modal';
 import { soundService } from '../services/SoundService';
+import { AuditService } from '../services/AuditService';
 
 const generateNumericId = () => {
   return Date.now() + Math.floor(Math.random() * 1000);
 };
 
 const InventoryPage: React.FC = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -95,6 +100,66 @@ const InventoryPage: React.FC = () => {
   }, [products]);
 
   const resetForm = useCallback(async (scannedSku?: string) => {
+    const defaultCatId = categories?.[0]?.id || 0;
+    let initialSku = scannedSku || '';
+    
+    if (!scannedSku && !editingProduct) {
+      // Auto-generate SKU based on first category
+      const cat = categories?.[0];
+      if (cat) {
+        const count = products?.filter(p => p.categoryId === cat.id).length || 0;
+        initialSku = `${cat.slug.substring(0, 3).toUpperCase()}${String(count + 1).padStart(4, '0')}`;
+      }
+    }
+
+    setFormData({
+      name: editingProduct?.name || '',
+      sku: initialSku || editingProduct?.sku || '',
+      costPrice: editingProduct?.costPrice || 0,
+      sellPrice: editingProduct?.sellPrice || 0,
+      quantity: editingProduct?.quantity || 0,
+      categoryId: editingProduct?.categoryId || defaultCatId,
+      isService: editingProduct?.isService || false,
+      imageUrl: editingProduct?.imageUrl || '',
+    });
+  }, [categories, products, editingProduct]);
+
+  const handleExport = () => {
+    if (!products || products.length === 0) {
+      toast.error('No inventory to export');
+      return;
+    }
+
+    const headers = ['SKU', 'Name', 'Category', 'Cost Price', 'Sell Price', 'Quantity', 'Type'];
+    const rows = products.map(p => {
+      const cat = categories?.find(c => c.id === p.categoryId);
+      return [
+        p.sku,
+        `"${p.name.replace(/"/g, '""')}"`,
+        cat?.title || 'Uncategorized',
+        p.costPrice,
+        p.sellPrice,
+        p.quantity,
+        p.isService ? 'Service' : 'Product'
+      ];
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `MsikaPos_Inventory_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Inventory exported successfully');
+  };
     const defaultCatId = categories?.[0]?.id || 0;
     let initialSku = scannedSku || '';
     
@@ -213,6 +278,7 @@ const InventoryPage: React.FC = () => {
 
       if (editingProduct) {
         await db.products.update(editingProduct.id, productData);
+        await AuditService.log('PRODUCT_UPDATE', `Updated product: ${productData.name} (SKU: ${productData.sku})`);
         toast.success('Product updated');
       } else {
         await db.products.add({
@@ -221,6 +287,7 @@ const InventoryPage: React.FC = () => {
           status: 'ACTIVE',
           createdAt: new Date().toISOString(),
         });
+        await AuditService.log('PRODUCT_ADD', `Added product: ${productData.name} (SKU: ${productData.sku})`);
         toast.success('Product added to inventory');
       }
       setIsAddModalOpen(false);
@@ -231,12 +298,20 @@ const InventoryPage: React.FC = () => {
   };
 
   const deleteProduct = async (id: number) => {
+    if (!isSuperAdmin) {
+      toast.error('Access Denied: Only Super Admins can delete products');
+      return;
+    }
     setDeleteConfirmation(id);
   };
 
   const confirmDelete = async () => {
     if (deleteConfirmation) {
+      const product = await db.products.get(deleteConfirmation);
       await db.products.delete(deleteConfirmation);
+      if (product) {
+        await AuditService.log('PRODUCT_DELETE', `Deleted product: ${product.name} (SKU: ${product.sku})`, 'WARNING');
+      }
       toast.success('Product removed');
       setDeleteConfirmation(null);
     }
@@ -259,69 +334,61 @@ const InventoryPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0">
-      <div className="p-0">
-        <header className="hidden md:flex flex-row justify-end gap-6 mb-10">
-          <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setIsCategoryModalOpen(true)}
-                className="btn-secondary !px-6 !py-4"
-                title="Open Category Manager"
-                aria-label="Open Category Manager"
-              >
-                Categories
-              </button>
-              <button 
-                onClick={() => openAddModal()}
-                className="btn-primary !px-6 !py-4"
-                title="Add New Product"
-                aria-label="Add New Product"
-              >
-                <Plus className="w-4 h-4 mr-1 inline" /> Add Product
-              </button>
-          </div>
-        </header>
-
-        {/* Mobile Quick Actions */}
-        <div className="flex md:hidden items-center gap-3 mb-6">
-            <button 
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="flex-1 btn-secondary !py-4 text-[10px] font-black tracking-widest"
-              title="Open Category Manager"
-              aria-label="Open Category Manager"
-            >
-              Categories
-            </button>
-            <button 
-              onClick={() => openAddModal()}
-              className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest"
-              title="Add New Product"
-              aria-label="Add New Product"
-            >
-              <Plus className="w-4 h-4 mr-1 inline" /> Add Product
-            </button>
+    <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-black tracking-tighter uppercase">Inventory Manager</h1>
+          <p className="text-[10px] font-black text-surface-text/40 tracking-widest uppercase">Manage stock levels and product catalog</p>
         </div>
-          
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50">
-            <div className="card-label">Total Stock Cost</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter italic">MK {analytics.totalCost.toLocaleString()}</div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="btn-secondary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest"
+            title="Open Category Manager"
+            aria-label="Open Category Manager"
+          >
+            Categories
+          </button>
+          <button 
+            onClick={handleExport}
+            className="btn-secondary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
+            title="Export CSV"
+            aria-label="Export CSV"
+          >
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
+          <button 
+            onClick={() => openAddModal()}
+            className="btn-primary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20"
+            title="Add New Product"
+            aria-label="Add New Product"
+          >
+            <Plus className="w-4 h-4 mr-1 inline" /> Add Product
+          </button>
+        </div>
+      </header>
+        
+      <div className="px-6 md:px-12 py-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-0 bg-surface-card border border-surface-border rounded-3xl overflow-hidden mb-8">
+          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
+            <div className="card-label uppercase">Total Stock Cost</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter">MK{analytics.totalCost.toLocaleString()}</div>
           </div>
-          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50">
-            <div className="card-label !text-emerald-500">Expected Profit</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter italic text-emerald-500">MK {analytics.totalProfit.toLocaleString()}</div>
+          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
+            <div className="card-label !text-emerald-500 uppercase">Expected Profit</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-emerald-500">MK{analytics.totalProfit.toLocaleString()}</div>
           </div>
-          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50">
-            <div className="card-label !text-red-500">Est. Ageing Loss</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter italic text-red-500">MK {analytics.totalLoss.toLocaleString()}</div>
+          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
+            <div className="card-label !text-red-500 uppercase">Est. Ageing Loss</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-red-500">MK{analytics.totalLoss.toLocaleString()}</div>
           </div>
-          <div className="p-8">
-            <div className="card-label !text-primary-500">Low Stock (Real)</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter italic text-primary-500">{analytics.lowStock} <span className="text-[10px] text-surface-text/20">Items</span></div>
+          <div className="p-8 bg-surface-card">
+            <div className="card-label !text-primary-500 uppercase">Low Stock Alert</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-primary-500">{analytics.lowStock} <span className="text-[10px] text-surface-text/20 uppercase">Items</span></div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <div className="relative group">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
             <input 
@@ -329,7 +396,7 @@ const InventoryPage: React.FC = () => {
               placeholder="Search by name or SKU..."
               title="Search products"
               aria-label="Search products"
-              className="input-field w-full pl-14 shadow-sm"
+              className="input-field w-full pl-14 shadow-sm py-4"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -338,7 +405,7 @@ const InventoryPage: React.FC = () => {
             <button 
               onClick={() => setSelectedCategory(null)}
               className={clsx(
-                "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2",
+                "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2 uppercase",
                 !selectedCategory ? "border-primary-500 text-primary-500" : "border-transparent text-surface-text/40 hover:text-surface-text"
               )}
               title="Show all categories"
@@ -351,7 +418,7 @@ const InventoryPage: React.FC = () => {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={clsx(
-                  "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2",
+                  "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2 uppercase",
                   selectedCategory === cat.id ? "border-primary-500 text-primary-500" : "border-transparent text-surface-text/40 hover:text-surface-text"
                 )}
                 title={`Filter by ${cat.title}`}
@@ -362,10 +429,8 @@ const InventoryPage: React.FC = () => {
             ))}
           </div>
         </div>
-      </div>
 
-      <div className="p-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <AnimatePresence mode="popLayout">
             {filteredProducts?.map(product => (
               <motion.div
@@ -374,7 +439,7 @@ const InventoryPage: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 key={product.id}
-                className="overflow-hidden group transition-all flex flex-col border-b border-surface-border/50 duration-500"
+                className="overflow-hidden group transition-all flex flex-col bg-surface-card border border-surface-border rounded-3xl hover:border-primary-500/20 duration-500"
               >
                 <div className="p-6 flex-1 flex flex-col">
                   <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center">
@@ -385,7 +450,7 @@ const InventoryPage: React.FC = () => {
                     )}
                   </div>
                   <div className="flex justify-between items-start mb-4">
-                    <div className="text-[9px] font-black text-surface-text/30  tracking-widest">{product.sku}</div>
+                    <div className="text-[9px] font-black text-surface-text/30 tracking-widest uppercase">{product.sku}</div>
                     <div className="flex gap-1">
                       {product.imageUrl && (
                         <button 
@@ -404,34 +469,38 @@ const InventoryPage: React.FC = () => {
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
-                        className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
-                        title="Delete product"
-                        aria-label="Delete product"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {isSuperAdmin && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
+                          className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
+                          title="Delete product"
+                          aria-label="Delete product"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2">{product.name}</h3>
+                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2 uppercase">{product.name}</h3>
                   <div className="flex items-center gap-2 mb-6">
-                    <span className="text-primary-500 font-black text-2xl leading-none tracking-tighter">MK {product.sellPrice.toLocaleString()}</span>
+                    <span className="text-primary-500 font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
                   </div>
                   <div className={clsx(
-                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black  tracking-widest",
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black tracking-widest uppercase",
                     product.quantity <= 5 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                   )}>
                     {product.isService ? <CheckCircle2 className="w-3 h-3" /> : (product.quantity <= 5 ? <AlertTriangle className="w-3 h-3" /> : <Package className="w-3 h-3" />)}
                     {product.isService ? 'Service Item' : `${product.quantity} in stock`}
                   </div>
                 </div>
-                <div className="px-6 py-4 bg-surface-bg/30 border-t border-surface-border flex justify-between items-center text-[9px] font-black  tracking-widest text-surface-text/40">
-                  {!product.isService && (
+                <div className="px-6 py-4 bg-surface-bg/30 border-t border-surface-border flex justify-between items-center text-[9px] font-black tracking-widest text-surface-text/40">
+                  {!product.isService && isSuperAdmin ? (
                     <>
-                      <span>Stock Profit: MK {((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
+                      <span className="uppercase">Stock Profit: MK{((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
                       <ArrowUpRight className="w-3 h-3 text-emerald-500" />
                     </>
+                  ) : (
+                    <span className="uppercase">Inventory Item</span>
                   )}
                 </div>
               </motion.div>
@@ -459,10 +528,10 @@ const InventoryPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-[10px] font-black tracking-widest uppercase mb-1">Product Image</p>
-                <p className="text-[9px] font-bold text-surface-text/40">Adding an image improves customer experience.</p>
-                <p className="text-[9px] font-bold text-surface-text/40">Optimal ratio is 1:1. Images will be auto-cropped.</p>
+                <p className="text-[9px] font-bold text-surface-text/40 uppercase">Adding an image improves experience.</p>
+                <p className="text-[9px] font-bold text-surface-text/40 uppercase">Optimal ratio is 1:1.</p>
                 {formData.imageUrl && (
-                  <button type="button" onClick={() => setFormData({...formData, imageUrl: ''})} className="text-[9px] font-black tracking-widest text-red-500 mt-2 hover:underline">
+                  <button type="button" onClick={() => setFormData({...formData, imageUrl: ''})} className="text-[9px] font-black tracking-widest text-red-500 mt-2 hover:underline uppercase">
                     REMOVE IMAGE
                   </button>
                 )}
@@ -470,34 +539,45 @@ const InventoryPage: React.FC = () => {
             </div>
 
             <div className="space-y-1 col-span-2">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-name">Product name</label>
-              <input required id="product-name" type="text" className="input-field w-full" placeholder="e.g. Coca Cola 300ml" title="Product name" aria-label="Product name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+              <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-name">Product name</label>
+              <input required id="product-name" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. Coca Cola 300ml" title="Product name" aria-label="Product name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-sku">SKU / Barcode</label>
+              <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-sku">SKU / Barcode</label>
               <div className="relative">
                 <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/30" />
-                <input required id="product-sku" type="text" className="input-field w-full pl-10" placeholder="Scan or type..." title="SKU / Barcode" aria-label="SKU / Barcode" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
+                <input required id="product-sku" type="text" className="input-field w-full pl-10 py-3 px-4 font-black" placeholder="Scan or type..." title="SKU / Barcode" aria-label="SKU / Barcode" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-category">Category</label>
-              <select id="product-category" className="input-field w-full font-bold" title="Product category" aria-label="Product category" value={formData.categoryId} onChange={(e) => setFormData({...formData, categoryId: Number(e.target.value)})}>
+              <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-category">Category</label>
+              <select id="product-category" className="input-field w-full py-3 px-4 font-black" title="Product category" aria-label="Product category" value={formData.categoryId} onChange={(e) => setFormData({...formData, categoryId: Number(e.target.value)})}>
                 {categories?.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-cost">Cost price</label>
-              <input required id="product-cost" type="number" className="input-field w-full font-bold" title="Cost price" aria-label="Cost price" value={formData.costPrice} onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-cost">Cost price</label>
+              <input 
+                required 
+                id="product-cost" 
+                type="number" 
+                className={clsx("input-field w-full py-3 px-4 font-black", !isSuperAdmin && "opacity-50 cursor-not-allowed")} 
+                title="Cost price" 
+                aria-label="Cost price" 
+                value={formData.costPrice} 
+                onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})} 
+                onFocus={(e) => e.target.select()} 
+                readOnly={!isSuperAdmin}
+              />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-sell">Sell price</label>
-              <input required id="product-sell" type="number" className="input-field w-full font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-sell">Sell price</label>
+              <input required id="product-sell" type="number" className="input-field w-full py-3 px-4 font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
             </div>
             {!formData.isService && (
               <div className="space-y-1 col-span-2">
-                <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-qty">Opening Stock Quantity</label>
-                <input required id="product-qty" type="number" className="input-field w-full font-black" title="Opening Stock Quantity" aria-label="Opening Stock Quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+                <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-qty">Opening Stock Quantity</label>
+                <input required id="product-qty" type="number" className="input-field w-full py-3 px-4 font-black" title="Opening Stock Quantity" aria-label="Opening Stock Quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
               </div>
             )}
             <div className="space-y-1 col-span-2">
@@ -509,43 +589,45 @@ const InventoryPage: React.FC = () => {
                   className="w-5 h-5 rounded border-surface-border text-primary-500 focus:ring-primary-500"
                 />
                 <div>
-                  <div className="text-[10px] font-black tracking-widest">Service / Non-Stock Item</div>
-                  <div className="text-[9px] text-surface-text/30 font-bold">Exclude from stock alerts and inventory value</div>
+                  <div className="text-[10px] font-black tracking-widest uppercase">Service / Non-Stock Item</div>
+                  <div className="text-[9px] text-surface-text/30 font-bold uppercase">Exclude from stock alerts</div>
                 </div>
               </label>
             </div>
           </div>
           <div className="flex gap-4 pt-4">
-            <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black  tracking-widest" title="Cancel" aria-label="Cancel">Cancel</button>
-            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black  tracking-widest" title="Save product" aria-label="Save product">Save product</button>
+            <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest uppercase" title="Cancel" aria-label="Cancel">Cancel</button>
+            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest uppercase shadow-lg shadow-primary-500/20" title="Save product" aria-label="Save product">Save product</button>
           </div>
         </form>
       </Modal>
 
       {/* Category Modal */}
       <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} title="Manage Categories">
-        <div className="w-full space-y-10 px-4 md:px-10">
+        <div className="w-full space-y-10 px-8 py-4">
           <div className="space-y-2">
-            <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="new-category">Create new category</label>
+            <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="new-category">Create new category</label>
             <div className="flex gap-2">
-              <input id="new-category" type="text" className="input-field flex-1" placeholder="Category name..." title="New category name" aria-label="New category name" value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
-              <button onClick={handleAddCategory} className="btn-primary !px-6 !py-3 font-black text-[10px]  tracking-widest" title="Add category" aria-label="Add category">Add</button>
+              <input id="new-category" type="text" className="input-field flex-1 py-3 px-4 font-black" placeholder="Category name..." title="New category name" aria-label="New category name" value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
+              <button onClick={handleAddCategory} className="btn-primary !px-8 !py-3 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20" title="Add category" aria-label="Add category">Add</button>
             </div>
           </div>
           <div className="space-y-2">
-             <div className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1">Existing categories</div>
+             <div className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Existing categories</div>
              <div className="bg-surface-bg border border-surface-border rounded-2xl divide-y divide-surface-border overflow-hidden">
                 {categories?.map(cat => (
                   <div key={cat.id} className="p-4 flex justify-between items-center group hover:bg-primary-500/5 transition-colors">
-                    <span className="font-bold text-sm">{cat.title}</span>
-                    <button 
-                      onClick={() => db.categories.delete(cat.id)} 
-                      className="p-2 text-surface-text/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                      title={`Delete ${cat.title} category`}
-                      aria-label={`Delete ${cat.title} category`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <span className="font-bold text-sm uppercase">{cat.title}</span>
+                    {isSuperAdmin && (
+                      <button 
+                        onClick={() => db.categories.delete(cat.id)} 
+                        className="p-2 text-surface-text/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                        title={`Delete ${cat.title} category`}
+                        aria-label={`Delete ${cat.title} category`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 ))}
              </div>
@@ -560,12 +642,12 @@ const InventoryPage: React.FC = () => {
             <Trash2 className="w-8 h-8 text-red-500" />
           </div>
           <div>
-            <h2 className="text-xl font-black italic tracking-tighter text-red-500 mb-2">Delete Product?</h2>
-            <p className="text-surface-text/40 text-[10px] font-black tracking-widest px-4 leading-relaxed">This action cannot be undone. The product will be permanently removed from inventory.</p>
+            <h2 className="text-xl font-black tracking-tighter text-red-500 mb-2 uppercase">Delete Product?</h2>
+            <p className="text-surface-text/40 text-[10px] font-black tracking-widest px-4 leading-relaxed uppercase">This action cannot be undone.</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => setDeleteConfirmation(null)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest">Cancel</button>
-            <button onClick={confirmDelete} className="flex-1 bg-red-500 text-white rounded-2xl text-[10px] font-black tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all">Delete</button>
+            <button onClick={() => setDeleteConfirmation(null)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest uppercase">Cancel</button>
+            <button onClick={confirmDelete} className="flex-1 bg-red-500 text-white rounded-2xl text-[10px] font-black tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all uppercase">Delete</button>
           </div>
         </div>
       </Modal>
@@ -575,7 +657,7 @@ const InventoryPage: React.FC = () => {
           <div className="relative group w-full max-w-lg aspect-square rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
             <img src={previewImage || ''} alt="Preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
-              <button onClick={() => setPreviewImage(null)} className="btn-primary !bg-white !text-black !py-3 !px-8 text-[10px] font-black tracking-widest">CLOSE PREVIEW</button>
+              <button onClick={() => setPreviewImage(null)} className="btn-primary !bg-white !text-black !py-3 !px-8 text-[10px] font-black tracking-widest uppercase">CLOSE PREVIEW</button>
             </div>
           </div>
         </div>

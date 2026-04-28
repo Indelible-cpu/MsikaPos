@@ -6,7 +6,7 @@ import { db } from '../db/posDB';
 
 export default function MobileHeader() {
   const location = useLocation();
-  const [shopName, setShopName] = useState('MsikaPos');
+  const [shopName, setShopName] = useState('Management');
   const [shopLogo, setShopLogo] = useState('/icon.png?v=2');
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -91,10 +91,10 @@ export default function MobileHeader() {
           )}
           
           <div className="flex flex-col min-w-0">
-            <span className="text-[14px] font-black tracking-tighter italic text-primary-500 leading-none truncate">
+            <span className="text-[14px] font-black tracking-tighter text-primary-500 leading-none truncate">
               {shopName}
             </span>
-            <span className="text-[10px] font-black tracking-[0.2em] text-surface-text/60 italic truncate !mb-0">
+            <span className="text-[10px] font-black tracking-[0.2em] text-surface-text/60 truncate !mb-0 uppercase">
               {getPageTitle(location.pathname)}
             </span>
           </div>

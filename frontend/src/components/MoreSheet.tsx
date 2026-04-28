@@ -52,7 +52,7 @@ const MoreSheet: React.FC<MoreSheetProps> = ({ isOpen, onClose }) => {
                   <div className="w-10 h-10 rounded-full bg-primary-500/10 flex items-center justify-center">
                     <LayoutGrid className="w-5 h-5 text-primary-500" />
                   </div>
-                  <h2 className="text-xl font-black italic tracking-tighter italic">More Options</h2>
+                  <h2 className="text-xl font-black  tracking-tighter ">More Options</h2>
                 </div>
                 <button 
                   onClick={onClose}

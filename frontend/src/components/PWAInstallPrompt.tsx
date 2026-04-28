@@ -24,7 +24,7 @@ const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ deferredPrompt, onI
         </div>
         <div>
           <p className="text-xs font-black">Install MsikaPos App</p>
-          <p className="text-[9px] font-bold text-surface-text/40 italic">Access system faster from home screen</p>
+          <p className="text-[9px] font-bold text-surface-text/40 ">Access system faster from home screen</p>
         </div>
       </div>
       <button 

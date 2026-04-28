@@ -26,38 +26,92 @@
     #global-loader {
       position: fixed;
       inset: 0;
-      background-color: #09090b;
+      background-color: #020202;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 9999;
       transition: opacity 0.3s ease;
+      font-family: 'Outfit', sans-serif;
     }
-    .splash-logo-container {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      overflow: hidden;
-      background-color: #18181b;
-      border: 3px solid #10b981;
+
+    .loader-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .loader-title {
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
       display: flex;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
     }
-    #splash-logo {
-      width: 100%;
+
+    .loader-title .msika { color: #1e293b; } /* Dark/Navy */
+    .loader-title .pos { color: #22c55e; }   /* Green */
+
+    .dark .loader-title .msika { color: #f8fafc; }
+
+    .loader-tagline {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: #fafafa;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .tagline-line {
+      height: 1px;
+      width: 40px;
+      background-color: #22c55e;
+    }
+
+    .loader-progress-container {
+      width: 200px;
+      height: 2px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .loader-progress-bar {
       height: 100%;
-      object-fit: cover;
-      transform: scale(1.15);
+      width: 40%;
+      background-color: #22c55e;
+      border-radius: 10px;
+      animation: progressMove 1.5s infinite ease-in-out;
+    }
+
+    @keyframes progressMove {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(250%); }
     }
   </style>
 </head>
 
 <body>
   <div id="global-loader">
-    <div class="splash-logo-container">
-      <img id="splash-logo" src="/icon.png" alt="MsikaPos Logo" title="Loading..." />
+    <div class="loader-content">
+      <div class="loader-title">
+        <span class="msika">Msika</span><span class="pos">Pos</span>
+      </div>
+      <div class="loader-tagline">
+        <div class="tagline-line"></div>
+        <span>Run Your Shop. Grow Your Business.</span>
+        <div class="tagline-line"></div>
+      </div>
+      <div class="loader-progress-container">
+        <div class="loader-progress-bar"></div>
+      </div>
     </div>
   </div>
   <div id="root"></div>
@@ -65,16 +119,10 @@
 
   <script>
     try {
-      const storedLogo = localStorage.getItem('companyLogo');
-      if (storedLogo) {
-        const splash = document.getElementById('splash-logo');
-        if (splash) splash.src = storedLogo;
-      }
-      
       const theme = localStorage.getItem('theme');
       if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
-        document.getElementById('global-loader').style.backgroundColor = '#09090b';
+        document.getElementById('global-loader').style.backgroundColor = '#020202';
       } else {
         document.documentElement.classList.remove('dark');
         document.getElementById('global-loader').style.backgroundColor = '#fcfdfe';

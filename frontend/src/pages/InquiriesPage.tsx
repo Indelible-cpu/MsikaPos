@@ -130,7 +130,7 @@ const InquiriesPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all w-full">
       <div className="w-full px-0">
-        <div className="p-4 md:p-8 flex flex-col md:flex-row gap-4 items-center bg-surface-card/30 border-b border-surface-border">
+        <div className="p-6 md:px-12 flex flex-col md:flex-row gap-4 items-center bg-surface-card border-b border-surface-border">
           <div className="flex flex-wrap gap-2 flex-1">
             {['ALL', 'NEW', 'VIEWED', 'RESPONDED', 'NEGOTIATING', 'CLOSED'].map(s => (
               <button
@@ -164,15 +164,15 @@ const InquiriesPage: React.FC = () => {
         {loading && inquiries.length === 0 ? (
           <div className="py-40 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-            <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 italic">Awaiting customer signals...</p>
+            <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 uppercase">Awaiting customer signals...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
             <MessageSquare className="w-16 h-16 text-surface-text/5 mb-4" />
-            <p className="text-[10px] font-black tracking-widest text-surface-text/20 italic">No matching inquiries found</p>
+            <p className="text-[10px] font-black tracking-widest text-surface-text/20 uppercase">No matching inquiries found</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-0">
             {filtered.map(i => {
               const items = JSON.parse(i.items || '[]');
               const normalizedStatus = i.status === 'PENDING' ? 'NEW' : 
@@ -181,7 +181,7 @@ const InquiriesPage: React.FC = () => {
                                      i.status === 'IN_PROGRESS' ? 'NEGOTIATING' : i.status;
               
               return (
-                <div key={i.id} className="bg-surface-card border-y md:border border-surface-border md:rounded-[2rem] p-4 md:p-8 hover:shadow-2xl transition-all relative group overflow-hidden flex flex-col gap-6">
+                <div key={i.id} className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-8 hover:bg-primary-500/[0.02] transition-all relative group overflow-hidden flex flex-col gap-6">
                   <div className="flex flex-col lg:flex-row justify-between gap-8">
                     {/* Customer Info */}
                     <div className="flex items-start gap-6 lg:border-r border-surface-border/50 lg:pr-8 lg:w-1/3">
@@ -190,8 +190,8 @@ const InquiriesPage: React.FC = () => {
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-xl font-black tracking-tight truncate">{i.customer?.fullname || 'Unknown Customer'}</h3>
-                        <p className="text-[10px] font-black text-surface-text/30 mb-3 tracking-widest italic">@{i.customer?.user?.username || i.customer?.username || 'user'}</p>
-                        <div className={clsx("inline-flex px-3 py-1 rounded-full text-[8px] font-black tracking-widest border italic", getStatusColor(normalizedStatus))}>
+                        <p className="text-[10px] font-black text-surface-text/30 mb-3 tracking-widest uppercase">@{i.customer?.user?.username || i.customer?.username || 'user'}</p>
+                        <div className={clsx("inline-flex px-3 py-1 rounded-full text-[8px] font-black tracking-widest border uppercase", getStatusColor(normalizedStatus))}>
                           {normalizedStatus}
                         </div>
                       </div>
@@ -199,7 +199,7 @@ const InquiriesPage: React.FC = () => {
 
                     {/* Inquiry Details */}
                     <div className="flex-1 space-y-4">
-                      <div className="flex items-center gap-3 text-[10px] font-black tracking-[0.2em] text-surface-text/20 italic">
+                      <div className="flex items-center gap-3 text-[10px] font-black tracking-[0.2em] text-surface-text/20 uppercase">
                         <Package className="w-4 h-4" />
                         Inquiry Items
                       </div>
@@ -207,7 +207,7 @@ const InquiriesPage: React.FC = () => {
                         {items.map((item: any, idx: number) => (
                           <div key={idx} className="p-4 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-between">
                             <span className="font-bold text-sm">{item.name}</span>
-                            <span className="text-xs font-black text-primary-500 italic">MK {(item.price ?? 0).toLocaleString()}</span>
+                            <span className="text-xs font-black text-primary-500">MK {(item.price ?? 0).toLocaleString()}</span>
                           </div>
                         ))}
                       </div>
@@ -256,7 +256,7 @@ const InquiriesPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none italic font-black text-[10px]">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none font-black text-[10px] uppercase">
                     {new Date(i.createdAt).toLocaleString()}
                   </div>
                 </div>

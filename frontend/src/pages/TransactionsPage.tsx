@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
+import toast from 'react-hot-toast';
 
 const TransactionsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,10 +80,46 @@ const TransactionsPage: React.FC = () => {
   const totalSalesCount = sales.length;
   const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
 
+  const handleExport = () => {
+    if (!sales || sales.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+
+    const headers = ['Invoice No', 'Date', 'Customer', 'Items', 'Subtotal', 'Tax', 'Discount', 'Total', 'Payment Mode'];
+    const rows = sales.map(s => [
+      s.invoiceNo,
+      format(new Date(s.createdAt), 'yyyy-MM-dd HH:mm'),
+      s.customerId || 'Walk-in',
+      s.itemsCount,
+      s.subtotal,
+      s.tax,
+      s.discount,
+      s.total,
+      s.paymentMode
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `MsikaPos_Transactions_${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Report exported successfully');
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
-        <div className="p-6">
+      <header className="px-0 py-0 bg-surface-card border-b border-surface-border sticky top-0 z-30">
+        <div className="p-6 md:px-12">
             <div className="flex items-center justify-between mb-6">
               <div /> {/* Spacer */}
             <div className="flex items-center gap-3">
@@ -100,7 +137,10 @@ const TransactionsPage: React.FC = () => {
               >
                 Today Only
               </button>
-              <button className="btn-primary !px-6 !py-2 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2">
+              <button 
+                onClick={handleExport}
+                className="btn-primary !px-6 !py-2 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2"
+              >
                 <Download className="w-4 h-4" /> Export report
               </button>
             </div>
@@ -109,12 +149,12 @@ const TransactionsPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="bg-surface-bg border border-surface-border p-4 rounded-2xl flex items-center gap-6">
                 <div>
-                   <div className="text-[9px] font-black  tracking-widest text-surface-text/30">Total transactions</div>
+                   <div className="text-[9px] font-black tracking-widest text-surface-text/30 uppercase">Total transactions</div>
                    <div className="text-2xl font-black">{totalSalesCount}</div>
                 </div>
                 <div className="h-8 w-px bg-surface-border"></div>
                 <div>
-                   <div className="text-[9px] font-black  tracking-widest text-surface-text/30">Total revenue</div>
+                   <div className="text-[9px] font-black tracking-widest text-surface-text/30 uppercase">Total revenue</div>
                    <div className="text-2xl font-black text-primary-400">MK {totalRevenue.toLocaleString()}</div>
                 </div>
              </div>
@@ -132,26 +172,26 @@ const TransactionsPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="p-0 md:p-8">
-        <div className="bg-surface-card md:border border-surface-border md:rounded-3xl overflow-hidden divide-y divide-surface-border">
+      <div className="p-0">
+        <div className="bg-surface-card border-b border-surface-border overflow-hidden divide-y divide-surface-border">
           {sales?.length === 0 ? (
-            <div className="p-20 text-center text-surface-text/20 font-black text-xs  tracking-widest">No transactions found</div>
+            <div className="p-20 text-center text-surface-text/20 font-black text-xs tracking-widest uppercase">No transactions found</div>
           ) : (
             sales?.map(sale => (
-              <div key={sale.id} onClick={() => setSelectedSaleId(sale.id)} className="p-6 flex justify-between items-center group hover:bg-primary-500/5 transition-colors cursor-pointer">
+              <div key={sale.id} onClick={() => setSelectedSaleId(sale.id)} className="px-6 md:px-12 py-6 flex justify-between items-center group hover:bg-primary-500/5 transition-colors cursor-pointer">
                  <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-surface-bg border border-surface-border rounded-xl flex items-center justify-center text-surface-text/20 group-hover:text-primary-400 transition-colors">
                        <ArrowLeftRight className="w-5 h-5" />
                     </div>
                     <div>
                        <div className="font-black text-sm tracking-tight group-hover:text-primary-400 transition-colors">{sale.invoiceNo}</div>
-                       <div className="text-[10px] text-surface-text/40 font-black  tracking-widest">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')} • {sale.itemsCount} items</div>
+                       <div className="text-[10px] text-surface-text/40 font-black tracking-widest uppercase">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')} • {sale.itemsCount} items</div>
                     </div>
                  </div>
                  <div className="flex items-center gap-6">
                     <div className="text-right">
                        <div className="text-base font-black text-primary-400">MK {sale.total.toLocaleString()}</div>
-                       <div className="text-[9px] text-surface-text/30 font-black tracking-widest ">{sale.paymentMode}</div>
+                       <div className="text-[9px] text-surface-text/30 font-black tracking-widest uppercase">{sale.paymentMode}</div>
                     </div>
                     <ArrowRightCircle className="w-5 h-5 text-surface-text/10 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
                  </div>

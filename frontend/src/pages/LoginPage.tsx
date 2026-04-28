@@ -245,7 +245,7 @@ const LoginPage: React.FC = () => {
             <img src="/icon.png?v=2" alt="MsikaPos Icon" className="w-full h-full object-contain" />
           </motion.div>
           <div className="space-y-1">
-            <div className="text-[10px] font-black text-primary-500 tracking-[0.4em] opacity-60 italic">MsikaPos</div>
+            <div className="text-[10px] font-black text-primary-500 tracking-[0.4em] opacity-60 ">MsikaPos</div>
             <div className="w-16 h-1 bg-primary-500/10 mx-auto rounded-full"></div>
           </div>
         </div>
@@ -332,7 +332,7 @@ const LoginPage: React.FC = () => {
           </Link>
 
           <div className="pt-4 text-center">
-            <p className="text-[8px] font-black tracking-[0.3em] text-surface-text/10 italic">Developed by James Dickson Petro</p>
+            <p className="text-[8px] font-black tracking-[0.3em] text-surface-text/10 ">Developed by James Dickson Petro</p>
           </div>
         </div>
 
@@ -353,7 +353,7 @@ const LoginPage: React.FC = () => {
                 <Fingerprint className="w-12 h-12 text-primary-500" />
               </motion.div>
               
-              <h2 className="text-2xl font-black mb-3 tracking-tighter italic">Secure Your Account</h2>
+              <h2 className="text-2xl font-black mb-3 tracking-tighter ">Secure Your Account</h2>
               <p className="text-surface-text/50 text-[11px] font-medium mb-10 leading-relaxed max-w-[240px]">
                 Enable high-standard biometric authentication for instant and professional system access on this device.
               </p>

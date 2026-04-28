@@ -53,6 +53,7 @@ const SalesPage: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0];
   const todaySales = sales.filter(s => s.createdAt.startsWith(today)) || [];
+  const totalDiscounts = todaySales.reduce((sum, s) => sum + Number(s.discount || 0), 0);
   const totalRevenue = todaySales.reduce((sum, s) => sum + Number(s.total), 0);
   const totalProfit = todaySales.reduce((sum, s) => {
     const saleProfit = s.items.reduce((pSum: number, item: LocalSaleItem) => pSum + (Number(item.profit) || 0), 0);
@@ -62,20 +63,27 @@ const SalesPage: React.FC = () => {
   return (
     <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0">
       <div className="p-6 md:p-10">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
           <div className="bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
              <div className="flex items-center gap-2 mb-2 text-surface-text/40">
                 <DollarSign className="w-3 h-3" />
                 <span className="text-[10px] font-bold">Revenue</span>
              </div>
-             <div className="text-xl font-black text-primary-400">MK {totalRevenue.toLocaleString()}</div>
+             <div className="text-xl font-black text-primary-400">MK{totalRevenue.toLocaleString()}</div>
           </div>
           <div className="bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
              <div className="flex items-center gap-2 mb-2 text-surface-text/40">
                 <TrendingUp className="w-3 h-3" />
                 <span className="text-[10px] font-bold">Profit</span>
              </div>
-             <div className="text-xl font-black text-emerald-500">MK {totalProfit.toLocaleString()}</div>
+             <div className="text-xl font-black text-emerald-500">MK{totalProfit.toLocaleString()}</div>
+          </div>
+          <div className="bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
+             <div className="flex items-center gap-2 mb-2 text-surface-text/40">
+                <ReceiptIcon className="w-3 h-3 text-amber-500" />
+                <span className="text-[10px] font-bold">Discounts</span>
+             </div>
+             <div className="text-xl font-black text-amber-500">MK{totalDiscounts.toLocaleString()}</div>
           </div>
           <div className="hidden lg:block bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
              <div className="flex items-center gap-2 mb-2 text-surface-text/40">
@@ -121,7 +129,7 @@ const SalesPage: React.FC = () => {
                   <span className="text-[10px] text-surface-text/40 font-bold">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')} • {sale.itemsCount} items</span>
                 </div>
                 <div className="text-right">
-                  <div className="font-black text-base text-primary-400">MK {sale.total.toLocaleString()}</div>
+                  <div className="font-black text-base text-primary-400">MK{sale.total.toLocaleString()}</div>
                   <div className="text-[9px] text-surface-text/30 font-bold">{sale.paymentMode}</div>
                 </div>
               </div>
@@ -149,7 +157,7 @@ const SalesPage: React.FC = () => {
                       <div className="font-bold text-sm">{item.productName}</div>
                       <div className="text-[10px] text-surface-text/40 font-bold">MK {item.unitPrice.toLocaleString()} × {item.quantity}</div>
                     </div>
-                    <div className="font-black text-primary-400">MK {item.lineTotal.toLocaleString()}</div>
+                    <div className="font-black text-primary-400">MK{item.lineTotal.toLocaleString()}</div>
                   </div>
                 ))}
               </div>
@@ -162,7 +170,7 @@ const SalesPage: React.FC = () => {
               </div>
               <div className="flex justify-between items-center pt-3 border-t-2 border-surface-border">
                 <span className="text-lg font-black tracking-tighter">Grand total</span>
-                <span className="text-2xl font-black text-primary-400">MK {selectedSale.total.toLocaleString()}</span>
+                <span className="text-2xl font-black text-primary-400">MK{selectedSale.total.toLocaleString()}</span>
               </div>
             </div>
 

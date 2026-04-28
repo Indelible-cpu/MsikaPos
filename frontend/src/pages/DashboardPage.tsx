@@ -90,7 +90,7 @@ const DashboardPage: React.FC = () => {
                   {stat.trend}
                 </div>
               </div>
-              <div className="text-3xl font-black tracking-tighter mb-1 italic">{stat.value}</div>
+              <div className="text-3xl font-black tracking-tighter mb-1">{stat.value}</div>
               <div className="card-label">{stat.label}</div>
             </motion.div>
           ))}
@@ -99,10 +99,10 @@ const DashboardPage: React.FC = () => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 border-t border-surface-border">
            {/* Revenue & Customer Flow Chart */}
-           <div className="lg:col-span-2 p-10 relative overflow-hidden md:border-r border-surface-border/50">
+           <div className="lg:col-span-2 p-6 md:p-12 relative overflow-hidden md:border-r border-surface-border/50">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
                  <div>
-                    <h3 className="text-base font-black italic tracking-tighter text-primary-500">Business Analytics</h3>
+                    <h3 className="text-base font-black tracking-tighter text-primary-500 uppercase">Business Analytics</h3>
                     <div className="card-label">Revenue vs Customer Flow (Last 7 Days)</div>
                  </div>
                  <div className="flex items-center gap-4">
@@ -167,9 +167,9 @@ const DashboardPage: React.FC = () => {
            </div>
 
            {/* Daily Flow Breakdown */}
-           <div className="p-10">
+           <div className="p-6 md:p-12">
               <div className="mb-10">
-                 <h3 className="text-base font-black italic tracking-tighter text-amber-500">Peak Flow</h3>
+                 <h3 className="text-base font-black tracking-tighter text-amber-500 uppercase">Peak Flow</h3>
                  <div className="card-label">Transactions per day</div>
               </div>
               <div className="h-[300px] w-full">
@@ -204,11 +204,11 @@ const DashboardPage: React.FC = () => {
 
         {/* Expenses & Low Stock Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border-t border-surface-border">
-           <div className="p-10 md:border-r border-surface-border/50">
+           <div className="p-6 md:p-12 md:border-r border-surface-border/50">
               <div className="flex justify-between items-center mb-10">
-                 <h3 className="text-sm font-black italic text-surface-text/40">Recent Expenses</h3>
+                 <h3 className="text-sm font-black text-surface-text/40 uppercase">Recent Expenses</h3>
                  <div className="flex gap-4 items-center">
-                    <Link to="/staff/expenses" className="text-[10px] font-black text-primary-400 hover:underline">Manage all</Link>
+                    <Link to="/staff/expenses" className="text-[10px] font-black text-primary-400 hover:underline">MANAGE ALL</Link>
                     <Link to="/staff/expenses" className="p-2 bg-primary-500 text-white rounded-lg active:scale-95 transition-all shadow-lg shadow-primary-500/20" title="Add Expense">
                        <Plus className="w-3 h-3" />
                     </Link>
@@ -237,10 +237,10 @@ const DashboardPage: React.FC = () => {
               </div>
            </div>
 
-           <div className="p-10">
+           <div className="p-6 md:p-12">
               <div className="flex justify-between items-center mb-10">
-                 <h3 className="text-sm font-black italic text-surface-text/40">Low Stock Alert</h3>
-                 <Link to="/staff/inventory" className="text-[10px] font-black text-primary-400 hover:underline">Manage inventory</Link>
+                 <h3 className="text-sm font-black text-surface-text/40 uppercase">Low Stock Alert</h3>
+                 <Link to="/staff/inventory" className="text-[10px] font-black text-primary-400 hover:underline uppercase">Manage inventory</Link>
               </div>
               <div className="space-y-4">
                  {lowStockItems.slice(0, 5).map((p: any, i: number) => (
@@ -268,10 +268,10 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Credit Customers */}
-        <div className="p-10 border-t border-surface-border">
+        <div className="p-6 md:p-12 border-t border-surface-border">
            <div className="flex justify-between items-center mb-10">
-              <h3 className="text-sm font-black italic text-surface-text/40">Active Credits</h3>
-              <Link to="/staff/debt" className="text-[10px] font-black text-primary-400 hover:underline">Manage all</Link>
+              <h3 className="text-sm font-black text-surface-text/40 uppercase">Active Credits</h3>
+              <Link to="/staff/debt" className="text-[10px] font-black text-primary-400 hover:underline uppercase">Manage all</Link>
            </div>
            <div className="p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
               {activeCredits?.slice(0, 6).map((customer: any, i: number) => (

@@ -17,7 +17,6 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
   const getAiHelp = async () => {
     setLoading(true);
     setIsOpen(true);
-    setIsOpen(true);
     try {
       let finalContext: Record<string, unknown> = {};
       if (context && typeof context === 'object') {
@@ -91,12 +90,19 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
 
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-end p-4 md:p-12 pointer-events-none">
+          <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-end p-4 md:p-12">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto" 
+              onClick={() => setIsOpen(false)} 
+            />
             <motion.div
               initial={{ opacity: 0, y: 100, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 100, scale: 0.9 }}
-              className="w-full max-w-md bg-zinc-900 border border-white/10 rounded-[2.5rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto"
+              className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-[2.5rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto"
             >
               <header className="p-8 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-indigo-500/10 to-transparent">
                 <div className="flex items-center gap-4">
@@ -104,13 +110,10 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
                     {type === 'SYSTEM_DIAGNOSTICS' ? <ShieldCheck className="w-6 h-6 text-amber-400" /> : <BrainCircuit className="w-6 h-6 text-indigo-400" />}
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-white tracking-tighter italic">{type === 'SYSTEM_DIAGNOSTICS' ? 'Msika Guard' : 'Msika Brain'}</h3>
+                    <h3 className="text-lg font-black text-white tracking-tighter">{type === 'SYSTEM_DIAGNOSTICS' ? 'Msika Guard' : 'Msika Brain'}</h3>
                     <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{type === 'SYSTEM_DIAGNOSTICS' ? 'System Troubleshooting' : 'Advanced Business AI'}</p>
                   </div>
                 </div>
-                <button onClick={() => setIsOpen(false)} title="Close assistant" className="p-2 hover:bg-white/5 rounded-xl transition-colors">
-                  <X className="w-5 h-5 text-white/40" />
-                </button>
               </header>
 
               <div className="p-8 min-h-[300px] flex flex-col">
@@ -155,14 +158,22 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
                 )}
               </div>
 
-              <footer className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-between">
+              <footer className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-between gap-4">
                 <span className="text-[9px] font-black text-zinc-500 tracking-widest uppercase">Powered by Gemini 1.5 Flash</span>
-                <button 
-                  onClick={getAiHelp}
-                  className="px-6 py-3 bg-indigo-500 text-white rounded-xl text-[10px] font-black tracking-widest hover:bg-indigo-600 transition-all active:scale-95"
-                >
-                  Regenerate
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setIsOpen(false)}
+                    className="px-6 py-3 bg-white/5 text-white/60 rounded-xl text-[10px] font-black tracking-widest hover:bg-white/10 transition-all active:scale-95"
+                  >
+                    Close
+                  </button>
+                  <button 
+                    onClick={getAiHelp}
+                    className="px-6 py-3 bg-indigo-500 text-white rounded-xl text-[10px] font-black tracking-widest hover:bg-indigo-600 transition-all active:scale-95"
+                  >
+                    Regenerate
+                  </button>
+                </div>
               </footer>
             </motion.div>
           </div>

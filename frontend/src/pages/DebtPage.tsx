@@ -159,19 +159,19 @@ const DebtPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 md:px-6 md:py-6 bg-transparent md:border-b border-surface-border sticky top-0 z-30">
-        <div className="p-6">
+      <header className="px-0 py-0 bg-surface-card border-b border-surface-border sticky top-0 z-30">
+        <div className="p-6 md:px-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6" />
               </div>
-              <h1 className="text-xl md:text-2xl font-black tracking-tighter italic">Customers & Debt</h1>
+              <h1 className="text-xl md:text-2xl font-black tracking-tighter">Customers & Debt</h1>
             </div>
 
             <button 
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 px-6 h-12 bg-primary-500 text-white rounded-2xl font-black text-[10px] tracking-widest shadow-lg shadow-primary-500/20 active:scale-95 transition-all"
+              className="flex items-center gap-2 px-6 h-12 bg-primary-500 text-white rounded-2xl font-black text-[10px] tracking-widest shadow-lg shadow-primary-500/20 active:scale-95 transition-all uppercase"
             >
               <Plus className="w-4 h-4" /> Add Customer
             </button>
@@ -190,7 +190,7 @@ const DebtPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="p-0 md:p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
+      <div className="p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0">
         <AnimatePresence mode="popLayout">
           {customers?.map(customer => (
             <motion.div
@@ -200,7 +200,7 @@ const DebtPage: React.FC = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               key={customer.id}
               onClick={() => setSelectedCustomer(customer)}
-              className="p-5 group transition-all cursor-pointer border-b border-surface-border/50"
+              className="px-6 md:px-12 py-8 group transition-all cursor-pointer border-b border-r border-surface-border/50 hover:bg-primary-500/[0.02]"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="w-12 h-12 bg-surface-bg rounded-xl overflow-hidden flex items-center justify-center border border-surface-border group-hover:border-primary-500/30 transition-colors">
@@ -211,23 +211,23 @@ const DebtPage: React.FC = () => {
                   )}
                 </div>
                 {customer.balance > 0 && (
-                  <div className="bg-amber-500/10 text-amber-500 px-2 py-1 rounded-md text-[8px] font-bold border border-amber-500/20 flex items-center gap-1">
+                  <div className="bg-amber-500/10 text-amber-500 px-2 py-1 rounded-md text-[8px] font-black border border-amber-500/20 flex items-center gap-1 uppercase">
                     <AlertCircle className="w-2.5 h-2.5" /> Owing
                   </div>
                 )}
               </div>
               
-              <h3 className="font-bold text-lg leading-tight tracking-tight mb-1 group-hover:text-primary-400 transition-colors">{customer.name}</h3>
-              <div className="flex flex-col gap-1 text-[10px] font-bold text-surface-text/30 mb-6 tracking-wider">
+              <h3 className="font-black text-lg leading-tight tracking-tight mb-1 group-hover:text-primary-400 transition-colors">{customer.name}</h3>
+              <div className="flex flex-col gap-1 text-[10px] font-black text-surface-text/30 mb-6 tracking-widest uppercase">
                 <div className="flex items-center gap-2"><Phone className="w-3 h-3" /> {customer.phone}</div>
                 {customer.idNumber && <div className="flex items-center gap-2 mt-1">ID: {customer.idNumber}</div>}
               </div>
 
               <div className="pt-4 border-t border-surface-border flex justify-between items-end">
                 <div>
-                  <div className="text-[9px] font-bold text-surface-text/20 mb-1">Balance</div>
+                  <div className="text-[9px] font-black text-surface-text/20 mb-1 uppercase">Balance</div>
                   <div className={clsx(
-                    "text-lg font-black",
+                    "text-lg font-black tracking-tighter",
                     customer.balance > 0 ? "text-amber-500" : "text-emerald-500"
                   )}>
                     MK {customer.balance.toLocaleString()}
@@ -273,8 +273,8 @@ const DebtPage: React.FC = () => {
                   </button>
                 )}
               </div>
-              <div className="bg-surface-bg/50 p-6 rounded-none border border-surface-border flex flex-col justify-center items-center text-center opacity-40 italic">
-                <div className="text-[10px] font-bold text-surface-text/30 mb-2 tracking-widest italic">Manual Credit Blocked</div>
+              <div className="bg-surface-bg/50 p-6 rounded-none border border-surface-border flex flex-col justify-center items-center text-center opacity-40 ">
+                <div className="text-[10px] font-bold text-surface-text/30 mb-2 tracking-widest ">Manual Credit Blocked</div>
                 <div className="text-[8px] font-bold">Credit must only be added through POS Terminal for audit security.</div>
               </div>
             </div>

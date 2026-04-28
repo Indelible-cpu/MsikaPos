@@ -182,7 +182,7 @@ const OnboardingPage: React.FC = () => {
                 className="space-y-8"
               >
                 <div className="text-center">
-                  <h1 className="text-3xl font-black italic tracking-tighter text-primary-500 mb-2">Welcome to MsikaPos</h1>
+                  <h1 className="text-3xl font-black  tracking-tighter text-primary-500 mb-2">Welcome to MsikaPos</h1>
                   <p className="text-surface-text/40 text-[10px] font-black tracking-widest">Complete your profile to unlock the system</p>
                 </div>
 
@@ -302,7 +302,7 @@ const OnboardingPage: React.FC = () => {
                 className="space-y-8"
               >
                 <div className="text-center">
-                  <h1 className="text-2xl font-black italic tracking-tighter text-primary-500 mb-2">Security & Contacts</h1>
+                  <h1 className="text-2xl font-black  tracking-tighter text-primary-500 mb-2">Security & Contacts</h1>
                   <p className="text-surface-text/40 text-[10px] font-black tracking-widest">Protect your account and emergency info</p>
                 </div>
 
@@ -432,7 +432,7 @@ const OnboardingPage: React.FC = () => {
                   <ShieldCheck className="w-10 h-10 text-emerald-500" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-black italic tracking-tighter text-emerald-500 mb-2">Check Your Inbox</h1>
+                  <h1 className="text-2xl font-black  tracking-tighter text-emerald-500 mb-2">Check Your Inbox</h1>
                   <p className="text-surface-text/40 text-xs max-w-[280px] mx-auto">We've sent a 6-digit verification code to <span className="text-surface-text font-bold">{email}</span></p>
                 </div>
 

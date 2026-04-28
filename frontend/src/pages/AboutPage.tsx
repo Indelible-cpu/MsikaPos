@@ -48,7 +48,7 @@ const AboutPage: React.FC = () => {
             <img src="/icon.png" alt="Logo" className="w-12 h-12 object-contain" />
           </div>
           <div>
-            <h2 className="text-3xl font-black tracking-tight italic">MsikaPos</h2>
+            <h2 className="text-3xl font-black tracking-tight ">MsikaPos</h2>
             <p className="text-surface-text/40 text-xs font-black tracking-widest">Version 2.4.0 • Cloud Powered</p>
           </div>
         </section>
@@ -73,7 +73,7 @@ const AboutPage: React.FC = () => {
                 <div className="divide-y divide-surface-border">
                   {section.items.map((item, i) => (
                     <div key={i} className="p-6 space-y-2 hover:bg-surface-bg/50 transition-all">
-                      <h4 className="text-sm font-black text-primary-500 italic">Q: {item.q}</h4>
+                      <h4 className="text-sm font-black text-primary-500 ">Q: {item.q}</h4>
                       <p className="text-[11px] font-medium text-surface-text/60 leading-relaxed">{item.a}</p>
                     </div>
                   ))}
@@ -128,8 +128,8 @@ const AboutPage: React.FC = () => {
           </div>
           
           <div className="space-y-1">
-            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] italic">System Developer</p>
-            <p className="text-sm font-black italic tracking-tight text-primary-500">James Dickson Petro</p>
+            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] ">System Developer</p>
+            <p className="text-sm font-black  tracking-tight text-primary-500">James Dickson Petro</p>
           </div>
           
           <p className="text-[9px] font-black text-surface-text/10 tracking-[0.4em] pb-10">© 2026 MsikaPos • Indelible-cpu</p>

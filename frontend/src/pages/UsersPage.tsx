@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
+import { AuditService } from '../services/AuditService';
+import { normalizePhone } from '../utils/phoneUtils';
 
 interface User {
   id: number;
@@ -105,13 +107,16 @@ const UsersPage: React.FC = () => {
     try {
       const res = await api.post('/users', {
         ...formData,
+        phone: normalizePhone(formData.phone),
         id: editingUser?.id
       });
       
       if (!editingUser && res.data.data?.tempPassword) {
+        await AuditService.log('USER_CREATE', `Created new user: ${formData.username} (Role: ${formData.roleId})`);
         setTempPassword(res.data.data.tempPassword);
         setMagicToken(res.data.data.magicToken);
       } else {
+        await AuditService.log('USER_UPDATE', `Updated user profile: ${formData.username}`);
         setIsModalOpen(false);
         toast.success(editingUser ? 'User updated' : 'User created');
       }
@@ -189,6 +194,7 @@ const UsersPage: React.FC = () => {
         });
       }
 
+      await AuditService.log(`USER_${actionModal.type}`, `User: ${actionModal.user.username} | Reason: ${actionModal.reason}`, actionModal.type === 'REACTIVATE' ? 'INFO' : 'WARNING');
       toast.success("Action completed successfully");
       setActionModal({ isOpen: false, type: null, user: null, reason: '' });
       fetchUsers();
@@ -241,7 +247,7 @@ const UsersPage: React.FC = () => {
               <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6" />
               </div>
-              <h1 className="text-2xl font-black tracking-tighter italic">Team</h1>
+              <h1 className="text-2xl font-black tracking-tighter ">Team</h1>
             </div>
             <button 
               onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
@@ -272,7 +278,7 @@ const UsersPage: React.FC = () => {
          {loading && users.length === 0 ? (
             <div className="col-span-full py-40 flex flex-col items-center justify-center gap-4">
                <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-               <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 italic">Retrieving Team Intelligence...</p>
+               <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 ">Retrieving Team Intelligence...</p>
             </div>
          ) : filteredUsers.length === 0 ? (
             <div className="col-span-full py-20 text-center text-surface-text/20 font-black text-xs tracking-widest">No team members found</div>
@@ -406,7 +412,7 @@ const UsersPage: React.FC = () => {
               <Check className="w-8 h-8 text-emerald-500" />
             </div>
             <div>
-              <h2 className="text-2xl font-black italic tracking-tighter text-emerald-500 mb-2">Account Ready</h2>
+              <h2 className="text-2xl font-black  tracking-tighter text-emerald-500 mb-2">Account Ready</h2>
               <p className="text-surface-text/40 text-xs px-4">Provide these details to the user to complete their profile.</p>
             </div>
 

@@ -71,7 +71,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
                   <div className={clsx("w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform group-active:scale-110", opt.color)}>
                     <opt.icon className="w-6 h-6" />
                   </div>
-                  <span className="text-[10px] font-black tracking-widest italic text-center leading-tight">{opt.label}</span>
+                  <span className="text-[10px] font-black tracking-widest text-center leading-tight">{opt.label}</span>
                 </NavLink>
               ))}
 
@@ -82,7 +82,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-rose-500 text-white shadow-lg transition-transform group-active:scale-110">
                   <LogOut className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] font-black tracking-widest italic text-rose-500">Sign Out</span>
+                <span className="text-[10px] font-black tracking-widest text-rose-500">Sign Out</span>
               </button>
               
               <button
@@ -92,7 +92,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-surface-bg border border-surface-border text-surface-text/40 shadow-sm transition-transform group-active:scale-110">
                   <ChevronDown className="w-6 h-6 group-hover:translate-y-1 transition-transform" />
                 </div>
-                <span className="text-[10px] font-black tracking-widest italic text-surface-text/40">Close</span>
+                <span className="text-[10px] font-black tracking-widest text-surface-text/40">Close</span>
               </button>
             </div>
 

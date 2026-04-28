@@ -19,6 +19,7 @@ import BranchesPage from './pages/BranchesPage';
 import AboutPage from './pages/AboutPage';
 import PublicStorefront from './pages/PublicStorefront';
 import InquiriesPage from './pages/InquiriesPage';
+import AuditLogsPage from './pages/AuditLogsPage';
 import { SyncService } from './services/SyncService';
 import MainLayout from './components/MainLayout';
 import { db } from './db/posDB';
@@ -309,6 +310,7 @@ const App: React.FC = () => {
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="reports" element={<ReportsPage />} />
                         <Route path="branches" element={<BranchesPage />} />
+                        <Route path="audit-logs" element={isSuperAdmin ? <AuditLogsPage /> : <Navigate to="/staff/dashboard" replace />} />
                         <Route path="about" element={<AboutPage />} />
                         <Route path="" element={<Navigate to="dashboard" replace />} />
                       </Routes>

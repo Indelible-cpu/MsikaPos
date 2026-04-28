@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, MessageSquare } from 'lucide-react';
+import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, MessageSquare, History } from 'lucide-react';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
@@ -9,6 +9,8 @@ import api from '../api/client';
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const [pendingCount, setPendingCount] = React.useState(0);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isSuperAdmin = user.role === 'SUPER_ADMIN';
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/staff/dashboard' },
@@ -22,6 +24,7 @@ const Sidebar: React.FC = () => {
     { id: 'branches', label: 'Branch Management', icon: Building2, path: '/staff/branches' },
     { id: 'reports', label: 'System Reports', icon: BarChart3, path: '/staff/reports' },
     { id: 'settings', label: 'System Settings', icon: Settings, path: '/staff/settings' },
+    ...(isSuperAdmin ? [{ id: 'audit', label: 'Security & Audits', icon: History, path: '/staff/audit-logs' }] : []),
   ];
 
   const fetchPending = React.useCallback(async () => {
@@ -61,10 +64,10 @@ const Sidebar: React.FC = () => {
       {/* Brand Header - Fixed */}
       <div className="p-8 pb-4 shrink-0 flex flex-col items-center text-center">
         <div className="w-24 h-24 flex items-center justify-center overflow-hidden flex-shrink-0 rounded-full bg-surface-bg border border-surface-border shadow-2xl p-1 mb-4 group-hover:scale-105 transition-transform">
-          <img src={shopLogo} alt="MsikaPos Logo" className="w-full h-full object-contain" />
+          <img src={shopLogo} alt="MsikaPos Logo" className="w-full h-full object-cover" />
         </div>
         <div className="space-y-1">
-          <div className="text-[10px] font-black text-primary-500 tracking-[0.3em] opacity-80">Cloud POS</div>
+          <div className="text-[10px] font-black text-primary-500 tracking-[0.3em] opacity-80 uppercase">Cloud Powered POS</div>
           <div className="w-12 h-1 bg-primary-500/20 mx-auto rounded-full"></div>
         </div>
       </div>
@@ -76,7 +79,7 @@ const Sidebar: React.FC = () => {
             key={tab.id}
             to={tab.path}
             className={({ isActive }) => clsx(
-              "flex items-center gap-4 px-5 h-14 rounded-[1.5rem] font-black tracking-widest text-[13px] transition-all group shrink-0 relative",
+              "flex items-center gap-4 px-5 h-14 rounded-[2rem] font-black tracking-widest text-[13px] transition-all group shrink-0 relative",
               isActive 
                 ? "bg-primary-500 text-white shadow-xl shadow-primary-500/20 scale-[1.02]" 
                 : "text-surface-text/40 hover:text-primary-500 hover:bg-primary-500/5 border border-transparent hover:border-primary-500/10"
@@ -106,10 +109,10 @@ const Sidebar: React.FC = () => {
           <LogOut className="w-6 h-6 transition-transform group-hover:scale-110" strokeWidth={2.5} />
           Sign Out
         </button>
-        <div className="mt-4 px-4 flex items-center justify-between opacity-40">
-           <span className="text-[8px] font-black tracking-[0.2em] uppercase">Sync Status</span>
+        <div className="mt-4 px-4 flex items-center justify-between opacity-30">
+           <span className="text-[7px] font-black tracking-[0.2em] uppercase">Powered by MsikaPOS</span>
            <div className={clsx(
-             "w-2 h-2 rounded-full",
+             "w-1.5 h-1.5 rounded-full",
              navigator.onLine ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
            )}></div>
         </div>

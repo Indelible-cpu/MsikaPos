@@ -43,6 +43,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+[data-font-size="small"] {
+  font-size: 14px;
+}
+
+[data-font-size="medium"] {
+  font-size: 16px;
+}
+
+[data-font-size="large"] {
+  font-size: 18px;
+}
+
 /* Ensure edge-to-edge on mobile */
 html, body {
   overscroll-behavior-y: none;
@@ -57,11 +69,11 @@ html, body {
 }
 
 .dark {
-  --bg-main: #09090b;
+  --bg-main: #020202;
   --text-main: #fafafa;
-  --bg-card: #18181b;
-  --bg-card-rgb: 24, 24, 27;
-  --border-color: #27272a;
+  --bg-card: #0a0a0a;
+  --bg-card-rgb: 10, 10, 10;
+  --border-color: #1a1a1a;
 }
 
 @media (min-width: 768px) {
@@ -119,11 +131,11 @@ body {
   }
 
   .section-title {
-    @apply text-2xl font-black tracking-tighter italic text-surface-text mb-8 flex items-center gap-4;
+    @apply text-2xl font-black tracking-tighter text-surface-text mb-8 flex items-center gap-4;
   }
 
   .card-label {
-    @apply text-[10px] font-black tracking-[0.2em] text-surface-text/20 mb-2 block italic;
+    @apply text-[10px] font-black tracking-[0.2em] text-surface-text/20 mb-2 block;
   }
 }
 

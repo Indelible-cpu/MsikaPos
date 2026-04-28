@@ -73,7 +73,7 @@ const ForgotPasswordPage: React.FC = () => {
               className="pt-10 space-y-8"
             >
               <div className="text-center">
-                <h1 className="text-3xl font-black italic tracking-tighter text-primary-500 mb-2">Reset Password</h1>
+                <h1 className="text-3xl font-black  tracking-tighter text-primary-500 mb-2">Reset Password</h1>
                 <p className="text-surface-text/40 text-[10px] font-black tracking-widest">Enter your registered details</p>
               </div>
 
@@ -134,7 +134,7 @@ const ForgotPasswordPage: React.FC = () => {
                 <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
                   <ShieldCheck className="w-8 h-8 text-emerald-500" />
                 </div>
-                <h1 className="text-2xl font-black italic tracking-tighter text-emerald-500 mb-2">Check Your Email</h1>
+                <h1 className="text-2xl font-black  tracking-tighter text-emerald-500 mb-2">Check Your Email</h1>
                 <p className="text-surface-text/40 text-[10px] font-black tracking-widest">Enter code and new password</p>
               </div>
 

@@ -44,8 +44,8 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
         <div className="w-14 h-14 mx-auto mb-2 rounded-full border border-black/10 flex items-center justify-center overflow-hidden">
            <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="w-full h-full object-contain grayscale" />
         </div>
-        <h1 className="text-xl font-bold tracking-tight italic uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
-        {shopSlogan && <p className="text-[8px] italic font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
+        <h1 className="text-xl font-bold tracking-tight  uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
+        {shopSlogan && <p className="text-[8px]  font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
         <p className="text-[9px] tracking-widest">{shopAddress}</p>
         <p className="text-[9px] font-bold mt-1">Tel: {shopTel}</p>
         {shopEmail && <p className="text-[8px] font-bold opacity-60">{shopEmail}</p>}
@@ -148,7 +148,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
       </div>
 
       <div className="text-center pt-4 mt-4 border-t border-black border-dashed">
-        <p className="text-[9px] font-bold italic">Payment expected by due date.</p>
+        <p className="text-[9px] font-bold ">Payment expected by due date.</p>
         <p className="text-[11px] font-black mt-2">Thank you for your business!</p>
         <div className="mt-4 opacity-30 text-[7px] font-bold tracking-widest">Powered by MsikaPos Cloud POS</div>
       </div>

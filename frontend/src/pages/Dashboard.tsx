@@ -261,7 +261,7 @@ export default function Dashboard() {
                     </div>
                     <p className="text-zinc-700 text-xs font-bold mb-1">Order count</p>
                     <h2 className="text-3xl font-black text-zinc-900 tracking-tight">{statsData?.total_transactions || '0'}</h2>
-                    <p className="text-[10px] text-zinc-700 mt-2 italic font-medium">Across all branches</p>
+                    <p className="text-[10px] text-zinc-700 mt-2  font-medium">Across all branches</p>
                   </div>
 
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md group">

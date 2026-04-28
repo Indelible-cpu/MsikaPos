@@ -7,6 +7,10 @@ import { ThemeProvider } from './context/ThemeProvider'
 
 const queryClient = new QueryClient()
 
+// Initialize font size
+const savedFontSize = localStorage.getItem('fontSize') || 'medium';
+document.documentElement.setAttribute('data-font-size', savedFontSize);
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
