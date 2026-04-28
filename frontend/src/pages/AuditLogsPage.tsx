@@ -18,18 +18,13 @@ const AuditLogsPage: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     const fetchLogs = async () => {
-      setLoading(true);
       try {
         const data = await AuditService.getLogs();
         setLogs(data);
       } catch (err) {
         toast.error('Failed to load audit logs');
-      } finally {
-        setLoading(false);
       }
     };
     fetchLogs();

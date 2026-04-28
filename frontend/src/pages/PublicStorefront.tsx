@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Star, Bookmark, Plus, ShoppingCart, X, ArrowRight } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
@@ -98,13 +98,6 @@ export const PublicStorefront: React.FC = () => {
     toast.success(newLiked.has(id) ? 'Added to favorites' : 'Removed from favorites');
   };
 
-  const toggleSave = (id: number) => {
-    const newSaved = new Set(savedItems);
-    if (newSaved.has(id)) newSaved.delete(id);
-    else newSaved.add(id);
-    setSavedItems(newSaved);
-    toast.success(newSaved.has(id) ? 'Saved for later' : 'Removed from saved');
-  };
 
   const addToCart = (product: StoreProduct, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();

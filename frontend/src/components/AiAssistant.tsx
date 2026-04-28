@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, X, BrainCircuit, Lightbulb, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Sparkles, BrainCircuit, Lightbulb, TrendingUp, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 import { db } from '../db/posDB';
