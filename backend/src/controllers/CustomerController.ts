@@ -159,29 +159,54 @@ export const listInquiries = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
   const role = req.user?.role;
 
-  try {
-    let inquiries;
-    if (role === 'CUSTOMER') {
-      const customer = await prisma.customer.findUnique({ where: { userId } });
-      if (!customer) return res.status(200).json({ success: true, data: [] });
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
 
-      inquiries = await prisma.inquiry.findMany({
-        where: { customerId: customer.id },
-        orderBy: { createdAt: 'desc' }
-      });
-    } else {
-      // Staff view
-      inquiries = await prisma.inquiry.findMany({
-        include: { 
-          customer: {
-            include: { user: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-    }
+    try {
+      let inquiries;
+      let total;
 
-    res.status(200).json({ success: true, data: inquiries });
+      if (role === 'CUSTOMER') {
+        if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+        
+        const customer = await prisma.customer.findUnique({ 
+          where: { userId: userId as number } 
+        });
+        if (!customer) return res.status(200).json({ success: true, data: [], total: 0 });
+
+        total = await prisma.inquiry.count({ where: { customerId: customer.id } });
+        inquiries = await prisma.inquiry.findMany({
+          where: { customerId: customer.id },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit
+        });
+      } else {
+        // Staff view
+        total = await prisma.inquiry.count();
+        inquiries = await prisma.inquiry.findMany({
+          include: { 
+            customer: {
+              include: { user: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit
+        });
+      }
+
+      res.status(200).json({ 
+        success: true, 
+        data: inquiries,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

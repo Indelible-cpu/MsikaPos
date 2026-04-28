@@ -8,10 +8,23 @@ export const syncData = async (req: Request, res: Response) => {
   try {
     // 1. Process Incoming Sales from Offline Queue
     if (sales && sales.length > 0) {
+      // Pre-fetch all products involved in the sync to check service status
+      const allProductIds = Array.from(new Set(
+        sales.flatMap((s: any) => s.items.map((i: any) => i.productId))
+      ));
+      
+      const productMeta = await prisma.product.findMany({
+        where: { id: { in: allProductIds as number[] } },
+        select: { id: true, isService: true }
+      });
+      
+      const serviceStatusMap = new Map(productMeta.map(p => [p.id, p.isService]));
+
       for (const saleData of sales) {
         // Check if sale already exists (prevent duplicates)
         const existingSale = await prisma.sale.findUnique({
           where: { invoiceNo: saleData.invoiceNo },
+          select: { id: true }
         });
 
         if (!existingSale) {
@@ -56,10 +69,10 @@ export const syncData = async (req: Request, res: Response) => {
               },
             });
 
-            // Update Inventory for each item
+            // Update Inventory for each item (only for non-services)
             for (const item of saleData.items) {
-              const product = await tx.product.findUnique({ where: { id: item.productId } });
-              if (product && !product.isService) {
+              const isService = serviceStatusMap.get(item.productId);
+              if (!isService) {
                 await tx.product.update({
                   where: { id: item.productId },
                   data: { quantity: { decrement: item.quantity } },

@@ -39,10 +39,31 @@ export const authLimiter = rateLimit({
 // 4. PARAMETER POLLUTION PREVENTION
 export const parameterPollution = hpp();
 
-// 5. IP BLOCKER MIDDLEWARE
+// 5. IP BLOCKER MIDDLEWARE with In-Memory Cache
+const ipCache = new Map<string, { blocked: boolean; reason?: string; expiresAt?: Date | null; lastChecked: number }>();
+const IP_CACHE_TTL = 60 * 1000; // 1 minute
+
 export const ipBlocker = async (req: Request, res: Response, next: NextFunction) => {
   const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
   
+  // Check Cache first
+  const cached = ipCache.get(ip);
+  if (cached && (now - cached.lastChecked < IP_CACHE_TTL)) {
+    if (cached.blocked) {
+      if (cached.expiresAt && cached.expiresAt < new Date()) {
+        ipCache.delete(ip); // Expired in cache, proceed to DB/Next
+      } else {
+        return res.status(403).json({ 
+          message: 'Your access has been restricted due to suspicious activity.',
+          reason: cached.reason 
+        });
+      }
+    } else {
+      return next(); // Not blocked according to cache
+    }
+  }
+
   try {
     const blocked = await prisma.blockedIP.findUnique({
       where: { ipAddress: ip }
@@ -51,16 +72,26 @@ export const ipBlocker = async (req: Request, res: Response, next: NextFunction)
     if (blocked) {
       if (blocked.expiresAt && blocked.expiresAt < new Date()) {
         await prisma.blockedIP.delete({ where: { id: blocked.id } });
+        ipCache.set(ip, { blocked: false, lastChecked: now });
       } else {
+        ipCache.set(ip, { 
+          blocked: true, 
+          reason: blocked.reason, 
+          expiresAt: blocked.expiresAt, 
+          lastChecked: now 
+        });
         return res.status(403).json({ 
           message: 'Your access has been restricted due to suspicious activity.',
           reason: blocked.reason 
         });
       }
+    } else {
+      // Not blocked, cache the negative result
+      ipCache.set(ip, { blocked: false, lastChecked: now });
     }
     next();
   } catch (error) {
-    next(); // Don't block if DB is down, but log it
+    next(); // Don't block if DB is down
   }
 };
 
