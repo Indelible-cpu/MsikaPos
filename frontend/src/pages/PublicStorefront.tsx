@@ -20,7 +20,7 @@ export const PublicStorefront: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [shopName, setShopName] = useState('Msika');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [customer, setCustomer] = useState<{ fullname: string; role: string; [key: string]: any } | null>(() => {
+  const [customer, setCustomer] = useState<{ fullname: string; role: string; [key: string]: unknown } | null>(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const u = JSON.parse(storedUser);
@@ -224,7 +224,7 @@ export const PublicStorefront: React.FC = () => {
     }
   };
 
-  const handleAuthSuccess = (_token: string, user: { fullname: string; role: string; [key: string]: any }) => {
+  const handleAuthSuccess = (_token: string, user: { fullname: string; role: string; [key: string]: unknown }) => {
     setCustomer(user);
     if (selectedProduct) {
       handleInquiry(selectedProduct);
