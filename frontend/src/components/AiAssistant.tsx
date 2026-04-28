@@ -58,8 +58,8 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
       if (res.data.success) {
         setSuggestion(res.data.data);
       }
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.message || err.message || "Unknown connectivity issue";
+    } catch (err: unknown) {
+      const errorMsg = (err as any).response?.data?.message || (err as any).message || "Unknown connectivity issue";
       setSuggestion(`Connectivity Error: ${errorMsg}. Please ensure your backend is live and the xAI key is set in Render settings.`);
     } finally {
       setLoading(false);
