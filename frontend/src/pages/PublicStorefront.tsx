@@ -3,6 +3,8 @@ import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon,
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
+import { AuditService } from '../services/AuditService';
+import { formatCurrency } from '../utils/phoneUtils';
 
 interface StoreProduct {
   id: number;
@@ -95,6 +97,11 @@ export const PublicStorefront: React.FC = () => {
     else newLiked.add(id);
     setLikedItems(newLiked);
     toast.success(newLiked.has(id) ? 'Added to favorites' : 'Removed from favorites');
+    // Track Action
+    const p = products.find(p => p.id === id);
+    if (p) {
+      AuditService.log(newLiked.has(id) ? 'CUSTOMER_LIKE' : 'CUSTOMER_UNLIKE', `Product: ${p.name}`);
+    }
   };
 
 
@@ -104,6 +111,8 @@ export const PublicStorefront: React.FC = () => {
       const exists = prev.find(item => item.id === product.id);
       if (exists) return prev;
       toast.success(`${product.name} added to cart`);
+      // Track Action
+      AuditService.log('CUSTOMER_CART_ADD', `Product: ${product.name} (MK${product.sellPrice})`);
       return [...prev, product];
     });
   };
@@ -184,7 +193,7 @@ export const PublicStorefront: React.FC = () => {
 
   const handleWhatsApp = (product: StoreProduct) => {
     const number = whatsappNumber || '265999999999'; // Fallback
-    const message = encodeURIComponent(`Hi ${shopName}, I am interested in ${product.name} (MK${Number(product.sellPrice ?? 0).toLocaleString()}). Could I get more details?`);
+    const message = encodeURIComponent(`Hi ${shopName}, I am interested in ${product.name} (${formatCurrency(product.sellPrice ?? 0)}). Could I get more details?`);
     window.open(`https://wa.me/${number.replace('+', '')}?text=${message}`, '_blank');
   };
 
@@ -268,7 +277,7 @@ export const PublicStorefront: React.FC = () => {
                 <ShoppingBag className="w-4 h-4 text-primary-500" />
               )}
             </div>
-            <h1 className="text-lg font-black tracking-tighter">{shopName}</h1>
+            <h1 className="text-sm font-black tracking-tighter">{shopName}</h1>
           </div>
           
           <div className="flex items-center gap-3">
@@ -291,13 +300,36 @@ export const PublicStorefront: React.FC = () => {
               </div>
             )}
             <div className="flex items-center gap-2">
-              <button 
-                onClick={toggleTheme}
-                className="w-8 h-8 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all text-xs"
-                title="Toggle Theme"
-              >
-                {theme === 'light' ? '☀️' : theme === 'dark' ? '🌙' : '💻'}
-              </button>
+              <div className="relative group">
+                <button 
+                  className="w-8 h-8 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all text-xs"
+                  title="Store Settings & Accessibility"
+                  aria-label="Store Settings & Accessibility"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+                <div className="absolute right-0 mt-2 w-48 bg-surface-card border border-surface-border rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-2">
+                  <button 
+                    onClick={toggleTheme}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-bg rounded-xl transition-colors text-[10px] font-black tracking-widest uppercase"
+                  >
+                    <span>{theme === 'light' ? '🌙 Dark' : theme === 'dark' ? '☀️ Light' : '💻 System'} Mode</span>
+                  </button>
+                  <div className="border-t border-surface-border my-1"></div>
+                  <div className="px-4 py-2">
+                    <p className="text-[8px] font-black text-surface-text/30 uppercase tracking-[0.2em] mb-2">Accessibility</p>
+                    <button 
+                      onClick={() => document.documentElement.classList.toggle('contrast-125')}
+                      className="w-full text-left px-4 py-2 hover:bg-surface-bg rounded-lg text-[9px] font-bold"
+                    >
+                      High Contrast
+                    </button>
+                  </div>
+                </div>
+              </div>
               <button 
                 onClick={() => setIsCartOpen(true)}
                 className="relative group"
@@ -371,15 +403,16 @@ export const PublicStorefront: React.FC = () => {
       <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <h2 className="text-base md:text-lg font-black tracking-tighter leading-none text-primary-500 uppercase">Marketplace</h2>
-            <p className="text-[10px] md:text-xs font-bold text-surface-text/40 mt-1 uppercase tracking-widest">Premium Products & Services</p>
+            <h2 className="text-sm md:text-base font-black tracking-tighter leading-none text-primary-500">Marketplace</h2>
+            <p className="text-[9px] md:text-[10px] font-bold text-surface-text/40 mt-1 uppercase tracking-widest">Premium products & services</p>
           </div>
           
           <div className="relative w-full md:max-w-sm">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
             <input 
               type="text" 
-              placeholder="Search MsikaPos..."
+              placeholder="Search"
+              aria-label="Search items"
               className="w-full py-4 pl-14 pr-12 bg-surface-card border border-surface-border rounded-full outline-none focus:border-primary-500 font-bold text-xs shadow-lg transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -468,7 +501,7 @@ export const PublicStorefront: React.FC = () => {
                     <div className="flex items-end justify-between">
                       <div className="flex flex-col">
                         <span className="text-[7px] md:text-[9px] font-black text-surface-text/20">PRICE</span>
-                        <p className="text-sm md:text-xl font-black text-primary-500 tracking-tighter">MK{Number(p.sellPrice ?? 0).toLocaleString()}</p>
+                        <p className="text-sm md:text-xl font-black text-primary-500 tracking-tighter">{formatCurrency(p.sellPrice ?? 0)}</p>
                       </div>
                       
                       <button 
@@ -547,7 +580,7 @@ export const PublicStorefront: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-0.5">{item.category?.name || 'Item'}</p>
                       <h4 className="font-black text-sm truncate">{item.name}</h4>
-                      <p className="text-xs font-bold text-surface-text/40">MK {Number(item.sellPrice ?? 0).toLocaleString()}</p>
+                      <p className="text-xs font-bold text-surface-text/40">{formatCurrency(item.sellPrice ?? 0)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button 
@@ -574,7 +607,7 @@ export const PublicStorefront: React.FC = () => {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-black text-surface-text/40">Estimated Total</p>
                 <p className="text-2xl font-black text-primary-500 tracking-tighter">
-                  MK {cartItems.reduce((acc, item) => acc + Number(item.sellPrice ?? 0), 0).toLocaleString()}
+                  {formatCurrency(cartItems.reduce((acc, item) => acc + Number(item.sellPrice ?? 0), 0))}
                 </p>
               </div>
               <button 

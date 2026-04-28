@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
+import { formatCurrency } from '../utils/phoneUtils';
 
 const SalesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,21 +70,21 @@ const SalesPage: React.FC = () => {
                 <DollarSign className="w-3 h-3" />
                 <span className="text-[10px] font-bold">Revenue</span>
              </div>
-             <div className="text-xl font-black text-primary-400">MK{totalRevenue.toLocaleString()}</div>
+             <div className="text-xl font-black text-primary-400">{formatCurrency(totalRevenue)}</div>
           </div>
           <div className="bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
              <div className="flex items-center gap-2 mb-2 text-surface-text/40">
                 <TrendingUp className="w-3 h-3" />
                 <span className="text-[10px] font-bold">Profit</span>
              </div>
-             <div className="text-xl font-black text-emerald-500">MK{totalProfit.toLocaleString()}</div>
+             <div className="text-xl font-black text-emerald-500">{formatCurrency(totalProfit)}</div>
           </div>
           <div className="bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
              <div className="flex items-center gap-2 mb-2 text-surface-text/40">
                 <ReceiptIcon className="w-3 h-3 text-amber-500" />
                 <span className="text-[10px] font-bold">Discounts</span>
              </div>
-             <div className="text-xl font-black text-amber-500">MK{totalDiscounts.toLocaleString()}</div>
+             <div className="text-xl font-black text-amber-500">{formatCurrency(totalDiscounts)}</div>
           </div>
           <div className="hidden lg:block bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
              <div className="flex items-center gap-2 mb-2 text-surface-text/40">
@@ -129,7 +130,7 @@ const SalesPage: React.FC = () => {
                   <span className="text-[10px] text-surface-text/40 font-bold">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')} • {sale.itemsCount} items</span>
                 </div>
                 <div className="text-right">
-                  <div className="font-black text-base text-primary-400">MK{sale.total.toLocaleString()}</div>
+                  <div className="font-black text-base text-primary-400">{formatCurrency(sale.total)}</div>
                   <div className="text-[9px] text-surface-text/30 font-bold">{sale.paymentMode}</div>
                 </div>
               </div>
@@ -155,9 +156,9 @@ const SalesPage: React.FC = () => {
                   <div key={idx} className="flex justify-between items-center p-4 bg-surface-bg/40 rounded-2xl border border-surface-border">
                     <div>
                       <div className="font-bold text-sm">{item.productName}</div>
-                      <div className="text-[10px] text-surface-text/40 font-bold">MK {item.unitPrice.toLocaleString()} × {item.quantity}</div>
+                      <div className="text-[10px] text-surface-text/40 font-bold">{formatCurrency(item.unitPrice)} × {item.quantity}</div>
                     </div>
-                    <div className="font-black text-primary-400">MK{item.lineTotal.toLocaleString()}</div>
+                    <div className="font-black text-primary-400">{formatCurrency(item.lineTotal)}</div>
                   </div>
                 ))}
               </div>
@@ -170,7 +171,7 @@ const SalesPage: React.FC = () => {
               </div>
               <div className="flex justify-between items-center pt-3 border-t-2 border-surface-border">
                 <span className="text-lg font-black tracking-tighter">Grand total</span>
-                <span className="text-2xl font-black text-primary-400">MK{selectedSale.total.toLocaleString()}</span>
+                <span className="text-2xl font-black text-primary-400">{formatCurrency(selectedSale.total)}</span>
               </div>
             </div>
 
