@@ -15,7 +15,9 @@ const transporter = nodemailer.createTransport({
 });
 
 // 1. HELMET for secure headers
-export const securityHeaders = helmet();
+export const securityHeaders = helmet({
+  crossOriginResourcePolicy: false,
+});
 
 // 2. RATE LIMITER (Global)
 export const globalLimiter = rateLimit({
