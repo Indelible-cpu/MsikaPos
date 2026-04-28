@@ -15,7 +15,7 @@ import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 
 interface AuditLog {
-  id: number;
+  id: string;
   action: string;
   type: 'INFO' | 'WARNING' | 'ERROR';
   details: string;
