@@ -71,7 +71,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
           errorMsg = axiosError.response.data.message;
         }
       }
-      setSuggestion(`Connectivity Error: ${errorMsg}. Please ensure your backend is live and the xAI key is set in Render settings.`);
+      setSuggestion(`Connectivity Error: ${errorMsg}. Please ensure your backend is live and the GEMINI_API_KEY is set in Render settings.`);
     } finally {
       setLoading(false);
     }
