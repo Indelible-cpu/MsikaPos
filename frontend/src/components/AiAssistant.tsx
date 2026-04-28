@@ -58,8 +58,9 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
       if (res.data.success) {
         setSuggestion(res.data.data);
       }
-    } catch {
-      setSuggestion("Failed to connect to the brain. Please check your internet or system settings.");
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || err.message || "Unknown connectivity issue";
+      setSuggestion(`Connectivity Error: ${errorMsg}. Please ensure your backend is live and the xAI key is set in Render settings.`);
     } finally {
       setLoading(false);
     }
