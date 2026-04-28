@@ -5,6 +5,8 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "esnext",
     "types": ["vite/client", "./src/pwa.d.ts"],
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
 
     /* Bundler mode */
