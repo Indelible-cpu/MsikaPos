@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Store, Smartphone, Building2, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus, Wallet, Eye, Zap } from 'lucide-react';
+import { User, Store, Smartphone, Building2, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus, Wallet, Eye } from 'lucide-react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
@@ -322,7 +322,7 @@ const SettingsPage: React.FC = () => {
                         </div>
                         <button
                            role="switch"
-                           aria-checked={highContrast ? 'true' : 'false'}
+                           aria-pressed={highContrast}
                            onClick={() => {
                               const next = !highContrast;
                               setHighContrast(next);
@@ -343,7 +343,7 @@ const SettingsPage: React.FC = () => {
                         </div>
                         <button
                            role="switch"
-                           aria-checked={reduceMotion ? 'true' : 'false'}
+                           aria-pressed={reduceMotion}
                            onClick={() => {
                               const next = !reduceMotion;
                               setReduceMotion(next);
