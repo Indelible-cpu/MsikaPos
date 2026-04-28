@@ -166,7 +166,7 @@ const SettingsPage: React.FC = () => {
                                       toast.success('Logo updated');
                                       window.dispatchEvent(new Event('storage'));
                                       window.location.reload();
-                                    } catch (err) {
+                                    } catch {
                                       toast.error('Failed to save logo to database');
                                     }
                                  };
@@ -233,7 +233,7 @@ const SettingsPage: React.FC = () => {
                                       toast.success('Logo updated');
                                       window.dispatchEvent(new Event('storage'));
                                       window.location.reload();
-                                    } catch (err) {
+                                    } catch {
                                       toast.error('Failed to save logo to database');
                                     }
                                  };

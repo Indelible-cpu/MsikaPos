@@ -369,7 +369,7 @@ export const PublicStorefront: React.FC = () => {
       <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <h2 className="text-2xl md:text-3xl font-black tracking-tighter italic leading-none text-primary-500 uppercase">Marketplace</h2>
+            <h2 className="text-base md:text-lg font-black tracking-tighter italic leading-none text-primary-500 uppercase">Marketplace</h2>
             <p className="text-[10px] md:text-xs font-bold text-surface-text/40 mt-1 uppercase tracking-widest">Premium Products & Services</p>
           </div>
           
