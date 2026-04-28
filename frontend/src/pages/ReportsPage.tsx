@@ -51,9 +51,27 @@ const BarChart = ({ data, label, valuePrefix = '' }: { data: { label: string, va
   );
 };
 
+interface ServerStats {
+  today_sales: number;
+  total_transactions: number;
+  total_profit: number;
+  active_products: number;
+  low_stock: number;
+  credit_reminders: number;
+  recent_activity: Array<{
+    invoice_no: string;
+    total: number;
+    username: string;
+  }>;
+  chart_data: Array<{
+    date: string;
+    total: number;
+  }>;
+}
+
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('Financial');
-  const [serverStats, setServerStats] = useState<any>(null);
+  const [serverStats, setServerStats] = useState<ServerStats | null>(null);
   const [loading, setLoading] = useState(false);
   
   const localSales = useLiveQuery(() => db.salesQueue.toArray());
@@ -83,11 +101,11 @@ const ReportsPage: React.FC = () => {
   const analyticsData = useMemo(() => {
     if (serverStats?.chart_data) {
       return {
-        weekly: serverStats.chart_data.map((d: any) => ({ label: d.date, value: d.total })),
-        staff: serverStats.recent_activity ? Object.entries(serverStats.recent_activity.reduce((acc: any, curr: any) => {
+        weekly: serverStats.chart_data.map(d => ({ label: d.date, value: d.total })),
+        staff: serverStats.recent_activity ? Object.entries(serverStats.recent_activity.reduce((acc: Record<string, number>, curr) => {
           acc[curr.username] = (acc[curr.username] || 0) + curr.total;
           return acc;
-        }, {})).map(([label, value]) => ({ label, value: value as number })) : [],
+        }, {})).map(([label, value]) => ({ label, value })) : [],
         branches: [], // Branch data could be added to backend
         payment: [] 
       };

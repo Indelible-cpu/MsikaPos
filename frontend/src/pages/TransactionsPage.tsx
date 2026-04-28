@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type LocalProduct } from '../db/posDB';
+import { db, type LocalProduct, type LocalSale } from '../db/posDB';
 import api from '../api/client';
 import { 
   Search, 
@@ -17,7 +17,7 @@ const TransactionsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterToday, setFilterToday] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
-  const [serverSales, setServerSales] = useState<any[]>([]);
+  const [serverSales, setServerSales] = useState<LocalSale[]>([]);
   const [loading, setLoading] = useState(false);
 
   const localSales = useLiveQuery(
@@ -42,7 +42,7 @@ const TransactionsPage: React.FC = () => {
     const loadServerSales = async () => {
       setLoading(true);
       try {
-        const params: any = { q: searchTerm };
+        const params: { q: string, from?: string } = { q: searchTerm };
         if (filterToday) params.from = new Date().toISOString().split('T')[0];
         const res = await api.get('/reports/transactions', { params });
         if (res.data.success) {

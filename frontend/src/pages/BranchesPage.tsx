@@ -12,8 +12,19 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
+interface Branch {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  email?: string;
+  facebook?: string;
+  slogan?: string;
+  logo?: string;
+}
+
 const BranchesPage: React.FC = () => {
-  const [branches, setBranches] = useState<any[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ 
@@ -31,7 +42,7 @@ const BranchesPage: React.FC = () => {
     try {
       const res = await api.get('/branches');
       setBranches(res.data.data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch branches');
     } finally {
       setLoading(false);
@@ -39,7 +50,12 @@ const BranchesPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchBranches();
+    let active = true;
+    const load = async () => {
+      if (active) await fetchBranches();
+    };
+    load();
+    return () => { active = false; };
   }, [fetchBranches]);
 
   const stats = [
