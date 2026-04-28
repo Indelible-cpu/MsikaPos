@@ -44,7 +44,7 @@ export const getAiSuggestions = async (req: Request, res: Response) => {
 
     const openai = getOpenAI();
     const response = await openai.chat.completions.create({
-      model: "grok-beta", // Using grok-beta for general intelligence
+      model: "grok-2", // Standard production model
       messages: [{ role: "user", content: prompt }],
       max_tokens: 500,
     });
