@@ -12,12 +12,13 @@ export const SyncService = {
     const lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp');
 
     try {
-      // 1. Check if server is alive first
+      /* 
       try {
         await api.get('/ping', { timeout: 5000 });
       } catch (_e) {
         throw new Error('Server is unreachable. Please wait 30s and try again.');
       }
+      */
 
       const response = await api.post('/sync', {
         sales: unsyncedSales,
