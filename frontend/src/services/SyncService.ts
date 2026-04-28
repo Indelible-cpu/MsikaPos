@@ -14,7 +14,7 @@ export const SyncService = {
     try {
       // 1. Check if server is alive first
       try {
-        await api.get('/api/ping', { timeout: 5000 });
+        await api.get('/ping', { timeout: 5000 });
       } catch (e) {
         throw new Error('Server is unreachable. Please wait 30s and try again.');
       }
