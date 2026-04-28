@@ -160,27 +160,7 @@ const InventoryPage: React.FC = () => {
     document.body.removeChild(link);
     toast.success('Inventory exported successfully');
   };
-    const defaultCatId = categories?.[0]?.id || 0;
-    let initialSku = scannedSku || '';
-    
-    if (!scannedSku && defaultCatId) {
-      const cat = await db.categories.get(defaultCatId);
-      const prefix = cat ? cat.title.substring(0, 2).toUpperCase() : 'PR';
-      const productsInCat = await db.products.where('categoryId').equals(defaultCatId).toArray();
-      initialSku = `${prefix}-${(productsInCat.length + 1).toString().padStart(3, '0')}`;
-    }
 
-    setFormData({
-      name: '',
-      sku: initialSku,
-      costPrice: 0,
-      sellPrice: 0,
-      quantity: 0,
-      categoryId: defaultCatId,
-      isService: false,
-      imageUrl: '',
-    });
-  }, [categories]);
 
   const openAddModal = useCallback(async (scannedSku?: string) => {
     setEditingProduct(null);
