@@ -17,7 +17,12 @@ export const getAiSuggestions = async (req: Request, res: Response) => {
   try {
     let prompt = "";
 
-    if (type === 'DASHBOARD_INSIGHTS') {
+    if (type === 'IMAGE_GENERATION') {
+      prompt = `You are a professional AI image prompt engineer. 
+      The user wants to generate an image related to: ${context}. 
+      Create a highly detailed, cinematic, and professional image generation prompt for this. 
+      Your response must ONLY contain the final prompt text, nothing else.`;
+    } else if (type === 'DASHBOARD_INSIGHTS') {
       prompt = `You are a professional business consultant for a retail POS system called MsikaPos. 
       Given the following sales and inventory data, provide 3 powerful, actionable business suggestions to improve profit, manage stock better, or increase customer retention. 
       Keep it concise, professional, and data-driven. 
@@ -37,6 +42,12 @@ export const getAiSuggestions = async (req: Request, res: Response) => {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
+
+    if (type === 'IMAGE_GENERATION') {
+      const encodedPrompt = encodeURIComponent(text.trim());
+      const imageUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000000)}&nologo=true`;
+      return res.json({ success: true, data: imageUrl, isImage: true });
+    }
 
     res.json({ 
       success: true, 
