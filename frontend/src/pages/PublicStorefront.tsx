@@ -38,7 +38,6 @@ export const PublicStorefront: React.FC = () => {
     return (localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null) || 'system';
   });
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
-  const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
   const categoryNavRef = useRef<HTMLDivElement>(null);
 
   const CUSTOM_CATEGORIES = [

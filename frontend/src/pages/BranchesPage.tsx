@@ -87,8 +87,8 @@ const BranchesPage: React.FC = () => {
       setIsModalOpen(false);
       setFormData({ name: '', address: '', phone: '', email: '', facebook: '', slogan: '', logo: '' });
       fetchBranches();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to add branch');
+    } catch (error: unknown) {
+      toast.error((error as any).response?.data?.message || 'Failed to add branch');
     } finally {
       setLoading(false);
     }

@@ -14,8 +14,17 @@ import { AuditService } from '../services/AuditService';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 
+interface AuditLog {
+  id: number;
+  action: string;
+  type: 'INFO' | 'WARNING' | 'ERROR';
+  details: string;
+  username: string;
+  createdAt: string;
+}
+
 const AuditLogsPage: React.FC = () => {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   useEffect(() => {
@@ -23,7 +32,7 @@ const AuditLogsPage: React.FC = () => {
       try {
         const data = await AuditService.getLogs();
         setLogs(data);
-      } catch (err) {
+      } catch {
         toast.error('Failed to load audit logs');
       }
     };
