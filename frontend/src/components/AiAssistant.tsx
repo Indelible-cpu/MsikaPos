@@ -59,14 +59,16 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
       if (res.data.success) {
         setSuggestion(res.data.data);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       let errorMsg = "Unknown connectivity issue";
       let errorDetail = "";
       
-      if (err.response?.data) {
-        errorMsg = err.response.data.message || err.message;
-        errorDetail = err.response.data.error || "";
-      } else {
+      const axiosError = err as { response?: { data?: { message?: string, error?: string } }, message?: string };
+      
+      if (axiosError.response?.data) {
+        errorMsg = axiosError.response.data.message || axiosError.message || "Request failed";
+        errorDetail = axiosError.response.data.error || "";
+      } else if (err instanceof Error) {
         errorMsg = err.message;
       }
       
