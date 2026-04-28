@@ -20,7 +20,7 @@ export const securityHeaders = helmet();
 // 2. RATE LIMITER (Global)
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
+  max: 500, // Increased for staff efficiency in multi-tab usage
   message: 'Too many requests from this IP, please try again after 15 minutes',
   standardHeaders: true,
   legacyHeaders: false,
@@ -29,7 +29,7 @@ export const globalLimiter = rateLimit({
 // 3. AUTH LIMITER (More strict for login)
 export const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // Increased for smoother dev setup, adjust for production later
+  max: 50, // More headroom for staff login retries
   message: 'Too many login attempts, your IP has been flagged',
   skipSuccessfulRequests: true,
 });
