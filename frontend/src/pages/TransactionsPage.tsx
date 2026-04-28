@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/posDB';
+import { db, type LocalProduct } from '../db/posDB';
 import { 
   Search, 
   ArrowLeftRight, 
@@ -14,14 +14,25 @@ import { Invoice } from '../components/Invoice';
 
 const TransactionsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterToday, setFilterToday] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
   const sales = useLiveQuery(
     () => db.salesQueue
-      .filter(s => s.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase()) || (s.customerId || '').includes(searchTerm))
+      .filter(s => {
+        const matchesSearch = s.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase()) || (s.customerId || '').includes(searchTerm);
+        if (!filterToday) return matchesSearch;
+        
+        const saleDate = new Date(s.createdAt);
+        const today = new Date();
+        const isToday = saleDate.getDate() === today.getDate() && 
+                        saleDate.getMonth() === today.getMonth() && 
+                        saleDate.getFullYear() === today.getFullYear();
+        return matchesSearch && isToday;
+      })
       .reverse()
       .toArray(),
-    [searchTerm]
+    [searchTerm, filterToday]
   );
 
   const selectedSale = useLiveQuery(
@@ -37,10 +48,20 @@ const TransactionsPage: React.FC = () => {
       <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex-1"></div>
-            <button className="btn-primary !px-6 !py-4 text-[10px] font-black  tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2 w-full md:w-auto justify-center">
-              <Download className="w-4 h-4" /> Export report
-            </button>
+            <h1 className="text-2xl font-black italic tracking-tighter text-surface-text">Transactions</h1>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setFilterToday(!filterToday)}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${
+                  filterToday ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-surface-bg border border-surface-border text-surface-text/60 hover:text-surface-text'
+                }`}
+              >
+                Today Only
+              </button>
+              <button className="btn-primary !px-6 !py-2 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2">
+                <Download className="w-4 h-4" /> Export report
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -127,20 +148,22 @@ const TransactionsPage: React.FC = () => {
             </div>
 
             {/* Hidden for screen, visible for print */}
-            <div className="hidden">
+            {/* Print Container for Reprints */}
+            <div id="print-container" className="hidden">
               {selectedSale.paymentMode === 'Credit' ? (
                 <Invoice 
-                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as any, quantity: item.quantity }))}
+                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as unknown as LocalProduct, quantity: item.quantity }))}
                   total={selectedSale.total}
                   subtotal={selectedSale.subtotal || selectedSale.total}
                   discount={selectedSale.discount || 0}
                   tax={selectedSale.tax || 0}
                   invoiceNo={selectedSale.invoiceNo}
                   date={selectedSale.createdAt}
+                  customerId={selectedSale.customerId}
                 />
               ) : (
                 <Receipt 
-                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as any, quantity: item.quantity }))}
+                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as unknown as LocalProduct, quantity: item.quantity }))}
                   total={selectedSale.total}
                   subtotal={selectedSale.subtotal || selectedSale.total}
                   discount={selectedSale.discount || 0}
@@ -152,6 +175,7 @@ const TransactionsPage: React.FC = () => {
                   mode={selectedSale.paymentMode}
                   bankName={selectedSale.bankName}
                   accountNumber={selectedSale.accountNumber}
+                  customerId={selectedSale.customerId}
                 />
               )}
             </div>

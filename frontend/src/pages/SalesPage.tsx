@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type LocalSale, type LocalSaleItem } from '../db/posDB';
+import { db, type LocalSale, type LocalSaleItem, type LocalProduct } from '../db/posDB';
 import { 
   Receipt as ReceiptIcon, 
   Search, 
@@ -137,21 +137,23 @@ const SalesPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Hidden for screen, visible for print */}
-            <div className="hidden">
+            {/* Print Container for Reprints */}
+            <div id="print-container" className="hidden">
               {selectedSale.paymentMode === 'Credit' ? (
                 <Invoice 
-                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as any, quantity: item.quantity }))}
+                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as unknown as LocalProduct, quantity: item.quantity }))}
                   total={selectedSale.total}
                   subtotal={selectedSale.subtotal || selectedSale.total}
                   discount={selectedSale.discount || 0}
                   tax={selectedSale.tax || 0}
                   invoiceNo={selectedSale.invoiceNo}
                   date={selectedSale.createdAt}
+                  customerName={selectedSale.customerId ? 'Fetching...' : undefined}
+                  customerId={selectedSale.customerId}
                 />
               ) : (
                 <Receipt 
-                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as any, quantity: item.quantity }))}
+                  items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as unknown as LocalProduct, quantity: item.quantity }))}
                   total={selectedSale.total}
                   subtotal={selectedSale.subtotal || selectedSale.total}
                   discount={selectedSale.discount || 0}
@@ -163,6 +165,7 @@ const SalesPage: React.FC = () => {
                   mode={selectedSale.paymentMode}
                   bankName={selectedSale.bankName}
                   accountNumber={selectedSale.accountNumber}
+                  customerId={selectedSale.customerId}
                 />
               )}
             </div>

@@ -4,6 +4,7 @@ import MobileNav from './MobileNav';
 import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
 import { clsx } from 'clsx';
+import AiAssistant from './AiAssistant';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const hideNav = location.pathname.includes('/login');
+
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const getAiContext = () => {
+    if (isSuperAdmin) return { mode: 'DIAGNOSTIC' };
+    if (location.pathname.includes('/dashboard')) return { mode: 'DASHBOARD' };
+    if (location.pathname.includes('/inventory')) return { mode: 'INVENTORY' };
+    return { mode: 'GENERAL' };
+  };
+
+  const aiType = isSuperAdmin ? 'SYSTEM_DIAGNOSTICS' : 
+                 location.pathname.includes('/dashboard') ? 'DASHBOARD_INSIGHTS' : 
+                 location.pathname.includes('/inventory') ? 'INVENTORY_STRATEGY' : 'GENERAL_SUPPORT';
 
   return (
     <div className="min-h-screen flex bg-surface-bg transition-colors duration-300 mesh-bg">
@@ -39,6 +55,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         {!hideNav && <MobileNav />}
       </div>
+      {!hideNav && <AiAssistant type={aiType} context={getAiContext()} />}
     </div>
   );
 };

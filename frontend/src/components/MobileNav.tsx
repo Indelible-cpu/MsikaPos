@@ -12,7 +12,7 @@ const MobileNav: React.FC = () => {
   const fetchPending = React.useCallback(async () => {
     try {
       const res = await api.get('/inquiries');
-      const pending = res.data.data.filter((i: any) => i.status === 'PENDING').length;
+      const pending = res.data.data.filter((i: any) => i.status === 'NEW').length;
       setPendingCount(pending);
     } catch { /* silent */ }
   }, []);
@@ -25,7 +25,7 @@ const MobileNav: React.FC = () => {
 
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: Home, path: '/staff/dashboard' },
-    { id: 'sales', label: 'Logs', icon: Receipt, path: '/staff/sales' },
+    { id: 'sales', label: 'Logs', icon: Receipt, path: '/staff/transactions' },
     { id: 'pos', label: 'Pos', icon: ShoppingCart, path: '/staff/pos' },
     { id: 'inquiries', label: 'Inquiry', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
   ];

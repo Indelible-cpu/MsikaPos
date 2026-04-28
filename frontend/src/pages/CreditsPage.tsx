@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
-import { Search, Calendar, UserCheck, ArrowRightCircle, X } from 'lucide-react';
+import { type LocalCustomer } from '../db/posDB';
+import { Search, Calendar, UserCheck, ArrowRightCircle, X, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '../hooks/useToast';
 
@@ -22,6 +23,7 @@ export default function CreditsPage() {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
   const [paymentModal, setPaymentModal] = useState<{ id: number, total: number } | null>(null);
   const [payAmount, setPayAmount] = useState('');
 
@@ -101,8 +103,33 @@ export default function CreditsPage() {
               ) : filtered?.map((c) => (
                 <tr key={c.id} className="hover:bg-zinc-50/80 transition-all group">
                   <td className="px-10 py-8">
-                    <p className="font-bold text-zinc-800 text-sm mb-1 tracking-tight group-hover:text-primary transition-colors">{c.customer_name}</p>
-                    <p className="text-[9px] font-bold text-zinc-400">{c.customer_phone}</p>
+                    <div className="flex items-center gap-4">
+                      {/* Customer Biometric Preview */}
+                      <div className="w-12 h-12 rounded-xl bg-zinc-100 border border-zinc-200 overflow-hidden shrink-0 flex items-center justify-center relative group/bio">
+                         <img 
+                           src={(c as unknown as LocalCustomer).livePhoto || "/icon.png"} 
+                           alt="cust" 
+                           className={`w-full h-full object-cover ${!(c as unknown as LocalCustomer).livePhoto && 'opacity-10'}`} 
+                         />
+                         {(c as unknown as LocalCustomer).fingerprintData && (
+                           <div className="absolute top-0 right-0 p-1 bg-emerald-500 rounded-bl-lg">
+                             <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                           </div>
+                         )}
+                         <button 
+                           type="button"
+                           title="View biometric profile"
+                           onClick={() => setSelectedCustomer(c as unknown as LocalCustomer)}
+                           className="absolute inset-0 bg-black/40 opacity-0 group-hover/bio:opacity-100 transition-opacity flex items-center justify-center"
+                         >
+                           <Eye className="w-4 h-4 text-white" />
+                         </button>
+                      </div>
+                      <div>
+                        <p className="font-bold text-zinc-800 text-sm mb-1 tracking-tight group-hover:text-primary transition-colors">{c.customer_name}</p>
+                        <p className="text-[9px] font-bold text-zinc-400">{c.customer_phone}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-10 py-8 text-[11px] font-bold text-zinc-500 font-mono">#{c.invoice_no}</td>
                   <td className="px-10 py-8">
@@ -184,6 +211,31 @@ export default function CreditsPage() {
                     </button>
                  </div>
               </div>
+           </div>
+        </div>
+      )}
+
+      {selectedCustomer && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-zinc-900/80 backdrop-blur-xl p-6" onClick={() => setSelectedCustomer(null)}>
+           <div className="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl flex flex-col items-center p-10 text-center" onClick={(e) => e.stopPropagation()}>
+              <div className="w-32 h-32 rounded-[2rem] border-4 border-primary/20 p-1 mb-6">
+                <img src={selectedCustomer.livePhoto || "/icon.png"} className="w-full h-full object-cover rounded-[1.5rem]" alt="verification" />
+              </div>
+              <h3 className="text-2xl font-black text-zinc-900 mb-1">{selectedCustomer.name}</h3>
+              <p className="text-[10px] font-black tracking-widest text-zinc-400 mb-8 uppercase">Verified Profile</p>
+              
+              <div className="w-full space-y-4 mb-10">
+                <div className="flex justify-between items-center p-4 bg-zinc-50 rounded-2xl">
+                   <span className="text-[9px] font-black text-zinc-400 tracking-widest uppercase">National ID</span>
+                   <span className="text-xs font-black text-zinc-800">{selectedCustomer.idNumber || 'N/A'}</span>
+                </div>
+                <div className={`flex justify-between items-center p-4 rounded-2xl border ${selectedCustomer.fingerprintData ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-zinc-50 border-zinc-100 text-zinc-400'}`}>
+                   <span className="text-[9px] font-black tracking-widest uppercase">Fingerprint</span>
+                   <span className="text-xs font-black">{selectedCustomer.fingerprintData ? 'SECURED' : 'NOT LINKED'}</span>
+                </div>
+              </div>
+
+              <button onClick={() => setSelectedCustomer(null)} className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-black text-[10px] tracking-widest">Close Verification</button>
            </div>
         </div>
       )}

@@ -23,7 +23,6 @@ const CustomerAuthModal: React.FC<CustomerAuthModalProps> = ({ isOpen, onClose, 
     e.preventDefault();
     setLoading(true);
     try {
-      // All logins/registrations now hit the unified backend
       const endpoint = isLogin ? '/customer/login' : '/customer/register';
       const res = await api.post(endpoint, formData);
       

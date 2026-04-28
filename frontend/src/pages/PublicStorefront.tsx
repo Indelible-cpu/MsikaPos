@@ -4,20 +4,39 @@ import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
 
+interface StoreProduct {
+  id: number;
+  name: string;
+  sellPrice?: number;
+  imageUrl?: string;
+  description?: string;
+  isService?: boolean;
+  category?: { name?: string; title?: string };
+}
+
 export const PublicStorefront: React.FC = () => {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<StoreProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [shopName, setShopName] = useState('Msika');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [customer, setCustomer] = useState<any>(null);
+  const [customer, setCustomer] = useState<{ fullname: string; role: string; [key: string]: any } | null>(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const u = JSON.parse(storedUser);
+      if (u.role === 'CUSTOMER') return u;
+    }
+    return null;
+  });
   const [submitting, setSubmitting] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [cartItems, setCartItems] = useState<StoreProduct[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
+    return (localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null) || 'system';
+  });
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
   const categoryNavRef = useRef<HTMLDivElement>(null);
@@ -30,18 +49,30 @@ export const PublicStorefront: React.FC = () => {
   ];
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    const activeTheme = theme;
+    if (activeTheme !== 'system') {
+      document.documentElement.classList.toggle('dark', activeTheme === 'dark');
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark', prefersDark);
     }
-  }, []);
+  }, [theme]);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
+    let newTheme: 'light' | 'dark' | 'system';
+    if (theme === 'system') newTheme = 'light';
+    else if (theme === 'light') newTheme = 'dark';
+    else newTheme = 'system';
+
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    
+    if (newTheme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark', prefersDark);
+    } else {
+      document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    }
   };
 
   const checkCategoryScroll = () => {
@@ -75,7 +106,7 @@ export const PublicStorefront: React.FC = () => {
     toast.success(newSaved.has(id) ? 'Saved for later' : 'Removed from saved');
   };
 
-  const addToCart = (product: any, e?: React.MouseEvent) => {
+  const addToCart = (product: StoreProduct, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setCartItems(prev => {
       const exists = prev.find(item => item.id === product.id);
@@ -139,8 +170,8 @@ export const PublicStorefront: React.FC = () => {
         setProducts(data);
         
         // Better category extraction
-        const cats = Array.from(new Set(data.map((p: any) => p.category?.name || 'Uncategorized')))
-          .filter((c: any) => c !== 'Uncategorized') as string[];
+        const cats = Array.from(new Set(data.map((p: StoreProduct) => p.category?.name || 'Uncategorized')))
+          .filter((c: unknown) => c !== 'Uncategorized') as string[];
         setCategories(cats);
       }
 
@@ -164,16 +195,9 @@ export const PublicStorefront: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    // Restore logged-in customer session if any
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const u = JSON.parse(storedUser);
-      if (u.role === 'CUSTOMER') setCustomer(u);
-    }
-  }, []);
 
-  const handleInquiry = async (product: any) => {
+
+  const handleInquiry = async (product: StoreProduct) => {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
@@ -193,14 +217,14 @@ export const PublicStorefront: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Inquiry sent successfully!');
-    } catch (error) {
+    } catch {
       toast.error('Failed to send inquiry');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleAuthSuccess = (_token: string, user: any) => {
+  const handleAuthSuccess = (_token: string, user: { fullname: string; role: string; [key: string]: any }) => {
     setCustomer(user);
     if (selectedProduct) {
       handleInquiry(selectedProduct);
@@ -268,7 +292,7 @@ export const PublicStorefront: React.FC = () => {
                 className="w-8 h-8 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all text-xs"
                 title="Toggle Theme"
               >
-                {theme === 'light' ? '🌙' : '☀️'}
+                {theme === 'light' ? '☀️' : theme === 'dark' ? '🌙' : '💻'}
               </button>
               <button 
                 onClick={() => setIsCartOpen(true)}
@@ -362,6 +386,8 @@ export const PublicStorefront: React.FC = () => {
               <button 
                 onClick={() => setSearchTerm('')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-surface-text/20 hover:text-rose-500 transition-colors"
+                title="Clear search"
+                aria-label="Clear search"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -370,7 +396,7 @@ export const PublicStorefront: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-6 md:px-12 py-8">
+      <div className="px-3 md:px-12 py-8">
         {loading ? (
           <div className="py-32 text-center flex flex-col items-center gap-8">
             <div className="relative">
@@ -390,7 +416,7 @@ export const PublicStorefront: React.FC = () => {
             <p className="text-[10px] font-black tracking-widest text-surface-text/30 italic">No items found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-8">
             {filteredProducts.map(p => (
               <div 
                 key={p.id} 
@@ -415,6 +441,8 @@ export const PublicStorefront: React.FC = () => {
                           ? 'bg-rose-500 text-white border-rose-500' 
                           : 'bg-white/10 text-white/40 border-white/10 hover:bg-white/20 hover:text-white'
                       }`}
+                      title={likedItems.has(p.id) ? "Remove from Favorites" : "Add to Favorites"}
+                      aria-label={likedItems.has(p.id) ? "Remove from Favorites" : "Add to Favorites"}
                     >
                       <Heart className={`w-3 md:w-4 h-3 md:h-4 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
                     </button>
@@ -425,13 +453,15 @@ export const PublicStorefront: React.FC = () => {
                           ? 'bg-primary-500 text-white border-primary-500' 
                           : 'bg-white/10 text-white/40 border-white/10 hover:bg-white/20 hover:text-white'
                       }`}
+                      title={savedItems.has(p.id) ? "Remove Bookmark" : "Bookmark Product"}
+                      aria-label={savedItems.has(p.id) ? "Remove Bookmark" : "Bookmark Product"}
                     >
                       <Bookmark className={`w-3 md:w-4 h-3 md:h-4 ${savedItems.has(p.id) ? 'fill-current' : ''}`} />
                     </button>
                   </div>
                 </div>
 
-                <div className="aspect-[4/5] bg-surface-bg border-b border-surface-border/30 flex items-center justify-center relative overflow-hidden shrink-0">
+                <div className="aspect-square bg-surface-bg border-b border-surface-border/30 flex items-center justify-center relative overflow-hidden shrink-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-zinc-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <img 
                     src={p.imageUrl || "/premium-item.png"} 
@@ -467,6 +497,8 @@ export const PublicStorefront: React.FC = () => {
                       <button 
                         onClick={(e) => addToCart(p, e)}
                         className="w-8 md:w-12 h-8 md:h-12 bg-primary-500/10 text-primary-500 rounded-xl md:rounded-2xl flex items-center justify-center hover:bg-primary-500 hover:text-white transition-all active:scale-90"
+                        title="Add to Cart"
+                        aria-label="Add to Cart"
                       >
                         <Plus className="w-4 md:w-5 h-4 md:h-5" />
                       </button>
@@ -503,6 +535,8 @@ export const PublicStorefront: React.FC = () => {
               <button 
                 onClick={() => setIsCartOpen(false)}
                 className="w-10 h-10 bg-surface-bg border border-surface-border rounded-full flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+                title="Close Cart"
+                aria-label="Close Cart"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -533,12 +567,16 @@ export const PublicStorefront: React.FC = () => {
                       <button 
                         onClick={(e) => { e.stopPropagation(); scrollToProduct(item.id); }}
                         className="w-8 h-8 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                        title="View Product"
+                        aria-label="View Product"
                       >
                         <ArrowRight className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={(e) => removeFromCart(item.id, e)}
                         className="w-8 h-8 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+                        title="Remove from Cart"
+                        aria-label="Remove from Cart"
                       >
                         <X className="w-4 h-4" />
                       </button>

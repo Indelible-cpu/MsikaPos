@@ -28,9 +28,15 @@ import api from './api/client';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+  prompt(): Promise<void>;
+}
+
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   // PWA Auto-Update Logic
   const {
@@ -62,9 +68,10 @@ const App: React.FC = () => {
       if (daysSinceDismissal < 7) return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -232,21 +239,24 @@ const App: React.FC = () => {
       <Toaster 
         position="top-center" 
         toastOptions={{
-          className: 'glass-panel',
           style: {
-            background: 'rgba(var(--bg-card-rgb), 0.8)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '1.5rem',
-            padding: '16px 24px',
-            color: 'var(--text-main)',
-            fontWeight: '900',
-            fontSize: '13px',
-            letterSpacing: '0.05em',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            fontStyle: 'italic'
+            background: '#111',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '12px',
+            padding: '10px 20px',
+            color: '#fff',
+            fontWeight: '400',
+            fontSize: '11px',
+            letterSpacing: '0.02em',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
           },
-          duration: 3000,
+          duration: 2500,
+          success: {
+            icon: null,
+          },
+          error: {
+            icon: null,
+          }
         }} 
       />
       <div className="min-h-screen selection:bg-primary-500/30">

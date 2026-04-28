@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/posDB';
+import { db, type LocalCustomer, type LocalProduct } from '../db/posDB';
 import { 
   TrendingUp, 
   Users, 
@@ -11,7 +11,44 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
-type ReportTab = 'Financial' | 'Staff' | 'Payment';
+type ReportTab = 'Financial' | 'Staff' | 'Branches' | 'Payment';
+
+// Helper for Bar Charts moved outside render
+const BarChart = ({ data, label, valuePrefix = '' }: { data: { label: string, value: number }[], label: string, valuePrefix?: string }) => {
+  const maxVal = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div className="bg-surface-card border border-surface-border rounded-3xl p-6">
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary-500/10 text-primary-500 rounded-lg">
+            <BarChart3 className="w-4 h-4" />
+          </div>
+          <h3 className="text-sm font-black tracking-wider">{label}</h3>
+        </div>
+      </div>
+      <div className="h-64 flex items-end justify-between gap-2 pt-4">
+        {data.length === 0 ? (
+          <div className="w-full h-full flex items-center justify-center text-surface-text/10 font-black text-xs tracking-widest">No data available</div>
+        ) : data.map((item, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+            <div className="relative w-full flex flex-col justify-end h-full">
+              <motion.div 
+                initial={{ height: 0 }}
+                animate={{ height: `${(item.value / maxVal) * 100}%` }}
+                className="w-full bg-primary-500/20 group-hover:bg-primary-500/40 border-t-4 border-primary-500 rounded-t-lg transition-all relative"
+              >
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface-text text-surface-bg text-[8px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  {valuePrefix}{item.value.toLocaleString()}
+                </div>
+              </motion.div>
+            </div>
+            <span className="text-[9px] font-bold text-surface-text/30 truncate w-full text-center tracking-tighter">{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('Financial');
@@ -27,7 +64,7 @@ const ReportsPage: React.FC = () => {
 
   // Process actual data for graphs
   const analyticsData = useMemo(() => {
-    if (!sales) return { weekly: [], staff: [], payment: [] };
+    if (!sales) return { weekly: [], staff: [], branches: [], payment: [] };
 
     // 1. Weekly Revenue (Last 7 Days)
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -56,7 +93,17 @@ const ReportsPage: React.FC = () => {
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
 
-    // 3. Payment Distribution (Customer Choice)
+    // 3. Branch Performance (Super Admin View)
+    const branchMap: Record<string, number> = {};
+    sales.forEach(s => {
+      const branchName = s.branchId || 'Main HQ'; // Should ideally be name-resolved
+      branchMap[branchName] = (branchMap[branchName] || 0) + s.total;
+    });
+    const branches = Object.entries(branchMap)
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value);
+
+    // 4. Payment Distribution (Customer Choice)
     const payMap: Record<string, number> = {};
     sales.forEach(s => {
       const mode = s.paymentMode || 'CASH';
@@ -64,7 +111,7 @@ const ReportsPage: React.FC = () => {
     });
     const payment = Object.entries(payMap).map(([label, value]) => ({ label, value }));
 
-    return { weekly, staff, payment };
+    return { weekly, staff, branches, payment };
   }, [sales]);
 
   const stats = [
@@ -74,42 +121,6 @@ const ReportsPage: React.FC = () => {
     { label: 'Avg Sale', value: `MK ${(totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0).toLocaleString()}`, icon: Users, color: 'text-amber-500' },
   ];
 
-  // Helper for Bar Charts
-  const BarChart = ({ data, label, valuePrefix = '' }: { data: { label: string, value: number }[], label: string, valuePrefix?: string }) => {
-    const maxVal = Math.max(...data.map(d => d.value), 1);
-    return (
-      <div className="bg-surface-card border border-surface-border rounded-3xl p-6">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-500/10 text-primary-500 rounded-lg">
-              <BarChart3 className="w-4 h-4" />
-            </div>
-            <h3 className="text-sm font-black tracking-wider">{label}</h3>
-          </div>
-        </div>
-        <div className="h-64 flex items-end justify-between gap-2 pt-4">
-          {data.length === 0 ? (
-            <div className="w-full h-full flex items-center justify-center text-surface-text/10 font-black text-xs tracking-widest">No data available</div>
-          ) : data.map((item, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="relative w-full flex flex-col justify-end h-full">
-                <motion.div 
-                  initial={{ height: 0 }}
-                  animate={{ height: `${(item.value / maxVal) * 100}%` }}
-                  className="w-full bg-primary-500/20 group-hover:bg-primary-500/40 border-t-4 border-primary-500 rounded-t-lg transition-all relative"
-                >
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface-text text-surface-bg text-[8px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                    {valuePrefix}{item.value.toLocaleString()}
-                  </div>
-                </motion.div>
-              </div>
-              <span className="text-[9px] font-bold text-surface-text/30 truncate w-full text-center tracking-tighter">{item.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0 md:px-0 pt-0">
@@ -123,7 +134,7 @@ const ReportsPage: React.FC = () => {
       </header>
 
       <div className="mb-8 flex gap-2 p-1 bg-surface-card border border-surface-border rounded-2xl overflow-x-auto no-scrollbar">
-        {(['Financial', 'Staff', 'Payment'] as ReportTab[]).map((tab) => (
+        {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
           <button 
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -166,7 +177,8 @@ const ReportsPage: React.FC = () => {
             transition={{ duration: 0.2 }}
           >
             {activeTab === 'Financial' && <BarChart data={analyticsData.weekly} label="Weekly Revenue Breakdown" valuePrefix="MK " />}
-            {activeTab === 'Staff' && <BarChart data={analyticsData.staff} label="Top Performing Staff" valuePrefix="MK " />}
+            {activeTab === 'Staff' && <BarChart data={analyticsData.staff} label="Top Performing Cashiers" valuePrefix="MK " />}
+            {activeTab === 'Branches' && <BarChart data={analyticsData.branches} label="Top Performing Branches" valuePrefix="MK " />}
             {activeTab === 'Payment' && <BarChart data={analyticsData.payment} label="Payment Mode Flow" />}
           </motion.div>
         </AnimatePresence>
@@ -175,9 +187,10 @@ const ReportsPage: React.FC = () => {
       <div className="mt-8 bg-surface-card border border-surface-border rounded-3xl p-6">
         <h4 className="text-[10px] font-black tracking-widest text-surface-text/30 mb-4">Market Intelligence</h4>
         <p className="text-xs font-bold leading-relaxed text-surface-text/60">
-          Your revenue is currently driven primarily by <span className="text-primary-500">{analyticsData.payment[0]?.label || 'Cash'}</span> transactions. 
-          {analyticsData.staff[0] && <span> <span className="text-emerald-500 font-black">{analyticsData.staff[0].label}</span> is your highest grossing seller this period.</span>}
-          The system continues to track flow based on transaction density to optimize staff allocation.
+          Revenue is primarily driven by <span className="text-primary-500">{analyticsData.payment[0]?.label || 'Cash'}</span>. 
+          {analyticsData.staff[0] && <span> The top cashier is <span className="text-emerald-500 font-black">{analyticsData.staff[0].label}</span>. </span>}
+          {analyticsData.branches[0] && <span> The leading location is <span className="text-amber-500 font-black">{analyticsData.branches[0].label}</span>. </span>}
+          This data assists Super Admins in performance-based promotions and multi-branch resource allocation.
         </p>
       </div>
     </div>

@@ -166,7 +166,7 @@ const DebtPage: React.FC = () => {
               <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
                 <Users className="w-6 h-6" />
               </div>
-              <h1 className="text-xl md:text-2xl font-black tracking-tighter italic">Debt book</h1>
+              <h1 className="text-xl md:text-2xl font-black tracking-tighter italic">Customers & Debt</h1>
             </div>
 
             <button 

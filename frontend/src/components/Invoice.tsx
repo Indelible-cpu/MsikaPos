@@ -1,5 +1,5 @@
 import React from 'react';
-import type { LocalProduct } from '../db/posDB';
+import type { LocalProduct, LocalCustomer } from '../db/posDB';
 
 interface InvoiceProps {
   items: { product: LocalProduct; quantity: number }[];
@@ -10,9 +10,10 @@ interface InvoiceProps {
   invoiceNo: string;
   date: string;
   customerName?: string;
+  customerId?: string;
 }
 
-export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, customerName }) => {
+export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, customerName, customerId }) => {
   const currentBranchStr = localStorage.getItem('currentBranch');
   const branch = currentBranchStr ? JSON.parse(currentBranchStr) : null;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -23,17 +24,27 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
   const shopSlogan = branch?.slogan;
   const cashierName = user.fullname || user.username || 'System';
   
+  const [customer, setCustomer] = React.useState<LocalCustomer | null>(null);
+
+  React.useEffect(() => {
+    if (customerId) {
+      import('../db/posDB').then(({ db }) => {
+        db.customers.get(customerId).then(setCustomer);
+      });
+    }
+  }, [customerId]);
+
   return (
-    <div className="invoice relative p-6 bg-white text-black font-mono w-[80mm] mx-auto text-[11px] border-4 border-double border-black leading-tight shadow-sm">
+    <div className="invoice relative p-6 bg-white text-black font-mono w-[80mm] mx-auto text-[11px] border-4 border-double border-black leading-tight shadow-sm flex flex-col items-center">
       <div className="absolute top-2 right-2 border border-black px-2 py-0.5 font-black text-[8px] tracking-tighter bg-black text-white">
         Credit Note
       </div>
       
-      <div className="text-center border-b-2 border-black pb-4 mb-4">
+      <div className="text-center w-full border-b-2 border-black pb-4 mb-4">
         <div className="w-14 h-14 mx-auto mb-2 rounded-full border border-black/10 flex items-center justify-center overflow-hidden">
            <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="w-full h-full object-contain grayscale" />
         </div>
-        <h1 className="text-xl font-bold tracking-tight italic">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
+        <h1 className="text-xl font-bold tracking-tight italic uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
         {shopSlogan && <p className="text-[8px] italic font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
         <p className="text-[9px] tracking-widest">{shopAddress}</p>
         <p className="text-[9px] font-bold mt-1">Tel: {shopTel}</p>
@@ -49,7 +60,10 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
              return isNaN(d.getTime()) ? new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
            })()}</span>
         </div>
-        <div>Cashier: {cashierName}</div>
+        <div className="flex justify-between uppercase font-bold">
+          <span>Cashier: {cashierName}</span>
+          <span>Branch: {branch?.name || 'Main HQ'}</span>
+        </div>
       </div>
 
       <div className="mb-4 space-y-1 p-2 bg-zinc-50 border border-black border-dotted">
@@ -104,7 +118,25 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
         </div>
       </div>
 
-      <div className="text-center mb-6 flex flex-col items-center">
+      <div className="text-center mb-6 flex flex-col items-center w-full">
+        {customer && (
+          <div className="w-full py-3 mb-6 border border-black border-dotted flex flex-col items-center gap-2">
+            <div className="text-[8px] font-black tracking-widest opacity-40 uppercase">Credit Customer Verification</div>
+            <div className="flex items-center gap-4">
+              {customer.livePhoto && (
+                <img src={customer.livePhoto} alt="cust" className="w-10 h-10 rounded-lg object-cover border border-black/10 grayscale" />
+              )}
+              <div className="text-left">
+                <div className="font-bold text-[9px]">{customer.name}</div>
+                <div className="text-[7px] font-bold opacity-60">ID: {customer.idNumber || 'N/A'}</div>
+                {customer.fingerprintData && (
+                  <div className="text-[7px] font-black text-emerald-600 mt-0.5">✓ BIOMETRIC SECURED</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="w-32 mx-auto border-t border-black mb-1"></div>
         <p className="text-[9px] font-black tracking-widest">Authorized Signature</p>
         

@@ -24,6 +24,7 @@ import {
   Bar,
   Cell
 } from 'recharts';
+import AiAssistant from '../components/AiAssistant';
 
 const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
@@ -295,6 +296,7 @@ const DashboardPage: React.FC = () => {
            </div>
         </div>
       </div>
+      <AiAssistant type="DASHBOARD_INSIGHTS" context={stats} />
     </div>
   );
 };

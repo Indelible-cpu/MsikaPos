@@ -11,11 +11,14 @@ import {
   Trash2, 
   ArrowUpRight,
   Barcode,
-  CheckCircle2
+  CheckCircle2,
+  Image as ImageIcon,
+  Upload
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
+import AiAssistant from '../components/AiAssistant';
 import Modal from '../components/Modal';
 import { soundService } from '../services/SoundService';
 
@@ -40,6 +43,7 @@ const InventoryPage: React.FC = () => {
     quantity: 0,
     categoryId: 0,
     isService: false,
+    imageUrl: '',
   });
 
   const products = useLiveQuery(
@@ -108,6 +112,7 @@ const InventoryPage: React.FC = () => {
       quantity: 0,
       categoryId: defaultCatId,
       isService: false,
+      imageUrl: '',
     });
   }, [categories]);
 
@@ -127,6 +132,7 @@ const InventoryPage: React.FC = () => {
       quantity: product.quantity,
       categoryId: product.categoryId,
       isService: product.isService || false,
+      imageUrl: product.imageUrl || '',
     });
     setIsAddModalOpen(true);
   };
@@ -167,6 +173,33 @@ const InventoryPage: React.FC = () => {
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [openAddModal]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = Math.min(img.width, img.height);
+        // Target size 500x500 for good quality vs size ratio
+        canvas.width = 500;
+        canvas.height = 500;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const offsetX = (img.width - size) / 2;
+          const offsetY = (img.height - size) / 2;
+          ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, 500, 500);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8); // Compress
+          setFormData(prev => ({ ...prev, imageUrl: dataUrl }));
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -342,7 +375,14 @@ const InventoryPage: React.FC = () => {
                 key={product.id}
                 className="overflow-hidden group transition-all flex flex-col border-b border-surface-border/50 duration-500"
               >
-                <div className="p-6 flex-1">
+                <div className="p-6 flex-1 flex flex-col">
+                  <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center">
+                    {product.imageUrl ? (
+                      <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    ) : (
+                      <ImageIcon className="w-8 h-8 text-surface-text/10" />
+                    )}
+                  </div>
                   <div className="flex justify-between items-start mb-4">
                     <div className="text-[9px] font-black text-surface-text/30  tracking-widest">{product.sku}</div>
                     <div className="flex gap-1">
@@ -394,6 +434,31 @@ const InventoryPage: React.FC = () => {
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={editingProduct ? 'Edit Product' : 'New Product'}>
         <form onSubmit={handleSaveProduct} className="p-8 space-y-6">
           <div className="grid grid-cols-2 gap-6">
+            <div className="col-span-2 flex items-center gap-6 mb-2">
+              <div className="w-24 h-24 rounded-2xl bg-surface-bg border border-surface-border flex items-center justify-center overflow-hidden shrink-0 relative group">
+                {formData.imageUrl ? (
+                  <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-surface-text/20" />
+                )}
+                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white">
+                  <Upload className="w-5 h-5 mb-1" />
+                  <span className="text-[8px] font-black tracking-widest">UPLOAD</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                </label>
+              </div>
+              <div>
+                <p className="text-[10px] font-black tracking-widest uppercase mb-1">Product Image</p>
+                <p className="text-[9px] font-bold text-surface-text/40">Adding an image improves customer experience.</p>
+                <p className="text-[9px] font-bold text-surface-text/40">Optimal ratio is 1:1. Images will be auto-cropped.</p>
+                {formData.imageUrl && (
+                  <button type="button" onClick={() => setFormData({...formData, imageUrl: ''})} className="text-[9px] font-black tracking-widest text-red-500 mt-2 hover:underline">
+                    REMOVE IMAGE
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-1 col-span-2">
               <label className="text-[9px] font-black  tracking-widest text-surface-text/40 ml-1" htmlFor="product-name">Product name</label>
               <input required id="product-name" type="text" className="input-field w-full" placeholder="e.g. Coca Cola 300ml" title="Product name" aria-label="Product name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
@@ -494,6 +559,7 @@ const InventoryPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+      <AiAssistant type="INVENTORY_STRATEGY" context={products} />
     </div>
   );
 };

@@ -10,6 +10,7 @@ export interface LocalProduct {
   quantity: number;
   isService: boolean;
   status: 'ACTIVE' | 'INACTIVE';
+  imageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

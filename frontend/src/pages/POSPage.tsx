@@ -77,6 +77,34 @@ const POSPage: React.FC = () => {
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
 
+  /* Centering and Printing Fixes */
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media print {
+        body * { visibility: hidden !important; }
+        #print-container, #print-container * { visibility: visible !important; }
+        #print-container {
+          position: fixed;
+          left: 0;
+          top: 0;
+          width: 80mm;
+          margin: 0;
+          padding: 0;
+          display: flex !important;
+          justify-content: center !important;
+          background: white;
+        }
+        @page {
+          size: 80mm auto;
+          margin: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(style); };
+  }, []);
+
   const [showReceipt, setShowReceipt] = useState<{
     items: { product: LocalProduct; quantity: number }[];
     total: number;
@@ -91,6 +119,7 @@ const POSPage: React.FC = () => {
     change: number;
     bankName?: string;
     accountNumber?: string;
+    customerId?: string;
   } | null>(null);
 
   // Load Tax Config
@@ -217,13 +246,14 @@ const POSPage: React.FC = () => {
            discount,
            tax: taxAmount,
            invoiceNo,
-          date: new Date().toLocaleString(),
+          date: new Date().toISOString(),
           mode: paymentMode,
           customerName,
           paid,
           change: changeDue,
           bankName: (paymentMode === 'Card' || paymentMode === 'Momo') ? bankName : undefined,
-          accountNumber: (paymentMode === 'Card' || paymentMode === 'Momo') ? accountNumber : undefined
+          accountNumber: (paymentMode === 'Card' || paymentMode === 'Momo') ? accountNumber : undefined,
+          customerId: selectedCustomerId || undefined
         });
 
       setCart([]);
@@ -513,7 +543,7 @@ const POSPage: React.FC = () => {
               <h2 className="text-2xl font-black mb-2 tracking-tight italic">Sale Completed</h2>
               <p className="text-surface-text/40 mb-8 text-center text-[10px] font-black tracking-widest">Inv: {showReceipt.invoiceNo}</p>
               
-              <div className="w-full bg-white rounded-none overflow-hidden mb-8 shadow-inner border border-zinc-100 p-4 max-h-[40vh] overflow-y-auto text-black">
+              <div id="print-container" className="w-full bg-white rounded-none overflow-hidden mb-8 shadow-inner border border-zinc-100 p-4 max-h-[40vh] overflow-y-auto text-black flex justify-center">
                 {showReceipt.mode === 'Credit' ? (
                   <Invoice 
                     items={showReceipt.items}
@@ -524,6 +554,7 @@ const POSPage: React.FC = () => {
                     invoiceNo={showReceipt.invoiceNo}
                     date={showReceipt.date}
                     customerName={showReceipt.customerName}
+                    customerId={showReceipt.customerId}
                   />
                 ) : (
                   <Receipt 
@@ -537,6 +568,8 @@ const POSPage: React.FC = () => {
                     paid={showReceipt.paid}
                     change={showReceipt.change}
                     mode={showReceipt.mode}
+                    customerName={showReceipt.customerName}
+                    customerId={showReceipt.customerId}
                   />
                 )}
               </div>
@@ -571,7 +604,7 @@ const POSPage: React.FC = () => {
                           }
                         }, 'image/png');
                       }
-                    } catch (error) {
+                    } catch {
                       toast.error('Failed to generate receipt image', { id: 'receipt' });
                     }
                   }} className="flex-1 px-4 py-3 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white rounded-none font-black text-[10px] tracking-widest flex items-center justify-center gap-2 border border-[#25D366]/20">

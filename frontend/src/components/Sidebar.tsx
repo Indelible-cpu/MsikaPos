@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, Info, MessageSquare } from 'lucide-react';
+import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, MessageSquare } from 'lucide-react';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
@@ -13,23 +13,21 @@ const Sidebar: React.FC = () => {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/staff/dashboard' },
     { id: 'pos', label: 'POS Terminal', icon: ShoppingCart, path: '/staff/pos' },
-    { id: 'inquiries', label: 'Inquiries', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
-    { id: 'sales', label: 'Daily Sales', icon: Receipt, path: '/staff/sales' },
-    { id: 'debt', label: 'Debt Management', icon: Users, path: '/staff/debt' },
-    { id: 'expenses', label: 'Expenses Tracking', icon: Wallet, path: '/staff/expenses' },
+    { id: 'transactions', label: 'Transactions', icon: Receipt, path: '/staff/transactions' },
+    { id: 'debt', label: 'Customers & Debt', icon: Users, path: '/staff/debt' },
     { id: 'inventory', label: 'Stock Management', icon: Package, path: '/staff/inventory' },
-    { id: 'team', label: 'Team Management', icon: UserCheck, path: '/staff/users' },
+    { id: 'inquiries', label: 'Inquiries & Requests', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
+    { id: 'expenses', label: 'Finance & Expenses', icon: Wallet, path: '/staff/expenses' },
+    { id: 'team', label: 'Staff Management', icon: UserCheck, path: '/staff/users' },
     { id: 'branches', label: 'Branch Management', icon: Building2, path: '/staff/branches' },
-    { id: 'transactions', label: 'Transactions History', icon: BarChart3, path: '/staff/transactions' },
-    { id: 'reports', label: 'Sales Reports', icon: BarChart3, path: '/staff/reports' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/staff/settings' },
-    { id: 'about', label: 'Support & About', icon: Info, path: '/staff/about' },
+    { id: 'reports', label: 'System Reports', icon: BarChart3, path: '/staff/reports' },
+    { id: 'settings', label: 'System Settings', icon: Settings, path: '/staff/settings' },
   ];
 
   const fetchPending = React.useCallback(async () => {
     try {
       const res = await api.get('/inquiries');
-      const pending = res.data.data.filter((i: any) => i.status === 'PENDING').length;
+      const pending = res.data.data.filter((i: { status: string }) => i.status === 'NEW').length;
       setPendingCount(pending);
     } catch { /* silent */ }
   }, []);
@@ -108,6 +106,13 @@ const Sidebar: React.FC = () => {
           <LogOut className="w-6 h-6 transition-transform group-hover:scale-110" strokeWidth={2.5} />
           Sign Out
         </button>
+        <div className="mt-4 px-4 flex items-center justify-between opacity-40">
+           <span className="text-[8px] font-black tracking-[0.2em] uppercase">Sync Status</span>
+           <div className={clsx(
+             "w-2 h-2 rounded-full",
+             navigator.onLine ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+           )}></div>
+        </div>
       </div>
     </aside>
   );

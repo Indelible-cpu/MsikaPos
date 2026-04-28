@@ -8,6 +8,7 @@ export default function MobileHeader() {
   const location = useLocation();
   const [shopName, setShopName] = useState('MsikaPos');
   const [shopLogo, setShopLogo] = useState('/icon.png?v=2');
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     const updateHeader = async () => {
@@ -24,9 +25,23 @@ export default function MobileHeader() {
       if (storedLogo) setShopLogo(storedLogo);
     };
 
+    const fetchPending = async () => {
+      try {
+        const api = (await import('../api/client')).default;
+        const res = await api.get('/inquiries');
+        const pending = res.data.data.filter((i: { status: string }) => i.status === 'NEW').length;
+        setPendingCount(pending);
+      } catch { /* silent */ }
+    };
+
     updateHeader();
+    fetchPending();
+    const interval = setInterval(fetchPending, 15000);
     window.addEventListener('storage', updateHeader);
-    return () => window.removeEventListener('storage', updateHeader);
+    return () => {
+      window.removeEventListener('storage', updateHeader);
+      clearInterval(interval);
+    };
   }, []);
 
   const getPageTitle = (pathname: string) => {
@@ -87,12 +102,17 @@ export default function MobileHeader() {
 
         <div className="flex items-center gap-2">
           <button 
-            className="relative p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 active:scale-95 transition-all"
+            onClick={() => window.location.href = '/staff/inquiries'}
+            className="relative p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 active:scale-95 transition-all"
             title="Notifications"
             aria-label="Notifications"
           >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-primary-500 rounded-full border-2 border-surface-card"></span>
+            {pendingCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-surface-card animate-pulse shadow-lg shadow-rose-500/20">
+                {pendingCount}
+              </span>
+            )}
           </button>
         </div>
       </header>
