@@ -78,7 +78,7 @@ const InventoryPage: React.FC = () => {
       profit += pProfit;
 
       // Loss evaluation based on ageing
-      const created = new Date(p.createdAt || Date.now());
+      const created = new Date(p.createdAt || now);
       const ageInDays = Math.floor((now.getTime() - created.getTime()) / (1000 * 3600 * 24));
       
       let depreciationRate = 0;
@@ -384,11 +384,12 @@ const InventoryPage: React.FC = () => {
                       <ImageIcon className="w-8 h-8 text-surface-text/10" />
                     )}
                   </div>
+                  <div className="flex justify-between items-start mb-4">
                     <div className="text-[9px] font-black text-surface-text/30  tracking-widest">{product.sku}</div>
                     <div className="flex gap-1">
                       {product.imageUrl && (
                         <button 
-                          onClick={() => setPreviewImage(product.imageUrl || null)} 
+                          onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
                           className="p-2 hover:bg-emerald-500/10 rounded-xl transition-colors text-emerald-500"
                           title="View product image"
                         >
@@ -396,7 +397,7 @@ const InventoryPage: React.FC = () => {
                         </button>
                       )}
                       <button 
-                        onClick={() => openEditModal(product)} 
+                        onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
                         className="p-2 hover:bg-primary-500/10 rounded-xl transition-colors text-primary-400"
                         title="Edit product"
                         aria-label="Edit product"
@@ -404,7 +405,7 @@ const InventoryPage: React.FC = () => {
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button 
-                        onClick={() => deleteProduct(product.id)} 
+                        onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
                         className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
                         title="Delete product"
                         aria-label="Delete product"

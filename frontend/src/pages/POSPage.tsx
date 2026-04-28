@@ -789,6 +789,7 @@ const POSPage: React.FC = () => {
                             className="input-field w-full !rounded-none py-3 px-4 text-sm font-black shadow-inner appearance-none bg-surface-bg border border-surface-border focus:border-primary-500 transition-all"
                             value={bankName} 
                             onChange={e => setBankName(e.target.value)}
+                            title={paymentMode === 'Card' ? 'Select Bank' : 'Select Provider'}
                           >
                             {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).split(',').map(provider => (
                               <option key={provider.trim()} value={provider.trim()}>{provider.trim()}</option>
