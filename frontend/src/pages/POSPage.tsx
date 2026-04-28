@@ -128,10 +128,18 @@ const POSPage: React.FC = () => {
       const tax = await db.settings.get('tax_config');
       if (tax?.value) setTaxConfig(tax.value as TaxConfig);
       const payment = await db.settings.get('payment_config');
-      if (payment?.value) setPaymentConfig(payment.value as { momo: string; bank: string });
+      if (payment?.value) {
+        const val = payment.value as { momo: string; bank: string };
+        setPaymentConfig(val);
+        // Pre-select first option if available
+        const momoList = val.momo.split(',').map(s => s.trim());
+        const bankList = val.bank.split(',').map(s => s.trim());
+        if (momoList.length > 0) setBankName(momoList[0]);
+        if (bankList.length > 0 && paymentMode === 'Card') setBankName(bankList[0]);
+      }
     };
     loadTax();
-  }, []);
+  }, [paymentMode]);
 
   const products = useLiveQuery(
     () => searchTerm.length >= 2 
@@ -767,8 +775,16 @@ const POSPage: React.FC = () => {
                     {(paymentMode === 'Card' || paymentMode === 'Momo') && (
                       <>
                         <div className="space-y-1">
-                          <label className="card-label ml-1">{paymentMode === 'Card' ? `Credited To (${paymentConfig.bank})` : `Transfered To (${paymentConfig.momo})`}</label>
-                          <input type="text" placeholder={paymentMode === 'Card' ? `e.g. ${paymentConfig.bank}` : `e.g. ${paymentConfig.momo}`} className="input-field w-full !rounded-none" value={bankName} onChange={e => setBankName(e.target.value)} />
+                          <label className="card-label ml-1">{paymentMode === 'Card' ? 'Select Bank' : 'Select Provider'}</label>
+                          <select 
+                            className="input-field w-full !rounded-none py-3 px-4 text-sm font-black shadow-inner appearance-none bg-surface-bg border border-surface-border focus:border-primary-500 transition-all"
+                            value={bankName} 
+                            onChange={e => setBankName(e.target.value)}
+                          >
+                            {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).split(',').map(provider => (
+                              <option key={provider.trim()} value={provider.trim()}>{provider.trim()}</option>
+                            ))}
+                          </select>
                         </div>
                         <div className="space-y-1">
                           <label className="card-label ml-1">Account / Reference Number</label>
