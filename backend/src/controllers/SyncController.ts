@@ -102,7 +102,12 @@ export const syncData = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error('Sync Error:', error);
-    return res.status(500).json({ success: false, message: 'Sync failed', error: error.message });
+    console.error('Sync Error Deep Trace:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Sync failed', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+    });
   }
 };
