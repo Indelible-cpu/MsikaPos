@@ -141,7 +141,7 @@ const ReportsPage: React.FC = () => {
     const payment = Object.entries(payMap).map(([label, value]) => ({ label, value }));
 
     return { weekly, staff, branches, payment };
-  }, [sales]);
+  }, [localSales, serverStats]);
 
   const stats = [
     { label: 'Revenue', value: `MK ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500' },
@@ -153,19 +153,27 @@ const ReportsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0 md:px-0 pt-0">
-      <div className="mb-8 flex gap-2 p-1 bg-surface-card border border-surface-border rounded-2xl overflow-x-auto no-scrollbar">
-        {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
-          <button 
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={clsx(
-              "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap",
-              activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg"
-            )}
-          >
-            {tab}
-          </button>
-        ))}
+      <div className="mb-8 flex items-center justify-between gap-4 p-1 bg-surface-card border border-surface-border rounded-2xl overflow-x-auto no-scrollbar">
+        <div className="flex gap-2">
+          {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
+            <button 
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={clsx(
+                "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap",
+                activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg"
+              )}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+        {loading && (
+          <div className="pr-4 flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
+            <span className="text-[8px] font-black tracking-widest text-primary-500">REFRESHING...</span>
+          </div>
+        )}
       </div>
 
       {/* Stats Grid */}

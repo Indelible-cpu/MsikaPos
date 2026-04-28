@@ -86,6 +86,12 @@ const TransactionsPage: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <div /> {/* Spacer */}
             <div className="flex items-center gap-3">
+              {loading && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-primary-500/10 text-primary-500 rounded-lg animate-pulse mr-2">
+                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"></div>
+                  <span className="text-[8px] font-black tracking-widest">SYNCING...</span>
+                </div>
+              )}
               <button 
                 onClick={() => setFilterToday(!filterToday)}
                 className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${

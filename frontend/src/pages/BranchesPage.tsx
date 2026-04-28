@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
-import { db } from '../db/posDB';
 import { 
   Store, 
   MapPin, 
