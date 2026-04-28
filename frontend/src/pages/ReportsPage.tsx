@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type LocalCustomer, type LocalProduct } from '../db/posDB';
+import { db } from '../db/posDB';
 import { 
   TrendingUp, 
   Users, 

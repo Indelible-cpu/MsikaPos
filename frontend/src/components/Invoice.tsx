@@ -29,7 +29,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
   React.useEffect(() => {
     if (customerId) {
       import('../db/posDB').then(({ db }) => {
-        db.customers.get(customerId).then(setCustomer);
+        db.customers.get(customerId).then(c => setCustomer(c || null));
       });
     }
   }, [customerId]);
