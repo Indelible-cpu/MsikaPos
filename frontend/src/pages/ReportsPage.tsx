@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
+import api from '../api/client';
 import { 
   TrendingUp, 
   Users, 
@@ -52,19 +53,47 @@ const BarChart = ({ data, label, valuePrefix = '' }: { data: { label: string, va
 
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('Financial');
+  const [serverStats, setServerStats] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   
-  const sales = useLiveQuery(() => db.salesQueue.toArray());
+  const localSales = useLiveQuery(() => db.salesQueue.toArray());
 
-  const totalRevenue = sales?.reduce((sum, s) => sum + s.total, 0) || 0;
-  const totalSalesCount = sales?.length || 0;
-  const totalProfit = sales?.reduce((sum, s) => {
-    const saleProfit = s.items?.reduce((pSum, item) => pSum + (item.profit || 0), 0) || 0;
-    return sum + saleProfit;
-  }, 0) || 0;
+  useEffect(() => {
+    const loadStats = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get('/dashboard/stats'); // Reusing dashboard stats for now as it has charts
+        if (res.data.success) {
+          setServerStats(res.data.data);
+        }
+      } catch (e) {
+        console.error('Failed to load report stats:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStats();
+  }, []);
+
+  const totalRevenue = serverStats?.today_sales || 0;
+  const totalSalesCount = serverStats?.total_transactions || 0;
+  const totalProfit = serverStats?.total_profit || 0; // Might need to add this to backend
 
   // Process actual data for graphs
   const analyticsData = useMemo(() => {
-    if (!sales) return { weekly: [], staff: [], branches: [], payment: [] };
+    if (serverStats?.chart_data) {
+      return {
+        weekly: serverStats.chart_data.map((d: any) => ({ label: d.date, value: d.total })),
+        staff: serverStats.recent_activity ? Object.entries(serverStats.recent_activity.reduce((acc: any, curr: any) => {
+          acc[curr.username] = (acc[curr.username] || 0) + curr.total;
+          return acc;
+        }, {})).map(([label, value]) => ({ label, value: value as number })) : [],
+        branches: [], // Branch data could be added to backend
+        payment: [] 
+      };
+    }
+
+    if (!localSales) return { weekly: [], staff: [], branches: [], payment: [] };
 
     // 1. Weekly Revenue (Last 7 Days)
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -75,7 +104,7 @@ const ReportsPage: React.FC = () => {
       return { key: d.toLocaleDateString(), label: days[d.getDay()] };
     });
 
-    sales.forEach(s => {
+    localSales.forEach(s => {
       const date = new Date(s.createdAt).toLocaleDateString();
       weeklyMap[date] = (weeklyMap[date] || 0) + s.total;
     });
@@ -84,7 +113,7 @@ const ReportsPage: React.FC = () => {
 
     // 2. Staff Performance
     const staffMap: Record<string, number> = {};
-    sales.forEach(s => {
+    localSales.forEach(s => {
       const name = s.sellerName || 'System';
       staffMap[name] = (staffMap[name] || 0) + s.total;
     });
@@ -95,7 +124,7 @@ const ReportsPage: React.FC = () => {
 
     // 3. Branch Performance (Super Admin View)
     const branchMap: Record<string, number> = {};
-    sales.forEach(s => {
+    localSales.forEach(s => {
       const branchName = s.branchId || 'Main HQ'; // Should ideally be name-resolved
       branchMap[branchName] = (branchMap[branchName] || 0) + s.total;
     });
@@ -105,7 +134,7 @@ const ReportsPage: React.FC = () => {
 
     // 4. Payment Distribution (Customer Choice)
     const payMap: Record<string, number> = {};
-    sales.forEach(s => {
+    localSales.forEach(s => {
       const mode = s.paymentMode || 'CASH';
       payMap[mode] = (payMap[mode] || 0) + 1; // Count transactions as customer flow
     });
@@ -124,15 +153,6 @@ const ReportsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0 md:px-0 pt-0">
-      <header className="hidden md:block mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight italic">Business Reports</h1>
-            <p className="text-[10px] text-surface-text/40 font-black tracking-widest mt-1">Live Performance Analytics</p>
-          </div>
-        </div>
-      </header>
-
       <div className="mb-8 flex gap-2 p-1 bg-surface-card border border-surface-border rounded-2xl overflow-x-auto no-scrollbar">
         {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
           <button 

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type LocalSale, type LocalSaleItem, type LocalProduct } from '../db/posDB';
+import api from '../api/client';
 import { 
   Receipt as ReceiptIcon, 
   Search, 
@@ -16,30 +17,52 @@ import { Invoice } from '../components/Invoice';
 const SalesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSale, setSelectedSale] = useState<LocalSale | null>(null);
+  const [serverSales, setServerSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const sales = useLiveQuery(() => db.salesQueue.reverse().toArray());
-  const filteredSales = sales?.filter(s => 
+  const localSales = useLiveQuery(() => db.salesQueue.reverse().toArray());
+
+  useEffect(() => {
+    const loadServerSales = async () => {
+      setLoading(true);
+      try {
+        const res = await api.get('/reports/transactions');
+        if (res.data.success) setServerSales(res.data.data);
+      } catch (e) {
+        console.error('Failed to load server sales:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadServerSales();
+  }, []);
+
+  const sales = useMemo(() => {
+    const merged = [...(localSales || [])];
+    const localInvoices = new Set(merged.map(s => s.invoiceNo));
+    serverSales.forEach(ss => {
+      if (!localInvoices.has(ss.invoiceNo)) merged.push(ss);
+    });
+    return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [localSales, serverSales]);
+
+  const filteredSales = sales.filter(s => 
     s.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.paymentMode.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const today = new Date().toISOString().split('T')[0];
-  const todaySales = sales?.filter(s => s.createdAt.startsWith(today)) || [];
-  const totalRevenue = todaySales.reduce((sum, s) => sum + s.total, 0);
+  const todaySales = sales.filter(s => s.createdAt.startsWith(today)) || [];
+  const totalRevenue = todaySales.reduce((sum, s) => sum + Number(s.total), 0);
   const totalProfit = todaySales.reduce((sum, s) => {
-    const saleProfit = s.items.reduce((pSum, item) => pSum + (item.profit || 0), 0);
+    const saleProfit = s.items.reduce((pSum: number, item: any) => pSum + (Number(item.profit) || 0), 0);
     return sum + saleProfit;
   }, 0);
 
   return (
     <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0">
       <div className="p-6 md:p-10">
-        <header className="hidden md:flex items-center gap-3 mb-10">
-          <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-          <h1 className="text-2xl font-black tracking-tighter">Sales & profit</h1>
-        </header>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           <div className="bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">

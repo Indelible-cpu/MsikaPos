@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type LocalProduct } from '../db/posDB';
+import api from '../api/client';
 import { 
   Search, 
   ArrowLeftRight, 
@@ -16,8 +17,10 @@ const TransactionsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterToday, setFilterToday] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const [serverSales, setServerSales] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const sales = useLiveQuery(
+  const localSales = useLiveQuery(
     () => db.salesQueue
       .filter(s => {
         const matchesSearch = s.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase()) || (s.customerId || '').includes(searchTerm);
@@ -35,20 +38,53 @@ const TransactionsPage: React.FC = () => {
     [searchTerm, filterToday]
   );
 
-  const selectedSale = useLiveQuery(
-    async () => selectedSaleId ? await db.salesQueue.get(selectedSaleId) : undefined,
-    [selectedSaleId]
-  );
+  useEffect(() => {
+    const loadServerSales = async () => {
+      setLoading(true);
+      try {
+        const params: any = { q: searchTerm };
+        if (filterToday) params.from = new Date().toISOString().split('T')[0];
+        const res = await api.get('/reports/transactions', { params });
+        if (res.data.success) {
+          setServerSales(res.data.data);
+        }
+      } catch (e) {
+        console.error('Failed to load server sales:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadServerSales();
+  }, [searchTerm, filterToday]);
 
-  const totalSalesCount = sales?.length || 0;
-  const totalRevenue = sales?.reduce((sum, s) => sum + s.total, 0) || 0;
+  // Merge local and server sales, avoiding duplicates by invoiceNo
+  const sales = useMemo(() => {
+    const merged = [...(localSales || [])];
+    const localInvoices = new Set(merged.map(s => s.invoiceNo));
+    
+    serverSales.forEach(ss => {
+      if (!localInvoices.has(ss.invoiceNo)) {
+        merged.push(ss);
+      }
+    });
+    
+    return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [localSales, serverSales]);
+
+  const selectedSale = useMemo(() => {
+    if (!selectedSaleId) return null;
+    return sales.find(s => s.id === selectedSaleId);
+  }, [selectedSaleId, sales]);
+
+  const totalSalesCount = sales.length;
+  const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
       <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-card md:border-b border-surface-border sticky top-0 z-30">
         <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-black italic tracking-tighter text-surface-text">Transactions</h1>
+            <div className="flex items-center justify-between mb-6">
+              <div /> {/* Spacer */}
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setFilterToday(!filterToday)}

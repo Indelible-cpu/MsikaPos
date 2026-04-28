@@ -60,7 +60,7 @@ export default function MobileHeader() {
       case '/users': return 'Team Management';
       case '/onboarding': return 'Setup';
       case '/about': return 'About MsikaPos';
-      case '/inquiries': return 'Inquiries';
+      case '/inquiries': return 'Customer Inquiries';
       default: return 'System';
     }
   };

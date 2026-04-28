@@ -167,7 +167,7 @@ const POSPage: React.FC = () => {
   }, []);
 
   // Totals Calculation
-  const cartSubtotal = cart.reduce((sum, item) => sum + (item.product.sellPrice * item.quantity), 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + (Number(item.product.sellPrice) * item.quantity), 0);
   const discountedSubtotal = Math.max(0, cartSubtotal - discount);
   let finalTotal = discountedSubtotal;
   let taxAmount = 0;
@@ -735,7 +735,7 @@ const POSPage: React.FC = () => {
                           <div className="w-14 text-center font-black text-lg">{item.quantity}</div>
                           <button onClick={() => addToCart(item.product)} className="w-11 h-11 bg-surface-bg border border-surface-border rounded-none flex items-center justify-center hover:bg-surface-border/30 transition-all" title="Increase quantity" aria-label="Increase quantity"><Plus className="w-5 h-5" /></button>
                         </div>
-                        <div className="font-black text-primary-500 text-2xl tracking-tighter italic">MK {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
+                        <div className="font-black text-primary-500 text-2xl tracking-tighter italic">MK {(Number(item.product.sellPrice) * item.quantity).toLocaleString()}</div>
                       </div>
                     </motion.div>
                   ))}

@@ -39,6 +39,7 @@ export const fetchTransactions = async (req: Request, res: Response) => {
       include: {
         user: { select: { username: true } },
         customer: { select: { fullname: true } },
+        items: true,
       },
       orderBy: { createdAt: 'desc' },
       take: 100,

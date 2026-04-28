@@ -12,13 +12,12 @@ interface AiAssistantProps {
 const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
-  const [isImage, setIsImage] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const getAiHelp = async () => {
     setLoading(true);
     setIsOpen(true);
-    setIsImage(false);
+    setIsOpen(true);
     try {
       let finalContext: Record<string, unknown> = {};
       if (context && typeof context === 'object') {
@@ -59,7 +58,6 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
       const res = await api.post('/ai/suggestions', { type, context: finalContext });
       if (res.data.success) {
         setSuggestion(res.data.data);
-        setIsImage(!!res.data.isImage);
       }
     } catch (err: unknown) {
       let errorMsg = "Unknown connectivity issue";
@@ -129,34 +127,12 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
                        </div>
                        <div className="flex-1">
                           <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">
-                            {isImage ? 'Generated Asset' : 'Insight Discovery'}
+                            Insight Discovery
                           </h4>
                           
-                          {isImage ? (
-                            <motion.div 
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              className="relative group rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
-                            >
-                              <img 
-                                src={suggestion || ''} 
-                                alt="AI Generated" 
-                                className="w-full aspect-square object-cover"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                                <button 
-                                  onClick={() => window.open(suggestion || '', '_blank')}
-                                  className="text-[8px] font-black text-white uppercase tracking-widest bg-white/10 backdrop-blur-md px-3 py-2 rounded-lg"
-                                >
-                                  Download Original
-                                </button>
-                              </div>
-                            </motion.div>
-                          ) : (
-                            <p className="text-[13px] leading-relaxed text-zinc-300 font-medium whitespace-pre-line">
-                              {suggestion}
-                            </p>
-                          )}
+                          <p className="text-[13px] leading-relaxed text-zinc-300 font-medium whitespace-pre-line">
+                            {suggestion}
+                          </p>
                        </div>
                     </div>
 

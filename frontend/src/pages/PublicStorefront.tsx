@@ -212,7 +212,7 @@ export const PublicStorefront: React.FC = () => {
     setSubmitting(true);
     try {
       await api.post('/inquiries', {
-        items: [{ id: product.id, name: product.name, price: product.sellPrice ?? 0 }]
+        items: [{ id: product.id, name: product.name, price: Number(product.sellPrice ?? 0) }]
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -491,7 +491,7 @@ export const PublicStorefront: React.FC = () => {
                     <div className="flex items-end justify-between">
                       <div className="flex flex-col">
                         <span className="text-[7px] md:text-[10px] font-black text-surface-text/20 italic">Starting from</span>
-                        <p className="text-sm md:text-2xl font-black text-primary-500 italic tracking-tighter">MK {(p.sellPrice ?? 0).toLocaleString()}</p>
+                        <p className="text-sm md:text-2xl font-black text-primary-500 italic tracking-tighter">MK {Number(p.sellPrice ?? 0).toLocaleString()}</p>
                       </div>
                       
                       <button 
@@ -561,7 +561,7 @@ export const PublicStorefront: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-0.5">{item.category?.name || 'Item'}</p>
                       <h4 className="font-black text-sm truncate">{item.name}</h4>
-                      <p className="text-xs font-bold text-surface-text/40">MK {(item.sellPrice ?? 0).toLocaleString()}</p>
+                      <p className="text-xs font-bold text-surface-text/40">MK {Number(item.sellPrice ?? 0).toLocaleString()}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button 
@@ -590,7 +590,7 @@ export const PublicStorefront: React.FC = () => {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-black text-surface-text/40 italic">Estimated Total</p>
                 <p className="text-2xl font-black text-primary-500 tracking-tighter italic">
-                  MK {cartItems.reduce((acc, item) => acc + (item.sellPrice ?? 0), 0).toLocaleString()}
+                  MK {cartItems.reduce((acc, item) => acc + Number(item.sellPrice ?? 0), 0).toLocaleString()}
                 </p>
               </div>
               <button 

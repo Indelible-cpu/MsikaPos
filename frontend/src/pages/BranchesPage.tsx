@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
+import React, { useState, useEffect, useCallback } from 'react';
+import api from '../api/client';
 import { db } from '../db/posDB';
 import { 
   Store, 
@@ -7,13 +7,15 @@ import {
   Phone, 
   Plus, 
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const BranchesPage: React.FC = () => {
-  const branches = useLiveQuery(() => db.branches.toArray());
+  const [branches, setBranches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ 
     name: '', 
@@ -24,6 +26,22 @@ const BranchesPage: React.FC = () => {
     slogan: '', 
     logo: '' 
   });
+
+  const fetchBranches = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/branches');
+      setBranches(res.data.data);
+    } catch (error) {
+      toast.error('Failed to fetch branches');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBranches();
+  }, [fetchBranches]);
 
   const stats = [
     { label: 'Total Branches', value: (branches?.length || 0).toString(), icon: Store, color: 'text-primary-500' },
@@ -37,18 +55,17 @@ const BranchesPage: React.FC = () => {
       toast.error('Branch contact number must be exactly 10 or 13 digits');
       return;
     }
+    setLoading(true);
     try {
-      await db.branches.add({
-        id: crypto.randomUUID(),
-        ...formData,
-        status: 'ACTIVE',
-        createdAt: new Date().toISOString()
-      });
+      await api.post('/branches', formData);
       toast.success('Branch added successfully');
       setIsModalOpen(false);
       setFormData({ name: '', address: '', phone: '', email: '', facebook: '', slogan: '', logo: '' });
-    } catch {
-      toast.error('Failed to add branch');
+      fetchBranches();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to add branch');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,7 +112,12 @@ const BranchesPage: React.FC = () => {
       </header>
 
       <div className="p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
-        {branches?.map((branch, i) => (
+        {loading && branches.length === 0 ? (
+          <div className="col-span-full py-40 flex flex-col items-center justify-center gap-4">
+            <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
+            <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 italic">Loading branches...</p>
+          </div>
+        ) : branches?.map((branch, i) => (
           <motion.div
             key={branch.id}
             initial={{ opacity: 0, scale: 0.95 }}
@@ -165,7 +187,7 @@ const BranchesPage: React.FC = () => {
         ))}
       </div>
 
-      {branches?.length === 0 && (
+      {!loading && branches?.length === 0 && (
         <div className="flex-1 flex flex-col items-center justify-center py-20 text-center opacity-40">
            <a href="https://www.facebook.com/JEFInvestment" target="_blank" rel="noreferrer noopener" title="Facebook Support" aria-label="Facebook Support" className="w-24 h-24 bg-surface-card border border-surface-border rounded-none flex items-center justify-center mb-6 shadow-inner">
              <Store className="w-10 h-10" />

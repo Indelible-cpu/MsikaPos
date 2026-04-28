@@ -45,32 +45,36 @@ export const fetchBranches = async (req: Request, res: Response) => {
 };
 
 export const saveBranch = async (req: Request, res: Response) => {
-  const { id, name, location, phone, is_active } = req.body;
+  const { id, name, location, address, phone, email, facebook, slogan, logo, is_active } = req.body;
 
-  if (!name || !location) {
+  const branchName = name;
+  const branchLocation = location || address;
+
+  if (!branchName || !branchLocation) {
     return res.status(400).json({ success: false, message: "Name and location are required" });
   }
 
   try {
-    if (id) {
+    const data = {
+      name: branchName,
+      location: branchLocation,
+      phone,
+      email,
+      facebook,
+      slogan,
+      logo,
+      status: is_active === undefined || !!is_active ? 'ACTIVE' : 'INACTIVE',
+    };
+
+    if (id && !isNaN(parseInt(id))) {
       await prisma.branch.update({
         where: { id: parseInt(id) },
-        data: {
-          name,
-          location,
-          phone,
-          status: is_active === undefined || !!is_active ? 'ACTIVE' : 'INACTIVE',
-        },
+        data,
       });
       return res.status(200).json({ success: true, message: "Branch updated" });
     } else {
       await prisma.branch.create({
-        data: {
-          name,
-          location,
-          phone,
-          status: is_active === undefined || !!is_active ? 'ACTIVE' : 'INACTIVE',
-        },
+        data,
       });
       return res.status(201).json({ success: true, message: "Branch created" });
     }

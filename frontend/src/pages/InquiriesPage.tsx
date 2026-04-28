@@ -76,9 +76,6 @@ const InquiriesPage: React.FC = () => {
     }
     setSendingResponse(true);
     try {
-      // Assuming a generic update to the inquiry, maybe storing response in a new field or just updating status.
-      // We will append to notes or add a response field. For now, we'll update status to RESPONDED.
-      // If the backend supports a "response" or "quotePrice" field we can pass it.
       await api.put(`/inquiries/${selectedInquiry.id}`, { 
         status: 'RESPONDED',
         notes: `Response: ${responseText} | Price Quote: ${responsePrice || 'N/A'}`
@@ -110,7 +107,7 @@ const InquiriesPage: React.FC = () => {
     const matchesSearch = fullname.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           username.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || i.status === statusFilter || 
-                         (statusFilter === 'NEW' && i.status === 'PENDING'); // Handle legacy PENDING as NEW
+                         (statusFilter === 'NEW' && i.status === 'PENDING');
     return matchesSearch && matchesStatus;
   });
 
@@ -131,48 +128,39 @@ const InquiriesPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all">
-      <header className="p-8 pb-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-          <div>
-            <h1 className="text-3xl font-black tracking-tighter italic flex items-center gap-3">
-              <MessageSquare className="w-8 h-8 text-primary-500" />
-              Customer Inquiries
-            </h1>
-            <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/30 italic mt-1">Live Request Management</p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
+    <div className="flex flex-col min-h-screen bg-surface-bg transition-all w-full">
+      <div className="w-full px-0">
+        <div className="p-4 md:p-8 flex flex-col md:flex-row gap-4 items-center bg-surface-card/30 border-b border-surface-border">
+          <div className="flex flex-wrap gap-2 flex-1">
             {['ALL', 'NEW', 'VIEWED', 'RESPONDED', 'NEGOTIATING', 'CLOSED'].map(s => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
                 className={clsx(
-                  "px-4 py-2 rounded-full text-[9px] font-black tracking-widest transition-all border",
+                  "px-4 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all border",
                   statusFilter === s 
                     ? "bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20" 
-                    : "bg-surface-card border-surface-border text-surface-text/40 hover:bg-surface-border/50"
+                    : "bg-surface-bg border-surface-border text-surface-text/40 hover:bg-surface-border/50"
                 )}
               >
                 {s}
               </button>
             ))}
           </div>
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search customers..."
+              className="w-full py-3 pl-12 pr-4 bg-surface-bg border border-surface-border rounded-xl outline-none focus:border-primary-500 font-bold text-xs shadow-inner transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
+      </div>
 
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
-          <input 
-            type="text" 
-            placeholder="Search by customer name or username..."
-            className="w-full py-4 pl-12 pr-4 bg-surface-card border border-surface-border rounded-2xl outline-none focus:border-primary-500 font-bold text-sm shadow-inner transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </header>
-
-      <main className="p-8 pt-4">
+      <main className="w-full">
         {loading && inquiries.length === 0 ? (
           <div className="py-40 flex flex-col items-center justify-center gap-4">
             <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
@@ -193,7 +181,7 @@ const InquiriesPage: React.FC = () => {
                                      i.status === 'IN_PROGRESS' ? 'NEGOTIATING' : i.status;
               
               return (
-                <div key={i.id} className="bg-surface-card border border-surface-border rounded-[2rem] p-8 hover:shadow-2xl transition-all relative group overflow-hidden flex flex-col gap-6">
+                <div key={i.id} className="bg-surface-card border-y md:border border-surface-border md:rounded-[2rem] p-4 md:p-8 hover:shadow-2xl transition-all relative group overflow-hidden flex flex-col gap-6">
                   <div className="flex flex-col lg:flex-row justify-between gap-8">
                     {/* Customer Info */}
                     <div className="flex items-start gap-6 lg:border-r border-surface-border/50 lg:pr-8 lg:w-1/3">

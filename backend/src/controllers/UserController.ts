@@ -127,10 +127,13 @@ export const saveUser = async (req: Request, res: Response) => {
       });
 
       return res.status(200).json({ success: true, message: "User updated" });
+    } else {
+      const tempPassword = crypto.randomBytes(4).toString('hex'); // 8 char hex
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
       const magicToken = crypto.randomBytes(32).toString('hex');
       const magicTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-      const newUser = await prisma.user.create({
+      await prisma.user.create({
         data: {
           username,
           password: hashedPassword,
@@ -148,7 +151,7 @@ export const saveUser = async (req: Request, res: Response) => {
         message: "User created",
         data: { 
           username, 
-          tempPassword: password ? undefined : tempPassword,
+          tempPassword,
           magicToken 
         }
       });
