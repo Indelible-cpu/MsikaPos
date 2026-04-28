@@ -30,7 +30,6 @@ import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
 import { soundService } from '../services/SoundService';
 import clsx from 'clsx';
-import { formatCurrency } from '../utils/phoneUtils';
 
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
@@ -837,7 +836,7 @@ const POSPage: React.FC = () => {
                     <div className="flex flex-wrap items-center gap-10">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-black text-surface-text/30 tracking-widest uppercase mb-1">Subtotal</span>
-                        <span className="text-xl font-black uppercase">{formatCurrency(cartSubtotal)}</span>
+                        <span className="text-xl font-black uppercase">MK{cartSubtotal.toLocaleString()}</span>
                       </div>
                       <div className="flex flex-col">
                         <label className="text-[10px] font-black text-surface-text/30 tracking-widest uppercase mb-1">Discount (MK)</label>
@@ -852,7 +851,7 @@ const POSPage: React.FC = () => {
                       {taxAmount > 0 && (
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black text-surface-text/30 tracking-widest uppercase mb-1">Tax ({taxConfig.rate}%)</span>
-                           <span className="text-xl font-black text-primary-500 uppercase">{formatCurrency(taxAmount)}</span>
+                          <span className="text-xl font-black text-primary-500 uppercase">MK{taxAmount.toLocaleString()}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-3 bg-surface-bg/50 px-4 py-2 rounded-xl border border-surface-border/50">
@@ -871,7 +870,7 @@ const POSPage: React.FC = () => {
                       <div className="text-right">
                         <span className="text-[10px] font-black text-surface-text/30 tracking-widest mb-1 uppercase block">Final Payable Total</span>
                         <div className={clsx("text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none", paymentMode === 'Credit' ? 'text-amber-500' : 'text-primary-500')}>
-                             {formatCurrency(finalTotal)}
+                            MK{finalTotal.toLocaleString()}
                         </div>
                       </div>
                       <button 

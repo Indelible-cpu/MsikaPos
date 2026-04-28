@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import { formatCurrency } from '../utils/phoneUtils';
 
 type ReportTab = 'Financial' | 'Staff' | 'Branches' | 'Payment';
 
@@ -163,10 +162,10 @@ const ReportsPage: React.FC = () => {
   }, [localSales, serverStats]);
 
   const stats = [
-    { label: 'Revenue', value: formatCurrency(totalRevenue), icon: DollarSign, color: 'text-emerald-500' },
+    { label: 'Revenue', value: `MK${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500' },
     { label: 'Transactions', value: totalSalesCount.toString(), icon: TrendingUp, color: 'text-primary-500' },
-    { label: 'Total Profit', value: formatCurrency(totalProfit), icon: ArrowUpRight, color: 'text-blue-500' },
-    { label: 'Avg Sale', value: formatCurrency(totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0), icon: Users, color: 'text-amber-500' },
+    { label: 'Total Profit', value: `MK${totalProfit.toLocaleString()}`, icon: ArrowUpRight, color: 'text-blue-500' },
+    { label: 'Avg Sale', value: `MK${(totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0).toLocaleString()}`, icon: Users, color: 'text-amber-500' },
   ];
 
 

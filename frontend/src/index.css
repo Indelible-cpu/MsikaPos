@@ -164,5 +164,27 @@ body {
 
 /* Custom scrollbar hidden globally as per request */
 
+/* === ACCESSIBILITY MODES === */
 
+/* High Contrast Mode */
+.high-contrast {
+  --bg-main: #000000;
+  --text-main: #ffffff;
+  --bg-card: #111111;
+  --border-color: #ffffff;
+  filter: contrast(1.2);
+}
+.high-contrast .dark {
+  --bg-main: #000000;
+  --text-main: #ffffff;
+}
 
+/* Reduce Motion Mode */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

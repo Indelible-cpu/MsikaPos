@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type LocalProduct } from '../db/posDB';
+import { db } from '../db/posDB';
+import type { LocalProduct } from '../db/posDB';
 import { 
   Plus, 
   Search, 
@@ -22,7 +23,6 @@ import AiAssistant from '../components/AiAssistant';
 import Modal from '../components/Modal';
 import { soundService } from '../services/SoundService';
 import { AuditService } from '../services/AuditService';
-import { formatCurrency } from '../utils/phoneUtils';
 
 const generateNumericId = () => {
   return Date.now() + Math.floor(Math.random() * 1000);
@@ -352,15 +352,15 @@ const InventoryPage: React.FC = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-0 bg-surface-card border border-surface-border rounded-3xl overflow-hidden mb-8">
           <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
             <div className="card-label uppercase">Total Stock Cost</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter">{formatCurrency(analytics.totalCost)}</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter">MK{analytics.totalCost.toLocaleString()}</div>
           </div>
           <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
             <div className="card-label !text-emerald-500 uppercase">Expected Profit</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter text-emerald-500">{formatCurrency(analytics.totalProfit)}</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-emerald-500">MK{analytics.totalProfit.toLocaleString()}</div>
           </div>
           <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
             <div className="card-label !text-red-500 uppercase">Est. Ageing Loss</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter text-red-500">{formatCurrency(analytics.totalLoss)}</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-red-500">MK{analytics.totalLoss.toLocaleString()}</div>
           </div>
           <div className="p-8 bg-surface-card">
             <div className="card-label !text-primary-500 uppercase">Low Stock Alert</div>
@@ -463,7 +463,7 @@ const InventoryPage: React.FC = () => {
                   </div>
                   <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2 uppercase">{product.name}</h3>
                   <div className="flex items-center gap-2 mb-6">
-                    <span className="text-primary-500 font-black text-2xl leading-none tracking-tighter">{formatCurrency(product.sellPrice)}</span>
+                    <span className="text-primary-500 font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
                   </div>
                   <div className={clsx(
                     "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black tracking-widest uppercase",
@@ -476,7 +476,7 @@ const InventoryPage: React.FC = () => {
                 <div className="px-6 py-4 bg-surface-bg/30 border-t border-surface-border flex justify-between items-center text-[9px] font-black tracking-widest text-surface-text/40">
                   {!product.isService && isSuperAdmin ? (
                     <>
-                      <span className="uppercase">Stock Profit: {formatCurrency((product.sellPrice - product.costPrice) * product.quantity)}</span>
+                      <span className="uppercase">Stock Profit: MK{((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
                       <ArrowUpRight className="w-3 h-3 text-emerald-500" />
                     </>
                   ) : (
