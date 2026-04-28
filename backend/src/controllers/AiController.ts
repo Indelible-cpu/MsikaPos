@@ -54,7 +54,12 @@ export const getAiSuggestions = async (req: Request, res: Response) => {
       data: response.choices[0]?.message?.content || "The brain is thinking... but no words came out. Try again." 
     });
   } catch (error: any) {
-    console.error('AI Error:', error);
-    res.status(500).json({ success: false, message: 'AI failed to generate suggestion' });
+    console.error('AI Error Deep Trace:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'AI failed to generate suggestion', 
+      error: error.message,
+      details: error.response?.data || 'Check xAI API status or key usage'
+    });
   }
 };
