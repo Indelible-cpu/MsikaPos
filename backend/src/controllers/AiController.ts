@@ -1,10 +1,16 @@
 import OpenAI from 'openai';
 import type { Request, Response } from 'express';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: "https://api.x.ai/v1",
-});
+let _openai: OpenAI | null = null;
+const getOpenAI = () => {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || 'missing',
+      baseURL: "https://api.x.ai/v1",
+    });
+  }
+  return _openai;
+};
 
 export const getAiSuggestions = async (req: Request, res: Response) => {
   const { context, type } = req.body;
@@ -36,6 +42,7 @@ export const getAiSuggestions = async (req: Request, res: Response) => {
       prompt = `Provide a powerful business idea or suggestion based on this context: ${JSON.stringify(context)}`;
     }
 
+    const openai = getOpenAI();
     const response = await openai.chat.completions.create({
       model: "grok-beta", // Using grok-beta for general intelligence
       messages: [{ role: "user", content: prompt }],
