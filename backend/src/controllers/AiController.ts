@@ -7,10 +7,10 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 export const getAiSuggestions = async (req: Request, res: Response) => {
   const { context, type } = req.body;
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     return res.json({ 
       success: true, 
-      data: "Msika Brain (Grok Edition) is currently in demo mode. Please configure your xAI API Key in the system settings." 
+      data: "Msika Brain (Gemini Flash) is currently in demo mode. Please configure your Google Gemini API Key in the system settings." 
     });
   }
 
