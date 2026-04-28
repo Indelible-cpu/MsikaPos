@@ -57,7 +57,7 @@ app.post('/api/customer/register', CustomerCtrl.registerCustomer as any);
 app.post('/api/customer/login', CustomerCtrl.loginCustomer as any);
 
 // Public Storefront Routes (No Auth Required)
-app.get('/api/public/products', async (req, res) => {
+app.get('/api/public/products', async (_req, res) => {
   try {
     const products = await prisma.product.findMany({
       where: { deleted: false },
