@@ -17,7 +17,7 @@ import { Invoice } from '../components/Invoice';
 const SalesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSale, setSelectedSale] = useState<LocalSale | null>(null);
-  const [serverSales, setServerSales] = useState<any[]>([]);
+  const [serverSales, setServerSales] = useState<LocalSale[]>([]);
   const [loading, setLoading] = useState(false);
 
   const localSales = useLiveQuery(() => db.salesQueue.reverse().toArray());
@@ -55,7 +55,7 @@ const SalesPage: React.FC = () => {
   const todaySales = sales.filter(s => s.createdAt.startsWith(today)) || [];
   const totalRevenue = todaySales.reduce((sum, s) => sum + Number(s.total), 0);
   const totalProfit = todaySales.reduce((sum, s) => {
-    const saleProfit = s.items.reduce((pSum: number, item: any) => pSum + (Number(item.profit) || 0), 0);
+    const saleProfit = s.items.reduce((pSum: number, item: LocalSaleItem) => pSum + (Number(item.profit) || 0), 0);
     return sum + saleProfit;
   }, 0);
 
@@ -93,9 +93,17 @@ const SalesPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5" />
-          <input type="text" placeholder="Search invoices..." className="input-field w-full pl-12 py-4 text-sm font-medium shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <div className="mt-8 relative flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5" />
+            <input type="text" placeholder="Search invoices..." className="input-field w-full pl-12 py-4 text-sm font-medium shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+          {loading && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-primary-500/10 text-primary-500 rounded-xl animate-pulse">
+               <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
+               <span className="text-[10px] font-bold">Syncing cloud logs...</span>
+            </div>
+          )}
         </div>
       </div>
 
