@@ -15,7 +15,7 @@ export const SyncService = {
       // 1. Check if server is alive first
       try {
         await api.get('/ping', { timeout: 5000 });
-      } catch (e) {
+      } catch (_e) {
         throw new Error('Server is unreachable. Please wait 30s and try again.');
       }
 
@@ -39,9 +39,10 @@ export const SyncService = {
         return true;
       }
       throw new Error(response.data.message || 'Server rejected sync');
-    } catch (error: any) {
-      const status = error.response?.status;
-      const message = error.response?.data?.message || error.message;
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number, data?: { message?: string } }, message?: string };
+      const status = axiosError.response?.status;
+      const message = axiosError.response?.data?.message || axiosError.message;
       console.error('Sync Error:', { status, message });
       throw new Error(status ? `${status}: ${message}` : message);
     }
