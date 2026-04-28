@@ -16,6 +16,7 @@ import * as AiCtrl from './controllers/AiController';
 import * as Security from './middleware/security';
 
 import { authenticate, authorize } from './middleware/auth';
+import { prisma } from './lib/prisma';
 
 dotenv.config();
 
@@ -57,7 +58,6 @@ app.post('/api/customer/login', CustomerCtrl.loginCustomer as any);
 
 // Public Storefront Routes (No Auth Required)
 app.get('/api/public/products', async (req, res) => {
-  const { prisma } = await import('./lib/prisma');
   try {
     const products = await prisma.product.findMany({
       where: { deleted: false },
@@ -73,7 +73,6 @@ app.get('/api/public/products', async (req, res) => {
 });
 
 app.get('/api/public/settings', async (_req, res) => {
-  const { prisma } = await import('./lib/prisma');
   try {
     const settings = await prisma.companySettings.findFirst();
     res.json({ success: true, data: settings });
@@ -139,7 +138,6 @@ app.post('/api/settings', adminOnly, SettingsCtrl.saveSettings);
 
 // Role Initialization
 const initRoles = async () => {
-  const { prisma } = await import('./lib/prisma');
   const roles = ['SUPER_ADMIN', 'ADMIN', 'CASHIER', 'CUSTOMER'];
   try {
     for (const roleName of roles) {
