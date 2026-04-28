@@ -1,16 +1,8 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Request, Response } from 'express';
 
-let _openai: OpenAI | null = null;
-const getOpenAI = () => {
-  if (!_openai) {
-    _openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY || 'missing',
-      baseURL: "https://api.x.ai/v1",
-    });
-  }
-  return _openai;
-};
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export const getAiSuggestions = async (req: Request, res: Response) => {
   const { context, type } = req.body;
@@ -42,24 +34,21 @@ export const getAiSuggestions = async (req: Request, res: Response) => {
       prompt = `Provide a powerful business idea or suggestion based on this context: ${JSON.stringify(context)}`;
     }
 
-    const openai = getOpenAI();
-    const response = await openai.chat.completions.create({
-      model: "grok-2", // Standard production model
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 500,
-    });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
     res.json({ 
       success: true, 
-      data: response.choices[0]?.message?.content || "The brain is thinking... but no words came out. Try again." 
+      data: text || "The brain is thinking... but no words came out. Try again." 
     });
   } catch (error: any) {
-    console.error('AI Error Deep Trace:', error);
+    console.error('Gemini AI Error:', error);
     return res.status(500).json({ 
       success: false, 
-      message: 'AI failed to generate suggestion', 
+      message: 'Msika Brain failed to generate suggestion', 
       error: error.message,
-      details: error.response?.data || 'Check xAI API status or key usage'
+      details: 'Ensure GEMINI_API_KEY is set in Render environment variables'
     });
   }
 };
