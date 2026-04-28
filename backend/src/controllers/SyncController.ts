@@ -31,8 +31,13 @@ export const syncData = async (req: Request, res: Response) => {
                 paid: saleData.paid,
                 changeDue: saleData.changeDue,
                 profit: saleData.profit,
-                paymentMode: saleData.paymentMode,
-                status: saleData.status,
+                paymentMode: saleData.paymentMode === 'Momo' ? 'MOBILE_MONEY' : 
+                             saleData.paymentMode === 'Card' ? 'CARD' : 
+                             saleData.paymentMode === 'Credit' ? 'CREDIT' : 'CASH',
+                status: saleData.status || 'COMPLETED',
+                taxAmount: saleData.tax || 0,
+                taxRate: saleData.taxRate || 0,
+                isCredit: saleData.paymentMode === 'Credit',
                 itemsCount: saleData.itemsCount,
                 synced: true,
                 deviceId: deviceId,
