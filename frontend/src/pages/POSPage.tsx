@@ -675,9 +675,18 @@ const POSPage: React.FC = () => {
                       onClick={() => addToCart(product)} 
                       className="p-6 cursor-pointer active:scale-[0.98] transition-all group border-b border-surface-border/50 flex items-center justify-between gap-4"
                     >
-                      <div className="flex flex-col min-w-0">
-                        <div className="card-label !mb-0">{product.sku}</div>
-                        <div className="font-black text-sm text-surface-text group-hover:text-primary-500 transition-colors truncate">{product.name}</div>
+                      <div className="flex items-center gap-6 min-w-0">
+                        <div className="w-16 h-16 bg-surface-bg border border-surface-border rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
+                          {product.imageUrl ? (
+                            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <PackageSearch className="w-6 h-6 text-surface-text/10" />
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <div className="card-label !mb-0">{product.sku}</div>
+                          <div className="font-black text-sm text-surface-text group-hover:text-primary-500 transition-colors truncate">{product.name}</div>
+                        </div>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <div className="text-xl font-black text-primary-500 tracking-tighter italic">MK {product.sellPrice.toLocaleString()}</div>

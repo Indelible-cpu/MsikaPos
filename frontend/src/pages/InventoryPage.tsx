@@ -34,6 +34,7 @@ const InventoryPage: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState<number | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -383,9 +384,17 @@ const InventoryPage: React.FC = () => {
                       <ImageIcon className="w-8 h-8 text-surface-text/10" />
                     )}
                   </div>
-                  <div className="flex justify-between items-start mb-4">
                     <div className="text-[9px] font-black text-surface-text/30  tracking-widest">{product.sku}</div>
                     <div className="flex gap-1">
+                      {product.imageUrl && (
+                        <button 
+                          onClick={() => setPreviewImage(product.imageUrl || null)} 
+                          className="p-2 hover:bg-emerald-500/10 rounded-xl transition-colors text-emerald-500"
+                          title="View product image"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                        </button>
+                      )}
                       <button 
                         onClick={() => openEditModal(product)} 
                         className="p-2 hover:bg-primary-500/10 rounded-xl transition-colors text-primary-400"
@@ -559,6 +568,18 @@ const InventoryPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+      {/* Image Preview Modal */}
+      <Modal isOpen={!!previewImage} onClose={() => setPreviewImage(null)} title="Product Preview">
+        <div className="p-4 flex items-center justify-center bg-black/5">
+          <div className="relative group w-full max-w-lg aspect-square rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+            <img src={previewImage || ''} alt="Preview" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
+              <button onClick={() => setPreviewImage(null)} className="btn-primary !bg-white !text-black !py-3 !px-8 text-[10px] font-black tracking-widest">CLOSE PREVIEW</button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
       <AiAssistant type="INVENTORY_STRATEGY" context={products} />
     </div>
   );
