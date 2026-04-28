@@ -30,7 +30,7 @@ export const syncData = async (req: Request, res: Response) => {
                 total: saleData.total,
                 paid: saleData.paid,
                 changeDue: saleData.changeDue,
-                profit: saleData.profit,
+                profit: saleData.profit || 0,
                 paymentMode: saleData.paymentMode === 'Momo' ? 'MOBILE_MONEY' : 
                              saleData.paymentMode === 'Card' ? 'CARD' : 
                              saleData.paymentMode === 'Credit' ? 'CREDIT' : 'CASH',
