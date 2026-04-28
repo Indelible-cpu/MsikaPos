@@ -43,7 +43,8 @@ export const SyncService = {
       const axiosError = error as { response?: { status?: number, data?: { message?: string } }, message?: string };
       const status = axiosError.response?.status;
       const message = axiosError.response?.data?.message || axiosError.message;
-      console.error('Sync Error:', { status, message });
+      console.error('Sync Error Payload:', axiosError.response?.data);
+      console.error('Sync Error Summary:', { status, message });
       throw new Error(status ? `${status}: ${message}` : message);
     }
   },
