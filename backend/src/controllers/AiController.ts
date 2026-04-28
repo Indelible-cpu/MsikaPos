@@ -34,23 +34,37 @@ export const getAiSuggestions = async (req: Request, res: Response) => {
     }
 
     const ai = genAI(process.env.GEMINI_API_KEY || "");
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        maxOutputTokens: 500,
+        temperature: 0.7,
+      }
+    });
+
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-
 
     res.json({ 
       success: true, 
       data: text || "The brain is thinking... but no words came out. Try again." 
     });
   } catch (error: any) {
-    console.error('Gemini AI Error:', error);
+    console.error('Gemini AI Error Detailed:', error);
+    
+    let errorDetail = error.message || 'Unknown Gemini Error';
+    if (errorDetail.includes('API key not valid')) {
+      errorDetail = 'Invalid GEMINI_API_KEY. Please verify your Render environment variables.';
+    } else if (errorDetail.includes('quota')) {
+      errorDetail = 'Gemini API quota exceeded. Please wait or upgrade your plan.';
+    }
+
     return res.status(500).json({ 
       success: false, 
       message: 'Msika Brain failed to generate suggestion', 
-      error: error.message,
-      details: 'Ensure GEMINI_API_KEY is set in Render environment variables'
+      error: errorDetail,
+      details: 'Check backend logs for full stack trace'
     });
   }
 };
