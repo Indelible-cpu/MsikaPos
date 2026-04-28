@@ -1,21 +1,21 @@
 import express from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { authenticate, authorize } from './middleware/auth.js';
-
 // Controllers
-import * as UserCtrl from './controllers/UserController.js';
-import * as ProductCtrl from './controllers/ProductController.js';
-import * as BranchCtrl from './controllers/BranchController.js';
-import * as SyncCtrl from './controllers/SyncController.js';
-import * as ReportCtrl from './controllers/ReportController.js';
-import * as SettingsCtrl from './controllers/SettingsController.js';
-import * as DashboardCtrl from './controllers/DashboardController.js';
-import * as CreditCtrl from './controllers/CreditController.js';
-import * as CustomerCtrl from './controllers/CustomerController.js';
-import * as ExpenseCtrl from './controllers/ExpenseController.js';
-import * as AiCtrl from './controllers/AiController.js';
-import * as Security from './middleware/security.js';
+import * as UserCtrl from './controllers/UserController';
+import * as ProductCtrl from './controllers/ProductController';
+import * as BranchCtrl from './controllers/BranchController';
+import * as SyncCtrl from './controllers/SyncController';
+import * as ReportCtrl from './controllers/ReportController';
+import * as SettingsCtrl from './controllers/SettingsController';
+import * as DashboardCtrl from './controllers/DashboardController';
+import * as CreditCtrl from './controllers/CreditController';
+import * as CustomerCtrl from './controllers/CustomerController';
+import * as ExpenseCtrl from './controllers/ExpenseController';
+import * as AiCtrl from './controllers/AiController';
+import * as Security from './middleware/security';
+
+import { authenticate, authorize } from './middleware/auth';
 
 dotenv.config();
 
@@ -57,7 +57,7 @@ app.post('/api/customer/login', CustomerCtrl.loginCustomer as any);
 
 // Public Storefront Routes (No Auth Required)
 app.get('/api/public/products', async (req, res) => {
-  const { prisma } = await import('./lib/prisma.js');
+  const { prisma } = await import('./lib/prisma');
   try {
     const products = await prisma.product.findMany({
       where: { deleted: false },
@@ -73,7 +73,7 @@ app.get('/api/public/products', async (req, res) => {
 });
 
 app.get('/api/public/settings', async (_req, res) => {
-  const { prisma } = await import('./lib/prisma.js');
+  const { prisma } = await import('./lib/prisma');
   try {
     const settings = await prisma.companySettings.findFirst();
     res.json({ success: true, data: settings });
@@ -139,7 +139,7 @@ app.post('/api/settings', adminOnly, SettingsCtrl.saveSettings);
 
 // Role Initialization
 const initRoles = async () => {
-  const { prisma } = await import('./lib/prisma.js');
+  const { prisma } = await import('./lib/prisma');
   const roles = ['SUPER_ADMIN', 'ADMIN', 'CASHIER', 'CUSTOMER'];
   try {
     for (const roleName of roles) {
