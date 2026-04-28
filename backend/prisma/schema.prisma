@@ -88,6 +88,7 @@ model Product {
   taxRate     Decimal    @default(0.00) @db.Decimal(5, 2)
   quantity    Int        @default(0)
   isService   Boolean    @default(false)
+  imageUrl    String?    @db.Text
   branchId    Int?
   deleted     Boolean    @default(false)
   synced      Boolean    @default(true)

@@ -167,6 +167,7 @@ export const saveProduct = async (req: Request, res: Response) => {
         sellPrice: Number(data.sell_price),
         quantity: Number(data.quantity),
         isService: !!data.is_service,
+        imageUrl: data.image_url || data.imageUrl || null,
         categoryId: parseInt(data.category_id),
         branchId: user.role === 'SUPER_ADMIN' ? (data.branch_id ? parseInt(data.branch_id) : null) : user.branchId,
         updatedAt: new Date()
