@@ -322,7 +322,7 @@ const SettingsPage: React.FC = () => {
                         </div>
                         <button
                            role="switch"
-                           aria-checked={highContrast}
+                           aria-checked={highContrast ? 'true' : 'false'}
                            onClick={() => {
                               const next = !highContrast;
                               setHighContrast(next);
@@ -343,7 +343,7 @@ const SettingsPage: React.FC = () => {
                         </div>
                         <button
                            role="switch"
-                           aria-checked={reduceMotion}
+                           aria-checked={reduceMotion ? 'true' : 'false'}
                            onClick={() => {
                               const next = !reduceMotion;
                               setReduceMotion(next);
