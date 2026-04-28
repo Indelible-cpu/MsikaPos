@@ -63,8 +63,6 @@ const SalesPage: React.FC = () => {
     <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0">
       <div className="p-6 md:p-10">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           <div className="bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">
              <div className="flex items-center gap-2 mb-2 text-surface-text/40">
                 <DollarSign className="w-3 h-3" />
