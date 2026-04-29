@@ -95,11 +95,24 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       });
     }
 
+    // Calculate total profit for the period (simplified to today's profit)
+    const todayProfit = await prisma.sale.aggregate({
+      where: {
+        ...where,
+        createdAt: {
+          gte: startOfDay(today),
+          lte: endOfDay(today),
+        },
+      },
+      _sum: { profit: true },
+    });
+
     return res.status(200).json({
       success: true,
       message: "Stats fetched",
       data: {
         today_sales: Number(todaySales._sum.total || 0),
+        total_profit: Number(todayProfit._sum.profit || 0),
         total_transactions: totalTransactions,
         active_products: activeProducts,
         low_stock: lowStock,

@@ -32,7 +32,14 @@ export const listProducts = async (req: Request, res: Response) => {
       orderBy: { name: 'asc' },
     });
 
-    return res.status(200).json({ success: true, data: products });
+    const mapped = products.map((p: any) => ({
+      ...p,
+      costPrice: Number(p.costPrice),
+      sellPrice: Number(p.sellPrice),
+      discountValue: p.discountValue ? Number(p.discountValue) : 0,
+    }));
+
+    return res.status(200).json({ success: true, data: mapped });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Failed to fetch products', error: error.message });
   }
@@ -113,8 +120,10 @@ export const getProductTotals = async (req: Request, res: Response) => {
         return res.status(200).json({
             success: true,
             data: {
-                ...totals,
-                total_profit: totals.total_sell - totals.total_cost
+                total_cost: Number(totals.total_cost),
+                total_sell: Number(totals.total_sell),
+                total_qty: Number(totals.total_qty),
+                total_profit: Number(totals.total_sell - totals.total_cost)
             }
         });
     } catch (error: any) {
@@ -160,7 +169,7 @@ export const saveProduct = async (req: Request, res: Response) => {
   const user = (req as any).user;
 
   try {
-    const payload = {
+    const payload: any = {
         name: data.name,
         sku: data.sku,
         costPrice: Number(data.cost_price),
@@ -170,6 +179,10 @@ export const saveProduct = async (req: Request, res: Response) => {
         imageUrl: data.image_url || data.imageUrl || null,
         categoryId: parseInt(data.category_id),
         branchId: user.role === 'SUPER_ADMIN' ? (data.branch_id ? parseInt(data.branch_id) : null) : user.branchId,
+        discountType: data.discount_type || null,
+        discountValue: data.discount_value ? Number(data.discount_value) : 0,
+        discountStartDate: data.discount_start_date ? new Date(data.discount_start_date) : null,
+        discountEndDate: data.discount_end_date ? new Date(data.discount_end_date) : null,
         updatedAt: new Date()
     };
 

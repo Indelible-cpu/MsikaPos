@@ -94,6 +94,13 @@ export const syncData = async (req: Request, res: Response) => {
       include: { category: true },
     });
 
+    const mappedProducts = updatedProducts.map((p: any) => ({
+      ...p,
+      costPrice: Number(p.costPrice),
+      sellPrice: Number(p.sellPrice),
+      discountValue: p.discountValue ? Number(p.discountValue) : 0,
+    }));
+
     const updatedCategories = await prisma.category.findMany({
        where: {
         // Categories rarely change but we could track update timestamps if needed
@@ -115,7 +122,7 @@ export const syncData = async (req: Request, res: Response) => {
       success: true,
       serverTime: new Date().toISOString(),
       updates: {
-        products: updatedProducts,
+        products: mappedProducts,
         categories: updatedCategories,
       },
     });

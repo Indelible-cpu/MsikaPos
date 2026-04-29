@@ -50,7 +50,21 @@ export const fetchTransactions = async (req: Request, res: Response) => {
       message: "Transactions fetched",
       data: transactions.map((t: any) => ({
         ...t,
+        subtotal: Number(t.subtotal),
+        discount: Number(t.discount),
+        total: Number(t.total),
+        paid: Number(t.paid),
+        changeDue: Number(t.changeDue),
+        profit: Number(t.profit),
+        taxAmount: Number(t.taxAmount),
         cashier: t.user.username,
+        items: t.items.map((i: any) => ({
+          ...i,
+          unitPrice: Number(i.unitPrice),
+          discount: Number(i.discount),
+          lineTotal: Number(i.lineTotal),
+          profit: Number(i.profit),
+        }))
       })),
     });
   } catch (error: any) {

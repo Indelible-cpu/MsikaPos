@@ -97,8 +97,14 @@ model Product {
   deleted     Boolean    @default(false)
   synced      Boolean    @default(true)
   deviceId    String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  // Discount Fields
+  discountType      String?    // percentage, fixed
+  discountValue     Decimal?   @default(0.00) @db.Decimal(10, 2)
+  discountStartDate DateTime?
+  discountEndDate   DateTime?
   category    Category   @relation(fields: [categoryId], references: [id])
   branch      Branch?    @relation(fields: [branchId], references: [id])
   saleItems   SaleItem[]
@@ -234,6 +240,10 @@ model CompanySettings {
   email        String?
   logo         String?
   facebookPage String?
+  
+  // System Config
+  tax_config      String?    // JSON: { rate: number, inclusive: boolean }
+  global_discount Decimal?   @default(0.00) @db.Decimal(10, 2)
 }
 
 enum UserStatus {

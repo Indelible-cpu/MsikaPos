@@ -170,6 +170,7 @@ export const updateOnboarding = async (req: Request, res: Response) => {
     email,
     profilePic,
     homeAddress,
+    nextOfKinName,
     nextOfKinPhone,
     relationship,
     newPassword
