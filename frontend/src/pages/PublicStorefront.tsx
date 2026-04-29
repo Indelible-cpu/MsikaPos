@@ -253,13 +253,20 @@ export const PublicStorefront: React.FC = () => {
         if (s.companyName) setShopName(s.companyName);
         if (s.whatsapp) setWhatsappNumber(s.whatsapp);
         if (s.logo) setShopLogo(s.logo);
+        
+        // Load tax and discount settings from server
+        if (s.tax_config) setTaxConfig(typeof s.tax_config === 'string' ? JSON.parse(s.tax_config) : s.tax_config);
+        else {
+          const localTax = await db.settings.get('tax_config');
+          if (localTax?.value) setTaxConfig(localTax.value as { rate: number; inclusive: boolean });
+        }
+
+        if (s.global_discount !== undefined) setGlobalDiscount(Number(s.global_discount));
+        else {
+          const localDiscount = await db.settings.get('global_discount');
+          if (localDiscount?.value) setGlobalDiscount(localDiscount.value as number);
+        }
       }
-      
-      const localTax = await db.settings.get('tax_config');
-      if (localTax?.value) setTaxConfig(localTax.value as { rate: number; inclusive: boolean });
-      
-      const localDiscount = await db.settings.get('global_discount');
-      if (localDiscount?.value) setGlobalDiscount(localDiscount.value as number);
     } catch (err) {
       console.error('Storefront load error:', err);
       toast.error('Failed to load marketplace. Please refresh.');
@@ -734,7 +741,9 @@ export const PublicStorefront: React.FC = () => {
               {(() => {
                 const subtotal = cartItems.reduce((acc, item) => {
                   const price = Number(item.sellPrice ?? 0);
-                  const discountedPrice = price * (1 - globalDiscount / 100);
+                  const pDiscount = item.discount ?? item.discount_rate ?? 0;
+                  const effectiveDiscount = pDiscount || globalDiscount;
+                  const discountedPrice = price * (1 - effectiveDiscount / 100);
                   return acc + discountedPrice;
                 }, 0);
                 let taxAmount = 0;
