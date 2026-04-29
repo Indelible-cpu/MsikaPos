@@ -274,26 +274,28 @@ const SettingsPage: React.FC = () => {
                         <div className="text-xs text-surface-text/40 font-bold uppercase">Adjust the system typography scale</div>
                      </div>
                   </div>
-                  <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl w-full md:w-fit" role="radiogroup" aria-label="Font size">
-                    {['small', 'medium', 'large'].map((size) => (
-                      <button
-                        key={size}
-                        role="radio"
-                        aria-checked={fontSize === size ? "true" : "false"}
-                        onClick={() => {
-                          setFontSize(size);
-                          localStorage.setItem('fontSize', size);
-                          document.documentElement.setAttribute('data-font-size', size);
-                          toast.success(`Font size set to ${size}`);
-                        }}
-                        className={clsx(
-                          "px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all flex-1 md:flex-none",
-                          fontSize === size ? "bg-primary-500 text-white shadow-lg" : "text-surface-text/40 hover:bg-surface-border/50"
-                        )}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                  <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl w-full md:w-fit">
+                    {['small', 'medium', 'large'].map((size) => {
+                      const isSelected = fontSize === size;
+                      return (
+                        <button
+                          key={size}
+                          title={`Set font size to ${size}`}
+                          onClick={() => {
+                            setFontSize(size);
+                            localStorage.setItem('fontSize', size);
+                            document.documentElement.setAttribute('data-font-size', size);
+                            toast.success(`Font size set to ${size}`);
+                          }}
+                          className={clsx(
+                            "px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all flex-1 md:flex-none",
+                            isSelected ? "bg-primary-500 text-white shadow-lg" : "text-surface-text/40 hover:bg-surface-border/50"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
                   </div>
                </div>
 
