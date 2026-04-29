@@ -208,7 +208,7 @@ export const PublicStorefront: React.FC = () => {
     }
   };
 
-  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('+265993732694');
   const [shopLogo, setShopLogo] = useState('');
 
   const loadStorefront = async (background = false) => {
@@ -466,8 +466,8 @@ export const PublicStorefront: React.FC = () => {
       <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <h2 className="text-sm md:text-lg font-black tracking-tighter leading-none text-primary-500">Market place</h2>
-            <p className="text-[7px] md:text-[9px] font-black text-surface-text mt-1 lowercase tracking-widest">premium products & services</p>
+            <h2 className="text-lg md:text-3xl font-black tracking-tighter leading-none text-primary-500 uppercase">Market Place</h2>
+            <p className="text-[9px] md:text-[12px] font-black text-surface-text mt-2 uppercase tracking-[0.2em]"> Premium Products & Services</p>
           </div>
           
           <div className="relative w-full md:max-w-sm">
@@ -629,6 +629,13 @@ export const PublicStorefront: React.FC = () => {
                         WhatsApp
                       </button>
                     </div>
+                    <button 
+                      onClick={(e) => addToCart(p, e)}
+                      className="w-full py-3 mt-1.5 bg-primary-500 text-white rounded-xl text-[8px] font-black tracking-widest hover:scale-[1.02] transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-primary-500/20"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" />
+                      Save Card
+                    </button>
                   </div>
                 </div>
               </div>

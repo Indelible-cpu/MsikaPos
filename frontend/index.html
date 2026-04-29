@@ -95,7 +95,7 @@
       width: 0%;
       background-color: #22c55e;
       border-radius: 10px;
-      animation: fillProgress 20s linear forwards;
+      animation: fillProgress 10s linear forwards;
     }
 
     @keyframes fillProgress {
@@ -126,27 +126,35 @@
 
   <script>
     try {
-      const theme = localStorage.getItem('theme');
-      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-        document.getElementById('global-loader').style.backgroundColor = '#020202';
+      const hasShownSplash = sessionStorage.getItem('hasShownSplash');
+      const loader = document.getElementById('global-loader');
+      
+      if (hasShownSplash) {
+        if (loader) loader.remove();
       } else {
-        document.documentElement.classList.remove('dark');
-        document.getElementById('global-loader').style.backgroundColor = '#fcfdfe';
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          if (loader) loader.style.backgroundColor = '#020202';
+        } else {
+          document.documentElement.classList.remove('dark');
+          if (loader) loader.style.backgroundColor = '#fcfdfe';
+        }
       }
     } catch(e) {}
     
     // Hide loader when page is fully loaded and React has started
     window.addEventListener('load', () => {
+      const loader = document.getElementById('global-loader');
+      if (!loader) return;
+
       setTimeout(() => {
-        const loader = document.getElementById('global-loader');
-        if (loader) {
-          loader.style.opacity = '0';
-          setTimeout(() => {
-            if (loader.parentNode) loader.remove();
-          }, 500);
-        }
-      }, 20000); // 20 seconds as requested
+        loader.style.opacity = '0';
+        sessionStorage.setItem('hasShownSplash', 'true');
+        setTimeout(() => {
+          if (loader.parentNode) loader.remove();
+        }, 500);
+      }, 10000); // 10 seconds as requested
     });
   </script>
 </body>
