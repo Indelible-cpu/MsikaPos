@@ -162,6 +162,11 @@ body {
   --color-primary-500-rgb: 14, 140, 233;
 }
 
+/* Custom loading bar for splash screen */
+.progress-fill {
+  width: var(--progress, 0%);
+}
+
 /* Custom scrollbar hidden globally as per request */
 
 

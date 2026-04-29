@@ -259,47 +259,39 @@ const App: React.FC = () => {
 
   if (isInitialLoading) {
     return (
-      <div className="fixed inset-0 z-[1000] bg-surface-bg flex flex-col items-center justify-center p-8 overflow-hidden">
+      <div className="fixed inset-0 z-[1000] bg-surface-bg flex flex-col items-center justify-center p-12 overflow-hidden">
         {/* Animated Background Orbs */}
         <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary-500/10 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-rose-500/10 rounded-full blur-[120px] animate-pulse delay-700"></div>
         
-        <div className="relative flex flex-col items-center max-w-sm w-full">
-          <div className="w-32 h-32 mb-12 relative">
-             <div className="absolute inset-0 bg-primary-500/20 rounded-full blur-2xl animate-ping opacity-50"></div>
-             <div className="relative w-full h-full rounded-full bg-surface-card border-4 border-primary-500 flex items-center justify-center overflow-hidden shadow-2xl p-2 scale-110">
-                <img src="/icon.png?v=2" alt="MsikaPos Logo" className="w-full h-full object-cover rounded-full" />
-             </div>
-          </div>
-          
-          <div className="text-center space-y-4 mb-12">
-            <h1 className="text-3xl font-black tracking-tighter text-surface-text uppercase italic">MsikaPos</h1>
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-[10px] font-black tracking-[0.4em] text-primary-500 uppercase opacity-80">Cloud Powered Business Hub</span>
-              <div className="w-12 h-1 bg-primary-500/20 rounded-full overflow-hidden">
-                 <div className="h-full bg-primary-500 animate-[loading-bar_2s_infinite]"></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="w-full space-y-3">
-             <div className="flex justify-between items-end mb-1">
-                <span className="text-[8px] font-black tracking-widest text-surface-text/40 uppercase">
-                  {loadingProgress < 30 ? 'Initializing core modules...' : 
-                   loadingProgress < 60 ? 'Syncing branch data...' : 
-                   loadingProgress < 90 ? 'Optimizing database hooks...' : 'Finishing touches...'}
+        <div className="relative flex flex-col items-center max-w-sm w-full space-y-12">
+          <div className="w-full space-y-6">
+             <div className="flex flex-col gap-2 items-center text-center">
+                <span className="text-[11px] font-black tracking-[0.4em] text-primary-500 uppercase">
+                  {loadingProgress < 25 ? 'Initializing Core Environment' : 
+                   loadingProgress < 50 ? 'Syncing Branch Intelligence' : 
+                   loadingProgress < 75 ? 'Optimizing Data Pipelines' : 'Readying Workspace'}
                 </span>
-                <span className="text-[10px] font-black text-primary-500 tabular-nums">{Math.floor(loadingProgress)}%</span>
+                <div className="w-16 h-1 bg-primary-500/10 rounded-full overflow-hidden">
+                   <div className="h-full bg-primary-500 animate-[loading-bar_2s_infinite]"></div>
+                </div>
              </div>
-             <div className="h-2 w-full bg-surface-card border border-surface-border rounded-full overflow-hidden p-0.5">
-                <div 
-                  className="h-full bg-primary-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(var(--primary-500-rgb),0.5)]"
-                  style={{ width: `${loadingProgress}%` } as React.CSSProperties}
-                ></div>
+
+             <div className="space-y-3">
+                <div className="flex justify-between items-end px-1">
+                   <span className="text-[9px] font-bold text-surface-text/30 tracking-widest uppercase">System Initialization</span>
+                   <span className="text-xs font-black text-primary-500 tabular-nums">{Math.floor(loadingProgress)}%</span>
+                </div>
+                <div className="h-3 w-full bg-surface-card border border-surface-border rounded-full overflow-hidden p-1 shadow-inner">
+                   <div 
+                     className="h-full bg-primary-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_20px_rgba(var(--color-primary-500-rgb),0.4)] progress-fill"
+                     style={{ '--progress': `${loadingProgress}%` } as React.CSSProperties}
+                   ></div>
+                </div>
              </div>
           </div>
 
-          <p className="mt-12 text-[8px] font-black tracking-[0.3em] text-surface-text/20 uppercase">Version 2.4.0 • Enterprise Edition</p>
+          <p className="text-[9px] font-black tracking-[0.4em] text-surface-text/10 uppercase italic">MsikaPos Enterprise</p>
         </div>
       </div>
     );
