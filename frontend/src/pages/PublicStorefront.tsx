@@ -46,6 +46,7 @@ export const PublicStorefront: React.FC = () => {
   });
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const categoryNavRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('fontSize') || 'medium');
   const [taxConfig, setTaxConfig] = useState<{ rate: number, inclusive: boolean }>({ rate: 0, inclusive: true });
@@ -95,9 +96,18 @@ export const PublicStorefront: React.FC = () => {
   };
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
     checkCategoryScroll();
     window.addEventListener('resize', checkCategoryScroll);
-    return () => window.removeEventListener('resize', checkCategoryScroll);
+    return () => {
+      window.removeEventListener('resize', checkCategoryScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [categories]);
 
   const logCustomerAction = async (action: string, product: StoreProduct) => {
@@ -348,7 +358,7 @@ export const PublicStorefront: React.FC = () => {
               </div>
             )}
             <div className="flex items-center gap-2">
-              <div className="relative">
+              <div className="relative" ref={settingsRef}>
                 <button 
                   onClick={() => setIsSettingsOpen(!isSettingsOpen)}
                   className="w-8 h-8 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all text-xs"
@@ -357,25 +367,28 @@ export const PublicStorefront: React.FC = () => {
                   <Settings className="w-4 h-4" />
                 </button>
                 {isSettingsOpen && (
-                  <div className="absolute top-10 right-0 w-48 bg-surface-card border border-surface-border rounded-xl shadow-xl p-4 z-50">
-                    <h4 className="text-[10px] font-black tracking-widest uppercase text-surface-text/50 mb-3">Settings & Accessibility</h4>
-                    <div className="space-y-4">
+                  <div className="absolute top-12 right-0 w-56 bg-surface-card border border-surface-border rounded-2xl shadow-2xl p-6 z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <h4 className="text-[10px] font-black tracking-widest uppercase text-primary-500 mb-5">Personalization</h4>
+                    <div className="space-y-6">
                       <div>
-                        <p className="text-[9px] font-bold uppercase mb-2">Theme</p>
-                        <button onClick={toggleTheme} className="w-full py-2 bg-surface-bg border border-surface-border rounded-lg text-[10px] font-bold hover:bg-primary-500 hover:text-white transition-colors">
+                        <p className="text-[10px] font-bold text-surface-text/40 mb-3 ml-1">Theme</p>
+                        <button 
+                          onClick={() => { toggleTheme(); setIsSettingsOpen(false); }} 
+                          className="w-full py-3 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-black hover:bg-primary-500 hover:text-white transition-all uppercase tracking-widest"
+                        >
                           {theme === 'light' ? '☀️ Light' : theme === 'dark' ? '🌙 Dark' : '💻 System'}
                         </button>
                       </div>
                       <div>
-                        <p className="text-[9px] font-bold uppercase mb-2">Font Size</p>
-                        <div className="flex gap-1">
+                        <p className="text-[10px] font-bold text-surface-text/40 mb-3 ml-1">Font size</p>
+                        <div className="flex gap-2">
                           {['small', 'medium', 'large'].map(s => (
                             <button 
                               key={s}
-                              onClick={() => handleFontSize(s)}
-                              className={`flex-1 py-1.5 text-[9px] uppercase font-bold rounded transition-colors ${fontSize === s ? 'bg-primary-500 text-white' : 'bg-surface-bg border border-surface-border hover:bg-surface-border/50'}`}
+                              onClick={() => { handleFontSize(s); setIsSettingsOpen(false); }}
+                              className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all ${fontSize === s ? 'bg-primary-500 text-white shadow-lg' : 'bg-surface-bg border border-surface-border text-surface-text/40 hover:bg-surface-border/50'}`}
                             >
-                              {s}
+                              {s.charAt(0).toUpperCase() + s.slice(1)}
                             </button>
                           ))}
                         </div>
@@ -458,7 +471,7 @@ export const PublicStorefront: React.FC = () => {
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
             <h2 className="text-sm md:text-lg font-black tracking-tighter leading-none text-primary-500">Market place</h2>
-            <p className="text-[7px] md:text-[9px] font-black text-surface-text/40 mt-1 lowercase tracking-widest">premium products & services</p>
+            <p className="text-[7px] md:text-[9px] font-black text-surface-text mt-1 lowercase tracking-widest">premium products & services</p>
           </div>
           
           <div className="relative w-full md:max-w-sm">
@@ -605,12 +618,11 @@ export const PublicStorefront: React.FC = () => {
                           handleWhatsApp(p);
                         }}
                         title="Contact on WhatsApp"
-                        className="py-3 bg-emerald-500 text-white rounded-xl text-[8px] font-black tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-emerald-500/10"
+                        className="py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-all flex items-center justify-center active:scale-95 shadow-lg shadow-emerald-500/10"
                       >
-                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                         </svg>
-                        WhatsApp
                       </button>
                     </div>
                   </div>

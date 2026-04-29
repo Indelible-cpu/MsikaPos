@@ -60,7 +60,8 @@ const POSPage: React.FC = () => {
     idNumber: '',
     village: '',
     livePhoto: '',
-    fingerprintData: ''
+    fingerprintData: '',
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   });
 
   const [useCamera, setUseCamera] = useState(false);
@@ -494,6 +495,10 @@ const POSPage: React.FC = () => {
                           <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Village / location</label>
                           <input type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. Lilongwe" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
                         </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black tracking-widest text-rose-500 pl-1 uppercase">Due date (Required for credit)</label>
+                          <input required type="date" className="input-field w-full py-3 px-4 font-black border-rose-500/30" value={custForm.dueDate} onChange={e => setCustForm({...custForm, dueDate: e.target.value})} />
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
@@ -534,10 +539,10 @@ const POSPage: React.FC = () => {
                             type="button" 
                             onClick={captureFingerprint}
                             disabled={!!custForm.fingerprintData}
-                            className={`w-full aspect-square rounded-2xl flex flex-col items-center justify-center gap-2 border transition-all ${custForm.fingerprintData ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-surface-bg border-surface-border text-surface-text/60'}`}
+                            className={`w-full aspect-square rounded-2xl flex flex-col items-center justify-center gap-4 border transition-all ${custForm.fingerprintData ? 'bg-emerald-500 border-emerald-500 text-white shadow-xl scale-105' : 'bg-surface-bg border-surface-border text-surface-text/60'}`}
                           >
-                            {custForm.fingerprintData ? <CheckCircle2 className="w-8 h-8" /> : <Fingerprint className="w-8 h-8" />}
-                            <span className="text-[8px] font-bold uppercase">{custForm.fingerprintData ? 'Captured' : 'Scan'}</span>
+                            {custForm.fingerprintData ? <CheckCircle2 className="w-12 h-12" /> : <Fingerprint className="w-12 h-12" />}
+                            <span className="text-[10px] font-black uppercase tracking-widest">{custForm.fingerprintData ? 'Captured Successfully' : 'Tap Fingerprint'}</span>
                           </button>
                         </div>
                       </div>
@@ -563,7 +568,14 @@ const POSPage: React.FC = () => {
                             </div>
                             <div>
                               <div className="font-bold text-sm uppercase">{c.name}</div>
-                              <div className="text-[10px] text-surface-text/30 font-bold">{c.phone}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="text-[10px] text-surface-text/30 font-bold">{c.phone}</div>
+                                {c.balance > 0 && (
+                                  <div className="text-[10px] font-black text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                    Balance: MK {c.balance.toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <ChevronRight className="w-5 h-5 text-surface-text/20 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
@@ -859,12 +871,16 @@ const POSPage: React.FC = () => {
                                </div>
                                <div>
                                   <div className="font-black text-xl uppercase">Credit Sale</div>
-                                  <div className="text-[10px] font-black text-amber-600/60 uppercase tracking-widest">{selectedCustomerId ? 'Customer attached' : 'No customer selected'}</div>
+                                  <div className="text-[10px] font-black text-amber-600/60 uppercase tracking-widest">
+                                     {selectedCustomerId ? `Customer attached: MK ${(customers?.find(c => c.id === selectedCustomerId)?.balance || 0).toLocaleString()} pending` : 'Mandatory registration required'}
+                                  </div>
                                </div>
                             </div>
-                            <button onClick={() => setShowCustomerSelector(true)} className="btn-primary !bg-amber-500 !px-8 !py-4 text-[10px] font-black tracking-widest uppercase shadow-xl shadow-amber-500/20">
-                               {selectedCustomerId ? 'Change Customer' : 'Select Customer'}
-                            </button>
+                            {!selectedCustomerId && (
+                              <button onClick={() => setShowCustomerSelector(true)} className="btn-primary !bg-amber-500 !px-8 !py-4 text-[10px] font-black tracking-widest uppercase shadow-xl shadow-amber-500/20">
+                                 Register for credit
+                              </button>
+                            )}
                          </div>
                       </div>
                     )}

@@ -79,16 +79,16 @@ export default function CreditsPage() {
   return (
     <div className="flex flex-col gap-10 h-full w-full animate-slide-in p-2">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-zinc-800 tracking-tight mb-2">Credit Management</h2>
-          <p className="text-zinc-400 text-sm font-medium tracking-wide">Track customer balances and payments.</p>
+        <div className="md:invisible">
+          <h2 className="text-3xl font-black text-zinc-800 tracking-tight mb-2 invisible h-0">Credit Management</h2>
+          <p className="text-zinc-400 text-sm font-medium tracking-wide invisible h-0">Track customer balances and payments.</p>
         </div>
         <div className="bg-white px-6 py-4 rounded-2xl border border-zinc-100 shadow-sm flex items-center gap-6">
            <div className="text-right border-r border-zinc-100 pr-6">
-              <p className="text-[10px] font-bold text-zinc-400 mb-0.5">Total balances</p>
-              <p className="text-lg font-black text-zinc-800 tracking-tighter">MK {(filtered?.reduce((acc, c) => acc + (c.current_total - c.paid_amount), 0) ?? 0).toLocaleString()}</p>
+              <p className="text-[10px] font-bold text-rose-500 mb-0.5 uppercase tracking-widest">Total unpaid balances</p>
+              <p className="text-lg font-black text-rose-600 tracking-tighter animate-pulse">MK {(filtered?.reduce((acc, c) => acc + (c.current_total - c.paid_amount), 0) ?? 0).toLocaleString()}</p>
            </div>
-           <UserCheck className="w-8 h-8 text-primary opacity-20" />
+           <UserCheck className="w-8 h-8 text-rose-500 opacity-20" />
         </div>
       </header>
 
@@ -166,8 +166,8 @@ export default function CreditsPage() {
                   <td className="px-10 py-8 text-right text-sm font-black text-zinc-600 tracking-tighter">MK {c.original_amount.toLocaleString()}</td>
                   <td className="px-10 py-8 text-right text-sm font-black text-rose-500 tracking-tighter">MK {c.interest.toLocaleString()}</td>
                   <td className="px-10 py-8 text-right">
-                    <p className="text-lg font-black text-zinc-900 tracking-tighter">MK {c.current_total.toLocaleString()}</p>
-                    {c.paid_amount > 0 && <p className="text-[10px] font-bold text-emerald-500 tracking-tighter">Paid: MK {c.paid_amount.toLocaleString()}</p>}
+                    <p className="text-lg font-black text-rose-600 tracking-tighter">MK {(c.current_total - c.paid_amount).toLocaleString()}</p>
+                    {c.paid_amount > 0 && <p className="text-[10px] font-bold text-emerald-500 tracking-tighter uppercase">Partial: MK {c.paid_amount.toLocaleString()}</p>}
                   </td>
                   <td className="px-10 py-8 text-center">
                      <span className={`px-4 py-2 rounded-xl text-[9px] font-bold shadow-inner ${
@@ -248,14 +248,26 @@ export default function CreditsPage() {
               <h3 className="text-2xl font-black text-zinc-900 mb-1">{selectedCustomer.name}</h3>
               <p className="text-[10px] font-black tracking-widest text-zinc-400 mb-8 uppercase">Verified Profile</p>
               
-              <div className="w-full space-y-4 mb-10">
-                <div className="flex justify-between items-center p-4 bg-zinc-50 rounded-2xl">
-                   <span className="text-[9px] font-black text-zinc-400 tracking-widest uppercase">National ID</span>
+              <div className="w-full space-y-3 mb-8">
+                <div className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl">
+                   <span className="text-[8px] font-black text-zinc-400 tracking-widest uppercase">Phone</span>
+                   <span className="text-xs font-black text-zinc-800">{selectedCustomer.phone}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl">
+                   <span className="text-[8px] font-black text-zinc-400 tracking-widest uppercase">Village</span>
+                   <span className="text-xs font-black text-zinc-800">{selectedCustomer.village || 'Not Set'}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-zinc-50 rounded-xl">
+                   <span className="text-[8px] font-black text-zinc-400 tracking-widest uppercase">National ID</span>
                    <span className="text-xs font-black text-zinc-800">{selectedCustomer.idNumber || 'N/A'}</span>
                 </div>
-                <div className={`flex justify-between items-center p-4 rounded-2xl border ${selectedCustomer.fingerprintData ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-zinc-50 border-zinc-100 text-zinc-400'}`}>
-                   <span className="text-[9px] font-black tracking-widest uppercase">Fingerprint</span>
-                   <span className="text-xs font-black">{selectedCustomer.fingerprintData ? 'SECURED: ' + selectedCustomer.fingerprintData.substring(0, 15) + '...' : 'NOT LINKED'}</span>
+                <div className={`flex justify-between items-center p-3 rounded-xl border ${selectedCustomer.balance > 0 ? 'bg-rose-50 border-rose-100 text-rose-600' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>
+                   <span className="text-[8px] font-black tracking-widest uppercase">Debt Balance</span>
+                   <span className="text-xs font-black">MK {selectedCustomer.balance.toLocaleString()}</span>
+                </div>
+                <div className={`flex justify-between items-center p-3 rounded-xl border ${selectedCustomer.fingerprintData ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-zinc-50 border-zinc-100 text-zinc-400'}`}>
+                   <span className="text-[8px] font-black tracking-widest uppercase">Biometric Hash</span>
+                   <span className="text-[10px] font-mono">{selectedCustomer.fingerprintData ? selectedCustomer.fingerprintData.substring(0, 20) + '...' : 'NOT LINKED'}</span>
                 </div>
               </div>
 
