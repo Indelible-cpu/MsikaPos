@@ -223,7 +223,7 @@ const InquiriesPage: React.FC = () => {
                         {items.map((item: LocalProduct, idx: number) => (
                           <div key={idx} className="p-4 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-between">
                             <span className="font-bold text-sm">{item.name}</span>
-                            <span className="text-xs font-black text-primary-500">MK {(item.price ?? 0).toLocaleString()}</span>
+                            <span className="text-xs font-black text-primary-500">MK {(item.sellPrice ?? 0).toLocaleString()}</span>
                           </div>
                         ))}
                       </div>

@@ -294,7 +294,7 @@ const App: React.FC = () => {
              <div className="h-2 w-full bg-surface-card border border-surface-border rounded-full overflow-hidden p-0.5">
                 <div 
                   className="h-full bg-primary-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(var(--primary-500-rgb),0.5)]"
-                  style={{ width: `${loadingProgress}%` }}
+                  style={{ width: `${loadingProgress}%` } as React.CSSProperties}
                 ></div>
              </div>
           </div>
