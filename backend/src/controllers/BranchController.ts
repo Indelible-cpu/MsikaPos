@@ -53,16 +53,30 @@ export const fetchBranches = async (req: Request, res: Response) => {
 };
 
 export const saveBranch = async (req: Request, res: Response) => {
-  const { id, name, location, address, phone, email, facebook, slogan, logo, is_active } = req.body;
+  const user = (req as any).user;
+  if (user.role !== 'SUPER_ADMIN') {
+    return res.status(403).json({ success: false, message: "Forbidden: Super Admin access required" });
+  }
+
+  const { id, name, location, address, phone, email, facebook, slogan, logo, is_active, status } = req.body;
 
   const branchName = name;
   const branchLocation = location || address;
 
   if (!branchName || !branchLocation) {
+    console.error('❌ Branch Save Validation Failed:', { branchName, branchLocation });
     return res.status(400).json({ success: false, message: "Name and location are required" });
   }
 
   try {
+    // Map frontend status to backend enum
+    let finalStatus = 'ACTIVE';
+    if (status) {
+      finalStatus = (status === 'ACTIVE') ? 'ACTIVE' : 'INACTIVE';
+    } else if (is_active !== undefined) {
+      finalStatus = is_active ? 'ACTIVE' : 'INACTIVE';
+    }
+
     const data = {
       name: branchName,
       location: branchLocation,
@@ -71,7 +85,7 @@ export const saveBranch = async (req: Request, res: Response) => {
       facebook,
       slogan,
       logo,
-      status: is_active === undefined || !!is_active ? 'ACTIVE' : 'INACTIVE',
+      status: finalStatus as any,
     };
 
     if (id && !isNaN(parseInt(id))) {
@@ -87,11 +101,21 @@ export const saveBranch = async (req: Request, res: Response) => {
       return res.status(201).json({ success: true, message: "Branch created" });
     }
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to save branch', error: error.message });
+    console.error('❌ Branch Save Error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to save branch', 
+      error: error.message 
+    });
   }
 };
 
 export const deleteBranch = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (user.role !== 'SUPER_ADMIN') {
+    return res.status(403).json({ success: false, message: "Forbidden: Super Admin access required" });
+  }
+
   const { id } = req.params;
 
   try {

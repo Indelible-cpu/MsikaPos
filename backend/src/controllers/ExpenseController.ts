@@ -58,7 +58,7 @@ export const saveExpense = async (req: Request, res: Response) => {
 export const deleteExpense = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    await prisma.expense.delete({ where: { id: parseInt(id) } });
+    await prisma.expense.delete({ where: { id: parseInt(id as string) } });
     return res.status(200).json({ success: true });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: error.message });
