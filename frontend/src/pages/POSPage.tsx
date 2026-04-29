@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct } from '../db/posDB';
+import { calculateEffectiveDiscount } from '../utils/discountUtils';
 import { 
   Search, 
   ShoppingCart, 
@@ -167,7 +168,10 @@ const POSPage: React.FC = () => {
   }, []);
 
   // Totals Calculation
-  const cartSubtotal = cart.reduce((sum, item) => sum + (Number(item.product.sellPrice) * item.quantity), 0);
+  const cartSubtotal = cart.reduce((sum, item) => {
+    const { finalPrice } = calculateEffectiveDiscount(item.product as any);
+    return sum + (finalPrice * item.quantity);
+  }, 0);
   const discountedSubtotal = Math.max(0, cartSubtotal - discount);
   let finalTotal = discountedSubtotal;
   let taxAmount = 0;
@@ -219,16 +223,19 @@ const POSPage: React.FC = () => {
       const saleData = {
         id: crypto.randomUUID(),
         invoiceNo,
-        items: cart.map(item => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          quantity: item.quantity,
-          unitPrice: item.product.sellPrice,
-          costPrice: item.product.costPrice,
-          discount: 0,
-          lineTotal: item.product.sellPrice * item.quantity,
-          profit: (item.product.sellPrice - item.product.costPrice) * item.quantity
-        })),
+        items: cart.map(item => {
+          const { finalPrice, discountAmount } = calculateEffectiveDiscount(item.product as any);
+          return {
+            productId: item.product.id,
+            productName: item.product.name,
+            quantity: item.quantity,
+            unitPrice: item.product.sellPrice,
+            costPrice: item.product.costPrice,
+            discount: discountAmount * item.quantity,
+            lineTotal: finalPrice * item.quantity,
+            profit: (finalPrice - item.product.costPrice) * item.quantity
+          };
+        }),
         subtotal: cartSubtotal,
         discount,
         tax: taxAmount,
@@ -797,7 +804,15 @@ const POSPage: React.FC = () => {
                           </div>
                           <div>
                             <div className="font-black text-xl leading-tight uppercase">{item.product.name}</div>
-                            <div className="card-label !mt-1 !mb-0 uppercase">MK {item.product.sellPrice.toLocaleString()} per unit</div>
+                            {(() => {
+                               const { finalPrice, hasDiscount, badgeText } = calculateEffectiveDiscount(item.product as any);
+                               return (
+                                 <div className="card-label !mt-1 !mb-0 uppercase flex items-center gap-2">
+                                   {hasDiscount && <span className="bg-red-500 text-white px-1.5 rounded text-[8px]">{badgeText}</span>}
+                                   MK {finalPrice.toLocaleString()} per unit
+                                 </div>
+                               );
+                            })()}
                           </div>
                         </div>
                         <button onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="p-3 text-surface-text/10 hover:text-red-500 hover:bg-red-500/5 rounded-2xl transition-all" title="Remove item" aria-label="Remove item">
@@ -811,7 +826,7 @@ const POSPage: React.FC = () => {
                           <button onClick={() => addToCart(item.product)} className="w-14 h-14 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-center hover:bg-surface-border/30 transition-all active:scale-95" title="Increase quantity" aria-label="Increase quantity"><Plus className="w-6 h-6" /></button>
                         </div>
                         <div className="text-right">
-                           <div className="text-2xl font-black text-primary-500 tracking-tighter uppercase">MK {(Number(item.product.sellPrice) * item.quantity).toLocaleString()}</div>
+                           <div className="text-2xl font-black text-primary-500 tracking-tighter uppercase">MK {(calculateEffectiveDiscount(item.product as any).finalPrice * item.quantity).toLocaleString()}</div>
                         </div>
                       </div>
                     </motion.div>

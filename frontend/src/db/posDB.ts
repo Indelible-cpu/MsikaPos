@@ -12,7 +12,11 @@ export interface LocalProduct {
   status: 'ACTIVE' | 'INACTIVE';
   imageUrl?: string;
   soldCount?: number;
-  discount?: number;
+  discount?: number; // legacy
+  discountType?: 'PERCENTAGE' | 'FIXED';
+  discountValue?: number;
+  discountStartDate?: string;
+  discountEndDate?: string;
   createdAt: string;
   updatedAt: string;
 }

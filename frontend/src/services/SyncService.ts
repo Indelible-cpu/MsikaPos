@@ -54,7 +54,7 @@ export const SyncService = {
     return navigator.onLine;
   },
 
-  async pushProduct(product: { id: number; name: string; sku: string; costPrice: number; sellPrice: number; quantity: number; categoryId: number; isService?: boolean; imageUrl?: string; discount?: number }) {
+  async pushProduct(product: { id: number; name: string; sku: string; costPrice: number; sellPrice: number; quantity: number; categoryId: number; isService?: boolean; imageUrl?: string; discount?: number; discountType?: string; discountValue?: number; discountStartDate?: string; discountEndDate?: string }) {
     try {
       await api.post('/products', {
         id: product.id,
@@ -68,6 +68,10 @@ export const SyncService = {
         imageUrl: product.imageUrl || null,
         discount: product.discount || 0,
         discount_rate: product.discount || 0,
+        discount_type: product.discountType,
+        discount_value: product.discountValue,
+        discount_start_date: product.discountStartDate,
+        discount_end_date: product.discountEndDate,
       });
       return true;
     } catch (error: unknown) {

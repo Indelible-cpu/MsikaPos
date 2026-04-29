@@ -7,6 +7,7 @@ import { db } from '../db/posDB';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
+import { calculateEffectiveDiscount } from '../utils/discountUtils';
 
 interface StoreProduct {
   id: number;
@@ -19,6 +20,10 @@ interface StoreProduct {
   soldCount?: number;
   discount?: number;
   discount_rate?: number;
+  discountType?: 'PERCENTAGE' | 'FIXED' | string;
+  discountValue?: number;
+  discountStartDate?: string;
+  discountEndDate?: string;
   createdAt: string;
   updatedAt: string;
   category?: { name?: string; title?: string };
@@ -138,7 +143,8 @@ export const PublicStorefront: React.FC = () => {
       } catch (e) {
         console.error("Failed to update soldCount", e);
       }
-    } catch {
+    } catch (err) {
+      console.error("Failed to add interaction", err);
     }
   };
 
@@ -247,7 +253,11 @@ export const PublicStorefront: React.FC = () => {
           const localP = localProducts.find(lp => lp.id === p.id);
           return {
             ...p,
-            discount: p.discount ?? p.discount_rate ?? localP?.discount ?? 0
+            discount: p.discount ?? p.discount_rate ?? localP?.discount ?? 0,
+            discountType: p.discountType ?? localP?.discountType,
+            discountValue: p.discountValue ?? localP?.discountValue,
+            discountStartDate: p.discountStartDate ?? localP?.discountStartDate,
+            discountEndDate: p.discountEndDate ?? localP?.discountEndDate,
           };
         });
         setProducts(mergedData);
@@ -291,7 +301,7 @@ export const PublicStorefront: React.FC = () => {
     const user = userStr ? JSON.parse(userStr) : null;
     
     if (!token || user?.role !== 'CUSTOMER') {
-      await SyncService.pushProduct(product as any);
+      await SyncService.pushProduct(product as unknown as Parameters<typeof SyncService.pushProduct>[0]);
       setSelectedProduct(product);
       setIsAuthOpen(true);
       return;
@@ -541,15 +551,13 @@ export const PublicStorefront: React.FC = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {filteredProducts.map(p => {
-              const pDiscount = p.discount ?? p.discount_rate ?? 0;
-              const effectiveDiscount = pDiscount || globalDiscount;
-              const hasDiscount = effectiveDiscount > 0;
+              const { hasDiscount, finalPrice, badgeText } = calculateEffectiveDiscount(p as unknown as Parameters<typeof calculateEffectiveDiscount>[0]);
 
               return (
-                <div key={p.id} className="px-1.5 md:px-4 pb-8 mb-8 border-b border-surface-border/50">
+                <div key={p.id} className="px-1.5 pb-1.5 mb-1.5 border-b border-surface-border/30">
                   <div 
                     id={`product-${p.id}`}
-                    className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full"
+                    className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 flex flex-col h-full"
                   >
                     <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
                     <div className={`px-3 md:px-5 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] font-black tracking-widest backdrop-blur-md shadow-xl pointer-events-auto border-2 ${
@@ -621,7 +629,7 @@ export const PublicStorefront: React.FC = () => {
                             </span>
                             {hasDiscount && (
                               <span className="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-tighter">
-                                {pDiscount > 0 ? `${pDiscount}% OFF` : `${globalDiscount}% OFF`}
+                                {badgeText}
                               </span>
                             )}
                           </div>
@@ -631,7 +639,7 @@ export const PublicStorefront: React.FC = () => {
                             </p>
                             {hasDiscount && (
                               <p className="text-sm md:text-xl font-black text-red-500 tracking-tighter">
-                                {formatCurrency(Number(p.sellPrice ?? 0) * (1 - effectiveDiscount / 100))}
+                                {formatCurrency(finalPrice)}
                               </p>
                             )}
                           </div>
@@ -648,13 +656,9 @@ export const PublicStorefront: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => {
-                            if (!customer) {
-                              toast.error('Identity Verification Required: Please register/login to contact via WhatsApp');
-                              setIsAuthOpen(true);
-                              return;
-                            }
                             const number = whatsappNumber || '265993732694';
-                            const message = encodeURIComponent(`Hi ${shopName}, I am interested in ${p.name} (MK${Number(p.sellPrice ?? 0).toLocaleString()}). Could I get more details?`);
+                            const priceFormatted = formatCurrency(finalPrice);
+                            const message = encodeURIComponent(`Hello, I’m interested in ${p.name} priced at ${priceFormatted}. Is it available?`);
                             window.open(`https://wa.me/${number.replace('+', '')}?text=${message}`, '_blank');
                           }}
                           className="col-span-1 py-3 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 rounded-xl text-[8px] font-black tracking-widest hover:bg-[#25D366] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
@@ -751,11 +755,8 @@ export const PublicStorefront: React.FC = () => {
             <div className="p-8 bg-surface-bg/50 border-t border-surface-border flex flex-col gap-4">
               {(() => {
                 const subtotal = cartItems.reduce((acc, item) => {
-                  const price = Number(item.sellPrice ?? 0);
-                  const pDiscount = item.discount ?? item.discount_rate ?? 0;
-                  const effectiveDiscount = pDiscount || globalDiscount;
-                  const discountedPrice = price * (1 - effectiveDiscount / 100);
-                  return acc + discountedPrice;
+                  const { finalPrice } = calculateEffectiveDiscount(item as unknown as Parameters<typeof calculateEffectiveDiscount>[0]);
+                  return acc + finalPrice;
                 }, 0);
                 let taxAmount = 0;
                 let total = subtotal;

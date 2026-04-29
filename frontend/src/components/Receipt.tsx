@@ -1,5 +1,6 @@
 import React from 'react';
 import type { LocalProduct, LocalCustomer } from '../db/posDB';
+import { calculateEffectiveDiscount } from '../utils/discountUtils';
 
 interface ReceiptProps {
   items: { product: LocalProduct; quantity: number }[];
@@ -79,16 +80,19 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
           </tr>
         </thead>
         <tbody className="pt-2">
-          {items.map((item, idx) => (
-            <tr key={idx}>
-              <td className="py-1 pr-2">
-                <div className="font-bold ">{item.product.name}</div>
-                <div className="text-[9px]">MK {item.product.sellPrice.toLocaleString()}</div>
-              </td>
-              <td className="text-center py-1 font-bold">{item.quantity}</td>
-              <td className="text-right py-1 font-bold">MK {(item.product.sellPrice * item.quantity).toLocaleString()}</td>
-            </tr>
-          ))}
+          {items.map((item, idx) => {
+            const { finalPrice } = calculateEffectiveDiscount(item.product as any);
+            return (
+              <tr key={idx}>
+                <td className="py-1 pr-2">
+                  <div className="font-bold ">{item.product.name}</div>
+                  <div className="text-[9px]">MK {finalPrice.toLocaleString()}</div>
+                </td>
+                <td className="text-center py-1 font-bold">{item.quantity}</td>
+                <td className="text-right py-1 font-bold">MK {(finalPrice * item.quantity).toLocaleString()}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 

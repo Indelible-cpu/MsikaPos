@@ -51,6 +51,10 @@ const InventoryPage: React.FC = () => {
     isService: false,
     imageUrl: '',
     discount: 0,
+    discountType: 'PERCENTAGE' as 'PERCENTAGE' | 'FIXED',
+    discountValue: 0,
+    discountStartDate: '',
+    discountEndDate: '',
   });
 
   const products = useLiveQuery(
@@ -114,6 +118,10 @@ const InventoryPage: React.FC = () => {
       isService: editingProduct?.isService || false,
       imageUrl: editingProduct?.imageUrl || '',
       discount: editingProduct?.discount || 0,
+      discountType: (editingProduct?.discountType || 'PERCENTAGE') as 'PERCENTAGE' | 'FIXED',
+      discountValue: editingProduct?.discountValue || 0,
+      discountStartDate: editingProduct?.discountStartDate || '',
+      discountEndDate: editingProduct?.discountEndDate || '',
     });
   }, [categories, editingProduct]);
 
@@ -161,7 +169,7 @@ const InventoryPage: React.FC = () => {
     setIsAddModalOpen(true);
   }, [resetForm]);
 
-  const openEditModal = (p: LocalProduct) => {
+  const openEditModal = useCallback((p: LocalProduct) => {
     setEditingProduct(p);
     setFormData({
       name: p?.name || '',
@@ -173,9 +181,13 @@ const InventoryPage: React.FC = () => {
       isService: p?.isService || false,
       imageUrl: p?.imageUrl || '',
       discount: p?.discount || 0,
+      discountType: (p?.discountType || 'PERCENTAGE') as 'PERCENTAGE' | 'FIXED',
+      discountValue: p?.discountValue || 0,
+      discountStartDate: p?.discountStartDate || '',
+      discountEndDate: p?.discountEndDate || '',
     });
     setIsAddModalOpen(true);
-  };
+  }, [categories]);
 
   useEffect(() => {
     let barcodeBuffer = '';
@@ -212,7 +224,7 @@ const InventoryPage: React.FC = () => {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [openAddModal]);
+  }, [openAddModal, openEditModal]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -246,6 +258,7 @@ const InventoryPage: React.FC = () => {
     try {
       const productData = {
         ...formData,
+        discountType: formData.discountType as 'PERCENTAGE' | 'FIXED' | undefined,
         quantity: formData.isService ? 1 : formData.quantity,
         updatedAt: new Date().toISOString()
       };
@@ -270,7 +283,7 @@ const InventoryPage: React.FC = () => {
         ? { ...productData, id: editingProduct.id }
         : { ...productData, id: generateNumericId() };
       
-      await SyncService.pushProduct(productToSync as any);
+      await SyncService.pushProduct(productToSync as Parameters<typeof SyncService.pushProduct>[0]);
       
       setIsAddModalOpen(false);
       setEditingProduct(null);
@@ -561,9 +574,33 @@ const InventoryPage: React.FC = () => {
               <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-sell">Sell price</label>
               <input required id="product-sell" type="number" className="input-field w-full py-3 px-4 font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
             </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black tracking-widest text-rose-500 ml-1 uppercase" htmlFor="product-discount">Specific Discount %</label>
-              <input id="product-discount" type="number" className="input-field w-full py-3 px-4 font-black text-rose-500 bg-rose-500/5 border-rose-500/20" title="Discount percentage" aria-label="Discount percentage" value={formData.discount} onChange={(e) => setFormData({...formData, discount: Math.min(100, Math.max(0, Number(e.target.value)))})} onFocus={(e) => e.target.select()} />
+            <div className="space-y-1 col-span-2 p-4 bg-surface-bg/50 border border-surface-border rounded-2xl">
+              <div className="text-[10px] font-black tracking-widest text-surface-text/40 mb-3 uppercase">Discount Configuration</div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="discount-type">Discount Type</label>
+                  <select id="discount-type" title="Discount Type" aria-label="Discount Type" className="input-field w-full py-3 px-4 font-black text-rose-500 bg-rose-500/5 border-rose-500/20" value={formData.discountType} onChange={(e) => setFormData({...formData, discountType: e.target.value as 'PERCENTAGE'|'FIXED'})}>
+                    <option value="PERCENTAGE">Percentage (%)</option>
+                    <option value="FIXED">Fixed Amount</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="discount-value">Discount Value</label>
+                  <input id="discount-value" title="Discount Value" aria-label="Discount Value" placeholder="0" type="number" className="input-field w-full py-3 px-4 font-black text-rose-500 bg-rose-500/5 border-rose-500/20" value={formData.discountValue} onChange={(e) => {
+                    let val = Math.max(0, Number(e.target.value));
+                    if (formData.discountType === 'PERCENTAGE') val = Math.min(100, val);
+                    setFormData({...formData, discountValue: val, discount: formData.discountType === 'PERCENTAGE' ? val : 0});
+                  }} onFocus={(e) => e.target.select()} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="discount-start">Start Date (Optional)</label>
+                  <input id="discount-start" title="Discount Start Date" aria-label="Discount Start Date" placeholder="Start Date" type="date" className="input-field w-full py-3 px-4 font-black text-surface-text/60" value={formData.discountStartDate} onChange={(e) => setFormData({...formData, discountStartDate: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="discount-end">End Date (Optional)</label>
+                  <input id="discount-end" title="Discount End Date" aria-label="Discount End Date" placeholder="End Date" type="date" className="input-field w-full py-3 px-4 font-black text-surface-text/60" value={formData.discountEndDate} onChange={(e) => setFormData({...formData, discountEndDate: e.target.value})} />
+                </div>
+              </div>
             </div>
             {!formData.isService && (
               <div className="space-y-1 col-span-2">
