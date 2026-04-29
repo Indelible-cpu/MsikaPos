@@ -9,7 +9,8 @@ import {
   Info,
   LogOut,
   ChevronDown,
-  BarChart3
+  BarChart3,
+  History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -21,16 +22,18 @@ interface MoreOptionsMenuProps {
 }
 
 const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) => {
-  
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+
   const options = [
     { id: 'inventory', label: 'Inventory', icon: Package, path: '/staff/inventory', color: 'bg-emerald-500' },
     { id: 'debt', label: 'Debt', icon: Users, path: '/staff/debt', color: 'bg-orange-500' },
-    { id: 'customers', label: 'Customers', icon: Users, path: '/staff/customers', color: 'bg-sky-500' },
     { id: 'expenses', label: 'Expenses', icon: Wallet, path: '/staff/expenses', color: 'bg-rose-500' },
     { id: 'team', label: 'Staff', icon: Users, path: '/staff/users', color: 'bg-primary-500' },
     { id: 'branches', label: 'Branches', icon: Building2, path: '/staff/branches', color: 'bg-blue-500' },
     { id: 'reports', label: 'Reports', icon: BarChart3, path: '/staff/reports', color: 'bg-violet-500' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/staff/settings', color: 'bg-slate-500' },
+    ...(isSuperAdmin ? [{ id: 'audit', label: 'Audit Logs', icon: History, path: '/staff/audit-logs', color: 'bg-amber-600' }] : []),
     { id: 'about', label: 'Support', icon: Info, path: '/staff/about', color: 'bg-indigo-500' },
   ];
 

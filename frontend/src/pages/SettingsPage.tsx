@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Store, Smartphone, Building2, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus, Wallet, Eye } from 'lucide-react';
+import { User, Store, Smartphone, Building2, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
@@ -24,13 +24,6 @@ const SettingsPage: React.FC = () => {
   const [bankNameSetting, setBankNameSetting] = React.useState('National Bank, NBS Bank, Standard Bank');
   const [branchWhatsApp, setBranchWhatsApp] = React.useState('');
   const [fontSize, setFontSize] = React.useState('medium');
-  const [highContrast, setHighContrast] = React.useState(() => localStorage.getItem('highContrast') === 'true');
-  const [reduceMotion, setReduceMotion] = React.useState(() => localStorage.getItem('reduceMotion') === 'true');
-
-  React.useEffect(() => {
-    document.documentElement.classList.toggle('high-contrast', highContrast);
-    document.documentElement.classList.toggle('reduce-motion', reduceMotion);
-  }, [highContrast, reduceMotion]);
 
   React.useEffect(() => {
     const loadSettings = async () => {
@@ -281,10 +274,12 @@ const SettingsPage: React.FC = () => {
                         <div className="text-xs text-surface-text/40 font-bold uppercase">Adjust the system typography scale</div>
                      </div>
                   </div>
-                  <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl w-full md:w-fit">
+                  <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl w-full md:w-fit" role="radiogroup" aria-label="Font size">
                     {['small', 'medium', 'large'].map((size) => (
                       <button
                         key={size}
+                        role="radio"
+                        aria-checked={fontSize === size}
                         onClick={() => {
                           setFontSize(size);
                           localStorage.setItem('fontSize', size);
@@ -302,73 +297,8 @@ const SettingsPage: React.FC = () => {
                   </div>
                </div>
 
-               {/* Accessibility Section */}
-               <div className="px-6 md:px-12 py-8 flex flex-col gap-6 border-b border-surface-border">
-                  <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 bg-surface-bg rounded-2xl flex items-center justify-center border border-surface-border">
-                        <Eye className="w-5 h-5 text-primary-400" />
-                     </div>
-                     <div>
-                        <div className="font-black text-sm tracking-tight uppercase">Accessibility</div>
-                        <div className="text-xs text-surface-text/40 font-bold uppercase">Visual and motion preferences</div>
-                     </div>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                     {/* High Contrast */}
-                     <div className="flex items-center justify-between py-3 px-4 bg-surface-bg border border-surface-border rounded-2xl">
-                        <div>
-                           <div className="text-xs font-black uppercase tracking-widest">High Contrast</div>
-                           <div className="text-[10px] text-surface-text/40 font-bold uppercase">Increase visual distinction</div>
-                        </div>
-                        <button
-                           role="switch"
-                           aria-pressed={highContrast}
-                           onClick={() => {
-                              const next = !highContrast;
-                              setHighContrast(next);
-                              localStorage.setItem('highContrast', String(next));
-                              toast.success(`High contrast ${next ? 'enabled' : 'disabled'}`);
-                           }}
-                           className={clsx('w-12 h-6 rounded-full transition-colors relative flex items-center', highContrast ? 'bg-primary-500' : 'bg-surface-border')}
-                           title="Toggle high contrast"
-                        >
-                           <span className={clsx('absolute w-4 h-4 bg-white rounded-full shadow transition-all', highContrast ? 'left-7' : 'left-1')} />
-                        </button>
-                     </div>
-                     {/* Reduce Motion */}
-                     <div className="flex items-center justify-between py-3 px-4 bg-surface-bg border border-surface-border rounded-2xl">
-                        <div>
-                           <div className="text-xs font-black uppercase tracking-widest">Reduce Motion</div>
-                           <div className="text-[10px] text-surface-text/40 font-bold uppercase">Minimise animations and transitions</div>
-                        </div>
-                        <button
-                           role="switch"
-                           aria-pressed={reduceMotion}
-                           onClick={() => {
-                              const next = !reduceMotion;
-                              setReduceMotion(next);
-                              localStorage.setItem('reduceMotion', String(next));
-                              toast.success(`Reduce motion ${next ? 'enabled' : 'disabled'}`);
-                           }}
-                           className={clsx('w-12 h-6 rounded-full transition-colors relative flex items-center', reduceMotion ? 'bg-primary-500' : 'bg-surface-border')}
-                           title="Toggle reduce motion"
-                        >
-                           <span className={clsx('absolute w-4 h-4 bg-white rounded-full shadow transition-all', reduceMotion ? 'left-7' : 'left-1')} />
-                        </button>
-                     </div>
-                     {/* Theme - moved here */}
-                     <div className="flex items-center justify-between py-3 px-4 bg-surface-bg border border-surface-border rounded-2xl">
-                        <div>
-                           <div className="text-xs font-black uppercase tracking-widest">Theme</div>
-                           <div className="text-[10px] text-surface-text/40 font-bold uppercase">Switch light / dark appearance</div>
-                        </div>
-                        <ThemeToggle />
-                     </div>
-                  </div>
-               </div>
-
                {isSuperAdmin && (
-                  <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors border-b border-surface-border">
+                 <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors border-b border-surface-border">
                     <div className="flex items-center gap-4">
                        <div className="w-10 h-10 bg-surface-bg rounded-2xl flex items-center justify-center border border-surface-border group-hover:border-primary-500/20 transition-all">
                           <Building2 className="w-5 h-5 text-primary-400" />
