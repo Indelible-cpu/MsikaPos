@@ -605,27 +605,29 @@ export const PublicStorefront: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <div className="mt-auto pt-4 border-t border-surface-border/50 flex flex-col gap-3">
-                      <div className="flex items-start justify-between w-full">
-                        <div className="flex flex-col">
-                          <span className="text-[7px] md:text-[9px] font-black text-surface-text/20 uppercase tracking-widest">
-                            {pDiscount > 0 ? 'Special Offer' : 'Price'}
-                          </span>
-                          <p className={`text-sm md:text-xl font-black tracking-tighter ${hasDiscount ? 'text-surface-text/40 line-through text-xs md:text-sm' : 'text-primary-500'}`}>
-                            {formatCurrency(Number(p.sellPrice ?? 0))}
-                          </p>
-                        </div>
-                        {hasDiscount && (
-                          <div className="flex flex-col items-end pl-2">
-                            <span className="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg mb-1 uppercase tracking-tighter">
-                              {pDiscount > 0 ? `${pDiscount}% OFF` : `${globalDiscount}% OFF`}
+                      <div className="mt-auto pt-4 border-t border-surface-border/50 flex flex-col gap-3">
+                        <div className="flex flex-col gap-1 w-full">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[7px] md:text-[9px] font-black text-surface-text/20 uppercase tracking-widest">
+                              {hasDiscount ? 'Special Offer' : 'Price'}
                             </span>
-                            <span className="text-sm md:text-xl font-black text-red-500 tracking-tighter">
-                              {formatCurrency(Number(p.sellPrice ?? 0) * (1 - effectiveDiscount / 100))}
-                            </span>
+                            {hasDiscount && (
+                              <span className="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-tighter">
+                                {pDiscount > 0 ? `${pDiscount}% OFF` : `${globalDiscount}% OFF`}
+                              </span>
+                            )}
                           </div>
-                        )}
-                      </div>
+                          <div className="flex items-baseline justify-between">
+                            <p className={`font-black tracking-tighter ${hasDiscount ? 'text-surface-text/40 line-through text-[10px] md:text-sm' : 'text-sm md:text-xl text-primary-500'}`}>
+                              {formatCurrency(Number(p.sellPrice ?? 0))}
+                            </p>
+                            {hasDiscount && (
+                              <p className="text-sm md:text-xl font-black text-red-500 tracking-tighter">
+                                {formatCurrency(Number(p.sellPrice ?? 0) * (1 - effectiveDiscount / 100))}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       
                       <div className="grid grid-cols-3 gap-2">
                         <button 
