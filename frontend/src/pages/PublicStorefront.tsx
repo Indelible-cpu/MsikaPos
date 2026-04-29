@@ -250,11 +250,6 @@ export const PublicStorefront: React.FC = () => {
     }
   };
 
-  const handleWhatsApp = (product: StoreProduct) => {
-    const number = whatsappNumber || '265999999999'; // Fallback
-    const message = encodeURIComponent(`Hi ${shopName}, I am interested in ${product.name} (MK${Number(product.sellPrice ?? 0).toLocaleString()}). Could I get more details?`);
-    window.open(`https://wa.me/${number.replace('+', '')}?text=${message}`, '_blank');
-  };
 
   const handleInquiry = async (product: StoreProduct) => {
     const token = localStorage.getItem('token');
