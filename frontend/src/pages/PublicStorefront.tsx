@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
@@ -39,6 +39,8 @@ export const PublicStorefront: React.FC = () => {
   });
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const categoryNavRef = useRef<HTMLDivElement>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [fontSize, setFontSize] = useState(() => localStorage.getItem('fontSize') || 'medium');
 
   const CUSTOM_CATEGORIES = [
     'Phone Accessories',
@@ -89,14 +91,38 @@ export const PublicStorefront: React.FC = () => {
     return () => window.removeEventListener('resize', checkCategoryScroll);
   }, [categories]);
 
-  const toggleLike = (id: number) => {
-    const newLiked = new Set(likedItems);
-    if (newLiked.has(id)) newLiked.delete(id);
-    else newLiked.add(id);
-    setLikedItems(newLiked);
-    toast.success(newLiked.has(id) ? 'Added to favorites' : 'Removed from favorites');
+  const logCustomerAction = async (action: string, product: StoreProduct) => {
+    try {
+      await api.post('/public/actions', {
+        action,
+        productId: product.id,
+        productName: product.name,
+        timestamp: new Date().toISOString()
+      });
+    } catch {
+      // Silently ignore if backend doesn't support it yet
+    }
   };
 
+  const handleFontSize = (size: string) => {
+    setFontSize(size);
+    localStorage.setItem('fontSize', size);
+    document.documentElement.setAttribute('data-font-size', size);
+  };
+
+  const toggleLike = (id: number) => {
+    const newLiked = new Set(likedItems);
+    const isLiking = !newLiked.has(id);
+    if (isLiking) newLiked.add(id);
+    else newLiked.delete(id);
+    setLikedItems(newLiked);
+    toast.success(isLiking ? 'Added to favorites' : 'Removed from favorites');
+    
+    if (isLiking) {
+      const product = products.find(p => p.id === id);
+      if (product) logCustomerAction('LIKE', product);
+    }
+  };
 
   const addToCart = (product: StoreProduct, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -106,6 +132,7 @@ export const PublicStorefront: React.FC = () => {
       toast.success(`${product.name} added to cart`);
       return [...prev, product];
     });
+    logCustomerAction('ADD_TO_CART', product);
   };
 
   const removeFromCart = (id: number, e?: React.MouseEvent) => {
@@ -291,13 +318,42 @@ export const PublicStorefront: React.FC = () => {
               </div>
             )}
             <div className="flex items-center gap-2">
-              <button 
-                onClick={toggleTheme}
-                className="w-8 h-8 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all text-xs"
-                title="Toggle Theme"
-              >
-                {theme === 'light' ? '☀️' : theme === 'dark' ? '🌙' : '💻'}
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                  className="w-8 h-8 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all text-xs"
+                  title="Settings & Accessibility"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+                {isSettingsOpen && (
+                  <div className="absolute top-10 right-0 w-48 bg-surface-card border border-surface-border rounded-xl shadow-xl p-4 z-50">
+                    <h4 className="text-[10px] font-black tracking-widest uppercase text-surface-text/50 mb-3">Settings & Accessibility</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-[9px] font-bold uppercase mb-2">Theme</p>
+                        <button onClick={toggleTheme} className="w-full py-2 bg-surface-bg border border-surface-border rounded-lg text-[10px] font-bold hover:bg-primary-500 hover:text-white transition-colors">
+                          {theme === 'light' ? '☀️ Light' : theme === 'dark' ? '🌙 Dark' : '💻 System'}
+                        </button>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-bold uppercase mb-2">Font Size</p>
+                        <div className="flex gap-1">
+                          {['small', 'medium', 'large'].map(s => (
+                            <button 
+                              key={s}
+                              onClick={() => handleFontSize(s)}
+                              className={`flex-1 py-1.5 text-[9px] uppercase font-bold rounded transition-colors ${fontSize === s ? 'bg-primary-500 text-white' : 'bg-surface-bg border border-surface-border hover:bg-surface-border/50'}`}
+                            >
+                              {s.charAt(0)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button 
                 onClick={() => setIsCartOpen(true)}
                 className="relative group"
@@ -371,15 +427,15 @@ export const PublicStorefront: React.FC = () => {
       <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <h2 className="text-base md:text-lg font-black tracking-tighter leading-none text-primary-500 uppercase">Marketplace</h2>
-            <p className="text-[10px] md:text-xs font-bold text-surface-text/40 mt-1 uppercase tracking-widest">Premium Products & Services</p>
+            <h2 className="text-sm md:text-base font-black tracking-tighter leading-none text-primary-500">Market place</h2>
+            <p className="text-[8px] md:text-[10px] font-bold text-surface-text/40 mt-1 uppercase tracking-widest">Premium Products & Services</p>
           </div>
           
           <div className="relative w-full md:max-w-sm">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
             <input 
               type="text" 
-              placeholder="Search MsikaPos..."
+              placeholder="Search"
               className="w-full py-4 pl-14 pr-12 bg-surface-card border border-surface-border rounded-full outline-none focus:border-primary-500 font-bold text-xs shadow-lg transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -547,7 +603,7 @@ export const PublicStorefront: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-0.5">{item.category?.name || 'Item'}</p>
                       <h4 className="font-black text-sm truncate">{item.name}</h4>
-                      <p className="text-xs font-bold text-surface-text/40">MK {Number(item.sellPrice ?? 0).toLocaleString()}</p>
+                      <p className="text-xs font-bold text-surface-text/40">MK{Number(item.sellPrice ?? 0).toLocaleString()}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button 

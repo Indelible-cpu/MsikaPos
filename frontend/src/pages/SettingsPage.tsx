@@ -279,7 +279,7 @@ const SettingsPage: React.FC = () => {
                       <button
                         key={size}
                         role="radio"
-                        aria-checked={fontSize === size}
+                        aria-checked={fontSize === size ? "true" : "false"}
                         onClick={() => {
                           setFontSize(size);
                           localStorage.setItem('fontSize', size);
