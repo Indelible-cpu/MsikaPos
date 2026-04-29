@@ -248,6 +248,8 @@ model CompanySettings {
   email           String?
   logo            String?
   facebookPage    String?
+  primaryColor    String?  @default("#6366f1")
+  currency        String?  @default("MK")
   global_discount Decimal? @default(0.00) @db.Decimal(10, 2)
   tax_config      String?
 }

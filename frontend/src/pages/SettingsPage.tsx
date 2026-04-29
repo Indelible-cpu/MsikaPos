@@ -18,6 +18,12 @@ const SettingsPage: React.FC = () => {
   const [taxRate, setTaxRate] = React.useState(0);
   const [taxInclusive, setTaxInclusive] = React.useState(true);
   const [companyName, setCompanyName] = React.useState('');
+  const [slogan, setSlogan] = React.useState('');
+  const [address, setAddress] = React.useState('');
+  const [companyPhone, setCompanyPhone] = React.useState('');
+  const [companyEmail, setCompanyEmail] = React.useState('');
+  const [primaryColor, setPrimaryColor] = React.useState('#6366f1');
+  const [currency, setCurrency] = React.useState('MK');
   const [momoProvider, setMomoProvider] = React.useState('TNM Mpamba, Airtel Money');
   const [bankNameSetting, setBankNameSetting] = React.useState('National Bank, NBS Bank, Standard Bank');
   const [branchName, setBranchName] = React.useState('Main Branch');
@@ -38,10 +44,30 @@ const SettingsPage: React.FC = () => {
         setTaxRate(value.rate);
         setTaxInclusive(value.inclusive);
       }
-      const company = await db.settings.get('company_config');
-      if (company?.value) {
-        setCompanyName((company.value as { name: string }).name);
+      
+      try {
+        const settingsRes = await api.get('/public/settings');
+        if (settingsRes.data.success && settingsRes.data.data) {
+          const s = settingsRes.data.data;
+          setCompanyName(s.companyName || '');
+          setSlogan(s.slogan || '');
+          setAddress(s.address || '');
+          setCompanyPhone(s.phone || '');
+          setCompanyEmail(s.email || '');
+          setPrimaryColor(s.primaryColor || '#6366f1');
+          setCurrency(s.currency || 'MK');
+          
+          if (s.primaryColor) {
+             document.documentElement.style.setProperty('--color-primary-500', s.primaryColor);
+             // Simple way to set others, though in a real app we'd generate a palette
+             document.documentElement.style.setProperty('--color-primary-400', s.primaryColor + 'cc');
+             document.documentElement.style.setProperty('--color-primary-600', s.primaryColor + 'ee');
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load online settings:', e);
       }
+
       const payment = await db.settings.get('payment_config');
       if (payment?.value) {
         const val = payment.value as { momo: string; bank: string };
@@ -62,22 +88,30 @@ const SettingsPage: React.FC = () => {
     loadSettings();
   }, []);
 
-  const saveCompanyConfig = async () => {
+  const saveBrandingConfig = async () => {
     try {
-      await db.settings.put({ key: 'company_config', value: { name: companyName } });
+      const payload = {
+        companyName,
+        slogan,
+        address,
+        phone: companyPhone,
+        email: companyEmail,
+        primaryColor,
+        currency
+      };
+
+      await api.post('/settings', payload);
       localStorage.setItem('companyName', companyName);
+      localStorage.setItem('currency', currency);
       
-      const token = localStorage.getItem('token');
-      if (token) {
-        await api.post('/settings', { companyName }, {
-          headers: { Authorization: `Bearer \${token}` }
-        });
+      if (primaryColor) {
+        document.documentElement.style.setProperty('--color-primary-500', primaryColor);
       }
 
-      toast.success('Company information updated');
+      toast.success('Branding and company information updated');
       window.dispatchEvent(new Event('storage'));
     } catch {
-      toast.error('Failed to save company info');
+      toast.error('Failed to save branding info');
     }
   };
 
@@ -123,8 +157,15 @@ const SettingsPage: React.FC = () => {
 
   const saveTaxConfig = async () => {
     try {
-      await db.settings.put({ key: 'tax_config', value: { rate: taxRate, inclusive: taxInclusive } });
-      toast.success('Tax configuration updated');
+      const config = { rate: taxRate, inclusive: taxInclusive };
+      await db.settings.put({ key: 'tax_config', value: config });
+      
+      // Also save to server
+      await api.post('/settings', { 
+        tax_config: JSON.stringify(config) 
+      });
+
+      toast.success('Tax configuration updated globally');
     } catch {
       toast.error('Failed to save tax configuration');
     }
@@ -305,29 +346,114 @@ const SettingsPage: React.FC = () => {
                </div>
 
                {isSuperAdmin && (
-                 <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors border-b border-surface-border">
+                 <div className="px-6 md:px-12 py-8 flex flex-col gap-10 group hover:bg-primary-500/[0.02] transition-colors border-b border-surface-border">
                     <div className="flex items-center gap-4">
                        <div className="w-10 h-10 bg-surface-bg rounded-2xl flex items-center justify-center border border-surface-border group-hover:border-primary-500/20 transition-all">
                           <Building2 className="w-5 h-5 text-primary-400" />
                        </div>
                        <div>
-                          <div className="font-black text-sm tracking-tight uppercase">Company registration</div>
-                          <div className="text-xs text-surface-text/40 font-bold uppercase">Register your shop name / main brand</div>
+                          <div className="font-black text-sm tracking-tight uppercase">Branding & Company Info</div>
+                          <div className="text-xs text-surface-text/40 font-bold uppercase">Configure your system-wide brand identity and contact details</div>
                        </div>
                     </div>
-                    <div className="flex items-center gap-4 mt-2">
-                      <div className="flex-1">
-                        <input 
-                          type="text" 
-                          value={companyName} 
-                          onChange={(e) => setCompanyName(e.target.value)}
-                          className="input-field w-full py-3 px-4 text-sm font-black shadow-inner" 
-                          placeholder="Enter shop name..."
-                        />
-                      </div>
-                      <button onClick={saveCompanyConfig} className="btn-primary !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20 uppercase">
-                        Register
-                      </button>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       {/* Basic Info */}
+                       <div className="space-y-6">
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Shop Name</label>
+                             <input 
+                               type="text" 
+                               value={companyName} 
+                               onChange={(e) => setCompanyName(e.target.value)}
+                               className="input-field w-full py-3 px-4 text-sm font-black shadow-inner" 
+                               placeholder="e.g. MsikaPos Cloud"
+                             />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Slogan / Motto</label>
+                             <input 
+                               type="text" 
+                               value={slogan} 
+                               onChange={(e) => setSlogan(e.target.value)}
+                               className="input-field w-full py-3 px-4 text-sm font-black shadow-inner" 
+                               placeholder="e.g. Your Business, Simplified"
+                             />
+                          </div>
+                          <div className="space-y-2">
+                             <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Business Address</label>
+                             <textarea 
+                               value={address} 
+                               onChange={(e) => setAddress(e.target.value)}
+                               className="input-field w-full py-3 px-4 text-sm font-black shadow-inner min-h-[100px]" 
+                               placeholder="Enter physical address..."
+                             />
+                          </div>
+                       </div>
+
+                       {/* Contact & Style */}
+                       <div className="space-y-6">
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Phone</label>
+                                <input 
+                                   type="text" 
+                                   value={companyPhone} 
+                                   onChange={(e) => setCompanyPhone(e.target.value)}
+                                   className="input-field w-full py-3 px-4 text-sm font-black shadow-inner" 
+                                   placeholder="+265..."
+                                />
+                             </div>
+                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Email</label>
+                                <input 
+                                   type="email" 
+                                   value={companyEmail} 
+                                   onChange={(e) => setCompanyEmail(e.target.value)}
+                                   className="input-field w-full py-3 px-4 text-sm font-black shadow-inner" 
+                                   placeholder="info@msikapos.com"
+                                />
+                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Primary System Color</label>
+                                <div className="flex items-center gap-3">
+                                   <input 
+                                      type="color" 
+                                      value={primaryColor} 
+                                      onChange={(e) => setPrimaryColor(e.target.value)}
+                                      className="w-12 h-12 rounded-xl border border-surface-border bg-surface-bg cursor-pointer p-1"
+                                      title="Choose primary color"
+                                   />
+                                   <input 
+                                      type="text" 
+                                      value={primaryColor} 
+                                      onChange={(e) => setPrimaryColor(e.target.value)}
+                                      className="input-field flex-1 py-3 px-4 text-xs font-black shadow-inner uppercase" 
+                                      placeholder="#6366f1"
+                                   />
+                                </div>
+                             </div>
+                             <div className="space-y-2">
+                                <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Currency Symbol</label>
+                                <input 
+                                   type="text" 
+                                   value={currency} 
+                                   onChange={(e) => setCurrency(e.target.value)}
+                                   className="input-field w-full py-3 px-4 text-sm font-black shadow-inner" 
+                                   placeholder="e.g. MK, $, £"
+                                />
+                             </div>
+                          </div>
+
+                          <div className="pt-4">
+                             <button onClick={saveBrandingConfig} className="btn-primary w-full !py-4 text-[10px] font-black tracking-[0.2em] shadow-xl shadow-primary-500/20 uppercase">
+                                Update Brand Identity
+                             </button>
+                          </div>
+                       </div>
                     </div>
                  </div>
                )}

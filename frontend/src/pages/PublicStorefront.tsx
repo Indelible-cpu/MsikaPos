@@ -770,19 +770,22 @@ export const PublicStorefront: React.FC = () => {
                 }
                 return (
                   <div className="flex flex-col gap-2 w-full">
-                    <div className="flex items-center justify-between text-xs font-black text-surface-text/40">
+                    <div className="flex items-center justify-between text-xs font-black text-surface-text/40 uppercase tracking-widest">
                       <span>Subtotal {globalDiscount > 0 && `(with ${globalDiscount}% discount)`}</span>
                       <span>{formatCurrency(subtotal)}</span>
                     </div>
                     {taxConfig.rate > 0 && (
-                      <div className="flex items-center justify-between text-xs font-black text-surface-text/40">
-                        <span>Tax ({taxConfig.rate}% {taxConfig.inclusive ? 'Inc.' : 'Exc.'})</span>
-                        <span>{formatCurrency(taxAmount)}</span>
+                      <div className="flex items-center justify-between text-xs font-black text-surface-text/40 uppercase tracking-widest">
+                        <span>Tax ({taxConfig.rate}% {taxConfig.inclusive ? 'Included' : 'Added'})</span>
+                        <span>{taxConfig.inclusive ? 'Included' : `+ \${formatCurrency(taxAmount)}`}</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between border-t border-surface-border pt-2 mt-1">
-                      <p className="text-sm font-black text-surface-text/40">Estimated Total</p>
-                      <p className="text-2xl font-black text-primary-500 tracking-tighter">
+                    <div className="flex items-center justify-between border-t border-surface-border pt-4 mt-2">
+                      <div>
+                        <p className="text-sm font-black text-surface-text uppercase tracking-widest">Grand Total</p>
+                        <p className="text-[10px] font-bold text-surface-text/30 uppercase">{taxConfig.inclusive ? 'All taxes included' : 'Total including taxes'}</p>
+                      </div>
+                      <p className="text-3xl font-black text-primary-500 tracking-tighter">
                         {formatCurrency(total)}
                       </p>
                     </div>

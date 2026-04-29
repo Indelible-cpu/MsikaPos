@@ -957,10 +957,12 @@ const POSPage: React.FC = () => {
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-8 w-full md:w-auto">
-                      <div className="text-right">
-                        <span className="text-[10px] font-black text-surface-text/30 tracking-widest mb-1 uppercase block">Final Payable Total</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-black text-surface-text/30 tracking-widest mb-1 uppercase block">
+                           {taxConfig.inclusive ? 'Grand Total (Tax Included)' : `Grand Total (Inc. MK \${taxAmount.toLocaleString()} Tax)`}
+                        </span>
                         <div className={clsx("text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none", paymentMode === 'Credit' ? 'text-amber-500' : 'text-primary-500')}>
-                            MK{finalTotal.toLocaleString()}
+                            MK {finalTotal.toLocaleString()}
                         </div>
                       </div>
                       <button 
