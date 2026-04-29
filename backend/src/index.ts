@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: '*', // Adjust to your production domain for extra security
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-branch-id']
 }));
 
 app.use(express.json({ limit: '1mb' })); 
@@ -53,15 +53,22 @@ app.post('/api/customer/register', CustomerCtrl.registerCustomer as any);
 app.post('/api/customer/login', CustomerCtrl.loginCustomer as any);
 
 // Public Storefront Routes (No Auth Required)
-app.get('/api/public/products', async (_req, res) => {
+app.get('/api/public/products', async (req, res) => {
   try {
+    const branchId = req.headers['x-branch-id'];
+    const where: any = { deleted: false };
+    
+    if (branchId) {
+      where.branchId = parseInt(branchId as string);
+    }
+
     const products = await prisma.product.findMany({
-      where: { deleted: false },
+      where,
       include: { category: true },
       orderBy: { name: 'asc' },
     });
     // Only return products with stock OR services
-    const visible = products.filter((p: any) => p.isService || p.quantity > 0);
+    const visible = products.filter((p: any) => p.isService || (p.quantity !== null && p.quantity > 0));
     res.json({ success: true, data: visible });
   } catch (e: any) {
     res.status(500).json({ success: false, message: e.message });
