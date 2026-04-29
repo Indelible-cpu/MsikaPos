@@ -1,6 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Store, Smartphone, Building2, Info, ChevronRight, ShieldAlert, History, TrendingUp, Plus, Wallet } from 'lucide-react';
+import { User, Store, Smartphone, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
@@ -10,7 +9,6 @@ import api from '../api/client';
 import { normalizePhone, isValidMalawianPhone } from '../utils/phoneUtils';
 
 const SettingsPage: React.FC = () => {
-  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
