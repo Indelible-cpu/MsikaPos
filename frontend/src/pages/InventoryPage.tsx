@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
+import { SyncService } from '../services/SyncService';
 import type { LocalProduct } from '../db/posDB';
 import { 
   Plus, 
@@ -279,6 +280,14 @@ const InventoryPage: React.FC = () => {
         await AuditService.log('PRODUCT_ADD', `Added product: ${productData.name} (SKU: ${productData.sku})`);
         toast.success('Product added to inventory');
       }
+      
+      // Sync to cloud storefront
+      const productToSync = editingProduct 
+        ? { ...productData, id: editingProduct.id }
+        : { ...productData, id: generateNumericId() };
+      
+      SyncService.pushProduct(productToSync as any);
+      
       setIsAddModalOpen(false);
       setEditingProduct(null);
     } catch {

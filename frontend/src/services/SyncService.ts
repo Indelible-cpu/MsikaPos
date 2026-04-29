@@ -54,7 +54,7 @@ export const SyncService = {
     return navigator.onLine;
   },
 
-  async pushProduct(product: { id: number; name: string; sku: string; costPrice: number; sellPrice: number; quantity: number; categoryId: number; isService?: boolean; imageUrl?: string }) {
+  async pushProduct(product: { id: number; name: string; sku: string; costPrice: number; sellPrice: number; quantity: number; categoryId: number; isService?: boolean; imageUrl?: string; discount?: number }) {
     try {
       await api.post('/products', {
         id: product.id,
@@ -66,6 +66,7 @@ export const SyncService = {
         category_id: product.categoryId,
         is_service: product.isService || false,
         imageUrl: product.imageUrl || null,
+        discount: product.discount || 0,
       });
       return true;
     } catch (error: unknown) {
