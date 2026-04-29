@@ -38,9 +38,6 @@ interface BeforeInstallPromptEvent extends Event {
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const progressRef = useRef<HTMLDivElement>(null);
 
   // PWA Auto-Update Logic
   const {
@@ -60,29 +57,6 @@ const App: React.FC = () => {
     }
   });
 
-  useEffect(() => {
-    const duration = 30000; // 30 seconds
-    const interval = 100; // Update every 100ms
-    const steps = duration / interval;
-    const increment = 100 / steps;
-
-    const timer = setInterval(() => {
-      setLoadingProgress(prev => {
-        const next = prev + increment;
-        if (next >= 100) {
-          clearInterval(timer);
-          setIsInitialLoading(false);
-          return 100;
-        }
-        if (progressRef.current) {
-          progressRef.current.style.width = `${next}%`;
-        }
-        return next;
-      });
-    }, interval);
-
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     // 1. Don't show if already installed (standalone mode)
@@ -262,45 +236,6 @@ const App: React.FC = () => {
     return <LockedPage isSuperAdmin={isSuperAdmin} onUnlock={handleUnlock} />;
   }
 
-  if (isInitialLoading) {
-    return (
-      <div className="fixed inset-0 z-[1000] bg-surface-bg flex flex-col items-center justify-center p-12 overflow-hidden">
-        {/* Animated Background Orbs */}
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary-500/10 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-rose-500/10 rounded-full blur-[120px] animate-pulse delay-700"></div>
-        
-        <div className="relative flex flex-col items-center max-w-sm w-full space-y-12">
-          <div className="w-full space-y-6">
-             <div className="flex flex-col gap-2 items-center text-center">
-                <span className="text-[11px] font-black tracking-[0.4em] text-primary-500 uppercase">
-                  {loadingProgress < 25 ? 'Initializing Core Environment' : 
-                   loadingProgress < 50 ? 'Syncing Branch Intelligence' : 
-                   loadingProgress < 75 ? 'Optimizing Data Pipelines' : 'Readying Workspace'}
-                </span>
-                <div className="w-16 h-1 bg-primary-500/10 rounded-full overflow-hidden">
-                   <div className="h-full bg-primary-500 animate-[loading-bar_2s_infinite]"></div>
-                </div>
-             </div>
-
-             <div className="space-y-3">
-                <div className="flex justify-between items-end px-1">
-                   <span className="text-[9px] font-bold text-surface-text/30 tracking-widest uppercase">System Initialization</span>
-                   <span className="text-xs font-black text-primary-500 tabular-nums">{Math.floor(loadingProgress)}%</span>
-                </div>
-                <div className="h-3 w-full bg-surface-card border border-surface-border rounded-full overflow-hidden p-1 shadow-inner">
-                   <div 
-                     ref={progressRef}
-                     className="h-full bg-primary-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_20px_rgba(var(--color-primary-500-rgb),0.4)]"
-                   ></div>
-                </div>
-             </div>
-          </div>
-
-          <p className="text-[9px] font-black tracking-[0.4em] text-surface-text/10 uppercase italic">MsikaPos Enterprise</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Router>

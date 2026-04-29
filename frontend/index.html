@@ -26,74 +26,50 @@
     #global-loader {
       position: fixed;
       inset: 0;
-      background-color: #020202;
+      background-color: #000000;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 9999;
-      transition: opacity 0.3s ease;
-      font-family: 'Outfit', sans-serif;
+      transition: opacity 0.5s ease;
+      font-family: 'Inter', sans-serif;
     }
 
     .loader-content {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 12px;
+      padding: 20px;
     }
 
     .loader-title {
-      font-size: 48px;
+      font-size: 56px;
       font-weight: 900;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      display: flex;
-      align-items: center;
+      letter-spacing: -0.05em;
+      color: #ffffff;
+      margin-bottom: 4px;
     }
 
-    .loader-title .msika { color: #1e293b; } /* Dark/Navy */
-    .loader-title .pos { color: #22c55e; }   /* Green */
+    .loader-title span {
+      color: #22c55e;
+    }
 
-    .dark .loader-title .msika { color: #f8fafc; }
+    .green-bar {
+      width: 80px;
+      height: 8px;
+      background-color: #22c55e;
+      border-radius: 2px;
+      margin: 10px 0;
+    }
 
     .loader-tagline {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      color: #fafafa;
+      color: #22c55e;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .tagline-line {
-      height: 1px;
-      width: 40px;
-      background-color: #22c55e;
-    }
-
-    .loader-progress-container {
-      width: 200px;
-      height: 2px;
-      background-color: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-
-    .loader-progress-bar {
-      height: 100%;
-      width: 40%;
-      background-color: #22c55e;
-      border-radius: 10px;
-      animation: progressMove 1.5s infinite ease-in-out;
-    }
-
-    @keyframes progressMove {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(250%); }
+      text-align: center;
     }
   </style>
 </head>
@@ -101,16 +77,10 @@
 <body>
   <div id="global-loader">
     <div class="loader-content">
-      <div class="loader-title">
-        <span class="msika">Msika</span><span class="pos">Pos</span>
-      </div>
+      <div class="loader-title">Msika<span>Pos</span></div>
+      <div class="green-bar"></div>
       <div class="loader-tagline">
-        <div class="tagline-line"></div>
-        <span>Run Your Shop. Grow Your Business.</span>
-        <div class="tagline-line"></div>
-      </div>
-      <div class="loader-progress-container">
-        <div class="loader-progress-bar"></div>
+        _______Build Your Shop. Grow Your Business_______
       </div>
     </div>
   </div>
