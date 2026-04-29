@@ -36,7 +36,7 @@ export const syncData = async (req: Request, res: Response) => {
                 invoiceNo: saleData.invoiceNo,
                 receiptNo: saleData.receiptNo,
                 userId: userId,
-                branchId: saleData.branchId,
+                branchId: (req as any).user.role === 'SUPER_ADMIN' ? saleData.branchId : (req as any).user.branchId,
                 customerId: saleData.customerId,
                 subtotal: saleData.subtotal,
                 discount: saleData.discount,
@@ -85,11 +85,14 @@ export const syncData = async (req: Request, res: Response) => {
     }
 
     // 2. Fetch Updates for Client (Since last sync)
+    const user = (req as any).user;
     const updatedProducts = await prisma.product.findMany({
       where: {
         updatedAt: {
           gt: lastSyncTimestamp ? new Date(lastSyncTimestamp) : new Date(0),
         },
+        // Strict Branch Isolation
+        branchId: user.branchId || undefined,
       },
       include: { category: true },
     });
@@ -112,6 +115,7 @@ export const syncData = async (req: Request, res: Response) => {
       data: {
         deviceId: deviceId || 'unknown',
         userId: userId,
+        branchId: (req as any).user.branchId,
         action: 'BATCH_SYNC',
         status: 'SUCCESS',
         details: `Processed ${sales?.length || 0} sales. Downloaded ${updatedProducts.length} product updates.`,

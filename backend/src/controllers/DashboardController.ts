@@ -10,7 +10,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
   try {
     const where: any = { status: { not: 'DELETED' } };
-    if (user.role !== 'SUPER_ADMIN' && user.branchId) {
+    // Strict Branch Isolation
+    if (user.role === 'SUPER_ADMIN') {
+      if (user.branchId) where.branchId = user.branchId;
+    } else {
       where.branchId = user.branchId;
     }
 

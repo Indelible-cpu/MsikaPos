@@ -71,7 +71,8 @@ export const fetchUsers = async (req: Request, res: Response) => {
 
   try {
     const where: any = { deleted: false };
-    if (authUser.role !== 'SUPER_ADMIN' && authUser.branchId) {
+    // Strict Branch Isolation / Context Switch
+    if (authUser.branchId) {
       where.branchId = authUser.branchId;
     }
 

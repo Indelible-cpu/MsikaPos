@@ -72,6 +72,10 @@ model Branch {
   products  Product[]
   sales     Sale[]
   users     User[]
+  inquiries Inquiry[]
+  customers Customer[]
+  syncLogs  SyncLog[]
+  securityLogs SecurityLog[]
 }
 
 model Category {
@@ -128,11 +132,15 @@ model Customer {
   locationId    String?
   livePhoto     String?
   userId        Int?     @unique
+  branchId      Int?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   user          User?    @relation(fields: [userId], references: [id])
+  branch        Branch?    @relation(fields: [branchId], references: [id])
   sales         Sale[]
   inquiries     Inquiry[]
+
+  @@index([branchId])
 }
 
 model Inquiry {
@@ -140,10 +148,14 @@ model Inquiry {
   customerId Int
   items      String   // Stored as JSON string
   status     String   @default("PENDING") // PENDING, SEEN, IN_PROGRESS, COMPLETED
+  branchId   Int?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
   customer   Customer @relation(fields: [customerId], references: [id])
+  branch     Branch?    @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
 }
 
 model Sale {
@@ -228,7 +240,11 @@ model SyncLog {
   action    String
   status    String
   details   String?
+  branchId  Int?
   createdAt DateTime @default(now())
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
 }
 
 model CompanySettings {
@@ -282,7 +298,11 @@ model SecurityLog {
   ipAddress String
   event     String   // BRUTE_FORCE, UNAUTHORIZED_ACCESS, XSS_ATTEMPT
   details   String?
+  branchId  Int?
   createdAt DateTime @default(now())
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
 }
 
 model BlockedIP {

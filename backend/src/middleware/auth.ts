@@ -6,6 +6,7 @@ interface AuthRequest extends Request {
     id: number;
     username: string;
     role: string;
+    branchId?: number | null;
   };
 }
 
@@ -18,6 +19,18 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+    
+    // Multi-branch context handling
+    const requestedBranchId = req.headers['x-branch-id'];
+    
+    if (decoded.role === 'SUPER_ADMIN') {
+      // Super Admin can switch context via header
+      decoded.branchId = requestedBranchId ? parseInt(requestedBranchId as string) : null;
+    } else {
+      // Non-Super Admins are LOCKED to their token's branchId
+      // They cannot spoof other branches via header
+    }
+
     req.user = decoded;
     next();
   } catch (error: any) {

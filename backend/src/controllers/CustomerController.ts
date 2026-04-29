@@ -9,6 +9,7 @@ interface AuthRequest extends Request {
     id: number;
     username: string;
     role: string;
+    branchId?: number | null;
   };
 }
 
@@ -175,17 +176,32 @@ export const listInquiries = async (req: AuthRequest, res: Response) => {
         });
         if (!customer) return res.status(200).json({ success: true, data: [], total: 0 });
 
-        total = await prisma.inquiry.count({ where: { customerId: customer.id } });
+        const whereInquiry: any = { 
+          customerId: customer.id
+        };
+        if (userId !== customer.userId && req.user?.branchId) {
+          whereInquiry.branchId = req.user.branchId;
+        }
+
+        total = await prisma.inquiry.count({ where: whereInquiry });
         inquiries = await prisma.inquiry.findMany({
-          where: { customerId: customer.id },
+          where: whereInquiry,
           orderBy: { createdAt: 'desc' },
           skip,
           take: limit
         });
       } else {
-        // Staff view
-        total = await prisma.inquiry.count();
+        // Staff view - Strict Branch Isolation
+        const where: any = {};
+        if (req.user?.role === 'SUPER_ADMIN') {
+          if (req.user.branchId) where.branchId = req.user.branchId;
+        } else {
+          where.branchId = req.user?.branchId;
+        }
+
+        total = await prisma.inquiry.count({ where });
         inquiries = await prisma.inquiry.findMany({
+          where,
           include: { 
             customer: {
               include: { user: true }

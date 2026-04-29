@@ -25,13 +25,12 @@ export const fetchTransactions = async (req: Request, res: Response) => {
       ];
     }
 
-    // Branch filtering logic
-    if (user.role !== 'SUPER_ADMIN') {
-      if (user.branchId) {
-        where.branchId = user.branchId;
-      }
-    } else if (branch_id) {
-      where.branchId = parseInt(branch_id as string);
+    // Strict Branch Isolation
+    if (user.role === 'SUPER_ADMIN') {
+      if (user.branchId) where.branchId = user.branchId;
+      else if (branch_id) where.branchId = parseInt(branch_id as string);
+    } else {
+      where.branchId = user.branchId;
     }
 
     const transactions = await prisma.sale.findMany({
@@ -89,10 +88,12 @@ export const getSummary = async (req: Request, res: Response) => {
       status: 'COMPLETED',
     };
 
-    if (user.role !== 'SUPER_ADMIN') {
+    // Strict Branch Isolation
+    if (user.role === 'SUPER_ADMIN') {
       if (user.branchId) where.branchId = user.branchId;
-    } else if (branch_id) {
-      where.branchId = parseInt(branch_id as string);
+      else if (branch_id) where.branchId = parseInt(branch_id as string);
+    } else {
+      where.branchId = user.branchId;
     }
 
     const sales = await prisma.sale.aggregate({

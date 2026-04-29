@@ -3,11 +3,15 @@ import { prisma } from '../lib/prisma';
 
 export const fetchBranches = async (req: Request, res: Response) => {
   const { q, minimal } = req.query;
+  const user = (req as any).user;
 
   try {
     if (minimal === '1') {
       const branches = await prisma.branch.findMany({
-        where: { status: 'ACTIVE' },
+        where: { 
+          status: 'ACTIVE',
+          id: user.role === 'SUPER_ADMIN' ? undefined : user.branchId 
+        },
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       });
@@ -15,11 +19,15 @@ export const fetchBranches = async (req: Request, res: Response) => {
     }
 
     const where: any = {};
-    if (q) {
-      where.OR = [
-        { name: { contains: q as string, mode: 'insensitive' } },
-        { location: { contains: q as string, mode: 'insensitive' } },
-      ];
+    if (user.role === 'SUPER_ADMIN') {
+      if (q) {
+        where.OR = [
+          { name: { contains: q as string, mode: 'insensitive' } },
+          { location: { contains: q as string, mode: 'insensitive' } },
+        ];
+      }
+    } else {
+      where.id = user.branchId;
     }
 
     const branches = await prisma.branch.findMany({

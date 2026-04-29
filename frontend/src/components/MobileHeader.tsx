@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Bell, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db } from '../db/posDB';
+import BranchSwitcher from './BranchSwitcher';
 
 export default function MobileHeader() {
   const location = useLocation();
@@ -101,6 +102,11 @@ export default function MobileHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          {JSON.parse(localStorage.getItem('user') || '{}').role === 'SUPER_ADMIN' && (
+            <div className="scale-75 origin-right">
+              <BranchSwitcher />
+            </div>
+          )}
           <button 
             onClick={() => window.location.href = '/staff/inquiries'}
             className="relative p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 active:scale-95 transition-all"
