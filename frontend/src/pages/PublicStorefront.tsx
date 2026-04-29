@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, ShoppingCart, X, ArrowRight, Settings, Bookmark } from 'lucide-react';
 import { AuditService } from '../services/AuditService';
 import { formatCurrency } from '../utils/phoneUtils';
 import { db } from '../db/posDB';
@@ -159,16 +159,6 @@ export const PublicStorefront: React.FC = () => {
     }
   };
 
-  const addToCart = (product: StoreProduct, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    setCartItems(prev => {
-      const exists = prev.find(item => item.id === product.id);
-      if (exists) return prev;
-      toast.success(`${product.name} added to cart`);
-      return [...prev, product];
-    });
-    logCustomerAction('ADD_TO_CART', product);
-  };
 
   const removeFromCart = (id: number, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -466,8 +456,8 @@ export const PublicStorefront: React.FC = () => {
       <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <h2 className="text-lg md:text-3xl font-black tracking-tighter leading-none text-primary-500 uppercase">Market Place</h2>
-            <p className="text-[9px] md:text-[12px] font-black text-surface-text mt-2 uppercase tracking-[0.2em]"> Premium Products & Services</p>
+            <h2 className="text-xl md:text-3xl font-black tracking-tighter leading-none text-primary-500">Market Place</h2>
+            <p className="text-[10px] md:text-[14px] font-black text-surface-text/60 mt-1"> Premium Products & Services</p>
           </div>
           
           <div className="relative w-full md:max-w-sm">
@@ -514,7 +504,7 @@ export const PublicStorefront: React.FC = () => {
               <div 
                 key={p.id} 
                 id={`product-${p.id}`}
-                className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full pb-4 border-b-2 border-surface-border/10 mb-2"
+                className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full border-b border-surface-border/50 pb-10 mb-2"
               >
                 {/* Top Actions */}
                 <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
@@ -527,25 +517,7 @@ export const PublicStorefront: React.FC = () => {
                   </div>
                   
                   <div className="flex flex-col gap-2 pointer-events-auto">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }}
-                      title={likedItems.has(p.id) ? "Remove from favorites" : "Add to favorites"}
-                      className={`p-2 rounded-full backdrop-blur-md border transition-all ${
-                        likedItems.has(p.id) 
-                          ? 'bg-rose-500 text-white border-rose-500' 
-                          : 'bg-white/10 text-white/40 border-white/10 hover:bg-white/20 hover:text-white'
-                      }`}
-                    >
-                      <Heart className={`w-3 md:w-4 h-3 md:h-4 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
-                    </button>
-                    
-                    <button 
-                      onClick={(e) => addToCart(p, e)}
-                      title="Add to cart"
-                      className="p-2 rounded-full backdrop-blur-md border bg-primary-500/20 text-white border-white/10 hover:bg-primary-500 hover:border-primary-500 transition-all active:scale-90"
-                    >
-                      <Plus className="w-3 md:w-4 h-3 md:h-4" />
-                    </button>
+                    {/* Top actions removed as per button grid update */}
                   </div>
                 </div>
 
@@ -629,11 +601,15 @@ export const PublicStorefront: React.FC = () => {
                         WhatsApp
                       </button>
                       <button 
-                        onClick={(e) => addToCart(p, e)}
-                        className="col-span-1 py-3 bg-primary-500 text-white rounded-xl flex items-center justify-center hover:scale-110 transition-all active:scale-95 shadow-lg shadow-primary-500/20"
-                        title="Save to Cart"
+                        onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }}
+                        className={`col-span-1 py-3 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
+                          likedItems.has(p.id) 
+                            ? 'bg-rose-500 text-white shadow-rose-500/20' 
+                            : 'bg-surface-bg border border-surface-border text-surface-text/40 hover:text-primary-500 shadow-primary-500/5'
+                        }`}
+                        title="Save for Later"
                       >
-                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <Bookmark className={`w-3.5 h-3.5 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
                       </button>
                     </div>
                   </div>
