@@ -26,50 +26,80 @@
     #global-loader {
       position: fixed;
       inset: 0;
-      background-color: #000000;
+      background-color: #ffffff;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 9999;
       transition: opacity 0.5s ease;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Outfit', sans-serif;
     }
 
     .loader-content {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 20px;
+      gap: 0;
     }
 
     .loader-title {
-      font-size: 56px;
+      font-size: 72px;
       font-weight: 900;
-      letter-spacing: -0.05em;
-      color: #ffffff;
-      margin-bottom: 4px;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      display: flex;
+      align-items: center;
     }
 
-    .loader-title span {
-      color: #22c55e;
+    .loader-title .msika {
+      color: #001f3f; /* Dark Navy from icon */
     }
 
-    .green-bar {
-      width: 80px;
-      height: 8px;
-      background-color: #22c55e;
-      border-radius: 2px;
-      margin: 10px 0;
+    .loader-title .pos {
+      color: #22c55e; /* Green from icon */
     }
 
     .loader-tagline {
-      color: #22c55e;
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .loader-tagline .line {
+      height: 2px;
+      width: 24px;
+      background-color: #22c55e;
+    }
+
+    .loader-tagline span {
+      color: #1a1a1a;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .loader-progress {
+      width: 120px;
+      height: 3px;
+      background-color: #f1f5f9;
+      margin-top: 32px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .loader-progress-bar {
+      height: 100%;
+      width: 30%;
+      background-color: #22c55e;
+      border-radius: 10px;
+      animation: slide 1.5s infinite ease-in-out;
+    }
+
+    @keyframes slide {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
     }
   </style>
 </head>
@@ -77,10 +107,16 @@
 <body>
   <div id="global-loader">
     <div class="loader-content">
-      <div class="loader-title">Msika<span>Pos</span></div>
-      <div class="green-bar"></div>
+      <div class="loader-title">
+        <span class="msika">Msika</span><span class="pos">Pos</span>
+      </div>
       <div class="loader-tagline">
-        _______Build Your Shop. Grow Your Business_______
+        <div class="line"></div>
+        <span>Build Your Shop. Grow Your Business.</span>
+        <div class="line"></div>
+      </div>
+      <div class="loader-progress">
+        <div class="loader-progress-bar"></div>
       </div>
     </div>
   </div>
