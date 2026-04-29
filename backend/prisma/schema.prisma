@@ -15,40 +15,35 @@ model Role {
 }
 
 model User {
-  id                 Int       @id @default(autoincrement())
-  username           String    @unique
+  id                 Int        @id @default(autoincrement())
+  username           String     @unique
   password           String
   roleId             Int
   branchId           Int?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  deleted            Boolean   @default(false)
-  status             UserStatus @default(ACTIVE)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  deleted            Boolean    @default(false)
   email              String?
   fullname           String?
-  isVerified         Boolean   @default(false)
-  mustChangePassword Boolean   @default(true)
+  homeAddress        String?
+  isVerified         Boolean    @default(false)
+  mustChangePassword Boolean    @default(true)
+  nextOfKinPhone     String?
   phone              String?
   profilePic         String?
+  relationship       String?
   verificationCode   String?
   nationalId         String?
-  auth_id            String?   @unique(map: "unique_auth_id") @db.Uuid
-  
-  // Onboarding / Profile
-  homeAddress        String?
-  nextOfKinName      String?
-  nextOfKinPhone     String?
-  relationship       String?
-  
-  // Magic Link
-  magicToken         String?   @unique
+  auth_id            String?    @unique(map: "unique_auth_id") @db.Uuid
+  magicToken         String?    @unique
   magicTokenExpires  DateTime?
-
+  nextOfKinName      String?
+  status             UserStatus @default(ACTIVE)
   customer           Customer?
   expenses           Expense[]
   sales              Sale[]
-  branch             Branch?   @relation(fields: [branchId], references: [id])
-  role               Role      @relation(fields: [roleId], references: [id])
+  branch             Branch?    @relation(fields: [branchId], references: [id])
+  role               Role       @relation(fields: [roleId], references: [id])
 
   @@index([roleId])
   @@index([branchId])
@@ -57,25 +52,25 @@ model User {
 }
 
 model Branch {
-  id        Int          @id @default(autoincrement())
-  name      String
-  location  String?
-  phone     String?
-  email     String?
-  facebook  String?
-  logo      String?
-  slogan    String?
-  status    BranchStatus @default(ACTIVE)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  expenses  Expense[]
-  products  Product[]
-  sales     Sale[]
-  users     User[]
-  inquiries Inquiry[]
-  customers Customer[]
-  syncLogs  SyncLog[]
+  id           Int           @id @default(autoincrement())
+  name         String
+  location     String?
+  phone        String?
+  status       BranchStatus  @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  email        String?
+  facebook     String?
+  logo         String?
+  slogan       String?
+  customers    Customer[]
+  expenses     Expense[]
+  inquiries    Inquiry[]
+  products     Product[]
+  sales        Sale[]
   securityLogs SecurityLog[]
+  syncLogs     SyncLog[]
+  users        User[]
 }
 
 model Category {
@@ -86,32 +81,30 @@ model Category {
 }
 
 model Product {
-  id          Int        @id @default(autoincrement())
-  categoryId  Int
-  sku         String?    @unique
-  name        String
-  description String?
-  costPrice   Decimal    @db.Decimal(10, 2)
-  sellPrice   Decimal    @db.Decimal(10, 2)
-  taxRate     Decimal    @default(0.00) @db.Decimal(5, 2)
-  quantity    Int        @default(0)
-  isService   Boolean    @default(false)
-  imageUrl    String?    @db.Text
-  branchId    Int?
-  deleted     Boolean    @default(false)
-  synced      Boolean    @default(true)
-  deviceId    String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  
-  // Discount Fields
-  discountType      String?    // percentage, fixed
-  discountValue     Decimal?   @default(0.00) @db.Decimal(10, 2)
-  discountStartDate DateTime?
+  id                Int        @id @default(autoincrement())
+  categoryId        Int
+  sku               String?    @unique
+  name              String
+  description       String?
+  costPrice         Decimal    @db.Decimal(10, 2)
+  sellPrice         Decimal    @db.Decimal(10, 2)
+  taxRate           Decimal    @default(0.00) @db.Decimal(5, 2)
+  quantity          Int        @default(0)
+  isService         Boolean    @default(false)
+  branchId          Int?
+  deleted           Boolean    @default(false)
+  synced            Boolean    @default(true)
+  deviceId          String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  imageUrl          String?
   discountEndDate   DateTime?
-  category    Category   @relation(fields: [categoryId], references: [id])
-  branch      Branch?    @relation(fields: [branchId], references: [id])
-  saleItems   SaleItem[]
+  discountStartDate DateTime?
+  discountType      String?
+  discountValue     Decimal?   @default(0.00) @db.Decimal(10, 2)
+  branch            Branch?    @relation(fields: [branchId], references: [id])
+  category          Category   @relation(fields: [categoryId], references: [id])
+  saleItems         SaleItem[]
 
   @@index([categoryId])
   @@index([branchId])
@@ -121,24 +114,24 @@ model Product {
 }
 
 model Customer {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   fullname      String
   phone         String
   email         String?
   address       String?
-  loyaltyPoints Int      @default(0)
+  loyaltyPoints Int       @default(0)
   idNumber      String?
   village       String?
   locationId    String?
   livePhoto     String?
-  userId        Int?     @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  userId        Int?      @unique
   branchId      Int?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  user          User?    @relation(fields: [userId], references: [id])
-  branch        Branch?    @relation(fields: [branchId], references: [id])
-  sales         Sale[]
+  branch        Branch?   @relation(fields: [branchId], references: [id])
+  user          User?     @relation(fields: [userId], references: [id])
   inquiries     Inquiry[]
+  sales         Sale[]
 
   @@index([branchId])
 }
@@ -146,14 +139,13 @@ model Customer {
 model Inquiry {
   id         Int      @id @default(autoincrement())
   customerId Int
-  items      String   // Stored as JSON string
-  status     String   @default("PENDING") // PENDING, SEEN, IN_PROGRESS, COMPLETED
-  branchId   Int?
+  items      String
+  status     String   @default("PENDING")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
+  branchId   Int?
+  branch     Branch?  @relation(fields: [branchId], references: [id])
   customer   Customer @relation(fields: [customerId], references: [id])
-  branch     Branch?    @relation(fields: [branchId], references: [id])
 
   @@index([branchId])
 }
@@ -240,26 +232,44 @@ model SyncLog {
   action    String
   status    String
   details   String?
-  branchId  Int?
   createdAt DateTime @default(now())
+  branchId  Int?
   branch    Branch?  @relation(fields: [branchId], references: [id])
 
   @@index([branchId])
 }
 
 model CompanySettings {
-  id           Int     @id @default(autoincrement())
-  companyName  String?
-  slogan       String?
-  address      String?
-  phone        String?
-  email        String?
-  logo         String?
-  facebookPage String?
-  
-  // System Config
-  tax_config      String?    // JSON: { rate: number, inclusive: boolean }
-  global_discount Decimal?   @default(0.00) @db.Decimal(10, 2)
+  id              Int      @id @default(autoincrement())
+  companyName     String?
+  slogan          String?
+  address         String?
+  phone           String?
+  email           String?
+  logo            String?
+  facebookPage    String?
+  global_discount Decimal? @default(0.00) @db.Decimal(10, 2)
+  tax_config      String?
+}
+
+model SecurityLog {
+  id        Int      @id @default(autoincrement())
+  ipAddress String
+  event     String
+  details   String?
+  createdAt DateTime @default(now())
+  branchId  Int?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
+}
+
+model BlockedIP {
+  id        Int       @id @default(autoincrement())
+  ipAddress String    @unique
+  reason    String
+  blockedAt DateTime  @default(now())
+  expiresAt DateTime?
 }
 
 enum UserStatus {
@@ -292,24 +302,3 @@ enum SaleStatus {
   PENDING
   DELETED
 }
-
-model SecurityLog {
-  id        Int      @id @default(autoincrement())
-  ipAddress String
-  event     String   // BRUTE_FORCE, UNAUTHORIZED_ACCESS, XSS_ATTEMPT
-  details   String?
-  branchId  Int?
-  createdAt DateTime @default(now())
-  branch    Branch?  @relation(fields: [branchId], references: [id])
-
-  @@index([branchId])
-}
-
-model BlockedIP {
-  id        Int      @id @default(autoincrement())
-  ipAddress String   @unique
-  reason    String
-  blockedAt DateTime @default(now())
-  expiresAt DateTime?
-}
-

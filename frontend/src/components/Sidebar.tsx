@@ -10,7 +10,6 @@ import api from '../api/client';
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const [pendingCount, setPendingCount] = React.useState(0);
-  const [pendingCount, setPendingCount] = React.useState(0);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
 
