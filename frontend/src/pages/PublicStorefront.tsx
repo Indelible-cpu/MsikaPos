@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, ShoppingCart, X, ArrowRight, Settings, Bookmark } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark } from 'lucide-react';
 import { AuditService } from '../services/AuditService';
 import { formatCurrency } from '../utils/phoneUtils';
 import { db } from '../db/posDB';
@@ -46,6 +46,7 @@ export const PublicStorefront: React.FC = () => {
     return (localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null) || 'system';
   });
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
+  const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
   const categoryNavRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -156,6 +157,31 @@ export const PublicStorefront: React.FC = () => {
     if (isLiking) {
       const product = products.find(p => p.id === id);
       if (product) logCustomerAction('LIKE', product);
+    }
+  };
+
+  const addToCart = (product: StoreProduct, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setCartItems(prev => {
+      const exists = prev.find(item => item.id === product.id);
+      if (exists) return prev;
+      toast.success(`${product.name} added to cart`);
+      return [...prev, product];
+    });
+    logCustomerAction('ADD_TO_CART', product);
+  };
+
+  const toggleSave = (id: number) => {
+    const newSaved = new Set(savedItems);
+    const isSaving = !newSaved.has(id);
+    if (isSaving) newSaved.add(id);
+    else newSaved.delete(id);
+    setSavedItems(newSaved);
+    toast.success(isSaving ? 'Saved for later' : 'Removed from saved items');
+    
+    if (isSaving) {
+      const product = products.find(p => p.id === id);
+      if (product) logCustomerAction('SAVE_FOR_LATER', product);
     }
   };
 
@@ -517,7 +543,25 @@ export const PublicStorefront: React.FC = () => {
                   </div>
                   
                   <div className="flex flex-col gap-2 pointer-events-auto">
-                    {/* Top actions removed as per button grid update */}
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }}
+                      title={likedItems.has(p.id) ? "Remove from favorites" : "Add to favorites"}
+                      className={`p-2 rounded-full backdrop-blur-md border transition-all ${
+                        likedItems.has(p.id) 
+                          ? 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/20' 
+                          : 'bg-white/10 text-white/40 border-white/10 hover:bg-white/20 hover:text-white'
+                      }`}
+                    >
+                      <Heart className={`w-3 md:w-4 h-3 md:h-4 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
+                    </button>
+                    
+                    <button 
+                      onClick={(e) => addToCart(p, e)}
+                      title="Add to cart"
+                      className="p-2 rounded-full backdrop-blur-md border bg-primary-500/20 text-white border-white/10 hover:bg-primary-500 hover:border-primary-500 transition-all active:scale-90"
+                    >
+                      <Plus className="w-3 md:w-4 h-3 md:h-4" />
+                    </button>
                   </div>
                 </div>
 
@@ -601,15 +645,15 @@ export const PublicStorefront: React.FC = () => {
                         WhatsApp
                       </button>
                       <button 
-                        onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }}
+                        onClick={(e) => { e.stopPropagation(); toggleSave(p.id); }}
                         className={`col-span-1 py-3 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
-                          likedItems.has(p.id) 
-                            ? 'bg-rose-500 text-white shadow-rose-500/20' 
+                          savedItems.has(p.id) 
+                            ? 'bg-primary-500 text-white shadow-primary-500/20' 
                             : 'bg-surface-bg border border-surface-border text-surface-text/40 hover:text-primary-500 shadow-primary-500/5'
                         }`}
                         title="Save for Later"
                       >
-                        <Bookmark className={`w-3.5 h-3.5 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
+                        <Bookmark className={`w-3.5 h-3.5 ${savedItems.has(p.id) ? 'fill-current' : ''}`} />
                       </button>
                     </div>
                   </div>
