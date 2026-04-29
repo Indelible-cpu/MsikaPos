@@ -16,6 +16,7 @@ interface StoreProduct {
   isService?: boolean;
   quantity?: number;
   soldCount?: number;
+  discount?: number;
   createdAt: string;
   updatedAt: string;
   category?: { name?: string; title?: string };
@@ -586,15 +587,21 @@ export const PublicStorefront: React.FC = () => {
                   <div className="mt-auto pt-4 border-t border-surface-border/50 flex flex-col gap-3">
                     <div className="flex items-start justify-between w-full">
                       <div className="flex flex-col">
-                        <span className="text-[7px] md:text-[9px] font-black text-surface-text/20">PRICE</span>
-                        <p className={`text-sm md:text-xl font-black tracking-tighter ${globalDiscount > 0 ? 'text-surface-text/40 line-through text-xs md:text-sm' : 'text-primary-500'}`}>
+                        <span className="text-[7px] md:text-[9px] font-black text-surface-text/20 uppercase tracking-widest">
+                          {p.discount ? 'Special Offer' : 'Price'}
+                        </span>
+                        <p className={`text-sm md:text-xl font-black tracking-tighter ${(p.discount || 0) > 0 || globalDiscount > 0 ? 'text-surface-text/40 line-through text-xs md:text-sm' : 'text-primary-500'}`}>
                           {formatCurrency(Number(p.sellPrice ?? 0))}
                         </p>
                       </div>
-                      {globalDiscount > 0 && (
+                      {((p.discount || 0) > 0 || globalDiscount > 0) && (
                         <div className="flex flex-col items-end pl-2">
-                          <span className="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg mb-1">{globalDiscount}% OFF</span>
-                          <span className="text-sm md:text-xl font-black text-red-500 tracking-tighter">{formatCurrency(Number(p.sellPrice ?? 0) * (1 - globalDiscount / 100))}</span>
+                          <span className="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg mb-1 uppercase tracking-tighter">
+                            {p.discount ? `${p.discount}% OFF` : `${globalDiscount}% OFF`}
+                          </span>
+                          <span className="text-sm md:text-xl font-black text-red-500 tracking-tighter">
+                            {formatCurrency(Number(p.sellPrice ?? 0) * (1 - (p.discount || globalDiscount) / 100))}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -606,7 +613,7 @@ export const PublicStorefront: React.FC = () => {
                         className="py-3 bg-surface-bg border border-surface-border rounded-xl text-[8px] font-black tracking-widest hover:bg-surface-card transition-all flex items-center justify-center gap-2 active:scale-95"
                       >
                         {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
-                        Get quate
+                        Get Quote
                       </button>
                       <button 
                         onClick={() => {

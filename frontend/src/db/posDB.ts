@@ -12,6 +12,7 @@ export interface LocalProduct {
   status: 'ACTIVE' | 'INACTIVE';
   imageUrl?: string;
   soldCount?: number;
+  discount?: number;
   createdAt: string;
   updatedAt: string;
 }

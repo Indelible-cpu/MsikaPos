@@ -85,13 +85,13 @@ const AuditLogsPage: React.FC = () => {
              <div className="w-8 h-8 bg-primary-500/10 rounded-lg flex items-center justify-center text-primary-500 border border-primary-500/20">
                 <History className="w-4 h-4" />
              </div>
-             <h1 className="text-2xl font-black tracking-tighter uppercase">Audit & Security Logs</h1>
+             <h1 className="text-2xl font-bold tracking-tight">Audit & Security Logs</h1>
           </div>
-          <p className="text-[10px] font-black text-surface-text/40 tracking-widest uppercase">Trace system activity and administrative actions</p>
+          <p className="text-[10px] font-medium text-surface-text/40 tracking-wider">Trace system activity and administrative actions</p>
         </div>
         <button 
           onClick={handleExport}
-          className="btn-secondary !px-6 !py-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase"
+          className="btn-secondary !px-6 !py-4 flex items-center gap-2 text-[10px] font-bold tracking-wider"
         >
           <FileSpreadsheet className="w-4 h-4" /> Export Audit CSV
         </button>
@@ -104,7 +104,7 @@ const AuditLogsPage: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Search by action, user, or details..."
-                className="input-field w-full pl-12 text-xs font-bold py-4"
+                className="input-field w-full pl-12 text-xs font-medium py-4"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -115,7 +115,7 @@ const AuditLogsPage: React.FC = () => {
                   key={t}
                   onClick={() => setTypeFilter(t)}
                   className={clsx(
-                    "px-6 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all border uppercase",
+                    "px-6 py-2 rounded-xl text-[9px] font-bold tracking-wider transition-all border",
                     typeFilter === t 
                       ? "bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20" 
                       : "bg-surface-card border-surface-border text-surface-text/40 hover:bg-surface-border/50"
@@ -130,7 +130,7 @@ const AuditLogsPage: React.FC = () => {
         <div className="bg-surface-card border border-surface-border rounded-3xl overflow-hidden shadow-sm">
            <table className="w-full text-left border-collapse">
               <thead>
-                 <tr className="bg-surface-bg/50 border-b border-surface-border text-[9px] font-black tracking-widest text-surface-text/30 uppercase">
+                 <tr className="bg-surface-bg/50 border-b border-surface-border text-[9px] font-bold tracking-wider text-surface-text/30">
                     <th className="px-8 py-6">Timestamp</th>
                     <th className="px-8 py-6">User</th>
                     <th className="px-8 py-6">Action</th>
@@ -168,7 +168,7 @@ const AuditLogsPage: React.FC = () => {
                          </div>
                       </td>
                       <td className="px-8 py-6">
-                         <p className="text-[10px] font-bold text-surface-text/60 leading-relaxed uppercase">{log.details}</p>
+                         <p className="text-xs font-bold text-surface-text/70 leading-relaxed">{log.details}</p>
                       </td>
                    </tr>
                  ))}

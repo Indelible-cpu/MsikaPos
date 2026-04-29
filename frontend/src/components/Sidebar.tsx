@@ -9,6 +9,8 @@ import api from '../api/client';
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const [pendingCount, setPendingCount] = React.useState(0);
+  const [branches, setBranches] = React.useState<any[]>([]);
+  const [activeBranchId, setActiveBranchId] = React.useState(localStorage.getItem('activeBranchId') || '');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
 
@@ -52,12 +54,31 @@ const Sidebar: React.FC = () => {
       }
       const storedLogo = localStorage.getItem('companyLogo');
       if (storedLogo) setShopLogo(storedLogo);
+      
+      if (isSuperAdmin) {
+        try {
+          const res = await api.get('/branches');
+          setBranches(res.data.data);
+        } catch { /* silent */ }
+      }
+      
       fetchPending();
     };
     loadSidebar();
     const interval = setInterval(fetchPending, 15000); // Poll every 15s
     return () => clearInterval(interval);
-  }, [fetchPending]);
+  }, [fetchPending, isSuperAdmin]);
+
+  const handleBranchSwitch = (branchId: string) => {
+    if (branchId === '') {
+      localStorage.removeItem('activeBranchId');
+    } else {
+      localStorage.setItem('activeBranchId', branchId);
+    }
+    setActiveBranchId(branchId);
+    toast.success('Switching branch context...');
+    setTimeout(() => window.location.reload(), 800);
+  };
 
   return (
     <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0 overflow-hidden">
@@ -70,6 +91,23 @@ const Sidebar: React.FC = () => {
           <div className="text-[10px] font-black text-primary-500 tracking-[0.3em] opacity-80 uppercase">Cloud Powered POS</div>
           <div className="w-12 h-1 bg-primary-500/20 mx-auto rounded-full"></div>
         </div>
+
+        {isSuperAdmin && branches.length > 0 && (
+          <div className="w-full mt-6 px-2">
+            <label className="text-[8px] font-black tracking-widest text-surface-text/30 uppercase mb-2 block">Switch Branch View</label>
+            <select 
+              title="Select active branch"
+              value={activeBranchId}
+              onChange={(e) => handleBranchSwitch(e.target.value)}
+              className="w-full bg-surface-bg border border-surface-border rounded-xl px-4 py-2.5 text-[10px] font-black tracking-widest uppercase outline-none focus:border-primary-500 transition-all appearance-none text-center cursor-pointer"
+            >
+              <option value="">All Branches (HQ)</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Navigation - Scrollable */}

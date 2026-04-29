@@ -54,7 +54,7 @@ const POSPage: React.FC = () => {
   const [custSearch, setCustSearch] = useState('');
   
   // Full Registration State for POS
-  const [custForm, setCustForm] = useState({ 
+  const [custForm, setCustForm] = useState(() => ({ 
     name: '', 
     phone: '',
     idNumber: '',
@@ -62,7 +62,7 @@ const POSPage: React.FC = () => {
     livePhoto: '',
     fingerprintData: '',
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  });
+  }));
 
   const [useCamera, setUseCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -393,7 +393,15 @@ const POSPage: React.FC = () => {
         }
         setSelectedCustomerId(existingCustomer.id);
         setIsAddingCustomer(false);
-        setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '', fingerprintData: '' });
+      setCustForm({ 
+        name: '', 
+        phone: '', 
+        idNumber: '', 
+        village: '', 
+        livePhoto: '', 
+        fingerprintData: '', 
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] 
+      });
         toast.success('Customer verified');
         if (paymentMode === 'Credit') handleCheckout();
         return;
@@ -416,7 +424,15 @@ const POSPage: React.FC = () => {
       });
       setSelectedCustomerId(id);
       setIsAddingCustomer(false);
-      setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '', fingerprintData: '' });
+      setCustForm({ 
+        name: '', 
+        phone: '', 
+        idNumber: '', 
+        village: '', 
+        livePhoto: '', 
+        fingerprintData: '', 
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] 
+      });
       toast.success('Customer added');
       if (paymentMode === 'Credit') handleCheckout();
     } catch {
@@ -481,23 +497,23 @@ const POSPage: React.FC = () => {
                       <div className="space-y-4">
                         <div className="space-y-1">
                           <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Full name</label>
-                          <input required type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. John Phiri" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
+                          <input required id="cust-name" title="Full name" aria-label="Full name" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. John Phiri" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Phone number</label>
-                          <input required type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. 0881234567 or +265..." value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
+                          <input required id="cust-phone" title="Phone number" aria-label="Phone number" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. 0881234567 or +265..." value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">National ID (8 chars)</label>
-                          <input type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. ABC12345" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
+                          <input id="cust-id" title="National ID" aria-label="National ID" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. ABC12345" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Village / location</label>
-                          <input type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. Lilongwe" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
+                          <input id="cust-village" title="Village / location" aria-label="Village / location" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. Lilongwe" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black tracking-widest text-rose-500 pl-1 uppercase">Due date (Required for credit)</label>
-                          <input required type="date" className="input-field w-full py-3 px-4 font-black border-rose-500/30" value={custForm.dueDate} onChange={e => setCustForm({...custForm, dueDate: e.target.value})} />
+                          <input required id="cust-due-date" title="Due date" aria-label="Due date" type="date" className="input-field w-full py-3 px-4 font-black border-rose-500/30" value={custForm.dueDate} onChange={e => setCustForm({...custForm, dueDate: e.target.value})} />
                         </div>
                       </div>
 

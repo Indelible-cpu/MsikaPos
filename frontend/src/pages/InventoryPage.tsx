@@ -65,6 +65,7 @@ const InventoryPage: React.FC = () => {
     categoryId: 0,
     isService: false,
     imageUrl: '',
+    discount: 0,
   });
 
   const products = useLiveQuery(
@@ -127,6 +128,7 @@ const InventoryPage: React.FC = () => {
       categoryId: editingProduct?.categoryId || defaultCatId,
       isService: editingProduct?.isService || false,
       imageUrl: editingProduct?.imageUrl || '',
+      discount: editingProduct?.discount || 0,
     });
   }, [categories, editingProduct]);
 
@@ -174,17 +176,18 @@ const InventoryPage: React.FC = () => {
     setIsAddModalOpen(true);
   }, [resetForm]);
 
-  const openEditModal = (product: LocalProduct) => {
-    setEditingProduct(product);
+  const openEditModal = (p: LocalProduct) => {
+    setEditingProduct(p);
     setFormData({
-      name: product.name,
-      sku: product.sku,
-      costPrice: product.costPrice,
-      sellPrice: product.sellPrice,
-      quantity: product.quantity,
-      categoryId: product.categoryId,
-      isService: product.isService || false,
-      imageUrl: product.imageUrl || '',
+      name: p?.name || '',
+      sku: p?.sku || '',
+      costPrice: p?.costPrice || 0,
+      sellPrice: p?.sellPrice || 0,
+      quantity: p?.quantity || 0,
+      categoryId: p?.categoryId || (categories?.[0]?.id || 0),
+      isService: p?.isService || false,
+      imageUrl: p?.imageUrl || '',
+      discount: p?.discount || 0,
     });
     setIsAddModalOpen(true);
   };
@@ -579,6 +582,10 @@ const InventoryPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-sell">Sell price</label>
               <input required id="product-sell" type="number" className="input-field w-full py-3 px-4 font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-black tracking-widest text-rose-500 ml-1 uppercase" htmlFor="product-discount">Specific Discount %</label>
+              <input id="product-discount" type="number" className="input-field w-full py-3 px-4 font-black text-rose-500 bg-rose-500/5 border-rose-500/20" title="Discount percentage" aria-label="Discount percentage" value={formData.discount} onChange={(e) => setFormData({...formData, discount: Math.min(100, Math.max(0, Number(e.target.value)))})} onFocus={(e) => e.target.select()} />
             </div>
             {!formData.isService && (
               <div className="space-y-1 col-span-2">

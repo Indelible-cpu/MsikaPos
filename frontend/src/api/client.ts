@@ -16,16 +16,19 @@ const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
   const token = localStorage.getItem('token');
+  const activeBranchId = localStorage.getItem('activeBranchId');
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log('Using MsikaPos Backend Token');
   } else {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       config.headers.Authorization = `Bearer ${session.access_token}`;
-      console.log('Using Supabase Token');
     }
+  }
+
+  if (activeBranchId) {
+    config.headers['x-branch-id'] = activeBranchId;
   }
   
   return config;

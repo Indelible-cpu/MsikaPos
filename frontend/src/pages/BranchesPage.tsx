@@ -21,8 +21,15 @@ interface Branch {
   phone: string;
   email?: string;
   facebook?: string;
+  instagram?: string;
+  whatsapp?: string;
   slogan?: string;
   logo?: string;
+  managerName?: string;
+  tinNumber?: string;
+  openingTime?: string;
+  closingTime?: string;
+  status?: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
 }
 
 const BranchesPage: React.FC = () => {
@@ -32,14 +39,22 @@ const BranchesPage: React.FC = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [formData, setFormData] = useState({ 
     name: '', 
     address: '', 
     phone: '', 
     email: '', 
     facebook: '', 
+    instagram: '',
+    whatsapp: '',
     slogan: '', 
-    logo: '' 
+    logo: '',
+    managerName: '',
+    tinNumber: '',
+    openingTime: '08:00',
+    closingTime: '18:00',
+    status: 'ACTIVE' as const
   });
 
   const fetchBranches = useCallback(async () => {
@@ -69,30 +84,70 @@ const BranchesPage: React.FC = () => {
     { label: 'NETWORK STATUS', value: 'Active', icon: MapPin, color: 'text-amber-500' },
   ];
 
-  const handleAddBranch = async (e: React.FormEvent) => {
+  const handleSaveBranch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isSuperAdmin) {
-      toast.error('Access Denied: Only Super Admins can add branches');
-      return;
-    }
-    if (!/^\d{10}$|^\d{13}$/.test(formData.phone)) {
-      toast.error('Branch contact number must be exactly 10 or 13 digits');
+      toast.error('Access Denied');
       return;
     }
     setLoading(true);
     try {
-      await api.post('/branches', formData);
-      await AuditService.log('BRANCH_ADD', `Added new branch: ${formData.name} at ${formData.address}`);
-      toast.success('Branch added successfully');
+      if (editingBranch) {
+        await api.put(`/branches/${editingBranch.id}`, formData);
+        await AuditService.log('BRANCH_UPDATE', `Updated branch: ${formData.name}`);
+        toast.success('Branch updated successfully');
+      } else {
+        await api.post('/branches', formData);
+        await AuditService.log('BRANCH_ADD', `Added branch: ${formData.name}`);
+        toast.success('Branch added successfully');
+      }
       setIsModalOpen(false);
-      setFormData({ name: '', address: '', phone: '', email: '', facebook: '', slogan: '', logo: '' });
+      setEditingBranch(null);
       fetchBranches();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err.response?.data?.message || 'Failed to add branch');
+      toast.error(err.response?.data?.message || 'Operation failed');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteBranch = async (id: number) => {
+    if (!window.confirm('Are you sure? This will remove all associated data access.')) return;
+    setLoading(true);
+    try {
+      await api.delete(`/branches/${id}`);
+      await AuditService.log('BRANCH_DELETE', `Deleted branch ID: ${id}`);
+      toast.success('Branch removed');
+      fetchBranches();
+      setIsModalOpen(false);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Delete failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEditModal = (branch: Branch) => {
+    setEditingBranch(branch);
+    setFormData({
+      name: branch.name || '',
+      address: branch.address || '',
+      phone: branch.phone || '',
+      email: branch.email || '',
+      facebook: branch.facebook || '',
+      instagram: branch.instagram || '',
+      whatsapp: branch.whatsapp || '',
+      slogan: branch.slogan || '',
+      logo: branch.logo || '',
+      managerName: branch.managerName || '',
+      tinNumber: branch.tinNumber || '',
+      openingTime: branch.openingTime || '08:00',
+      closingTime: branch.closingTime || '18:00',
+      status: branch.status || 'ACTIVE'
+    });
+    setIsModalOpen(true);
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -192,18 +247,21 @@ const BranchesPage: React.FC = () => {
                 </div>
 
                 <div className="flex gap-3 mt-8">
-                   {isSuperAdmin && (
-                     <button className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest hover:bg-primary-500/5 transition-all active:scale-95 shadow-sm uppercase">
-                        Configure
-                     </button>
-                   )}
+                  {isSuperAdmin && (
                     <button 
-                      onClick={async () => {
-                        localStorage.setItem('currentBranch', JSON.stringify(branch));
-                        await AuditService.log('BRANCH_SWITCH', `Administrator switched context to branch: ${branch.name}`);
+                      onClick={() => openEditModal(branch)}
+                      className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest hover:bg-primary-500/5 transition-all active:scale-95 shadow-sm uppercase"
+                    >
+                        Configure
+                    </button>
+                  )}
+                    <button 
+                      onClick={() => {
+                        localStorage.setItem('activeBranchId', branch.id.toString());
                         toast.success(`Switched to ${branch.name}`);
+                        setTimeout(() => window.location.reload(), 500);
                       }}
-                      className="p-4 bg-primary-500 text-white rounded-2xl shadow-xl shadow-primary-500/20 active:scale-95 transition-all"
+                      className="p-4 bg-primary-500 text-white rounded-2xl shadow-xl shadow-primary-500/20 active:scale-95 transition-all flex items-center justify-center"
                       title="Switch to this branch"
                       aria-label={`Switch to ${branch.name}`}
                     >
@@ -229,40 +287,108 @@ const BranchesPage: React.FC = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card border border-surface-border rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
               <div className="p-8 border-b border-surface-border flex justify-between items-center bg-surface-bg/30">
-                <h3 className="text-xl font-black tracking-tighter uppercase">New Branch Registration</h3>
+                <h3 className="text-xl font-black tracking-tighter uppercase">{editingBranch ? 'Update Branch Settings' : 'New Branch Registration'}</h3>
               </div>
-              <form onSubmit={handleAddBranch} className="p-8 space-y-6 overflow-y-auto custom-scrollbar">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
+              <form onSubmit={handleSaveBranch} className="p-8 space-y-10 overflow-y-auto custom-scrollbar">
+                {/* General Information */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-surface-border pb-3">
+                    <div className="w-8 h-8 bg-primary-500/10 rounded-lg flex items-center justify-center text-primary-500">
+                      <Store className="w-4 h-4" />
+                    </div>
+                    <h4 className="text-[10px] font-black tracking-[0.2em] uppercase text-surface-text/40">General Information</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch name *</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch Name *</label>
                       <input required className="input-field w-full py-3 px-4 font-black" placeholder="eg. Domasi Branch" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Location address *</label>
-                      <input required className="input-field w-full py-3 px-4 font-black" placeholder="eg. Zomba Main Road" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch Manager</label>
+                      <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. John Doe" value={formData.managerName} onChange={e => setFormData({...formData, managerName: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Phone contact *</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="br-tin">Tax Identification (TIN)</label>
+                      <input id="br-tin" title="Tax Identification Number" aria-label="Tax Identification Number" className="input-field w-full py-3 px-4 font-black" placeholder="eg. TIN-123456" value={formData.tinNumber} onChange={e => setFormData({...formData, tinNumber: e.target.value})} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="br-status">Operational Status</label>
+                      <select id="br-status" title="Operational Status" aria-label="Operational Status" className="input-field w-full py-3 px-4 font-black" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as any})}>
+                        <option value="ACTIVE">Operational (Active)</option>
+                        <option value="INACTIVE">Temporarily Closed</option>
+                        <option value="MAINTENANCE">Under Maintenance</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact & Location */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-surface-border pb-3">
+                    <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <h4 className="text-[10px] font-black tracking-[0.2em] uppercase text-surface-text/40">Contact & Location</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5 col-span-1 md:col-span-2">
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Physical Address *</label>
+                      <input required className="input-field w-full py-3 px-4 font-black" placeholder="eg. Zomba Main Road, Near Post Office" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Primary Phone *</label>
                       <input required className="input-field w-full py-3 px-4 font-black" placeholder="eg. +265..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Email address</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Official Email</label>
                       <input type="email" className="input-field w-full py-3 px-4 font-black" placeholder="eg. branch@msikapos.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                     </div>
                   </div>
-                  
-                  <div className="space-y-4">
+                </div>
+
+                {/* Operating Hours */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-surface-border pb-3">
+                    <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <h4 className="text-[10px] font-black tracking-[0.2em] uppercase text-surface-text/40">Operating Hours</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Facebook Page (Optional)</label>
-                      <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. facebook.com/msikapos" value={formData.facebook} onChange={e => setFormData({...formData, facebook: e.target.value})} />
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="br-open">Opening Time</label>
+                      <input id="br-open" title="Opening Time" aria-label="Opening Time" type="time" placeholder="08:00" className="input-field w-full py-3 px-4 font-black" value={formData.openingTime} onChange={e => setFormData({...formData, openingTime: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch slogan</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="br-close">Closing Time</label>
+                      <input id="br-close" title="Closing Time" aria-label="Closing Time" type="time" placeholder="18:00" className="input-field w-full py-3 px-4 font-black" value={formData.closingTime} onChange={e => setFormData({...formData, closingTime: e.target.value})} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social & Branding */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-surface-border pb-3">
+                    <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <h4 className="text-[10px] font-black tracking-[0.2em] uppercase text-surface-text/40">Social & Branding</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">WhatsApp Number</label>
+                      <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. 265..." value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Instagram Handle</label>
+                      <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. @msikapos_branch" value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch Slogan</label>
                       <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. Excellence in Service" value={formData.slogan} onChange={e => setFormData({...formData, slogan: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch logo</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch Logo</label>
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center overflow-hidden shrink-0">
                           {formData.logo ? (
@@ -280,10 +406,21 @@ const BranchesPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 mt-8">
-                  <button type="submit" className="w-full btn-primary h-16 font-black tracking-widest shadow-2xl shadow-primary-500/20 uppercase">Register Branch Office</button>
+                  <button type="submit" className="w-full btn-primary h-16 font-black tracking-widest shadow-2xl shadow-primary-500/20 uppercase">
+                    {editingBranch ? 'Save Configuration' : 'Register Branch Office'}
+                  </button>
+                  {editingBranch && (
+                    <button 
+                      type="button" 
+                      onClick={() => handleDeleteBranch(editingBranch.id)}
+                      className="w-full h-14 bg-red-500/5 text-red-500 text-[10px] font-black tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20 rounded-2xl uppercase"
+                    >
+                      Delete Branch
+                    </button>
+                  )}
                   <button 
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={() => { setIsModalOpen(false); setEditingBranch(null); }}
                     className="w-full h-14 bg-surface-bg text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all border border-surface-border rounded-2xl uppercase"
                   >
                     Close Window

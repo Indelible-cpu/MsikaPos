@@ -8,16 +8,25 @@ import {
   Package, 
   Loader2, 
   Search,
-  Send,
-  Phone
+  Send
 } from 'lucide-react';
 import api from '../api/client';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import Modal from '../components/Modal';
+import { type LocalProduct } from '../db/posDB';
+
+interface Inquiry {
+  id: number;
+  status: string;
+  items: string;
+  notes?: string;
+  customer?: { fullname: string; phone: string };
+  createdAt: string;
+}
 
 const InquiriesPage: React.FC = () => {
-  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -25,7 +34,7 @@ const InquiriesPage: React.FC = () => {
 
   // Response Modal State
   const [isResponseOpen, setIsResponseOpen] = useState(false);
-  const [selectedInquiry, setSelectedInquiry] = useState<any>(null);
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [responseText, setResponseText] = useState('');
   const [responsePrice, setResponsePrice] = useState('');
   const [sendingResponse, setSendingResponse] = useState(false);
@@ -34,7 +43,7 @@ const InquiriesPage: React.FC = () => {
     try {
       const res = await api.get('/inquiries');
       setInquiries(res.data.data);
-    } catch (error) {
+    } catch {
       toast.error('Failed to fetch inquiries');
     } finally {
       setLoading(false);
@@ -47,7 +56,7 @@ const InquiriesPage: React.FC = () => {
       if (res.data?.data?.phone) {
         setCompanyPhone(res.data.data.phone);
       }
-    } catch (error) {
+    } catch {
       console.error("Failed to fetch settings");
     }
   }, []);
@@ -64,7 +73,7 @@ const InquiriesPage: React.FC = () => {
       await api.put(`/inquiries/${id}`, { status: newStatus });
       toast.success(`Inquiry marked as ${newStatus}`);
       fetchInquiries();
-    } catch (error) {
+    } catch {
       toast.error('Update failed');
     }
   };
@@ -85,17 +94,17 @@ const InquiriesPage: React.FC = () => {
       setResponseText('');
       setResponsePrice('');
       fetchInquiries();
-    } catch (error) {
+    } catch {
       toast.error('Failed to send response');
     } finally {
       setSendingResponse(false);
     }
   };
 
-  const openWhatsApp = (inquiry: any) => {
+  const openWhatsApp = (inquiry: Inquiry) => {
     const phone = companyPhone || '1234567890'; // fallback
     const items = JSON.parse(inquiry.items || '[]');
-    const itemNames = items.map((i: any) => i.name).join(', ');
+    const itemNames = items.map((i: LocalProduct) => i.name).join(', ');
     const text = `Hello! Regarding the inquiry for: ${itemNames}.`;
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encoded}`, '_blank');
