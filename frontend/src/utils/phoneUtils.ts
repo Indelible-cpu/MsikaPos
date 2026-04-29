@@ -5,7 +5,6 @@ export const normalizePhone = (phone: string): string => {
   let clean = phone.replace(/[^\d+]/g, '');
   
   // Remove leading + for logic
-  let hasPlus = clean.startsWith('+');
   let digits = clean.replace('+', '');
 
   // Malawi specific logic (+265)
@@ -24,14 +23,21 @@ export const normalizePhone = (phone: string): string => {
     return `+${digits}`;
   }
 
-  // Fallback: Ensure it starts with + if it's long enough
-  if (digits.length >= 7 && !hasPlus) {
-    return `+${digits}`;
-  }
+  return clean; // If not valid malawian format, return whatever was input so validator can catch it
+};
 
-  return clean;
+export const isValidMalawianPhone = (phone: string): boolean => {
+  if (!phone) return false;
+  let clean = phone.replace(/[^\d+]/g, '');
+  let digits = clean.replace('+', '');
+  
+  if (digits.startsWith('0') && digits.length === 10) return true;
+  if (digits.length === 9 && (digits.startsWith('8') || digits.startsWith('9'))) return true;
+  if (digits.startsWith('265') && digits.length === 12) return true;
+  
+  return false;
 };
 
 export const formatCurrency = (amount: number): string => {
-  return `MK${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `MK${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };

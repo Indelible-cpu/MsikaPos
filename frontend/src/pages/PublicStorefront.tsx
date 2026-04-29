@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings } from 'lucide-react';
 import { AuditService } from '../services/AuditService';
+import { formatCurrency } from '../utils/phoneUtils';
+import { db } from '../db/posDB';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
@@ -12,6 +14,7 @@ interface StoreProduct {
   imageUrl?: string;
   description?: string;
   isService?: boolean;
+  quantity?: number;
   category?: { name?: string; title?: string };
 }
 
@@ -42,6 +45,8 @@ export const PublicStorefront: React.FC = () => {
   const categoryNavRef = useRef<HTMLDivElement>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('fontSize') || 'medium');
+  const [taxConfig, setTaxConfig] = useState<{ rate: number, inclusive: boolean }>({ rate: 0, inclusive: true });
+  const [globalDiscount, setGlobalDiscount] = useState<number>(0);
 
   const CUSTOM_CATEGORIES = [
     'Phone Accessories',
@@ -202,6 +207,12 @@ export const PublicStorefront: React.FC = () => {
         if (s.whatsapp) setWhatsappNumber(s.whatsapp);
         if (s.logo) setShopLogo(s.logo);
       }
+      
+      const localTax = await db.settings.get('tax_config');
+      if (localTax?.value) setTaxConfig(localTax.value as { rate: number; inclusive: boolean });
+      
+      const localDiscount = await db.settings.get('global_discount');
+      if (localDiscount?.value) setGlobalDiscount(localDiscount.value as number);
     } catch (err) {
       console.error('Storefront load error:', err);
       toast.error('Failed to load marketplace. Please refresh.');
@@ -429,8 +440,8 @@ export const PublicStorefront: React.FC = () => {
       <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <h2 className="text-xs md:text-sm font-black tracking-tighter leading-none text-primary-500">Market place</h2>
-            <p className="text-[7px] md:text-[9px] font-bold text-surface-text/40 mt-1 uppercase tracking-widest">Search</p>
+            <h2 className="text-sm md:text-lg font-black tracking-tighter leading-none text-primary-500">Market place</h2>
+            <p className="text-[7px] md:text-[9px] font-bold text-surface-text/40 mt-1 lowercase tracking-widest">premium products & services</p>
           </div>
           
           <div className="relative w-full md:max-w-sm">
@@ -486,7 +497,7 @@ export const PublicStorefront: React.FC = () => {
                       ? 'bg-primary-500 text-white border-white/20' 
                       : 'bg-emerald-600 text-white border-white/20'
                   }`}>
-                    {p.isService ? 'SERVICE' : 'STOCK'}
+                    {p.isService ? 'Service' : 'Product'}
                   </div>
                   
                   <div className="flex flex-col gap-2 pointer-events-auto">
@@ -520,14 +531,29 @@ export const PublicStorefront: React.FC = () => {
                         {p.category?.name || 'FEATURED'}
                       </div>
                     </div>
-                    <h3 className="font-black text-xs md:text-lg tracking-tight leading-tight group-hover:text-primary-500 transition-colors mb-2">{p.name}</h3>
+                    <h3 className="font-black text-xs md:text-lg tracking-tight leading-tight group-hover:text-primary-500 transition-colors mb-2">
+                      {p.name.charAt(0).toUpperCase() + p.name.slice(1).toLowerCase()}
+                    </h3>
+                    {!p.isService && p.quantity !== undefined && (
+                      <div className={`text-[9px] font-black tracking-widest ${p.quantity > 2 ? 'text-green-500' : 'text-yellow-500'}`}>
+                        {p.quantity > 2 ? '(In Stock)' : '(Low Stock)'}
+                      </div>
+                    )}
                   </div>
                   <div className="mt-auto pt-4 border-t border-surface-border/50 flex flex-col gap-3">
-                    <div className="flex items-end justify-between">
+                    <div className="flex items-start justify-between w-full">
                       <div className="flex flex-col">
                         <span className="text-[7px] md:text-[9px] font-black text-surface-text/20">PRICE</span>
-                        <p className="text-sm md:text-xl font-black text-primary-500 tracking-tighter">mk{Number(p.sellPrice ?? 0).toLocaleString()}</p>
+                        <p className={`text-sm md:text-xl font-black tracking-tighter ${globalDiscount > 0 ? 'text-surface-text/40 line-through text-xs md:text-sm' : 'text-primary-500'}`}>
+                          {formatCurrency(Number(p.sellPrice ?? 0))}
+                        </p>
                       </div>
+                      {globalDiscount > 0 && (
+                        <div className="flex flex-col items-end pl-2">
+                          <span className="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg mb-1">{globalDiscount}% OFF</span>
+                          <span className="text-sm md:text-xl font-black text-red-500 tracking-tighter">{formatCurrency(Number(p.sellPrice ?? 0) * (1 - globalDiscount / 100))}</span>
+                        </div>
+                      )}
                       
                       <button 
                         onClick={(e) => addToCart(p, e)}
@@ -550,7 +576,7 @@ export const PublicStorefront: React.FC = () => {
                       <button 
                         onClick={() => handleWhatsApp(p)}
                         title="Contact on WhatsApp"
-                        className="py-3 bg-emerald-500 text-white rounded-xl text-[8px] font-black tracking-widest hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-emerald-500/10"
+                        className="w-8 md:w-10 h-8 md:h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center hover:bg-emerald-600 transition-all active:scale-95 shadow-lg shadow-emerald-500/10"
                       >
                         <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -604,8 +630,8 @@ export const PublicStorefront: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-black text-primary-500 uppercase tracking-widest mb-0.5">{item.category?.name || 'Item'}</p>
-                      <h4 className="font-black text-sm truncate">{item.name}</h4>
-                      <p className="text-xs font-bold text-surface-text/40">mk{Number(item.sellPrice ?? 0).toLocaleString()}</p>
+                      <h4 className="font-black text-sm truncate">{item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase()}</h4>
+                      <p className="text-xs font-bold text-surface-text/40">{formatCurrency(Number(item.sellPrice ?? 0))}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button 
@@ -629,12 +655,43 @@ export const PublicStorefront: React.FC = () => {
             </div>
 
             <div className="p-8 bg-surface-bg/50 border-t border-surface-border flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-black text-surface-text/40">Estimated Total</p>
-                <p className="text-2xl font-black text-primary-500 tracking-tighter">
-                  MK {cartItems.reduce((acc, item) => acc + Number(item.sellPrice ?? 0), 0).toLocaleString()}
-                </p>
-              </div>
+              {(() => {
+                const subtotal = cartItems.reduce((acc, item) => {
+                  const price = Number(item.sellPrice ?? 0);
+                  const discountedPrice = price * (1 - globalDiscount / 100);
+                  return acc + discountedPrice;
+                }, 0);
+                let taxAmount = 0;
+                let total = subtotal;
+                if (taxConfig.rate > 0) {
+                  if (taxConfig.inclusive) {
+                    taxAmount = subtotal - (subtotal / (1 + (taxConfig.rate / 100)));
+                  } else {
+                    taxAmount = subtotal * (taxConfig.rate / 100);
+                    total = subtotal + taxAmount;
+                  }
+                }
+                return (
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="flex items-center justify-between text-xs font-black text-surface-text/40">
+                      <span>Subtotal {globalDiscount > 0 && `(with ${globalDiscount}% discount)`}</span>
+                      <span>{formatCurrency(subtotal)}</span>
+                    </div>
+                    {taxConfig.rate > 0 && (
+                      <div className="flex items-center justify-between text-xs font-black text-surface-text/40">
+                        <span>Tax ({taxConfig.rate}% {taxConfig.inclusive ? 'Inc.' : 'Exc.'})</span>
+                        <span>{formatCurrency(taxAmount)}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between border-t border-surface-border pt-2 mt-1">
+                      <p className="text-sm font-black text-surface-text/40">Estimated Total</p>
+                      <p className="text-2xl font-black text-primary-500 tracking-tighter">
+                        {formatCurrency(total)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
               <button 
                 onClick={() => setIsCartOpen(false)}
                 className="w-full py-5 bg-primary-500 text-white rounded-2xl text-xs font-black tracking-[0.2em] shadow-xl shadow-primary-500/30 hover:scale-[1.02] active:scale-95 transition-all"

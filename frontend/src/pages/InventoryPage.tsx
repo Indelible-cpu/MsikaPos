@@ -40,6 +40,21 @@ const InventoryPage: React.FC = () => {
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [globalDiscount, setGlobalDiscount] = useState<number>(0);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      const gd = await db.settings.get('global_discount');
+      if (gd?.value !== undefined) setGlobalDiscount(gd.value as number);
+    };
+    loadSettings();
+  }, []);
+
+  const handleSaveDiscount = async (val: number) => {
+    setGlobalDiscount(val);
+    await db.settings.put({ key: 'global_discount', value: val });
+    toast.success('Global discount updated');
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -101,16 +116,7 @@ const InventoryPage: React.FC = () => {
 
   const resetForm = useCallback(async (scannedSku?: string) => {
     const defaultCatId = categories?.[0]?.id || 0;
-    let initialSku = scannedSku || '';
-    
-    if (!scannedSku && !editingProduct) {
-      // Auto-generate SKU based on first category
-      const cat = categories?.[0];
-      if (cat) {
-        const count = products?.filter(p => p.categoryId === cat.id).length || 0;
-        initialSku = `${cat.slug.substring(0, 3).toUpperCase()}${String(count + 1).padStart(4, '0')}`;
-      }
-    }
+    const initialSku = scannedSku || generateNumericId().toString();
 
     setFormData({
       name: editingProduct?.name || '',
@@ -122,7 +128,7 @@ const InventoryPage: React.FC = () => {
       isService: editingProduct?.isService || false,
       imageUrl: editingProduct?.imageUrl || '',
     });
-  }, [categories, products, editingProduct]);
+  }, [categories, editingProduct]);
 
   const handleExport = () => {
     if (!products || products.length === 0) {
@@ -321,6 +327,21 @@ const InventoryPage: React.FC = () => {
           <p className="text-[10px] font-black text-surface-text/40 tracking-widest uppercase">Manage stock levels and product catalog</p>
         </div>
         <div className="flex items-center gap-3">
+          {isSuperAdmin && (
+            <div className="flex items-center gap-2 mr-4 bg-surface-bg border border-surface-border rounded-xl px-3 py-2 hidden md:flex">
+              <label className="text-[10px] font-black tracking-widest uppercase text-surface-text/60">Global Discount %</label>
+              <input 
+                type="number" 
+                value={globalDiscount} 
+                onChange={(e) => handleSaveDiscount(Number(e.target.value))}
+                className="w-16 bg-transparent border-b border-primary-500 text-sm font-black text-center outline-none"
+                min="0" max="100"
+                title="Global Discount Percentage"
+                aria-label="Global Discount Percentage"
+                placeholder="%"
+              />
+            </div>
+          )}
           <button 
             onClick={() => setIsCategoryModalOpen(true)}
             className="btn-secondary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest"
@@ -524,9 +545,14 @@ const InventoryPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-sku">SKU / Barcode</label>
-              <div className="relative">
-                <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/30" />
-                <input required id="product-sku" type="text" className="input-field w-full pl-10 py-3 px-4 font-black" placeholder="Scan or type..." title="SKU / Barcode" aria-label="SKU / Barcode" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
+              <div className="relative flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/30" />
+                  <input required id="product-sku" type="text" className="input-field w-full pl-10 py-3 px-4 font-black" placeholder="Scan or type..." title="SKU / Barcode" aria-label="SKU / Barcode" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
+                </div>
+                <button type="button" onClick={() => setFormData({...formData, sku: generateNumericId().toString()})} className="px-4 py-3 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-black uppercase hover:bg-surface-card transition-all" title="Auto-generate SKU">
+                  Generate
+                </button>
               </div>
             </div>
             <div className="space-y-1">
