@@ -188,13 +188,19 @@ const POSPage: React.FC = () => {
     if (paymentMode === 'Credit') {
       if (!selectedCustomerId) {
         toast.error('Customer required for credit sale');
+        setIsAddingCustomer(true);
         setShowCustomerSelector(true);
         return;
       }
       const customer = await db.customers.get(selectedCustomerId);
       if (!customer?.livePhoto) {
         toast.error('Identity Verification Required: Credit sales require a customer photo');
+        setIsAddingCustomer(true);
         setShowCustomerSelector(true);
+        return;
+      }
+      if (customer.balance > 0) {
+        toast.error('Customer has an outstanding balance. Cannot issue another credit.');
         return;
       }
     }
@@ -249,6 +255,21 @@ const POSPage: React.FC = () => {
             balance: customer.balance + (paymentMode === 'Credit' ? finalTotal : 0),
             updatedAt: new Date().toISOString()
           });
+        }
+      }
+
+      // Increment soldCount for products
+      for (const item of cart) {
+        try {
+          const product = await db.products.get(item.product.id);
+          if (product) {
+            await db.products.update(item.product.id, {
+              soldCount: (product.soldCount || 0) + item.quantity,
+              updatedAt: new Date().toISOString()
+            });
+          }
+        } catch (e) {
+          console.error("Failed to update soldCount", e);
         }
       }
 
@@ -356,9 +377,26 @@ const POSPage: React.FC = () => {
       return;
     }
 
-    if (custForm.idNumber && custForm.idNumber.length !== 8) {
-      toast.error('National ID must be exactly 8 characters');
-      return;
+    if (custForm.idNumber) {
+      const idUpper = custForm.idNumber.toUpperCase();
+      if (!/^[A-Z0-9]{8}$/.test(idUpper)) {
+        toast.error('National ID must be exactly 8 alphanumeric characters');
+        return;
+      }
+      
+      const existingCustomer = await db.customers.where('idNumber').equals(idUpper).first();
+      if (existingCustomer) {
+        if (existingCustomer.name.toLowerCase() !== custForm.name.toLowerCase()) {
+          toast.error(`ID Mismatch! ID ${idUpper} is registered under a different name. Please correct it.`);
+          return;
+        }
+        setSelectedCustomerId(existingCustomer.id);
+        setIsAddingCustomer(false);
+        setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '', fingerprintData: '' });
+        toast.success('Customer verified');
+        if (paymentMode === 'Credit') handleCheckout();
+        return;
+      }
     }
 
     try {
@@ -751,8 +789,8 @@ const POSPage: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
                       { id: 'Cash', icon: Wallet, color: 'bg-primary-500' },
-                      { id: 'Card', icon: CreditCard, color: 'bg-blue-600', label: paymentConfig.bank },
-                      { id: 'Momo', icon: Smartphone, color: 'bg-emerald-600', label: paymentConfig.momo },
+                      { id: 'Card', icon: CreditCard, color: 'bg-blue-600', label: 'BANK' },
+                      { id: 'Momo', icon: Smartphone, color: 'bg-emerald-600', label: 'MOBILE MONEY' },
                       { id: 'Credit', icon: Users, color: 'bg-amber-600' }
                     ].map((mode) => (
                       <button 

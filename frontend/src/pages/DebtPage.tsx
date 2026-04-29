@@ -12,14 +12,14 @@ import {
   Camera,
   Fingerprint,
   Upload,
-  CheckCircle2,
-  Plus
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
+import { Receipt } from '../components/Receipt';
 
 // Malawian format validators
 const MALAWI_PHONE_REGEX = /^\d{10}$|^\d{13}$/;
@@ -32,6 +32,7 @@ const DebtPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
+  const [clearedReceipt, setClearedReceipt] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // Form State
   const [custForm, setCustForm] = useState({ 
@@ -169,12 +170,6 @@ const DebtPage: React.FC = () => {
               <h1 className="text-xl md:text-2xl font-black tracking-tighter">Customers & Debt</h1>
             </div>
 
-            <button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 px-6 h-12 bg-primary-500 text-white rounded-2xl font-black text-[10px] tracking-widest shadow-lg shadow-primary-500/20 active:scale-95 transition-all uppercase"
-            >
-              <Plus className="w-4 h-4" /> Add Customer
-            </button>
           </div>
 
           <div className="relative">
@@ -221,6 +216,7 @@ const DebtPage: React.FC = () => {
               <div className="flex flex-col gap-1 text-[10px] font-black text-surface-text/30 mb-6 tracking-widest uppercase">
                 <div className="flex items-center gap-2"><Phone className="w-3 h-3" /> {customer.phone}</div>
                 {customer.idNumber && <div className="flex items-center gap-2 mt-1">ID: {customer.idNumber}</div>}
+                {customer.fingerprintData && <div className="flex items-center gap-2 mt-1 text-emerald-500"><Fingerprint className="w-3 h-3" /> SECURED: {customer.fingerprintData.substring(0, 15)}...</div>}
               </div>
 
               <div className="pt-4 border-t border-surface-border flex justify-between items-end">
@@ -260,6 +256,25 @@ const DebtPage: React.FC = () => {
                       if (confirm(`Are you sure you want to clear MK ${selectedCustomer.balance.toLocaleString()} for ${selectedCustomer.name}? This cannot be undone.`)) {
                         try {
                           await db.customers.update(selectedCustomer.id, { balance: 0, updatedAt: new Date().toISOString() });
+                          
+                          setClearedReceipt({
+                            items: [{ 
+                              product: { name: 'Debt Clearance Payment', sellPrice: selectedCustomer.balance, costPrice: 0, id: 0, sku: 'DEBT-PAYMENT', categoryId: 0, quantity: 1, isService: true } as unknown as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+                              quantity: 1 
+                            }],
+                            total: selectedCustomer.balance,
+                            subtotal: selectedCustomer.balance,
+                            discount: 0,
+                            tax: 0,
+                            invoiceNo: `REC-${Date.now()}`,
+                            date: new Date().toISOString(),
+                            mode: 'Cash',
+                            paid: selectedCustomer.balance,
+                            change: 0,
+                            customerName: selectedCustomer.name,
+                            customerId: selectedCustomer.id
+                          });
+
                           setSelectedCustomer({ ...selectedCustomer, balance: 0 });
                           toast.success('Balance cleared successfully');
                         } catch {
@@ -413,6 +428,20 @@ const DebtPage: React.FC = () => {
             <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-bold">Create secure profile</button>
           </div>
         </form>
+      </Modal>
+
+      {/* Receipt Modal */}
+      <Modal isOpen={!!clearedReceipt} onClose={() => setClearedReceipt(null)} title="Payment Receipt" maxWidth="max-w-md">
+        {clearedReceipt && (
+           <div className="p-4 flex flex-col items-center">
+             <div className="bg-white p-4 shadow-xl border border-zinc-200 w-full flex justify-center" id="printable-receipt">
+               <Receipt {...clearedReceipt} />
+             </div>
+             <button onClick={() => { window.print(); setClearedReceipt(null); }} className="mt-6 btn-primary w-full max-w-xs !py-4 text-[10px] uppercase font-black tracking-widest">
+                Print Receipt & Close
+             </button>
+           </div>
+        )}
       </Modal>
     </div>
   );

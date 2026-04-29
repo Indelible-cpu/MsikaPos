@@ -11,6 +11,7 @@ export interface LocalProduct {
   isService: boolean;
   status: 'ACTIVE' | 'INACTIVE';
   imageUrl?: string;
+  soldCount?: number;
   createdAt: string;
   updatedAt: string;
 }

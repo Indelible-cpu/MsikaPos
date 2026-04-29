@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/posDB';
 import { useAuthStore } from '../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
@@ -51,7 +53,7 @@ interface DashboardStats {
   low_stock: number;
   credit_reminders: number;
   recent_activity: RecentActivity[];
-  chart_data: { date: string, total: number }[];
+  chart_data: { date?: string, name?: string, total?: number, revenue?: number }[];
 }
 
 
@@ -104,6 +106,8 @@ export default function Dashboard() {
     },
     refetchInterval: 30000,
   });
+  
+  const totalCredit = useLiveQuery(() => db.customers.toArray().then(docs => docs.reduce((sum, c) => sum + (c.balance || 0), 0)), []) || 0;
 
   const handleLogout = () => {
     logout();
@@ -267,12 +271,13 @@ export default function Dashboard() {
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md group">
                     <div className="flex justify-between items-start mb-4">
                       <div className="p-2 bg-amber-50 rounded-lg group-hover:bg-amber-500 group-hover:text-white transition-colors text-amber-500">
-                        <Package className="w-5 h-5" />
+                        <Users className="w-5 h-5" />
                       </div>
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">Active</span>
                     </div>
-                    <p className="text-zinc-700 text-xs font-bold mb-1">Active SKUs</p>
-                    <h2 className="text-3xl font-black text-zinc-900 tracking-tight">{statsData?.active_products || '0'}</h2>
-                    <p className="text-[10px] text-zinc-700 mt-2 font-medium">In current local database</p>
+                    <p className="text-zinc-700 text-xs font-bold mb-1">Total credit</p>
+                    <h2 className="text-3xl font-black text-zinc-900 tracking-tight">MK {totalCredit.toLocaleString()}</h2>
+                    <p className="text-[10px] text-zinc-700 mt-2 font-medium">Outstanding local balances</p>
                   </div>
 
                   <div className={`p-6 rounded-2xl shadow-sm border transition-all hover:shadow-md group ${statsData?.low_stock && statsData.low_stock > 0 ? 'bg-red-50 border-red-100' : 'bg-white border-zinc-100'}`}>
@@ -309,8 +314,9 @@ export default function Dashboard() {
                       
                       <div className="h-64 w-full flex items-end justify-between gap-3 px-2">
                         {statsData?.chart_data?.map((day, i) => {
-                          const maxTotal = Math.max(...(statsData.chart_data?.map(d => d.total) || [1]), 1);
-                          const height = (day.total / maxTotal) * 100;
+                          const val = day.total || day.revenue || 0;
+                          const maxTotal = Math.max(...(statsData.chart_data?.map((d) => d.total || d.revenue || 0) || [1]), 1);
+                          const height = (val / maxTotal) * 100;
                           return (
                             <div key={i} className="flex-1 flex flex-col items-center gap-3 group/bar">
                               <div className="w-full bg-zinc-50 rounded-t-xl relative h-full flex flex-col justify-end overflow-hidden">
@@ -326,10 +332,10 @@ export default function Dashboard() {
                                   />
                                 </svg>
                                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover/bar:opacity-100 transition-all shadow-xl whitespace-nowrap pointer-events-none">
-                                  MK {day.total.toLocaleString()}
+                                  MK {val.toLocaleString()}
                                 </div>
                               </div>
-                              <span className="text-[10px] font-black text-zinc-700 tracking-tighter">{day.date}</span>
+                              <span className="text-[10px] font-black text-zinc-700 tracking-tighter">{day.date || day.name}</span>
                             </div>
                           );
                         })}

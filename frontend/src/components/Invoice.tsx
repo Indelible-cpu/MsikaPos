@@ -148,7 +148,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
       </div>
 
       <div className="text-center pt-4 mt-4 border-t border-black border-dashed">
-        <p className="text-[9px] font-bold ">Payment expected by due date.</p>
+        <p className="text-[9px] font-bold uppercase leading-tight px-2">Warning: Failure to settle the balance by the due date will attract a 2% daily interest rate (MK {(total * 0.02).toLocaleString()} daily).</p>
         <p className="text-[11px] font-black mt-2">Thank you for your business!</p>
         <div className="mt-4 opacity-30 text-[7px] font-bold tracking-widest">Powered by MsikaPos Cloud POS</div>
       </div>

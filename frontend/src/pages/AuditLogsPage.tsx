@@ -79,7 +79,7 @@ const AuditLogsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+      <header className="bg-surface-card border-b border-surface-border px-4 md:px-6 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 bg-primary-500/10 rounded-lg flex items-center justify-center text-primary-500 border border-primary-500/20">
@@ -97,7 +97,7 @@ const AuditLogsPage: React.FC = () => {
         </button>
       </header>
 
-      <div className="px-6 md:px-12 py-8">
+      <div className="px-4 md:px-6 py-8">
         <div className="flex flex-col md:flex-row gap-4 mb-8">
            <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />

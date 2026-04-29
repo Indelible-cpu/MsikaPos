@@ -452,34 +452,57 @@ const SettingsPage: React.FC = () => {
                           <div className="text-xs text-surface-text/40 font-bold uppercase">Set global tax rate and calculation method</div>
                        </div>
                     </div>
-                    <div className="flex items-end gap-4 mt-2">
-                      <div className="flex-1">
-                        <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Tax Rate (%)</label>
-                        <input 
-                          type="number" 
-                          value={taxRate} 
-                          onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                          className="input-field w-full py-3 px-4 text-sm font-black shadow-inner bg-surface-bg text-surface-text rounded-lg border border-surface-border" 
-                          title="Set tax rate percentage"
-                          aria-label="Set tax rate percentage"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Tax Type</label>
-                        <select 
-                          value={taxInclusive ? 'inclusive' : 'exclusive'} 
-                          onChange={(e) => setTaxInclusive(e.target.value === 'inclusive')}
-                          className="input-field w-full py-3 px-4 text-sm font-black shadow-inner bg-surface-bg text-surface-text rounded-lg border border-surface-border"
-                          title="Select tax type"
-                          aria-label="Select tax type"
+                    <div className="space-y-6 mt-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => setTaxInclusive(true)}
+                          className={clsx(
+                            "p-6 rounded-2xl border-2 text-left transition-all",
+                            taxInclusive ? "bg-primary-500/5 border-primary-500 shadow-sm" : "bg-surface-bg border-surface-border opacity-50 hover:opacity-100"
+                          )}
                         >
-                          <option value="inclusive">Inclusive</option>
-                          <option value="exclusive">Exclusive</option>
-                        </select>
+                          <div className="flex items-center gap-3 mb-2">
+                             <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center", taxInclusive ? "bg-primary-500 text-white" : "bg-zinc-200 text-zinc-500")}>
+                                <div className="text-[10px] font-black">INC</div>
+                             </div>
+                             <span className="font-black text-sm uppercase tracking-tight">Tax Inclusive</span>
+                          </div>
+                          <p className="text-[10px] font-bold text-surface-text/40 leading-relaxed uppercase">Tax is already built into your selling price. Total price won't change at checkout.</p>
+                        </button>
+
+                        <button 
+                          onClick={() => setTaxInclusive(false)}
+                          className={clsx(
+                            "p-6 rounded-2xl border-2 text-left transition-all",
+                            !taxInclusive ? "bg-primary-500/5 border-primary-500 shadow-sm" : "bg-surface-bg border-surface-border opacity-50 hover:opacity-100"
+                          )}
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                             <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center", !taxInclusive ? "bg-primary-500 text-white" : "bg-zinc-200 text-zinc-500")}>
+                                <div className="text-[10px] font-black">EXC</div>
+                             </div>
+                             <span className="font-black text-sm uppercase tracking-tight">Tax Exclusive</span>
+                          </div>
+                          <p className="text-[10px] font-bold text-surface-text/40 leading-relaxed uppercase">Tax is added on top of your selling price during checkout. Total price will increase.</p>
+                        </button>
                       </div>
-                      <div className="w-full md:w-auto">
-                        <button onClick={saveTaxConfig} className="btn-primary !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20 uppercase" title="Save tax configuration">
-                          Save
+
+                      <div className="flex flex-col md:flex-row items-end gap-6 p-6 bg-surface-bg/50 border border-surface-border rounded-2xl">
+                        <div className="flex-1 w-full">
+                          <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase mb-2 block">Global Tax Rate (%)</label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500 font-black">%</span>
+                            <input 
+                              type="number" 
+                              value={taxRate} 
+                              onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                              className="input-field w-full py-4 pl-10 pr-4 text-xl font-black shadow-inner" 
+                              placeholder="0.00"
+                            />
+                          </div>
+                        </div>
+                        <button onClick={saveTaxConfig} className="btn-primary !px-12 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 uppercase w-full md:w-auto">
+                          Update Tax Policy
                         </button>
                       </div>
                     </div>
@@ -533,29 +556,7 @@ const SettingsPage: React.FC = () => {
               </div>
             )}
 
-            {isSuperAdmin && (
-              <div className="bg-surface-card border-b border-surface-border overflow-hidden">
-                 <div className="px-6 md:px-12 py-5 bg-surface-bg border-b border-surface-border">
-                    <div className="card-label !mb-0 uppercase">Support & Information</div>
-                 </div>
-                 
-                 <button 
-                    onClick={() => navigate('/about')}
-                    className="w-full text-left px-6 md:px-12 py-8 flex items-center justify-between group hover:bg-primary-500/[0.02] transition-colors"
-                 >
-                    <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 bg-surface-bg rounded-2xl flex items-center justify-center border border-surface-border group-hover:border-primary-500/20 transition-all">
-                          <Info className="w-5 h-5 text-primary-400" />
-                       </div>
-                       <div>
-                          <div className="font-black text-sm tracking-tight uppercase">Support & Documentation</div>
-                          <div className="text-xs text-surface-text/40 font-bold uppercase">FAQ, Troubleshooting and Privacy Policy</div>
-                       </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-surface-text/20 group-hover:text-primary-500 transition-all" />
-                 </button>
-              </div>
-            )}
+
           </div>
        </div>
     </div>

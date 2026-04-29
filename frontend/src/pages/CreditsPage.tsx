@@ -4,6 +4,8 @@ import { type LocalCustomer } from '../db/posDB';
 import { Search, Calendar, UserCheck, ArrowRightCircle, X, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '../hooks/useToast';
+import Modal from '../components/Modal';
+import { Receipt } from '../components/Receipt';
 
 interface Credit {
   id: number;
@@ -26,6 +28,7 @@ export default function CreditsPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
   const [paymentModal, setPaymentModal] = useState<{ id: number, total: number } | null>(null);
   const [payAmount, setPayAmount] = useState('');
+  const [clearedReceipt, setClearedReceipt] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const { data: credits, isLoading } = useQuery({
     queryKey: ['credits'],
@@ -39,8 +42,29 @@ export default function CreditsPage() {
     mutationFn: async (data: { id: number, amount: number }) => {
       return api.post('/credits/payment', data);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['credits'] });
+      
+      const credit = credits?.find(c => c.id === variables.id);
+      if (credit && Number(payAmount) >= (credit.current_total - credit.paid_amount)) {
+          setClearedReceipt({
+            items: [{ 
+              product: { name: 'Credit Balance Clearance', sellPrice: Number(payAmount), costPrice: 0, id: 0, sku: 'CREDIT-PAY', categoryId: 0, quantity: 1, isService: true } as unknown as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+              quantity: 1 
+            }],
+            total: Number(payAmount),
+            subtotal: Number(payAmount),
+            discount: 0,
+            tax: 0,
+            invoiceNo: `REC-${Date.now()}`,
+            date: new Date().toISOString(),
+            mode: 'Cash',
+            paid: Number(payAmount),
+            change: 0,
+            customerName: credit.customer_name
+          });
+      }
+
       setPaymentModal(null);
       setPayAmount('');
       showToast('Payment received and balance updated.');
@@ -231,7 +255,7 @@ export default function CreditsPage() {
                 </div>
                 <div className={`flex justify-between items-center p-4 rounded-2xl border ${selectedCustomer.fingerprintData ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-zinc-50 border-zinc-100 text-zinc-400'}`}>
                    <span className="text-[9px] font-black tracking-widest uppercase">Fingerprint</span>
-                   <span className="text-xs font-black">{selectedCustomer.fingerprintData ? 'SECURED' : 'NOT LINKED'}</span>
+                   <span className="text-xs font-black">{selectedCustomer.fingerprintData ? 'SECURED: ' + selectedCustomer.fingerprintData.substring(0, 15) + '...' : 'NOT LINKED'}</span>
                 </div>
               </div>
 
@@ -239,6 +263,19 @@ export default function CreditsPage() {
            </div>
         </div>
       )}
+      {/* Receipt Modal */}
+      <Modal isOpen={!!clearedReceipt} onClose={() => setClearedReceipt(null)} title="Payment Receipt" maxWidth="max-w-md">
+        {clearedReceipt && (
+           <div className="p-4 flex flex-col items-center">
+             <div className="bg-white p-4 shadow-xl border border-zinc-200 w-full flex justify-center" id="printable-receipt">
+               <Receipt {...clearedReceipt} />
+             </div>
+             <button onClick={() => { window.print(); setClearedReceipt(null); }} className="mt-6 w-full py-4 bg-primary text-white rounded-2xl font-black text-[10px] tracking-widest uppercase hover:bg-primary/90 transition-all">
+                Print Receipt & Close
+             </button>
+           </div>
+        )}
+      </Modal>
     </div>
   );
 }
