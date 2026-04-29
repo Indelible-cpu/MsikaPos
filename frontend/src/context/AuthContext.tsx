@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useAuthStore } from '../hooks/useAuth';
 import api from '../api/client';
 
