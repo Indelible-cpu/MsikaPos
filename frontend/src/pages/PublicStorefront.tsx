@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark } from 'lucide-react';
+import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
 import { formatCurrency } from '../utils/phoneUtils';
 import { db } from '../db/posDB';
@@ -17,6 +18,7 @@ interface StoreProduct {
   quantity?: number;
   soldCount?: number;
   discount?: number;
+  discount_rate?: number;
   createdAt: string;
   updatedAt: string;
   category?: { name?: string; title?: string };
@@ -119,10 +121,12 @@ export const PublicStorefront: React.FC = () => {
         action,
         productId: product.id,
         productName: product.name,
+        imageUrl: product.imageUrl || null,
+        discount: product.discount || 0,
+        discount_rate: product.discount_rate || product.discount || 0,
         timestamp: new Date().toISOString()
       });
       
-      // Increment soldCount for products in DB context if applicable
       try {
         const p = await db.products.get(product.id);
         if (p) {
@@ -135,7 +139,6 @@ export const PublicStorefront: React.FC = () => {
         console.error("Failed to update soldCount", e);
       }
     } catch {
-      // Silently ignore if backend doesn't support it yet
     }
   };
 
@@ -217,7 +220,7 @@ export const PublicStorefront: React.FC = () => {
     if (touchStart !== null) {
       const touchEnd = e.changedTouches[0].clientY;
       const distance = touchEnd - touchStart;
-      if (distance > 150) { // Threshold for pull-to-refresh
+      if (distance > 150) {
         loadStorefront(true);
       }
       setTouchStart(null);
@@ -272,8 +275,8 @@ export const PublicStorefront: React.FC = () => {
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
     
-    // Only use token if role is CUSTOMER
     if (!token || user?.role !== 'CUSTOMER') {
+      await SyncService.pushProduct(product as any);
       setSelectedProduct(product);
       setIsAuthOpen(true);
       return;
@@ -328,14 +331,12 @@ export const PublicStorefront: React.FC = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Background Refresh Indicator */}
       {isRefreshing && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary-500 text-white p-3 rounded-full shadow-2xl flex items-center justify-center animate-in fade-in slide-in-from-top-4 duration-500 border-2 border-white/20">
           <Loader2 className="w-5 h-5 animate-spin" />
         </div>
       )}
 
-      {/* Fixed Header & Navigation */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <header className="bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border">
         <div className="w-full px-6 md:px-12 py-3 flex items-center justify-between">
@@ -427,7 +428,6 @@ export const PublicStorefront: React.FC = () => {
         </div>
       </header>
 
-      {/* Category Filter Bar (Fixed) */}
       <div className="w-full bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border relative">
         <div id="fade-left" className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-surface-bg via-surface-bg/60 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-500"></div>
         <div id="fade-right" className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-surface-bg via-surface-bg/60 to-transparent z-10 pointer-events-none transition-opacity duration-500"></div>
@@ -477,7 +477,6 @@ export const PublicStorefront: React.FC = () => {
       </div>
     </div>
 
-    {/* Main Content (Scrollable) */}
     <main className="flex-1 w-full pt-[130px] md:pt-[150px]">
       <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -526,146 +525,150 @@ export const PublicStorefront: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-8">
-            {filteredProducts.map(p => (
-              <div 
-                key={p.id} 
-                id={`product-${p.id}`}
-                className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full border-b border-surface-border/50 pb-10 mb-2"
-              >
-                {/* Top Actions */}
-                <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
-                  <div className={`px-3 md:px-5 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] font-black tracking-widest backdrop-blur-md shadow-xl pointer-events-auto border-2 ${
-                    p.isService 
-                      ? 'bg-primary-500 text-white border-white/20' 
-                      : 'bg-emerald-600 text-white border-white/20'
-                  }`}>
-                    {p.isService ? 'Service' : 'Product'}
+            {filteredProducts.map(p => {
+              const pDiscount = p.discount ?? p.discount_rate ?? 0;
+              const effectiveDiscount = pDiscount || globalDiscount;
+              const hasDiscount = effectiveDiscount > 0;
+
+              return (
+                <div 
+                  key={p.id} 
+                  id={`product-${p.id}`}
+                  className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full border-b border-surface-border/50 pb-10 mb-2"
+                >
+                  <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
+                    <div className={`px-3 md:px-5 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] font-black tracking-widest backdrop-blur-md shadow-xl pointer-events-auto border-2 ${
+                      p.isService 
+                        ? 'bg-primary-500 text-white border-white/20' 
+                        : 'bg-emerald-600 text-white border-white/20'
+                    }`}>
+                      {p.isService ? 'Service' : 'Product'}
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 pointer-events-auto">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }}
+                        title={likedItems.has(p.id) ? "Remove from favorites" : "Add to favorites"}
+                        className={`p-2 rounded-full backdrop-blur-md border transition-all ${
+                          likedItems.has(p.id) 
+                            ? 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/20' 
+                            : 'bg-white/10 text-white/40 border-white/10 hover:bg-white/20 hover:text-white'
+                        }`}
+                      >
+                        <Heart className={`w-3 md:w-4 h-3 md:h-4 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
+                      </button>
+                      
+                      <button 
+                        onClick={(e) => addToCart(p, e)}
+                        title="Add to cart"
+                        className="p-2 rounded-full backdrop-blur-md border bg-primary-500/20 text-white border-white/10 hover:bg-primary-500 hover:border-primary-500 transition-all active:scale-90"
+                      >
+                        <Plus className="w-3 md:w-4 h-3 md:h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="aspect-square bg-surface-bg border-b border-surface-border/30 flex items-center justify-center relative overflow-hidden shrink-0">
+                    <img 
+                      src={p.imageUrl || "/premium-item.png"} 
+                      alt={p.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface-card/60 via-transparent to-transparent"></div>
                   </div>
                   
-                  <div className="flex flex-col gap-2 pointer-events-auto">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }}
-                      title={likedItems.has(p.id) ? "Remove from favorites" : "Add to favorites"}
-                      className={`p-2 rounded-full backdrop-blur-md border transition-all ${
-                        likedItems.has(p.id) 
-                          ? 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/20' 
-                          : 'bg-white/10 text-white/40 border-white/10 hover:bg-white/20 hover:text-white'
-                      }`}
-                    >
-                      <Heart className={`w-3 md:w-4 h-3 md:h-4 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
-                    </button>
-                    
-                    <button 
-                      onClick={(e) => addToCart(p, e)}
-                      title="Add to cart"
-                      className="p-2 rounded-full backdrop-blur-md border bg-primary-500/20 text-white border-white/10 hover:bg-primary-500 hover:border-primary-500 transition-all active:scale-90"
-                    >
-                      <Plus className="w-3 md:w-4 h-3 md:h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="aspect-square bg-surface-bg border-b border-surface-border/30 flex items-center justify-center relative overflow-hidden shrink-0">
-                  <img 
-                    src={p.imageUrl || "/premium-item.png"} 
-                    alt={p.name} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-surface-card/60 via-transparent to-transparent"></div>
-                </div>
-                
-                <div className="p-4 md:p-6 flex flex-col flex-1">
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="text-[7px] md:text-[9px] font-black text-primary-500 tracking-[0.3em] opacity-60">
-                        {p.category?.name || 'FEATURED'}
+                  <div className="p-4 md:p-6 flex flex-col flex-1">
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="text-[7px] md:text-[9px] font-black text-primary-500 tracking-[0.3em] opacity-60">
+                          {p.category?.name || 'FEATURED'}
+                        </div>
                       </div>
-                    </div>
-                    <h3 className="font-black text-xs md:text-lg tracking-tight leading-tight group-hover:text-primary-500 transition-colors mb-2 flex flex-wrap items-center gap-2">
-                      {p.name.charAt(0).toUpperCase() + p.name.slice(1).toLowerCase()}
-                      {(p.soldCount || 0) > 0 && (
-                        <span className="text-[7px] md:text-[9px] font-black text-primary-500/60 bg-primary-500/5 px-2 py-0.5 rounded-full">
-                          {p.soldCount}+ sold
-                        </span>
-                      )}
-                    </h3>
-                    {!p.isService && p.quantity !== undefined && (
-                      <div className={`text-[9px] font-black tracking-widest ${p.quantity > 2 ? 'text-green-500' : 'text-yellow-500'}`}>
-                        {p.quantity > 2 ? '(In Stock)' : '(Low Stock)'}
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-auto pt-4 border-t border-surface-border/50 flex flex-col gap-3">
-                    <div className="flex items-start justify-between w-full">
-                      <div className="flex flex-col">
-                        <span className="text-[7px] md:text-[9px] font-black text-surface-text/20 uppercase tracking-widest">
-                          {p.discount ? 'Special Offer' : 'Price'}
-                        </span>
-                        <p className={`text-sm md:text-xl font-black tracking-tighter ${(p.discount || 0) > 0 || globalDiscount > 0 ? 'text-surface-text/40 line-through text-xs md:text-sm' : 'text-primary-500'}`}>
-                          {formatCurrency(Number(p.sellPrice ?? 0))}
-                        </p>
-                      </div>
-                      {((p.discount || 0) > 0 || globalDiscount > 0) && (
-                        <div className="flex flex-col items-end pl-2">
-                          <span className="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg mb-1 uppercase tracking-tighter">
-                            {p.discount ? `${p.discount}% OFF` : `${globalDiscount}% OFF`}
+                      <h3 className="font-black text-xs md:text-lg tracking-tight leading-tight group-hover:text-primary-500 transition-colors mb-2 flex flex-wrap items-center gap-2">
+                        {p.name.charAt(0).toUpperCase() + p.name.slice(1).toLowerCase()}
+                        {(p.soldCount || 0) > 0 && (
+                          <span className="text-[7px] md:text-[9px] font-black text-primary-500/60 bg-primary-500/5 px-2 py-0.5 rounded-full">
+                            {p.soldCount}+ sold
                           </span>
-                          <span className="text-sm md:text-xl font-black text-red-500 tracking-tighter">
-                            {formatCurrency(Number(p.sellPrice ?? 0) * (1 - (p.discount || globalDiscount) / 100))}
-                          </span>
+                        )}
+                      </h3>
+                      {!p.isService && p.quantity !== undefined && (
+                        <div className={`text-[9px] font-black tracking-widest ${p.quantity > 2 ? 'text-green-500' : 'text-yellow-500'}`}>
+                          {p.quantity > 2 ? '(In Stock)' : '(Low Stock)'}
                         </div>
                       )}
                     </div>
-                    
-                    <div className="grid grid-cols-3 gap-2">
-                      <button 
-                        onClick={() => handleInquiry(p)}
-                        disabled={submitting}
-                        className="col-span-1 py-3 bg-surface-bg border border-surface-border rounded-xl text-[8px] font-black tracking-widest hover:bg-surface-card transition-all flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
-                        Quote
-                      </button>
-                      <button 
-                        onClick={() => {
-                          if (!customer) {
-                            toast.error('Identity Verification Required: Please register/login to contact via WhatsApp');
-                            setIsAuthOpen(true);
-                            return;
-                          }
-                          const number = whatsappNumber || '265993732694';
-                          const message = encodeURIComponent(`Hi ${shopName}, I am interested in ${p.name} (MK${Number(p.sellPrice ?? 0).toLocaleString()}). Could I get more details?`);
-                          window.open(`https://wa.me/${number.replace('+', '')}?text=${message}`, '_blank');
-                        }}
-                        className="col-span-1 py-3 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 rounded-xl text-[8px] font-black tracking-widest hover:bg-[#25D366] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                        </svg>
-                        WhatsApp
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); toggleSave(p.id); }}
-                        className={`col-span-1 py-3 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
-                          savedItems.has(p.id) 
-                            ? 'bg-primary-500 text-white shadow-primary-500/20' 
-                            : 'bg-surface-bg border border-surface-border text-surface-text/40 hover:text-primary-500 shadow-primary-500/5'
-                        }`}
-                        title="Save for Later"
-                      >
-                        <Bookmark className={`w-3.5 h-3.5 ${savedItems.has(p.id) ? 'fill-current' : ''}`} />
-                      </button>
+                    <div className="mt-auto pt-4 border-t border-surface-border/50 flex flex-col gap-3">
+                      <div className="flex items-start justify-between w-full">
+                        <div className="flex flex-col">
+                          <span className="text-[7px] md:text-[9px] font-black text-surface-text/20 uppercase tracking-widest">
+                            {pDiscount > 0 ? 'Special Offer' : 'Price'}
+                          </span>
+                          <p className={`text-sm md:text-xl font-black tracking-tighter ${hasDiscount ? 'text-surface-text/40 line-through text-xs md:text-sm' : 'text-primary-500'}`}>
+                            {formatCurrency(Number(p.sellPrice ?? 0))}
+                          </p>
+                        </div>
+                        {hasDiscount && (
+                          <div className="flex flex-col items-end pl-2">
+                            <span className="bg-red-500 text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg mb-1 uppercase tracking-tighter">
+                              {pDiscount > 0 ? `${pDiscount}% OFF` : `${globalDiscount}% OFF`}
+                            </span>
+                            <span className="text-sm md:text-xl font-black text-red-500 tracking-tighter">
+                              {formatCurrency(Number(p.sellPrice ?? 0) * (1 - effectiveDiscount / 100))}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2">
+                        <button 
+                          onClick={() => handleInquiry(p)}
+                          disabled={submitting}
+                          className="col-span-1 py-3 bg-surface-bg border border-surface-border rounded-xl text-[8px] font-black tracking-widest hover:bg-surface-card transition-all flex items-center justify-center gap-2 active:scale-95"
+                        >
+                          {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
+                          Quote
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (!customer) {
+                              toast.error('Identity Verification Required: Please register/login to contact via WhatsApp');
+                              setIsAuthOpen(true);
+                              return;
+                            }
+                            const number = whatsappNumber || '265993732694';
+                            const message = encodeURIComponent(`Hi ${shopName}, I am interested in ${p.name} (MK${Number(p.sellPrice ?? 0).toLocaleString()}). Could I get more details?`);
+                            window.open(`https://wa.me/${number.replace('+', '')}?text=${message}`, '_blank');
+                          }}
+                          className="col-span-1 py-3 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 rounded-xl text-[8px] font-black tracking-widest hover:bg-[#25D366] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
+                        >
+                          <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                          </svg>
+                          WhatsApp
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); toggleSave(p.id); }}
+                          className={`col-span-1 py-3 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
+                            savedItems.has(p.id) 
+                              ? 'bg-primary-500 text-white shadow-primary-500/20' 
+                              : 'bg-surface-bg border border-surface-border text-surface-text/40 hover:text-primary-500 shadow-primary-500/5'
+                          }`}
+                          title="Save for Later"
+                        >
+                          <Bookmark className={`w-3.5 h-3.5 ${savedItems.has(p.id) ? 'fill-current' : ''}`} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
     </main>
 
-      {/* Cart Modal */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
           <div className="absolute inset-0 bg-surface-bg/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsCartOpen(false)}></div>

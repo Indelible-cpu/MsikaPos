@@ -67,6 +67,7 @@ export const SyncService = {
         is_service: product.isService || false,
         imageUrl: product.imageUrl || null,
         discount: product.discount || 0,
+        discount_rate: product.discount || 0,
       });
       return true;
     } catch (error: unknown) {

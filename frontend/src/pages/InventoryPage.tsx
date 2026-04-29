@@ -286,7 +286,7 @@ const InventoryPage: React.FC = () => {
         ? { ...productData, id: editingProduct.id }
         : { ...productData, id: generateNumericId() };
       
-      SyncService.pushProduct(productToSync as any);
+      await SyncService.pushProduct(productToSync as any);
       
       setIsAddModalOpen(false);
       setEditingProduct(null);
