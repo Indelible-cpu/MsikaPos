@@ -21,7 +21,12 @@ interface Inquiry {
   status: string;
   items: string;
   notes?: string;
-  customer?: { fullname: string; phone: string };
+  customer?: { 
+    fullname: string; 
+    phone: string;
+    username?: string;
+    user?: { username: string };
+  };
   createdAt: string;
 }
 
