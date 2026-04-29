@@ -657,7 +657,8 @@ const POSPage: React.FC = () => {
                 <button onClick={() => window.print()} className="flex-1 px-4 py-4 bg-surface-bg hover:bg-surface-border/50 rounded-2xl font-black text-[10px] tracking-widest flex items-center justify-center gap-2 border border-surface-border uppercase">
                   <Printer className="w-4 h-4" /> Print
                 </button>
-                <button onClick={async () => {
+                <button 
+                  onClick={async () => {
                     try {
                       const receiptElement = document.querySelector('.invoice') || document.querySelector('.receipt');
                       if (receiptElement) {
@@ -686,8 +687,12 @@ const POSPage: React.FC = () => {
                     } catch {
                       toast.error('Failed to generate receipt image', { id: 'receipt' });
                     }
-                  }} className="flex-1 px-4 py-4 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white rounded-2xl font-black text-[10px] tracking-widest flex items-center justify-center gap-2 border border-[#25D366]/20 uppercase">
-                  <Send className="w-4 h-4" /> Share
+                  }} 
+                  className="flex-1 md:flex-none md:w-14 px-4 py-4 bg-[#25D366]/10 md:bg-transparent text-[#25D366] hover:bg-[#25D366] hover:text-white md:hover:bg-transparent md:hover:scale-110 rounded-2xl md:rounded-full font-black text-[10px] tracking-widest flex items-center justify-center gap-2 border border-[#25D366]/20 md:border-none uppercase transition-all"
+                  title="Share to WhatsApp"
+                >
+                  <Send className="w-4 h-4 md:w-6 md:h-6" /> 
+                  <span className="md:hidden">Share</span>
                 </button>
               </div>
               <button onClick={() => setShowReceipt(null)} className="w-full mt-4 btn-primary !py-5 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20">
