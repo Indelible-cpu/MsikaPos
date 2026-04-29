@@ -81,25 +81,26 @@
     }
 
     .loader-progress {
-      width: 120px;
-      height: 3px;
+      width: 200px;
+      height: 4px;
       background-color: #f1f5f9;
       margin-top: 32px;
       border-radius: 10px;
       overflow: hidden;
+      position: relative;
     }
 
     .loader-progress-bar {
       height: 100%;
-      width: 30%;
+      width: 0%;
       background-color: #22c55e;
       border-radius: 10px;
-      animation: slide 1.5s infinite ease-in-out;
+      animation: fillProgress 30s linear forwards;
     }
 
-    @keyframes slide {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(400%); }
+    @keyframes fillProgress {
+      0% { width: 0%; }
+      100% { width: 100%; }
     }
   </style>
 </head>
