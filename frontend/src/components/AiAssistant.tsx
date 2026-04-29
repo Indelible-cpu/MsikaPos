@@ -59,19 +59,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
         setSuggestion(res.data.data);
       }
     } catch (err) {
-      let errorMsg = "Unknown connectivity issue";
-      let errorDetail = "";
-      
-      const axiosError = err as { response?: { data?: { message?: string, error?: string } }, message?: string };
-      
-      if (axiosError.response?.data) {
-        errorMsg = axiosError.response.data.message || axiosError.message || "Request failed";
-        errorDetail = axiosError.response.data.error || "";
-      } else if (err instanceof Error) {
-        errorMsg = err.message;
-      }
-      
-      setSuggestion(`Connectivity Error: ${errorMsg}${errorDetail ? ` (${errorDetail})` : ''}. Please ensure your backend is live and the GEMINI_API_KEY is set in Render settings.`);
+      setSuggestion("AI service temporarily unavailable. Please try again.");
     } finally {
       setLoading(false);
     }

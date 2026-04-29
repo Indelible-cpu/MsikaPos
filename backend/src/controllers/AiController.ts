@@ -1,17 +1,8 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Request, Response } from 'express';
-
-const genAI = (apiKey: string) => new GoogleGenerativeAI(apiKey);
+import { aiService } from '../lib/aiService';
 
 export const getAiSuggestions = async (req: Request, res: Response) => {
   const { context, type } = req.body;
-
-  if (!process.env.GEMINI_API_KEY) {
-    return res.json({ 
-      success: true, 
-      data: "Msika Brain (Gemini Flash) is currently in demo mode. Please configure your Google Gemini API Key in the system settings." 
-    });
-  }
 
   try {
     let prompt = "";
@@ -33,38 +24,26 @@ export const getAiSuggestions = async (req: Request, res: Response) => {
       prompt = `Provide a powerful business idea or suggestion based on this context: ${JSON.stringify(context)}`;
     }
 
-    const ai = genAI(process.env.GEMINI_API_KEY || "");
-    const model = ai.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        maxOutputTokens: 500,
-        temperature: 0.7,
-      }
-    });
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await aiService.generate(prompt, context);
 
     res.json({ 
       success: true, 
-      data: text || "The brain is thinking... but no words came out. Try again." 
+      data: text || "Msika Brain is thinking... but no words came out. Please try again." 
     });
   } catch (error: any) {
-    console.error('Gemini AI Error Detailed:', error);
+    console.error('Msika Brain Error:', error);
     
-    let errorDetail = error.message || 'Unknown Gemini Error';
-    if (errorDetail.includes('API key not valid')) {
-      errorDetail = 'Invalid GEMINI_API_KEY. Please verify your Render environment variables.';
-    } else if (errorDetail.includes('quota')) {
-      errorDetail = 'Gemini API quota exceeded. Please wait or upgrade your plan.';
+    // Controlled error message for user safety
+    let userMessage = "AI service temporarily unavailable. Please try again.";
+    
+    if (error.message === 'AI_CONFIG_ERROR') {
+      userMessage = "Msika Brain is currently in demo mode. Please configure your GEMINI_API_KEY.";
     }
 
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Msika Brain failed to generate suggestion', 
-      error: errorDetail,
-      details: 'Check backend logs for full stack trace'
+    return res.status(error.message === 'AI_CONFIG_ERROR' ? 200 : 500).json({ 
+      success: error.message === 'AI_CONFIG_ERROR', 
+      message: userMessage,
+      data: error.message === 'AI_CONFIG_ERROR' ? userMessage : undefined
     });
   }
 };
