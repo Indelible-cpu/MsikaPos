@@ -67,8 +67,10 @@ const InquiriesPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchInquiries();
-    fetchSettings();
+    const loadData = async () => {
+      await Promise.all([fetchInquiries(), fetchSettings()]);
+    };
+    loadData();
     const interval = setInterval(fetchInquiries, 30000); // Poll every 30s
     return () => clearInterval(interval);
   }, [fetchInquiries, fetchSettings]);
@@ -218,7 +220,7 @@ const InquiriesPage: React.FC = () => {
                         Inquiry Items
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {items.map((item: any, idx: number) => (
+                        {items.map((item: LocalProduct, idx: number) => (
                           <div key={idx} className="p-4 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-between">
                             <span className="font-bold text-sm">{item.name}</span>
                             <span className="text-xs font-black text-primary-500">MK {(item.price ?? 0).toLocaleString()}</span>
