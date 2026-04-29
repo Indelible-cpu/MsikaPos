@@ -7,7 +7,8 @@ import {
   Plus, 
   ExternalLink,
   ShieldCheck,
-  Loader2
+  Loader2,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -40,7 +41,22 @@ const BranchesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
-  const [formData, setFormData] = useState({ 
+  const [formData, setFormData] = useState<{
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    facebook: string;
+    instagram: string;
+    whatsapp: string;
+    slogan: string;
+    logo: string;
+    managerName: string;
+    tinNumber: string;
+    openingTime: string;
+    closingTime: string;
+    status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
+  }>({ 
     name: '', 
     address: '', 
     phone: '', 
@@ -54,7 +70,7 @@ const BranchesPage: React.FC = () => {
     tinNumber: '',
     openingTime: '08:00',
     closingTime: '18:00',
-    status: 'ACTIVE' as const
+    status: 'ACTIVE'
   });
 
   const fetchBranches = useCallback(async () => {
@@ -313,7 +329,7 @@ const BranchesPage: React.FC = () => {
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="br-status">Operational Status</label>
-                      <select id="br-status" title="Operational Status" aria-label="Operational Status" className="input-field w-full py-3 px-4 font-black" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as any})}>
+                      <select id="br-status" title="Operational Status" aria-label="Operational Status" className="input-field w-full py-3 px-4 font-black" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE'})}>
                         <option value="ACTIVE">Operational (Active)</option>
                         <option value="INACTIVE">Temporarily Closed</option>
                         <option value="MAINTENANCE">Under Maintenance</option>
