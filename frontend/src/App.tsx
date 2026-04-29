@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import DashboardPage from './pages/DashboardPage';
@@ -40,6 +40,7 @@ const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   // PWA Auto-Update Logic
   const {
@@ -67,12 +68,16 @@ const App: React.FC = () => {
 
     const timer = setInterval(() => {
       setLoadingProgress(prev => {
-        if (prev >= 100) {
+        const next = prev + increment;
+        if (next >= 100) {
           clearInterval(timer);
           setIsInitialLoading(false);
           return 100;
         }
-        return prev + increment;
+        if (progressRef.current) {
+          progressRef.current.style.width = `${next}%`;
+        }
+        return next;
       });
     }, interval);
 
@@ -284,8 +289,8 @@ const App: React.FC = () => {
                 </div>
                 <div className="h-3 w-full bg-surface-card border border-surface-border rounded-full overflow-hidden p-1 shadow-inner">
                    <div 
-                     className="h-full bg-primary-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_20px_rgba(var(--color-primary-500-rgb),0.4)] progress-fill"
-                     style={{ '--progress': `${loadingProgress}%` } as React.CSSProperties}
+                     ref={progressRef}
+                     className="h-full bg-primary-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_20px_rgba(var(--color-primary-500-rgb),0.4)]"
                    ></div>
                 </div>
              </div>
