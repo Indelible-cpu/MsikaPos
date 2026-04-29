@@ -242,8 +242,16 @@ export const PublicStorefront: React.FC = () => {
 
       if (productsRes.data.success) {
         const data = productsRes.data.data;
-        setProducts(data);
-        const cats = Array.from(new Set(data.map((p: StoreProduct) => p.category?.name || 'Uncategorized')))
+        const localProducts = await db.products.toArray();
+        const mergedData = data.map((p: StoreProduct) => {
+          const localP = localProducts.find(lp => lp.id === p.id);
+          return {
+            ...p,
+            discount: p.discount ?? p.discount_rate ?? localP?.discount ?? 0
+          };
+        });
+        setProducts(mergedData);
+        const cats = Array.from(new Set(mergedData.map((p: StoreProduct) => p.category?.name || 'Uncategorized')))
           .filter((c: unknown) => c !== 'Uncategorized') as string[];
         setCategories(cats);
       }
@@ -531,19 +539,19 @@ export const PublicStorefront: React.FC = () => {
             <p className="text-[10px] font-black tracking-widest text-surface-text/30">No items found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {filteredProducts.map(p => {
               const pDiscount = p.discount ?? p.discount_rate ?? 0;
               const effectiveDiscount = pDiscount || globalDiscount;
               const hasDiscount = effectiveDiscount > 0;
 
               return (
-                <div 
-                  key={p.id} 
-                  id={`product-${p.id}`}
-                  className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full border-b border-surface-border/50 pb-10 mb-2"
-                >
-                  <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
+                <div key={p.id} className="px-1.5 md:px-4 pb-8 mb-8 border-b border-surface-border/50">
+                  <div 
+                    id={`product-${p.id}`}
+                    className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden hover:border-primary-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-1 flex flex-col h-full"
+                  >
+                    <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
                     <div className={`px-3 md:px-5 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] font-black tracking-widest backdrop-blur-md shadow-xl pointer-events-auto border-2 ${
                       p.isService 
                         ? 'bg-primary-500 text-white border-white/20' 
@@ -670,6 +678,7 @@ export const PublicStorefront: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
               );
             })}

@@ -41,22 +41,6 @@ const InventoryPage: React.FC = () => {
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [globalDiscount, setGlobalDiscount] = useState<number>(0);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      const gd = await db.settings.get('global_discount');
-      if (gd?.value !== undefined) setGlobalDiscount(gd.value as number);
-    };
-    loadSettings();
-  }, []);
-
-  const handleSaveDiscount = async (val: number) => {
-    setGlobalDiscount(val);
-    await db.settings.put({ key: 'global_discount', value: val });
-    toast.success('Global discount updated');
-  };
-
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -339,21 +323,6 @@ const InventoryPage: React.FC = () => {
           <p className="text-[10px] font-black text-surface-text/40 tracking-widest uppercase">Manage stock levels and product catalog</p>
         </div>
         <div className="flex items-center gap-3">
-          {isSuperAdmin && (
-            <div className="flex items-center gap-2 mr-4 bg-surface-bg border border-surface-border rounded-xl px-3 py-2 hidden md:flex">
-              <label className="text-[10px] font-black tracking-widest uppercase text-surface-text/60">Global Discount %</label>
-              <input 
-                type="number" 
-                value={globalDiscount} 
-                onChange={(e) => handleSaveDiscount(Number(e.target.value))}
-                className="w-16 bg-transparent border-b border-primary-500 text-sm font-black text-center outline-none"
-                min="0" max="100"
-                title="Global Discount Percentage"
-                aria-label="Global Discount Percentage"
-                placeholder="%"
-              />
-            </div>
-          )}
           <button 
             onClick={() => setIsCategoryModalOpen(true)}
             className="btn-secondary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest"
