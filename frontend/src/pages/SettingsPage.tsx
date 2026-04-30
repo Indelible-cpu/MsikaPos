@@ -184,7 +184,7 @@ const SettingsPage: React.FC = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err) {
+    } catch {
       toast.error("Could not access camera");
       setIsCameraOpen(false);
     }

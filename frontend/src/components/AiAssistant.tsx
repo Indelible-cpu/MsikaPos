@@ -58,7 +58,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
       if (res.data.success) {
         setSuggestion(res.data.data);
       }
-    } catch (err) {
+    } catch {
       setSuggestion("AI service temporarily unavailable. Please try again.");
     } finally {
       setLoading(false);
