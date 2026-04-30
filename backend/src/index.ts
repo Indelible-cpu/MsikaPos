@@ -52,7 +52,7 @@ app.use(cors({
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
-app.options('*', cors() as any); // Enable pre-flight for all routes
+app.options(/.*/, cors() as any); // Enable pre-flight for all routes (Express 5 compatible)
 
 app.use(express.json({ limit: '1mb' })); 
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
