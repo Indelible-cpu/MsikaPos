@@ -22,6 +22,17 @@ import { prisma } from './lib/prisma';
 
 dotenv.config();
 
+// Global Error Handling to prevent silent crashes
+process.on('uncaughtException', (err) => {
+  console.error('🔥 UNCAUGHT EXCEPTION:', err);
+  // Give time for logging before exiting
+  setTimeout(() => process.exit(1), 1000);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🌊 UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
