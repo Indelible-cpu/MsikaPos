@@ -29,6 +29,27 @@ export const syncData = async (req: Request, res: Response) => {
 
         if (!existingSale) {
           await prisma.$transaction(async (tx) => {
+            let finalCustomerId: number | null = null;
+            if (saleData.customerId) {
+              const parsed = parseInt(saleData.customerId, 10);
+              if (!isNaN(parsed) && parsed.toString() === saleData.customerId.toString()) {
+                finalCustomerId = parsed;
+              } else {
+                let cust = await tx.customer.findUnique({ where: { offlineId: saleData.customerId } });
+                if (!cust) {
+                  cust = await tx.customer.create({
+                    data: {
+                      fullname: saleData.customerName || 'Offline Customer',
+                      phone: '000000000',
+                      offlineId: saleData.customerId,
+                      branchId: (req as any).user.role === 'SUPER_ADMIN' ? saleData.branchId : (req as any).user.branchId
+                    }
+                  });
+                }
+                finalCustomerId = cust.id;
+              }
+            }
+
             // Create Sale
             await tx.sale.create({
               data: {
@@ -37,7 +58,7 @@ export const syncData = async (req: Request, res: Response) => {
                 receiptNo: saleData.receiptNo,
                 userId: userId,
                 branchId: (req as any).user.role === 'SUPER_ADMIN' ? saleData.branchId : (req as any).user.branchId,
-                customerId: saleData.customerId,
+                customerId: finalCustomerId,
                 subtotal: saleData.subtotal,
                 discount: saleData.discount,
                 total: saleData.total,

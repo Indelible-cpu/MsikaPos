@@ -70,17 +70,9 @@ export default function MobileHeader() {
 
   return (
     <>
-      <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[50] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
+      <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[100] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
         <div className="flex items-center gap-3 overflow-hidden">
-          {isBasePage ? (
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-10 h-10 rounded-full border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm"
-            >
-              <img src={shopLogo} alt="Logo" className="w-full h-full object-contain" />
-            </motion.div>
-          ) : (
+          {!isBasePage && (
             <button 
               onClick={() => window.history.back()}
               className="p-2 bg-surface-bg rounded-xl border border-surface-border active:scale-95 transition-all flex-shrink-0"
@@ -90,6 +82,13 @@ export default function MobileHeader() {
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-10 h-10 rounded-full border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm"
+          >
+            <img src={shopLogo} alt="Logo" className="w-full h-full object-contain" />
+          </motion.div>
           
           <div className="flex flex-col min-w-0">
             <span className="text-[14px] font-black tracking-tighter text-primary-500 leading-none truncate">

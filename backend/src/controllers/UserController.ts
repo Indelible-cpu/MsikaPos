@@ -149,21 +149,28 @@ export const saveUser = async (req: Request, res: Response) => {
       const magicToken = crypto.randomBytes(32).toString('hex');
       const magicTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-      await prisma.user.create({
-        data: {
-          username,
-          fullname,
-          email,
-          phone: normalizePhone(phone),
-          password: hashedPassword,
-          roleId: rId,
-          branchId: bId,
-          mustChangePassword: true,
-          isVerified: false,
-          magicToken,
-          magicTokenExpires
-        },
-      });
+      try {
+        await prisma.user.create({
+          data: {
+            username,
+            fullname,
+            email,
+            phone: normalizePhone(phone),
+            password: hashedPassword,
+            roleId: rId,
+            branchId: bId,
+            mustChangePassword: true,
+            isVerified: false,
+            magicToken,
+            magicTokenExpires
+          },
+        });
+      } catch (err: any) {
+        if (err.code === 'P2002' && err.meta?.target?.includes('username')) {
+          return res.status(400).json({ success: false, message: "Username already taken" });
+        }
+        throw err;
+      }
 
       return res.status(201).json({
         success: true,

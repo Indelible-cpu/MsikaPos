@@ -69,8 +69,11 @@ interface ServerStats {
   }>;
 }
 
+type TimeFilter = 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
+
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('Financial');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('Weekly');
   const [serverStats, setServerStats] = useState<ServerStats | null>(null);
   const [loading, setLoading] = useState(false);
   
@@ -99,39 +102,81 @@ const ReportsPage: React.FC = () => {
 
   // Process actual data for graphs
   const analyticsData = useMemo(() => {
-    if (serverStats?.chart_data) {
-      return {
-        weekly: serverStats.chart_data.map(d => ({ label: d.date, value: d.total })),
-        staff: serverStats.recent_activity ? Object.entries(serverStats.recent_activity.reduce((acc: Record<string, number>, curr) => {
-          acc[curr.username] = (acc[curr.username] || 0) + curr.total;
-          return acc;
-        }, {})).map(([label, value]) => ({ label, value })) : [],
-        branches: [], // Branch data could be added to backend
-        payment: [] 
-      };
+    if (!localSales && !serverStats?.chart_data) {
+      return { financial: [], staff: [], branches: [], payment: [] };
     }
 
-    if (!localSales) return { weekly: [], staff: [], branches: [], payment: [] };
+    let financialData: { label: string; value: number }[] = [];
+    const salesToUse = localSales || [];
+    const now = new Date();
 
-    // 1. Weekly Revenue (Last 7 Days)
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const weeklyMap: Record<string, number> = {};
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      return { key: d.toLocaleDateString(), label: days[d.getDay()] };
-    });
-
-    localSales.forEach(s => {
-      const date = new Date(s.createdAt).toLocaleDateString();
-      weeklyMap[date] = (weeklyMap[date] || 0) + s.total;
-    });
-
-    const weekly = last7Days.map(d => ({ label: d.label, value: weeklyMap[d.key] || 0 }));
+    if (timeFilter === 'Weekly') {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const weeklyMap: Record<string, number> = {};
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return { key: d.toLocaleDateString(), label: days[d.getDay()] };
+      });
+      salesToUse.forEach(s => {
+        const d = new Date(s.createdAt);
+        if ((now.getTime() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000) {
+          weeklyMap[d.toLocaleDateString()] = (weeklyMap[d.toLocaleDateString()] || 0) + s.total;
+        }
+      });
+      financialData = last7Days.map(d => ({ label: d.label, value: weeklyMap[d.key] || 0 }));
+    } else if (timeFilter === 'Monthly') {
+      const monthlyMap: Record<string, number> = {};
+      const last4Weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      salesToUse.forEach(s => {
+        const d = new Date(s.createdAt);
+        const daysDiff = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysDiff < 28) {
+          const weekIdx = 3 - Math.floor(daysDiff / 7);
+          const label = last4Weeks[Math.max(0, weekIdx)];
+          monthlyMap[label] = (monthlyMap[label] || 0) + s.total;
+        }
+      });
+      financialData = last4Weeks.map(l => ({ label: l, value: monthlyMap[l] || 0 }));
+    } else if (timeFilter === 'Quarterly') {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const qMap: Record<number, number> = {};
+      const last3Months = Array.from({ length: 3 }, (_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - (2 - i));
+        return { key: d.getMonth(), label: months[d.getMonth()] };
+      });
+      salesToUse.forEach(s => {
+        const d = new Date(s.createdAt);
+        const monthsDiff = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+        if (monthsDiff < 3) {
+          const m = d.getMonth();
+          qMap[m] = (qMap[m] || 0) + s.total;
+        }
+      });
+      financialData = last3Months.map(m => ({ label: m.label, value: qMap[m.key] || 0 }));
+    } else if (timeFilter === 'Annual') {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const aMap: Record<number, number> = {};
+      const last12Months = Array.from({ length: 12 }, (_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - (11 - i));
+        return { key: d.getMonth(), label: months[d.getMonth()] };
+      });
+      salesToUse.forEach(s => {
+        const d = new Date(s.createdAt);
+        const monthsDiff = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+        if (monthsDiff < 12) {
+          const m = d.getMonth();
+          aMap[m] = (aMap[m] || 0) + s.total;
+        }
+      });
+      financialData = last12Months.map(m => ({ label: m.label, value: aMap[m.key] || 0 }));
+    }
 
     // 2. Staff Performance
     const staffMap: Record<string, number> = {};
-    localSales.forEach(s => {
+    salesToUse.forEach(s => {
       const name = s.sellerName || 'System';
       staffMap[name] = (staffMap[name] || 0) + s.total;
     });
@@ -142,7 +187,7 @@ const ReportsPage: React.FC = () => {
 
     // 3. Branch Performance (Super Admin View)
     const branchMap: Record<string, number> = {};
-    localSales.forEach(s => {
+    salesToUse.forEach(s => {
       const branchName = s.branchId || 'Main HQ'; // Should ideally be name-resolved
       branchMap[branchName] = (branchMap[branchName] || 0) + s.total;
     });
@@ -152,14 +197,14 @@ const ReportsPage: React.FC = () => {
 
     // 4. Payment Distribution (Customer Choice)
     const payMap: Record<string, number> = {};
-    localSales.forEach(s => {
+    salesToUse.forEach(s => {
       const mode = s.paymentMode || 'CASH';
       payMap[mode] = (payMap[mode] || 0) + 1; // Count transactions as customer flow
     });
     const payment = Object.entries(payMap).map(([label, value]) => ({ label, value }));
 
-    return { weekly, staff, branches, payment };
-  }, [localSales, serverStats]);
+    return { financial: financialData, staff, branches, payment };
+  }, [localSales, serverStats, timeFilter]);
 
   const stats = [
     { label: 'Revenue', value: `MK${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500' },
@@ -171,14 +216,14 @@ const ReportsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 mb-8 flex items-center justify-between gap-4 sticky top-0 z-30">
-        <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl overflow-x-auto no-scrollbar">
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-30">
+        <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl overflow-x-auto no-scrollbar w-full md:w-auto">
           {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
             <button 
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={clsx(
-                "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap",
+                "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none",
                 activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg/50"
               )}
             >
@@ -186,12 +231,30 @@ const ReportsPage: React.FC = () => {
             </button>
           ))}
         </div>
-        {loading && (
-          <div className="pr-4 flex items-center gap-2">
-            <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
-            <span className="text-[8px] font-black tracking-widest text-primary-500">REFRESHING...</span>
-          </div>
-        )}
+        
+        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+          {activeTab === 'Financial' && (
+            <select 
+              value={timeFilter}
+              onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+              title="Filter by time period"
+              aria-label="Filter by time period"
+              className="px-4 py-2 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-black tracking-widest uppercase text-primary-500 outline-none cursor-pointer"
+            >
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+              <option value="Annual">Annual</option>
+            </select>
+          )}
+
+          {loading && (
+            <div className="pr-4 flex items-center gap-2">
+              <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
+              <span className="text-[8px] font-black tracking-widest text-primary-500">REFRESHING...</span>
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="px-6 md:px-12">
@@ -223,7 +286,7 @@ const ReportsPage: React.FC = () => {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              {activeTab === 'Financial' && <BarChart data={analyticsData.weekly} label="Weekly Revenue Breakdown" valuePrefix="MK" />}
+              {activeTab === 'Financial' && <BarChart data={analyticsData.financial} label={`${timeFilter} Revenue Breakdown`} valuePrefix="MK" />}
               {activeTab === 'Staff' && <BarChart data={analyticsData.staff} label="Top Performing Cashiers" valuePrefix="MK" />}
               {activeTab === 'Branches' && <BarChart data={analyticsData.branches} label="Top Performing Branches" valuePrefix="MK" />}
               {activeTab === 'Payment' && <BarChart data={analyticsData.payment} label="Payment Mode Flow" />}
