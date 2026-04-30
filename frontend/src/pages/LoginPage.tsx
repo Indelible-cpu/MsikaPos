@@ -297,7 +297,7 @@ const LoginPage: React.FC = () => {
           >
             {loading ? <div className="loading-spinner w-6 h-6 border-2 border-t-white" /> : (
               <>
-                Sign In
+                Sign in
                 <ChevronRight className="w-5 h-5" />
               </>
             )}
@@ -309,26 +309,26 @@ const LoginPage: React.FC = () => {
             <button 
               onClick={handleBiometricLogin}
               className="group flex flex-col items-center gap-2 text-surface-text/40 hover:text-primary-500 transition-all active:scale-90"
-              title="Unlock with Biometrics"
+              title="Unlock with biometrics"
             >
               <div className="w-16 h-16 rounded-full bg-surface-bg border border-surface-border flex items-center justify-center group-hover:border-primary-500/50 group-hover:bg-primary-500/5 transition-all">
                 <Fingerprint className="w-8 h-8" />
               </div>
-              <span className="text-[9px] font-black  tracking-widest">Biometric Unlock</span>
+              <span className="text-[9px] font-black  tracking-widest">Biometric unlock</span>
             </button>
           )}
 
           <Link to="/about" className="md:hidden w-full h-14 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black tracking-widest text-surface-text/40 active:scale-95 transition-all">
             <Info className="w-4 h-4" />
-            About MsikaPos
+            About Msikapos
           </Link>
 
           <Link to="/staff/forgot-password" className="text-[10px] font-black  tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
-             Forgot Password?
+             Forgot password?
           </Link>
 
           <Link to="/about" className="hidden md:block text-[10px] font-black tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
-            About MsikaPos
+            About Msikapos
           </Link>
 
           <div className="pt-4 text-center">

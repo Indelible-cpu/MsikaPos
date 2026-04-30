@@ -26,14 +26,16 @@ import { soundService } from '../services/SoundService';
 import { AuditService } from '../services/AuditService';
 import BarcodeScanner from '../components/BarcodeScanner';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
+import { useAuthStore } from '../hooks/useAuth';
 
 const generateNumericId = () => {
   return Date.now() + Math.floor(Math.random() * 1000);
 };
 
 const InventoryPage: React.FC = () => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const isSuperAdmin = user.role === 'SUPER_ADMIN';
+  const currentUser = useAuthStore(state => state.user);
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const isAdmin = currentUser?.role === 'ADMIN' || isSuperAdmin;
   const { isReadOnly } = useFeatureAccess();
   const readOnly = isReadOnly('INVENTORY');
 
@@ -376,7 +378,7 @@ const InventoryPage: React.FC = () => {
                 title="Add New Product"
                 aria-label="Add New Product"
               >
-                <Plus className="w-4 h-4 mr-1 inline" /> Add Product
+                <Plus className="w-4 h-4 mr-1 inline" /> Add product
               </button>
             )}
           </div>
@@ -386,20 +388,20 @@ const InventoryPage: React.FC = () => {
       <div className="px-6 md:px-12 py-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-0 bg-surface-card border border-surface-border rounded-3xl overflow-hidden mb-8">
           <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
-            <div className="card-label uppercase">Total Stock Cost</div>
+            <div className="card-label">Total stock cost</div>
             <div className="text-xl md:text-2xl font-black tracking-tighter">MK{analytics.totalCost.toLocaleString()}</div>
           </div>
           <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
-            <div className="card-label !text-emerald-500 uppercase">Expected Profit</div>
+            <div className="card-label !text-emerald-500">Expected profit</div>
             <div className="text-xl md:text-2xl font-black tracking-tighter text-emerald-500">MK{analytics.totalProfit.toLocaleString()}</div>
           </div>
           <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
-            <div className="card-label !text-red-500 uppercase">Est. Ageing Loss</div>
+            <div className="card-label !text-red-500">Est. ageing loss</div>
             <div className="text-xl md:text-2xl font-black tracking-tighter text-red-500">MK{analytics.totalLoss.toLocaleString()}</div>
           </div>
           <div className="p-8 bg-surface-card">
-            <div className="card-label !text-primary-500 uppercase">Low Stock Alert</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter text-primary-500">{analytics.lowStock} <span className="text-[10px] text-surface-text/20 uppercase">Items</span></div>
+            <div className="card-label !text-primary-500">Low stock alert</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-primary-500">{analytics.lowStock} <span className="text-[10px] text-surface-text/20">Items</span></div>
           </div>
         </div>
 
@@ -429,20 +431,20 @@ const InventoryPage: React.FC = () => {
             <button 
               onClick={() => setSelectedCategory(null)}
               className={clsx(
-                "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2 uppercase",
+                "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2",
                 !selectedCategory ? "border-primary-500 text-primary-500" : "border-transparent text-surface-text/40 hover:text-surface-text"
               )}
               title="Show all categories"
               aria-label="Show all categories"
             >
-              All Items
+              All items
             </button>
             {categories?.map(cat => (
               <button 
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={clsx(
-                  "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2 uppercase",
+                  "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2",
                   selectedCategory === cat.id ? "border-primary-500 text-primary-500" : "border-transparent text-surface-text/40 hover:text-surface-text"
                 )}
                 title={`Filter by ${cat.title}`}
@@ -513,7 +515,7 @@ const InventoryPage: React.FC = () => {
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
-                      {!readOnly && isSuperAdmin && (
+                      {!readOnly && isAdmin && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
                           className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
@@ -525,26 +527,26 @@ const InventoryPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2 uppercase">{product.name}</h3>
+                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2">{product.name}</h3>
                   <div className="flex items-center gap-2 mb-6">
                     <span className="text-primary-500 font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
                   </div>
                   <div className={clsx(
-                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black tracking-widest uppercase",
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black tracking-widest",
                     product.quantity <= 5 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
                   )}>
                     {product.isService ? <CheckCircle2 className="w-3 h-3" /> : (product.quantity <= 5 ? <AlertTriangle className="w-3 h-3" /> : <Package className="w-3 h-3" />)}
-                    {product.isService ? 'Service Item' : `${product.quantity} in stock`}
+                    {product.isService ? 'Service item' : `${product.quantity} in stock`}
                   </div>
                 </div>
                 <div className="px-6 py-4 bg-surface-bg/30 border-t border-surface-border flex justify-between items-center text-[9px] font-black tracking-widest text-surface-text/40">
-                  {!product.isService && isSuperAdmin ? (
+                  {!product.isService && isAdmin ? (
                     <>
-                      <span className="uppercase">Stock Profit: MK{((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
+                      <span>Stock profit: MK{((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
                       <ArrowUpRight className="w-3 h-3 text-emerald-500" />
                     </>
                   ) : (
-                    <span className="uppercase">Inventory Item</span>
+                    <span>Inventory item</span>
                   )}
                 </div>
               </motion.div>
@@ -554,7 +556,7 @@ const InventoryPage: React.FC = () => {
       </div>
 
       {/* Product Add/Edit Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={editingProduct ? 'Edit Product' : 'New Product'}>
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={editingProduct ? 'Edit product' : 'New product'}>
         <form onSubmit={handleSaveProduct} className="p-8 space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="col-span-2 flex items-center gap-6 mb-2">
@@ -566,17 +568,17 @@ const InventoryPage: React.FC = () => {
                 )}
                 <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white">
                   <Upload className="w-5 h-5 mb-1" />
-                  <span className="text-[8px] font-black tracking-widest">UPLOAD</span>
+                  <span className="text-[8px] font-black tracking-widest">Upload</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
               </div>
               <div>
-                <p className="text-[10px] font-black tracking-widest uppercase mb-1">Product Image</p>
+                <p className="text-[10px] font-black tracking-widest mb-1">Product image</p>
                 <p className="text-[9px] font-bold text-surface-text/40 uppercase">Adding an image improves experience.</p>
                 <p className="text-[9px] font-bold text-surface-text/40 uppercase">Optimal ratio is 1:1.</p>
                 {formData.imageUrl && (
-                  <button type="button" onClick={() => setFormData({...formData, imageUrl: ''})} className="text-[9px] font-black tracking-widest text-red-500 mt-2 hover:underline uppercase">
-                    REMOVE IMAGE
+                  <button type="button" onClick={() => setFormData({...formData, imageUrl: ''})} className="text-[9px] font-black tracking-widest text-red-500 mt-2 hover:underline">
+                    Remove image
                   </button>
                 )}
               </div>

@@ -31,7 +31,7 @@ interface Inquiry {
   createdAt: string;
 }
 
-const InquiriesPage: React.FC = () => {
+const SupportPage: React.FC = () => {
   const { isReadOnly } = useFeatureAccess();
   const readOnly = isReadOnly('INQUIRIES');
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -187,8 +187,8 @@ const InquiriesPage: React.FC = () => {
             <input 
               type="text" 
               placeholder="Search customers..."
-              title="Search customer inquiries"
-              aria-label="Search customer inquiries"
+              title="Search support requests"
+              aria-label="Search support requests"
               className="input-field w-full pl-11 text-xs font-bold py-3"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -197,7 +197,7 @@ const InquiriesPage: React.FC = () => {
           <button 
             onClick={handleDeleteAll}
             className="p-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95"
-            title="Clear All Inquiries"
+            title="Clear all support history"
           >
             <Trash2 className="w-5 h-5" />
           </button>
@@ -213,7 +213,7 @@ const InquiriesPage: React.FC = () => {
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
             <MessageSquare className="w-16 h-16 text-surface-text/5 mb-4" />
-            <p className="text-[10px] font-black tracking-widest text-surface-text/20 uppercase">No matching inquiries found</p>
+            <p className="text-[10px] font-black tracking-widest text-surface-text/20 uppercase">No matching support requests found</p>
           </div>
         ) : (
           <div className="space-y-0">
@@ -241,11 +241,11 @@ const InquiriesPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Inquiry Details */}
+                    {/* Support Details */}
                     <div className="flex-1 space-y-4">
                       <div className="flex items-center gap-3 text-[10px] font-black tracking-[0.2em] text-surface-text/20 uppercase">
                         <Package className="w-4 h-4" />
-                        Inquiry Items
+                        Requested items
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {items.map((item: LocalProduct, idx: number) => (
@@ -292,7 +292,7 @@ const InquiriesPage: React.FC = () => {
 
                         {normalizedStatus !== 'CLOSED' && (
                           <button onClick={() => updateStatus(i.id, 'CLOSED')} className="w-full py-3 bg-surface-bg border border-surface-border text-surface-text/60 hover:text-surface-text rounded-xl text-[9px] font-black tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Close Inquiry
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Close support request
                           </button>
                         )}
                       </div>
@@ -345,4 +345,4 @@ const InquiriesPage: React.FC = () => {
   );
 };
 
-export default InquiriesPage;
+export default SupportPage;

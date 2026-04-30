@@ -61,8 +61,7 @@ const POSPage: React.FC = () => {
     idNumber: '',
     village: '',
     livePhoto: '',
-    fingerprintData: '',
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    fingerprintData: ''
   }));
 
   const [useCamera, setUseCamera] = useState(false);
@@ -324,12 +323,15 @@ const POSPage: React.FC = () => {
   const startCamera = async () => {
     setUseCamera(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch {
-      toast.error('Camera access denied');
+    } catch (err) {
+      console.error('Camera error:', err);
+      toast.error('Camera access denied or back camera not found');
       setUseCamera(false);
     }
   };
@@ -406,8 +408,7 @@ const POSPage: React.FC = () => {
         idNumber: '', 
         village: '', 
         livePhoto: '', 
-        fingerprintData: '', 
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] 
+        fingerprintData: ''
       });
         toast.success('Customer verified');
         if (paymentMode === 'Credit') handleCheckout();
@@ -437,8 +438,7 @@ const POSPage: React.FC = () => {
         idNumber: '', 
         village: '', 
         livePhoto: '', 
-        fingerprintData: '', 
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] 
+        fingerprintData: ''
       });
       toast.success('Customer added');
       if (paymentMode === 'Credit') handleCheckout();
@@ -503,31 +503,28 @@ const POSPage: React.FC = () => {
                     <div className="flex flex-col gap-6">
                       <div className="space-y-4">
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Full name</label>
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">Full name</label>
                           <input required id="cust-name" title="Full name" aria-label="Full name" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. John Phiri" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Phone number</label>
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">Phone number</label>
                           <input required id="cust-phone" title="Phone number" aria-label="Phone number" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. 0881234567 or +265..." value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">National ID (8 chars)</label>
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">National ID (8 chars)</label>
                           <input id="cust-id" title="National ID" aria-label="National ID" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. ABC12345" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Village / location</label>
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">Village / location</label>
                           <input id="cust-village" title="Village / location" aria-label="Village / location" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. Lilongwe" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-black tracking-widest text-rose-500 pl-1 uppercase">Due date (Required for credit)</label>
-                          <input required id="cust-due-date" title="Due date" aria-label="Due date" type="date" className="input-field w-full py-3 px-4 font-black border-rose-500/30" value={custForm.dueDate} onChange={e => setCustForm({...custForm, dueDate: e.target.value})} />
-                        </div>
+
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Live photo</label>
-                          <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl overflow-hidden relative flex flex-col items-center justify-center">
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">Live photo</label>
+                          <div className="w-full aspect-video max-h-[200px] bg-surface-bg border border-surface-border rounded-2xl overflow-hidden relative flex flex-col items-center justify-center">
                             {custForm.livePhoto ? (
                               <img src={custForm.livePhoto} alt="Preview" className="w-full h-full object-cover" />
                             ) : useCamera ? (
@@ -542,7 +539,7 @@ const POSPage: React.FC = () => {
                           </div>
                           <div className="flex gap-2">
                             {!useCamera && !custForm.livePhoto && (
-                              <button type="button" onClick={startCamera} className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-[8px] font-bold flex items-center justify-center gap-1 uppercase">
+                              <button type="button" onClick={startCamera} className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-[8px] font-bold flex items-center justify-center gap-1">
                                 <Camera className="w-3 h-3" /> Camera
                               </button>
                             )}
@@ -557,7 +554,7 @@ const POSPage: React.FC = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1 uppercase">Biometrics</label>
+                          <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">Biometrics</label>
                           <button 
                             type="button" 
                             onClick={captureFingerprint}
@@ -565,13 +562,13 @@ const POSPage: React.FC = () => {
                             className={`w-full aspect-square rounded-2xl flex flex-col items-center justify-center gap-4 border transition-all ${custForm.fingerprintData ? 'bg-emerald-500 border-emerald-500 text-white shadow-xl scale-105' : 'bg-surface-bg border-surface-border text-surface-text/60'}`}
                           >
                             {custForm.fingerprintData ? <CheckCircle2 className="w-12 h-12" /> : <Fingerprint className="w-12 h-12" />}
-                            <span className="text-[10px] font-black uppercase tracking-widest">{custForm.fingerprintData ? 'Captured Successfully' : 'Tap Fingerprint'}</span>
+                            <span className="text-[10px] font-black tracking-widest">{custForm.fingerprintData ? 'Captured successfully' : 'Tap fingerprint'}</span>
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    <button type="submit" className="w-full btn-primary !py-4 text-[10px] font-black tracking-widest mt-6 uppercase shadow-lg shadow-primary-500/20">
+                    <button type="submit" className="w-full btn-primary !py-4 text-[10px] font-black tracking-widest mt-6 shadow-lg shadow-primary-500/20">
                       Create secure profile
                     </button>
                   </form>
@@ -836,21 +833,21 @@ const POSPage: React.FC = () => {
                 <div className="mt-12 p-10 bg-surface-card border border-surface-border rounded-[3rem] space-y-10 shadow-xl relative overflow-hidden">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                      { id: 'Cash', icon: Wallet, color: 'bg-primary-500' },
-                      { id: 'Card', icon: CreditCard, color: 'bg-blue-600', label: 'BANK' },
-                      { id: 'Momo', icon: Smartphone, color: 'bg-emerald-600', label: 'MOBILE MONEY' },
-                      { id: 'Credit', icon: Users, color: 'bg-amber-600' }
+                      { id: 'Cash', icon: Wallet, color: 'bg-primary-500', label: 'Cash' },
+                      { id: 'Card', icon: CreditCard, color: 'bg-blue-600', label: 'Bank' },
+                      { id: 'Momo', icon: Smartphone, color: 'bg-emerald-600', label: 'MoMo' },
+                      { id: 'Credit', icon: Users, color: 'bg-amber-600', label: 'Credit' }
                     ].map((mode) => (
                       <button 
                         key={mode.id} 
                         onClick={() => setPaymentMode(mode.id as 'Cash' | 'Card' | 'Momo' | 'Credit')} 
                         className={clsx(
-                          "p-6 rounded-3xl border flex flex-col items-center gap-3 transition-all active:scale-95",
-                          paymentMode === mode.id ? `${mode.color} text-white border-transparent shadow-2xl scale-105` : "bg-surface-bg border-surface-border text-surface-text/30 hover:border-primary-500/20"
+                          "p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all active:scale-95",
+                          paymentMode === mode.id ? `${mode.color} text-white border-transparent shadow-xl scale-105` : "bg-surface-bg border-surface-border text-surface-text/30 hover:border-primary-500/20"
                         )}
                       >
-                        <mode.icon className="w-7 h-7" />
-                        <span className="text-[10px] font-black tracking-widest uppercase">{mode.label || mode.id}</span>
+                        <mode.icon className="w-5 h-5" />
+                        <span className="text-[9px] font-black tracking-widest uppercase">{mode.label}</span>
                       </button>
                     ))}
                   </div>
@@ -866,11 +863,11 @@ const POSPage: React.FC = () => {
                           <label className="text-[10px] font-black text-surface-text/40 tracking-widest ml-1 uppercase">Transaction Summary</label>
                           <div className={clsx("h-20 flex flex-col justify-center px-8 rounded-3xl border-2 font-black transition-all", parseFloat(amountReceived) >= finalTotal ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-500" : "bg-surface-bg border-surface-border text-surface-text/10")}>
                             <div className="flex justify-between items-center">
-                               <span className="text-[11px] uppercase tracking-widest">Change Due:</span>
+                               <span className="text-[11px] uppercase tracking-widest">Change due:</span>
                                <span className="text-xl">MK {changeDue.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center opacity-60">
-                               <span className="text-[9px] uppercase tracking-widest">Tax Inclusion:</span>
+                               <span className="text-[9px] uppercase tracking-widest">Tax inclusion:</span>
                                <span className="text-[10px]">MK {taxAmount.toLocaleString()}</span>
                             </div>
                           </div>
@@ -893,33 +890,12 @@ const POSPage: React.FC = () => {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Reference Number</label>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-surface-text/40 ml-1">Reference number</label>
                           <input type="text" className="input-field w-full h-20 rounded-3xl px-8 text-xl font-black border-2" placeholder="XXXX-XXXX" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
                         </div>
                       </>
                     )}
-                    {paymentMode === 'Credit' && (
-                      <div className="col-span-full">
-                         <div className="p-8 bg-amber-500/5 border-2 border-amber-500/20 rounded-3xl flex items-center justify-between">
-                            <div className="flex items-center gap-6">
-                               <div className="w-16 h-16 bg-amber-500/20 text-amber-600 rounded-2xl flex items-center justify-center">
-                                  <Users className="w-8 h-8" />
-                               </div>
-                               <div>
-                                  <div className="font-black text-xl uppercase">Credit Sale</div>
-                                  <div className="text-[10px] font-black text-amber-600/60 uppercase tracking-widest">
-                                     {selectedCustomerId ? `Customer attached: MK ${(customers?.find(c => c.id === selectedCustomerId)?.balance || 0).toLocaleString()} pending` : 'Mandatory registration required'}
-                                  </div>
-                               </div>
-                            </div>
-                            {!selectedCustomerId && (
-                              <button onClick={() => setShowCustomerSelector(true)} className="btn-primary !bg-amber-500 !px-8 !py-4 text-[10px] font-black tracking-widest uppercase shadow-xl shadow-amber-500/20">
-                                 Register for credit
-                              </button>
-                            )}
-                         </div>
-                      </div>
-                    )}
+
                   </div>
 
                   <div className="pt-10 flex flex-col md:flex-row items-center justify-between gap-8 border-t border-surface-border/30">
@@ -952,14 +928,14 @@ const POSPage: React.FC = () => {
                           onChange={(e) => setPrintReceipt(e.target.checked)}
                           className="w-5 h-5 rounded-lg border-surface-border text-primary-500 focus:ring-primary-500 cursor-pointer"
                         />
-                        <label htmlFor="printReceipt" className="text-[10px] font-black tracking-widest text-surface-text/60 cursor-pointer uppercase">Auto-Print Receipt</label>
+                        <label htmlFor="printReceipt" className="text-[10px] font-black tracking-widest text-surface-text/60 cursor-pointer uppercase">Auto-print receipt</label>
                       </div>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-8 w-full md:w-auto">
                       <div className="flex flex-col items-end">
                         <span className="text-[10px] font-black text-surface-text/30 tracking-widest mb-1 uppercase block">
-                           {taxConfig.inclusive ? 'Grand Total (Tax Included)' : `Grand Total (Inc. MK \${taxAmount.toLocaleString()} Tax)`}
+                           {taxConfig.inclusive ? 'Grand total (Tax included)' : `Grand total (Inc. MK \${taxAmount.toLocaleString()} Tax)`}
                         </span>
                         <div className={clsx("text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none", paymentMode === 'Credit' ? 'text-amber-500' : 'text-primary-500')}>
                             MK {finalTotal.toLocaleString()}
@@ -977,7 +953,7 @@ const POSPage: React.FC = () => {
                         )}
                       >
                         {paymentMode === 'Credit' ? <Users className="w-7 h-7" /> : <CheckCircle2 className="w-7 h-7" />}
-                        {paymentMode === 'Credit' ? 'Process Credit' : 'Complete Sale'}
+                        {paymentMode === 'Credit' ? 'Process credit' : 'Complete sale'}
                       </button>
                     </div>
                   </div>

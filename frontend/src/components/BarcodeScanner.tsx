@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { X, Zap, ZapOff } from 'lucide-react';
+import { Zap, ZapOff } from 'lucide-react';
 
 interface BarcodeScannerProps {
   onScan: (decodedText: string) => void;
@@ -28,7 +28,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
       try {
         const newState = !isFlashOn;
         await html5QrCodeRef.current.applyVideoConstraints({
-          advanced: [{ torch: newState } as any]
+          advanced: [{ torch: newState } as MediaTrackConstraintSet]
         });
         setIsFlashOn(newState);
       } catch (err) {
@@ -62,8 +62,8 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
     ).then(() => {
         // Try to check for flashlight capability
         try {
-            const capabilities = html5QrCode.getRunningTrackCapabilities();
-            if ((capabilities as any).torch) {
+            const capabilities = html5QrCode.getRunningTrackCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+            if (capabilities.torch) {
                 setHasFlash(true);
             }
         } catch {
@@ -84,16 +84,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
       
       {/* Controls Overlay */}
       <div className="absolute inset-0 flex flex-col pointer-events-none">
-          <header className="p-6 flex justify-between items-center pointer-events-auto">
-             <button 
-               onClick={onClose}
-               title="Close Scanner"
-               aria-label="Close Scanner"
-               className="w-12 h-12 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-90 transition-all pointer-events-auto"
-             >
-                <X className="w-6 h-6" />
-             </button>
-             
+          <header className="p-6 flex justify-end items-center pointer-events-auto">
              {hasFlash && (
                  <button 
                     onClick={toggleFlash}
@@ -117,8 +108,14 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
               </div>
           </div>
 
-          <footer className="p-16 text-center">
+          <footer className="p-16 text-center flex flex-col items-center gap-8 pointer-events-auto">
               <p className="text-[10px] font-black text-white/30 tracking-[0.5em] uppercase">Align Barcode to Scan</p>
+              <button 
+                onClick={onClose}
+                className="px-10 py-4 bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/20 transition-all active:scale-95"
+              >
+                Close Scanner
+              </button>
           </footer>
       </div>
     </div>

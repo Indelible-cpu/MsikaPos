@@ -209,8 +209,8 @@ const ReportsPage: React.FC = () => {
   const stats = [
     { label: 'Revenue', value: `MK${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500' },
     { label: 'Transactions', value: totalSalesCount.toString(), icon: TrendingUp, color: 'text-primary-500' },
-    { label: 'Total Profit', value: `MK${totalProfit.toLocaleString()}`, icon: ArrowUpRight, color: 'text-blue-500' },
-    { label: 'Avg Sale', value: `MK${(totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0).toLocaleString()}`, icon: Users, color: 'text-amber-500' },
+    { label: 'Total profit', value: `MK${totalProfit.toLocaleString()}`, icon: ArrowUpRight, color: 'text-blue-500' },
+    { label: 'Avg sale', value: `MK${(totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0).toLocaleString()}`, icon: Users, color: 'text-amber-500' },
   ];
 
 
@@ -231,7 +231,10 @@ const ReportsPage: React.FC = () => {
                   activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg/50"
                 )}
               >
-                {tab}
+                {tab === 'Financial' ? 'Financial reports' : 
+                 tab === 'Staff' ? 'Staff reports' : 
+                 tab === 'Branches' ? 'Branch reports' : 
+                 'Payment reports'}
               </button>
             ))}
           </div>

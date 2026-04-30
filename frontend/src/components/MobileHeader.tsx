@@ -13,7 +13,27 @@ export default function MobileHeader() {
 
   useEffect(() => {
     const updateHeader = async () => {
-      // Try DB first for persistence across logouts
+      const activeBranchId = localStorage.getItem('activeBranchId');
+      
+      // Try to get branch name if activeBranchId exists
+      if (activeBranchId) {
+        try {
+          const api = (await import('../api/client')).default;
+          const res = await api.get('/branches?minimal=1');
+          if (res.data.success) {
+            const branches = res.data.data;
+            const activeBranch = branches.find((b: { id: number }) => b.id === parseInt(activeBranchId));
+            if (activeBranch) {
+              setShopName(activeBranch.name);
+              return; // Found branch name, no need to check company config
+            }
+          }
+        } catch (e) {
+          console.error('Failed to fetch branch name for header:', e);
+        }
+      }
+
+      // Fallback to company config
       const company = await db.settings.get('company_config');
       if (company?.value) {
         setShopName((company.value as { name: string }).name);
@@ -49,21 +69,21 @@ export default function MobileHeader() {
     const path = pathname.replace('/staff', '');
     switch (path) {
       case '/dashboard': return 'Dashboard';
-      case '/pos': return 'POS Terminal';
+      case '/pos': return 'Pos terminal';
       case '/inventory': return 'Inventory';
-      case '/sales': return 'Sales History';
-      case '/reports': return 'Business Reports';
-      case '/settings': return 'System Settings';
-      case '/branches': return 'Branch Management';
-      case '/debt': return 'Credit Center';
-      case '/expenses': return 'Finance & Expenses';
-      case '/transactions': return 'Sales';
-      case '/users': return 'Staff Management';
-      case '/onboarding': return 'Account Setup';
-      case '/about': return 'MsikaPos Info';
-      case '/inquiries': return 'Customer Support';
-      case '/audit-logs': return 'Security Logs';
-      default: return 'MsikaPos';
+      case '/sales': return 'Sales history';
+      case '/reports': return 'Business reports';
+      case '/settings': return 'System settings';
+      case '/branches': return 'Branch management';
+      case '/debt': return 'Credit center';
+      case '/expenses': return 'Finance & expenses';
+      case '/transactions': return 'Sales history';
+      case '/users': return 'Staff management';
+      case '/onboarding': return 'Account setup';
+      case '/about': return 'Msikapos info';
+      case '/inquiries': return 'Support';
+      case '/audit-logs': return 'Security logs';
+      default: return 'Msikapos';
     }
   };
 
@@ -73,7 +93,7 @@ export default function MobileHeader() {
     <>
       <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[100] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
         <div className="flex items-center gap-2 overflow-hidden flex-1">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="w-9 h-9 rounded-full border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm"
@@ -82,7 +102,7 @@ export default function MobileHeader() {
           </motion.div>
 
           {!isBasePage && (
-            <button 
+            <button
               onClick={() => window.history.back()}
               className="p-1.5 bg-surface-bg rounded-lg border border-surface-border active:scale-90 transition-all flex-shrink-0"
               title="Go back"
@@ -91,12 +111,12 @@ export default function MobileHeader() {
               <ChevronLeft className="w-4 h-4" />
             </button>
           )}
-          
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-[14px] font-black tracking-tighter text-primary-500 leading-none truncate block">
+
+          <div className="flex flex-col min-w-0 flex-1 ml-1">
+            <span className="text-[17px] font-black tracking-tighter text-primary-500 leading-none truncate block">
               {shopName}
             </span>
-            <span className="text-[10px] font-black tracking-[0.2em] text-surface-text/60 truncate !mb-0 uppercase">
+            <span className="text-[8px] font-black tracking-[0.3em] text-surface-text/40 truncate !mb-0 uppercase mt-1">
               {getPageTitle(location.pathname)}
             </span>
           </div>
@@ -109,7 +129,7 @@ export default function MobileHeader() {
             </div>
           )}
 
-          <button 
+          <button
             onClick={() => window.location.href = '/staff/inquiries'}
             className="relative p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 active:scale-95 transition-all"
             title="Notifications"

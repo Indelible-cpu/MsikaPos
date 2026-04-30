@@ -27,7 +27,7 @@ const MobileNav: React.FC = () => {
     { id: 'dashboard', label: 'Home', icon: Home, path: '/staff/dashboard' },
     { id: 'sales', label: 'Sales', icon: Receipt, path: '/staff/transactions' },
     { id: 'pos', label: 'Pos', icon: ShoppingCart, path: '/staff/pos' },
-    { id: 'inquiries', label: 'Inquiry', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
+    { id: 'inquiries', label: 'Support', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
   ];
 
   return (
@@ -76,7 +76,7 @@ const MobileNav: React.FC = () => {
             <div className="transition-all duration-300 flex items-center justify-center opacity-60">
               <MoreHorizontal className="w-5 h-5" strokeWidth={2} />
             </div>
-            <span className="text-[8px] font-black tracking-[0.2em] mt-1.5 transition-all opacity-80 text-surface-text">
+            <span className="text-[9px] font-black tracking-[0.2em] mt-1.5 transition-all opacity-80 text-surface-text">
               More
             </span>
           </button>

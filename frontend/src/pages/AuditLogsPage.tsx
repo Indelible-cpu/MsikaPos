@@ -82,7 +82,7 @@ const AuditLogsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+      <div className="bg-surface-card border-b border-surface-border px-4 md:px-8 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
         {!readOnly && (
@@ -96,7 +96,7 @@ const AuditLogsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-6 md:px-12 py-8">
+      <div className="px-0 md:px-4 py-8">
         <div className="flex flex-col md:flex-row gap-4 mb-8">
            <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />

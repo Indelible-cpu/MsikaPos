@@ -88,10 +88,10 @@ const DashboardPage: React.FC = () => {
   const chartData = stats?.chart_data || [];
 
   const statCards = [
-    { label: "Today's Sales", value: `MK ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
-    { label: 'Total Expenses', value: `MK ${totalExpensesAmt.toLocaleString()}`, icon: Wallet, color: 'text-rose-500', trend: 'Monthly Spending' },
-    { label: 'Net Profit', value: `MK ${netProfit.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-400', trend: 'After Expenses' },
-    { label: 'Active Credits', value: `MK ${totalCreditAmount.toLocaleString()}`, icon: Users, color: 'text-amber-500', trend: `${activeCredits.length} Users` },
+    { label: "Today's sales", value: `MK ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
+    { label: 'Total expenses', value: `MK ${totalExpensesAmt.toLocaleString()}`, icon: Wallet, color: 'text-rose-500', trend: 'Monthly spending' },
+    { label: 'Net profit', value: `MK ${netProfit.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-400', trend: 'After expenses' },
+    { label: 'Active credits', value: `MK ${totalCreditAmount.toLocaleString()}`, icon: Users, color: 'text-amber-500', trend: `${activeCredits.length} Users` },
   ];
 
   return (

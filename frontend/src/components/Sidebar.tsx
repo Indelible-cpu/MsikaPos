@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, MessageSquare, History } from 'lucide-react';
-import BranchSwitcher from './BranchSwitcher';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
@@ -17,17 +16,17 @@ const Sidebar: React.FC = () => {
 
   const tabs = [
     { id: 'dashboard', key: 'DASHBOARD', label: 'Dashboard', icon: Home, path: '/staff/dashboard' },
-    { id: 'pos', key: 'POS_TERMINAL', label: 'POS Terminal', icon: ShoppingCart, path: '/staff/pos' },
-    { id: 'transactions', key: 'SALES_HISTORY', label: 'Sales', icon: Receipt, path: '/staff/transactions' },
-    { id: 'debt', key: 'CUSTOMERS', label: 'Credit Center', icon: Users, path: '/staff/debt' },
-    { id: 'inventory', key: 'INVENTORY', label: 'Stock Management', icon: Package, path: '/staff/inventory' },
-    { id: 'inquiries', key: 'INQUIRIES', label: 'Inquiries & Requests', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
-    { id: 'expenses', key: 'FINANCE', label: 'Finance & Expenses', icon: Wallet, path: '/staff/expenses' },
-    { id: 'team', key: 'STAFF', label: 'Staff Management', icon: UserCheck, path: '/staff/users' },
-    { id: 'branches', key: 'BRANCHES', label: 'Branch Management', icon: Building2, path: '/staff/branches' },
-    { id: 'reports', key: 'REPORTS', label: 'System Reports', icon: BarChart3, path: '/staff/reports' },
-    { id: 'settings', key: 'SETTINGS', label: 'System Settings', icon: Settings, path: '/staff/settings' },
-    ...(isSuperAdmin ? [{ id: 'audit', key: 'AUDIT_LOGS', label: 'Security Logs', icon: History, path: '/staff/audit-logs' }] : []),
+    { id: 'pos', key: 'POS_TERMINAL', label: 'Pos terminal', icon: ShoppingCart, path: '/staff/pos' },
+    { id: 'transactions', key: 'SALES_HISTORY', label: 'Sales history', icon: Receipt, path: '/staff/transactions' },
+    { id: 'debt', key: 'CUSTOMERS', label: 'Credit center', icon: Users, path: '/staff/debt' },
+    { id: 'inventory', key: 'INVENTORY', label: 'Stock management', icon: Package, path: '/staff/inventory' },
+    { id: 'inquiries', key: 'INQUIRIES', label: 'Support', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
+    { id: 'expenses', key: 'FINANCE', label: 'Finance & expenses', icon: Wallet, path: '/staff/expenses' },
+    { id: 'team', key: 'STAFF', label: 'Staff management', icon: UserCheck, path: '/staff/users' },
+    { id: 'branches', key: 'BRANCHES', label: 'Branch management', icon: Building2, path: '/staff/branches' },
+    { id: 'reports', key: 'REPORTS', label: 'System reports', icon: BarChart3, path: '/staff/reports' },
+    { id: 'settings', key: 'SETTINGS', label: 'System settings', icon: Settings, path: '/staff/settings' },
+    ...(isSuperAdmin ? [{ id: 'audit', key: 'AUDIT_LOGS', label: 'Security logs', icon: History, path: '/staff/audit-logs' }] : []),
   ];
 
   const filteredTabs = tabs.filter(tab => canAccess(tab.key));
@@ -75,15 +74,11 @@ const Sidebar: React.FC = () => {
           <img src={shopLogo} alt="MsikaPos Logo" className="w-full h-full object-cover" />
         </div>
         <div className="space-y-1">
-          <div className="text-[10px] font-black text-primary-500 tracking-[0.3em] opacity-80 uppercase">Cloud Powered POS</div>
+          <div className="text-[10px] font-black text-primary-500 tracking-[0.3em] opacity-80">Cloud powered pos</div>
           <div className="w-12 h-1 bg-primary-500/20 mx-auto rounded-full"></div>
         </div>
 
-        {isSuperAdmin && (
-          <div className="w-full mt-6 flex justify-center">
-            <BranchSwitcher />
-          </div>
-        )}
+
       </div>
 
       {/* Navigation - Scrollable */}
@@ -124,7 +119,7 @@ const Sidebar: React.FC = () => {
           Sign Out
         </button>
         <div className="mt-4 px-4 flex items-center justify-between opacity-30">
-           <span className="text-[7px] font-black tracking-[0.2em] uppercase">Powered by MsikaPOS</span>
+           <span className="text-[7px] font-black tracking-[0.2em]">Powered by Msikapos</span>
            <div className={clsx(
              "w-1.5 h-1.5 rounded-full",
              navigator.onLine ? "bg-emerald-500 animate-pulse" : "bg-rose-500"

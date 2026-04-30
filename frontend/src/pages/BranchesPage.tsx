@@ -208,7 +208,7 @@ const BranchesPage: React.FC = () => {
         {!readOnly && isSuperAdmin && (
           <button 
             onClick={() => { setEditingBranch(null); resetForm(); setIsModalOpen(true); }}
-            className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 uppercase"
+            className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20"
           >
             <Plus className="w-4 h-4 mr-2 inline" /> Add branch
           </button>
@@ -223,8 +223,8 @@ const BranchesPage: React.FC = () => {
               <div className={`p-2 rounded-xl bg-surface-bg border border-surface-border w-fit mb-4 ${stat.color}`}>
                 <stat.icon className="w-4 h-4" />
               </div>
-              <div className="text-xl md:text-2xl font-black tracking-tighter uppercase leading-none">{stat.value}</div>
-              <div className="text-[9px] font-black text-surface-text/30 tracking-widest uppercase mt-2">{stat.label}</div>
+              <div className="text-xl md:text-2xl font-black tracking-tighter leading-none">{stat.value}</div>
+              <div className="text-[9px] font-black text-surface-text/30 tracking-widest mt-2">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -350,7 +350,7 @@ const BranchesPage: React.FC = () => {
                       <input id="br-tin" title="Tax Identification Number" aria-label="Tax Identification Number" className="input-field w-full py-3 px-4 font-black" placeholder="eg. TIN-123456" value={formData.tinNumber} onChange={e => setFormData({...formData, tinNumber: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="br-status">Operational Status</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="br-status">Operational status</label>
                       <select id="br-status" title="Operational Status" aria-label="Operational Status" className="input-field w-full py-3 px-4 font-black" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE'})}>
                         <option value="ACTIVE">Operational (Active)</option>
                         <option value="INACTIVE">Temporarily Closed</option>
@@ -366,19 +366,19 @@ const BranchesPage: React.FC = () => {
                     <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500">
                       <MapPin className="w-4 h-4" />
                     </div>
-                    <h4 className="text-[10px] font-black tracking-[0.2em] uppercase text-surface-text/40">Contact & Location</h4>
+                    <h4 className="text-[10px] font-black tracking-[0.2em] text-surface-text/40">Contact & location</h4>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5 col-span-1 md:col-span-2">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Physical Address *</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Physical address *</label>
                       <input required className="input-field w-full py-3 px-4 font-black" placeholder="eg. Zomba Main Road, Near Post Office" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Primary Phone *</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Primary phone *</label>
                       <input required className="input-field w-full py-3 px-4 font-black" placeholder="eg. +265..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Official Email</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Official email</label>
                       <input type="email" className="input-field w-full py-3 px-4 font-black" placeholder="eg. branch@msikapos.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                     </div>
                   </div>
@@ -390,15 +390,15 @@ const BranchesPage: React.FC = () => {
                     <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500">
                       <Clock className="w-4 h-4" />
                     </div>
-                    <h4 className="text-[10px] font-black tracking-[0.2em] uppercase text-surface-text/40">Operating Hours</h4>
+                    <h4 className="text-[10px] font-black tracking-[0.2em] text-surface-text/40">Operating hours</h4>
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="br-open">Opening Time</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="br-open">Opening time</label>
                       <input id="br-open" title="Opening Time" aria-label="Opening Time" type="time" placeholder="08:00" className="input-field w-full py-3 px-4 font-black" value={formData.openingTime} onChange={e => setFormData({...formData, openingTime: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="br-close">Closing Time</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="br-close">Closing time</label>
                       <input id="br-close" title="Closing Time" aria-label="Closing Time" type="time" placeholder="18:00" className="input-field w-full py-3 px-4 font-black" value={formData.closingTime} onChange={e => setFormData({...formData, closingTime: e.target.value})} />
                     </div>
                   </div>
@@ -410,23 +410,23 @@ const BranchesPage: React.FC = () => {
                     <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500">
                       <ShieldCheck className="w-4 h-4" />
                     </div>
-                    <h4 className="text-[10px] font-black tracking-[0.2em] uppercase text-surface-text/40">Social & Branding</h4>
+                    <h4 className="text-[10px] font-black tracking-[0.2em] text-surface-text/40">Social & branding</h4>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">WhatsApp Number</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Whatsapp number</label>
                       <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. 265..." value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Instagram Handle</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Instagram handle</label>
                       <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. @msikapos_branch" value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch Slogan</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Branch slogan</label>
                       <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. Excellence in Service" value={formData.slogan} onChange={e => setFormData({...formData, slogan: e.target.value})} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Branch Logo</label>
+                      <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Branch logo</label>
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center overflow-hidden shrink-0">
                           {formData.logo ? (
@@ -435,7 +435,7 @@ const BranchesPage: React.FC = () => {
                             <Store className="w-6 h-6 text-surface-text/10" />
                           )}
                         </div>
-                        <label className="btn-primary !px-4 !py-2 text-[8px] font-black tracking-widest cursor-pointer uppercase">
+                        <label className="btn-primary !px-4 !py-2 text-[8px] font-black tracking-widest cursor-pointer">
                           Choose image
                           <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                         </label>
@@ -444,24 +444,24 @@ const BranchesPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 mt-8">
-                  <button type="submit" className="w-full btn-primary h-16 font-black tracking-widest shadow-2xl shadow-primary-500/20 uppercase">
-                    {editingBranch ? 'Save Configuration' : 'Register Branch Office'}
+                  <button type="submit" className="w-full btn-primary h-16 font-black tracking-widest shadow-2xl shadow-primary-500/20">
+                    {editingBranch ? 'Save configuration' : 'Register branch office'}
                   </button>
                   {editingBranch && (
                     <button 
                       type="button" 
                       onClick={() => handleDeleteBranch(editingBranch.id)}
-                      className="w-full h-14 bg-red-500/5 text-red-500 text-[10px] font-black tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20 rounded-2xl uppercase"
+                      className="w-full h-14 bg-red-500/5 text-red-500 text-[10px] font-black tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20 rounded-2xl"
                     >
-                      Delete Branch
+                      Delete branch
                     </button>
                   )}
                   <button 
                     type="button"
                     onClick={() => { setIsModalOpen(false); setEditingBranch(null); }}
-                    className="w-full h-14 bg-surface-bg text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all border border-surface-border rounded-2xl uppercase"
+                    className="w-full h-14 bg-surface-bg text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all border border-surface-border rounded-2xl"
                   >
-                    Close Window
+                    Close window
                   </button>
                 </div>
               </form>

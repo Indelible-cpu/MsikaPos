@@ -267,9 +267,9 @@ const UsersPage: React.FC = () => {
           {!readOnly && (
             <button 
               onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
-              className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 uppercase whitespace-nowrap"
+              className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 whitespace-nowrap"
             >
-              <Plus className="w-4 h-4 mr-2 inline" /> Add Staff
+              <Plus className="w-4 h-4 mr-2 inline" /> Add staff
             </button>
           )}
         </div>
@@ -369,7 +369,7 @@ const UsersPage: React.FC = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title={editingUser ? 'Edit Staff' : 'New Staff'}
+        title={editingUser ? 'Edit staff' : 'New staff'}
         maxWidth="max-w-xl"
       >
         {!tempPassword ? (
@@ -415,7 +415,7 @@ const UsersPage: React.FC = () => {
             <div className="flex gap-4 pt-4">
               <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest">Cancel</button>
               <button type="submit" disabled={loading} className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20">
-                {loading ? <Loader2 className="animate-spin" /> : (editingUser ? 'Save Changes' : 'Create Account')}
+                {loading ? <Loader2 className="animate-spin" /> : (editingUser ? 'Save changes' : 'Create account')}
               </button>
             </div>
           </form>
@@ -425,7 +425,7 @@ const UsersPage: React.FC = () => {
               <Check className="w-8 h-8 text-emerald-500" />
             </div>
             <div>
-              <h2 className="text-2xl font-black  tracking-tighter text-emerald-500 mb-2">Account Ready</h2>
+              <h2 className="text-2xl font-black  tracking-tighter text-emerald-500 mb-2">Account ready</h2>
               <p className="text-surface-text/40 text-xs px-4">Provide these details to the user to complete their profile.</p>
             </div>
 

@@ -18,7 +18,7 @@ import ReportsPage from './pages/ReportsPage';
 import BranchesPage from './pages/BranchesPage';
 import AboutPage from './pages/AboutPage';
 import PublicStorefront from './pages/PublicStorefront';
-import InquiriesPage from './pages/InquiriesPage';
+import SupportPage from './pages/SupportPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import FeatureAccessPage from './pages/FeatureAccessPage';
 import { SyncService } from './services/SyncService';
@@ -302,7 +302,7 @@ const App: React.FC = () => {
                       <Routes>
                         <Route path="dashboard" element={<DashboardPage />} />
                         <Route path="pos" element={<POSPage />} />
-                        <Route path="inquiries" element={<InquiriesPage />} />
+                        <Route path="inquiries" element={<SupportPage />} />
                         <Route path="inventory" element={<InventoryPage />} />
                         <Route path="sales" element={<SalesPage />} />
                         <Route path="debt" element={<DebtPage />} />

@@ -56,7 +56,7 @@ const BranchSwitcher: React.FC = () => {
         <div className="flex flex-col items-start">
           <span className="text-[10px] font-black text-surface-text/40 tracking-widest uppercase">Context</span>
           <span className="text-xs font-black truncate max-w-[120px]">
-            {activeBranch ? activeBranch.name : 'ALL BRANCHES'}
+            {activeBranch ? activeBranch.name : 'All branches'}
           </span>
         </div>
         <ChevronDown className={clsx("w-4 h-4 text-surface-text/20 transition-transform", isOpen && "rotate-180")} />
@@ -80,7 +80,7 @@ const BranchSwitcher: React.FC = () => {
                     activeBranchId === null ? "bg-primary-500 text-white" : "hover:bg-surface-bg text-surface-text/60"
                   )}
                 >
-                  <span>GLOBAL OVERVIEW</span>
+                  <span>Global overview</span>
                   {activeBranchId === null && <Check className="w-4 h-4" />}
                 </button>
                 
