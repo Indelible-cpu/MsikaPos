@@ -242,17 +242,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
-                <Store className="w-5 h-5" />
-             </div>
-             <h1 className="text-2xl font-black tracking-tighter uppercase">System Settings</h1>
-          </div>
-          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Configure business identity and global rules</p>
-        </div>
-      </header>
+
 
       <div className="p-0 space-y-6 md:space-y-0">
           <div className="px-6 md:px-12 py-10 bg-surface-card border-b border-surface-border flex flex-col md:flex-row items-center md:items-start gap-8 group transition-all duration-500">

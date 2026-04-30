@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import { 
-  Shield, 
   ChevronRight,
   Info
 } from 'lucide-react';
@@ -17,7 +16,7 @@ const FEATURES = [
   { key: 'DASHBOARD', label: 'Dashboard Stats', icon: 'Home' },
   { key: 'POS_TERMINAL', label: 'POS Terminal', icon: 'ShoppingCart' },
   { key: 'SALES_HISTORY', label: 'Sales History', icon: 'Receipt' },
-  { key: 'CUSTOMERS', label: 'Customers & Debt', icon: 'Users' },
+  { key: 'CUSTOMERS', label: 'Credit Center', icon: 'Users' },
   { key: 'INVENTORY', label: 'Stock Management', icon: 'Package' },
   { key: 'INQUIRIES', label: 'Inquiries & Requests', icon: 'MessageSquare' },
   { key: 'FINANCE', label: 'Finance & Expenses', icon: 'Wallet' },
@@ -33,21 +32,9 @@ const ROLES = ['ADMIN', 'CASHIER'];
 const FeatureAccessPage: React.FC = () => {
   const [configs, setConfigs] = useState<FeatureConfig[]>([]);
   const [saving, setSaving] = useState(false);
-  const [branches, setBranches] = useState<{id: number, name: string}[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string>('all');
+  const [selectedBranch] = useState<string>('all');
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const res = await api.get('/branches');
-        setBranches(res.data.data);
-      } catch (err: unknown) {
-        const error = err as Error;
-        console.error('Failed to fetch branches', error.message);
-      }
-    };
-    init();
-  }, []);
+
 
   useEffect(() => {
     const load = async () => {
@@ -102,38 +89,12 @@ const FeatureAccessPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
-                <Shield className="w-5 h-5" />
-             </div>
-             <h1 className="text-2xl font-black tracking-tighter uppercase">Access Control</h1>
-          </div>
-          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Configure module visibility and permissions</p>
-        </div>
+      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="flex-1"></div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden md:block">
-            <div className="text-[10px] font-black text-surface-text/30 uppercase tracking-widest">Selected Context</div>
-            <div className="text-xs font-black text-primary-500 uppercase">
-              {selectedBranch === 'all' ? 'Global Configuration' : branches.find(b => b.id.toString() === selectedBranch)?.name}
-            </div>
-          </div>
-          <select 
-            value={selectedBranch}
-            onChange={(e) => setSelectedBranch(e.target.value)}
-            title="Switch Branch Context"
-            aria-label="Switch Branch Context"
-            className="px-6 py-3 bg-surface-card border border-surface-border rounded-xl text-[10px] font-black tracking-widest uppercase text-primary-500 outline-none cursor-pointer hover:border-primary-500/20 transition-all shadow-sm"
-          >
-            <option value="all">GLOBAL (ALL BRANCHES)</option>
-            {branches.map(b => (
-              <option key={b.id} value={b.id.toString()}>{b.name.toUpperCase()}</option>
-            ))}
-          </select>
         </div>
-      </header>
+      </div>
 
       <main className="p-6 md:p-12 max-w-6xl mx-auto w-full">
         <div className="bg-surface-card rounded-[2.5rem] border border-surface-border shadow-2xl overflow-hidden">
@@ -197,8 +158,13 @@ const FeatureAccessPage: React.FC = () => {
             <p className="text-xs font-bold text-surface-text/60 leading-relaxed">
               Permissions are applied instantly. If a feature is set to <strong className="text-red-500">HIDDEN</strong>, it will be removed from the sidebar and navigation for that role. <strong className="text-amber-500">READ ONLY</strong> will disable all save/edit/delete actions within that module.
             </p>
-            <p className="text-[9px] font-black text-primary-500/50 uppercase tracking-widest">Global settings apply unless a branch-specific override exists.</p>
           </div>
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <a href="/staff/settings" className="px-8 py-4 bg-surface-card border border-surface-border rounded-2xl text-[10px] font-black tracking-widest text-surface-text/40 hover:text-primary-500 transition-all uppercase shadow-sm flex items-center gap-2">
+            Close Access Control
+          </a>
         </div>
       </main>
     </div>

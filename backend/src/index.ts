@@ -141,6 +141,7 @@ app.delete('/api/expenses/:id', staffOnly, ExpenseCtrl.deleteExpense as any);
 app.post('/api/inquiries', CustomerCtrl.createInquiry as any);
 app.get('/api/inquiries', CustomerCtrl.listInquiries as any);
 app.put('/api/inquiries/:id', staffOnly, CustomerCtrl.updateInquiryStatus as any);
+app.delete('/api/inquiries/all', adminOnly, CustomerCtrl.deleteAllInquiries as any);
 
 // AI Insights
 app.post('/api/ai/suggestions', staffOnly, AiCtrl.getAiSuggestions as any);

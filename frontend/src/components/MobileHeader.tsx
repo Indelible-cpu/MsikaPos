@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bell, ChevronLeft, RotateCcw } from 'lucide-react';
+import { Bell, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db } from '../db/posDB';
 import BranchSwitcher from './BranchSwitcher';
@@ -55,7 +55,7 @@ export default function MobileHeader() {
       case '/reports': return 'Business Reports';
       case '/settings': return 'System Settings';
       case '/branches': return 'Branch Management';
-      case '/debt': return 'Customers & Debt';
+      case '/debt': return 'Credit Center';
       case '/expenses': return 'Finance & Expenses';
       case '/transactions': return 'Sales';
       case '/users': return 'Staff Management';
@@ -108,14 +108,7 @@ export default function MobileHeader() {
               <BranchSwitcher />
             </div>
           )}
-          <button 
-            onClick={() => window.location.reload()}
-            className="p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 active:scale-95 transition-all"
-            title="Refresh Page"
-            aria-label="Refresh Page"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
+
           <button 
             onClick={() => window.location.href = '/staff/inquiries'}
             className="relative p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 active:scale-95 transition-all"

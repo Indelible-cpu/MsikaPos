@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct } from '../db/posDB';
-import { calculateEffectiveDiscount, type DiscountableProduct } from '../utils/discountUtils';
+import { calculateEffectiveDiscount } from '../utils/discountUtils';
 import { 
   Search, 
   ShoppingCart, 
@@ -31,7 +31,6 @@ import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
 import { soundService } from '../services/SoundService';
 import clsx from 'clsx';
-import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
@@ -46,8 +45,6 @@ interface TaxConfig {
 }
 
 const POSPage: React.FC = () => {
-  const { isReadOnly } = useFeatureAccess();
-  const readOnly = isReadOnly('POS_TERMINAL');
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentMode, setPaymentMode] = useState<'Cash' | 'Card' | 'Momo' | 'Credit'>('Cash');
   const [cart, setCart] = useState<{ product: LocalProduct; quantity: number }[]>([]);
@@ -172,7 +169,7 @@ const POSPage: React.FC = () => {
 
   // Totals Calculation
   const cartSubtotal = cart.reduce((sum, item) => {
-    const { finalPrice } = calculateEffectiveDiscount(item.product as DiscountableProduct);
+    const { finalPrice } = calculateEffectiveDiscount(item.product as any);
     return sum + (finalPrice * item.quantity);
   }, 0);
   const discountedSubtotal = Math.max(0, cartSubtotal - discount);
@@ -227,7 +224,7 @@ const POSPage: React.FC = () => {
         id: crypto.randomUUID(),
         invoiceNo,
         items: cart.map(item => {
-          const { finalPrice, discountAmount } = calculateEffectiveDiscount(item.product as DiscountableProduct);
+          const { finalPrice, discountAmount } = calculateEffectiveDiscount(item.product as any);
           return {
             productId: item.product.id,
             productName: item.product.name,
@@ -624,137 +621,119 @@ const POSPage: React.FC = () => {
         )}
 
         {showReceipt && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] flex items-center justify-center bg-black/90 backdrop-blur-xl">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card w-full h-full md:max-w-2xl md:h-auto md:max-h-[90vh] md:rounded-[3rem] flex flex-col items-center shadow-2xl overflow-hidden">
-              <div className="w-full p-8 flex flex-col items-center flex-1 overflow-y-auto no-scrollbar">
-                <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-6 border-2 border-emerald-500/20 shrink-0">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h2 className="text-2xl font-black mb-1 tracking-tight uppercase">Sale Completed</h2>
-                <p className="text-surface-text/30 mb-8 text-center text-[10px] font-black tracking-widest uppercase">Transaction: {showReceipt.invoiceNo}</p>
-                
-                <div id="print-container" className="w-full bg-white rounded-3xl overflow-hidden mb-8 shadow-2xl shadow-black/5 border border-zinc-100 p-6 text-black flex justify-center shrink-0">
-                  {showReceipt.mode === 'Credit' ? (
-                    <Invoice 
-                      items={showReceipt.items}
-                      total={showReceipt.total}
-                      subtotal={showReceipt.subtotal}
-                      discount={showReceipt.discount}
-                      tax={showReceipt.tax}
-                      invoiceNo={showReceipt.invoiceNo}
-                      date={showReceipt.date}
-                      customerName={showReceipt.customerName}
-                      customerId={showReceipt.customerId}
-                    />
-                  ) : (
-                    <Receipt 
-                      items={showReceipt.items}
-                      total={showReceipt.total}
-                      subtotal={showReceipt.subtotal}
-                      discount={showReceipt.discount}
-                      tax={showReceipt.tax}
-                      invoiceNo={showReceipt.invoiceNo}
-                      date={showReceipt.date}
-                      paid={showReceipt.paid}
-                      change={showReceipt.change}
-                      mode={showReceipt.mode}
-                      customerName={showReceipt.customerName}
-                      customerId={showReceipt.customerId}
-                    />
-                  )}
-                </div>
-                <div className="w-full flex flex-col gap-3 mt-auto p-8 bg-surface-bg/30 border-t border-surface-border">
-                  <div className="grid grid-cols-2 gap-4 w-full">
-                    <button onClick={() => window.print()} className="py-5 bg-surface-card border border-surface-border rounded-2xl font-black text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-surface-border/20 transition-all uppercase active:scale-95">
-                      <Printer className="w-4 h-4" /> Print Receipt
-                    </button>
-                    <button 
-                      onClick={async () => {
-                        try {
-                          const receiptElement = document.querySelector('.invoice') || document.querySelector('.receipt');
-                          if (receiptElement) {
-                            toast.loading('Sharing digital receipt...', { id: 'receipt' });
-                            const canvas = await html2canvas(receiptElement as HTMLElement, { 
-                                scale: 2,
-                                useCORS: true,
-                                backgroundColor: '#ffffff'
-                            });
-                            canvas.toBlob(async (blob) => {
-                              if (blob) {
-                                const file = new File([blob], `MsikaPos_${showReceipt.invoiceNo}.jpg`, { type: 'image/jpeg' });
-                                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                                  await navigator.share({
-                                    files: [file],
-                                    title: `Receipt ${showReceipt.invoiceNo}`,
-                                    text: `Thank you for your business! Here is your digital receipt from ${localStorage.getItem('companyName') || 'MsikaPos'}.`
-                                  });
-                                  toast.success('Ready to share', { id: 'receipt' });
-                                } else {
-                                  // Fallback to text WhatsApp
-                                  const itemsText = showReceipt.items.map(i => `▫️ ${i.product.name}\n   ${i.quantity} x MK ${i.product.sellPrice.toLocaleString()} = *MK ${(i.product.sellPrice * i.quantity).toLocaleString()}*`).join('\n\n');
-                                  const text = `*${localStorage.getItem('companyName') || 'MsikaPos'}*\n━━━━━━━━━━━━━━━━\n🧾 *DIGITAL RECEIPT*\n━━━━━━━━━━━━━━━━\n\n*Inv*: ${showReceipt.invoiceNo}\n*Date*: ${showReceipt.date}\n\n*ITEMS:*\n${itemsText}\n\n━━━━━━━━━━━━━━━━\n*TOTAL: MK ${showReceipt.total.toLocaleString()}*\n━━━━━━━━━━━━━━━━\n\n_Thank you for your business!_`;
-                                  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
-                                  toast.success('Opening WhatsApp', { id: 'receipt' });
-                                }
-                              }
-                            }, 'image/jpeg', 0.9);
-                          }
-                        } catch {
-                          toast.error('Failed to share', { id: 'receipt' });
-                        }
-                      }} 
-                      className="py-5 bg-[#25D366] text-white rounded-2xl font-black text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-[#25D366]/20 transition-all uppercase active:scale-95"
-                    >
-                      <Send className="w-4 h-4" /> WhatsApp
-                    </button>
-                  </div>
-                  <button onClick={() => setShowReceipt(null)} className="w-full btn-primary !py-5 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20">
-                    Next Transaction
-                  </button>
-                </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card max-w-lg w-full p-8 rounded-3xl flex flex-col items-center shadow-2xl border border-surface-border">
+              <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-6 border-2 border-emerald-500/20">
+                <ShoppingCart className="w-8 h-8" />
               </div>
+              <h2 className="text-2xl font-black mb-2 tracking-tight uppercase">Sale Completed</h2>
+              <p className="text-surface-text/40 mb-8 text-center text-[10px] font-black tracking-widest uppercase">Inv: {showReceipt.invoiceNo}</p>
+              
+              <div id="print-container" className="w-full bg-white rounded-2xl overflow-hidden mb-8 shadow-inner border border-zinc-100 p-4 max-h-[40vh] overflow-y-auto text-black flex justify-center">
+                {showReceipt.mode === 'Credit' ? (
+                  <Invoice 
+                    items={showReceipt.items}
+                    total={showReceipt.total}
+                    subtotal={showReceipt.subtotal}
+                    discount={showReceipt.discount}
+                    tax={showReceipt.tax}
+                    invoiceNo={showReceipt.invoiceNo}
+                    date={showReceipt.date}
+                    customerName={showReceipt.customerName}
+                    customerId={showReceipt.customerId}
+                  />
+                ) : (
+                  <Receipt 
+                    items={showReceipt.items}
+                    total={showReceipt.total}
+                    subtotal={showReceipt.subtotal}
+                    discount={showReceipt.discount}
+                    tax={showReceipt.tax}
+                    invoiceNo={showReceipt.invoiceNo}
+                    date={showReceipt.date}
+                    paid={showReceipt.paid}
+                    change={showReceipt.change}
+                    mode={showReceipt.mode}
+                    customerName={showReceipt.customerName}
+                    customerId={showReceipt.customerId}
+                  />
+                )}
+              </div>
+              
+              <div className="flex gap-3 w-full">
+                <button onClick={() => window.print()} className="flex-1 px-4 py-4 bg-surface-bg hover:bg-surface-border/50 rounded-2xl font-black text-[10px] tracking-widest flex items-center justify-center gap-2 border border-surface-border uppercase">
+                  <Printer className="w-4 h-4" /> Print
+                </button>
+                <button 
+                  onClick={async () => {
+                    try {
+                      const receiptElement = document.querySelector('.invoice') || document.querySelector('.receipt');
+                      if (receiptElement) {
+                        toast.loading('Generating receipt...', { id: 'receipt' });
+                        const canvas = await html2canvas(receiptElement as HTMLElement, { scale: 2 });
+                        canvas.toBlob(async (blob) => {
+                          if (blob) {
+                            const file = new File([blob], `receipt_${showReceipt.invoiceNo}.png`, { type: 'image/png' });
+                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                              await navigator.share({
+                                files: [file],
+                                title: `Receipt ${showReceipt.invoiceNo}`
+                              });
+                              toast.success('Shared successfully', { id: 'receipt' });
+                            } else {
+                              const itemsText = showReceipt.items.map(i => `▫️ ${i.product.name}\n   ${i.quantity} x MK ${i.product.sellPrice.toLocaleString()} = *MK ${(i.product.sellPrice * i.quantity).toLocaleString()}*`).join('\n\n');
+                              const bankInfo = showReceipt.bankName ? `\n\n🏦 *${showReceipt.mode === 'Momo' ? 'Provider' : 'Bank'}*: ${showReceipt.bankName}\n🔢 *Acc/Ref*: ${showReceipt.accountNumber}` : '';
+                              const taxText = showReceipt.tax > 0 ? `\nTax: MK ${showReceipt.tax.toLocaleString()}` : '';
+                              const text = `*${localStorage.getItem('companyName') || 'MsikaPos'}*\n━━━━━━━━━━━━━━━━\n🧾 *DIGITAL RECEIPT*\n━━━━━━━━━━━━━━━━\n\n*Inv*: ${showReceipt.invoiceNo}\n*Date*: ${showReceipt.date}\n\n*ITEMS:*\n${itemsText}\n\n━━━━━━━━━━━━━━━━\nSubtotal: MK ${showReceipt.subtotal.toLocaleString()}${taxText}\n*TOTAL: MK ${showReceipt.total.toLocaleString()}*\n━━━━━━━━━━━━━━━━\n\n*Payment*: ${showReceipt.mode}${bankInfo}\n\n_Thank you for your business!_\n_Powered by MsikaPos_`;
+                              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+                              toast.success('Generated text receipt fallback', { id: 'receipt' });
+                            }
+                          }
+                        }, 'image/png');
+                      }
+                    } catch {
+                      toast.error('Failed to generate receipt image', { id: 'receipt' });
+                    }
+                  }} 
+                  className="flex-1 md:flex-none md:w-14 px-4 py-4 bg-[#25D366]/10 md:bg-transparent text-[#25D366] hover:bg-[#25D366] hover:text-white md:hover:bg-transparent md:hover:scale-110 rounded-2xl md:rounded-full font-black text-[10px] tracking-widest flex items-center justify-center gap-2 border border-[#25D366]/20 md:border-none uppercase transition-all"
+                  title="Share to WhatsApp"
+                >
+                  <Send className="w-4 h-4 md:w-6 md:h-6" /> 
+                  <span className="md:hidden">Share</span>
+                </button>
+              </div>
+              <button onClick={() => setShowReceipt(null)} className="w-full mt-4 btn-primary !py-5 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20">
+                New Transaction
+              </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col min-h-0 bg-surface-bg overflow-y-auto custom-scrollbar px-0">
-        <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-8 sticky top-0 z-40">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
-                    <ShoppingCart className="w-5 h-5" />
-                 </div>
-                 <h1 className="text-2xl font-black tracking-tighter uppercase">POS Terminal</h1>
-              </div>
-              <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Checkout & Transaction Processing</p>
+        <header className="px-6 md:px-12 py-8 border-b border-surface-border bg-surface-card sticky top-0 z-40">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Search products by name or SKU..." 
+                className="input-field w-full pl-14 h-16 text-sm font-black uppercase" 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+              />
             </div>
-            
-            <div className="flex items-center gap-3">
-              <button onClick={() => setShowScanner(true)} className="w-12 h-12 bg-primary-500 text-white rounded-2xl active:scale-95 transition-all shadow-xl shadow-primary-500/20 flex items-center justify-center" title="Scan Barcode" aria-label="Scan Barcode">
-                <Scan className="w-5 h-5" />
-              </button>
-              <button onClick={async () => {
-                  setIsSyncing(true);
-                  await SyncService.pushSales();
-                  setIsSyncing(false);
-                  toast.success('Synced');
-                }} className={clsx("w-12 h-12 bg-surface-card border border-surface-border rounded-2xl text-primary-500 shadow-sm flex items-center justify-center transition-all active:bg-primary-500/5", isSyncing && "animate-spin")} title="Sync Sales" aria-label="Sync Sales">
-                <RefreshCw className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="relative group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Search products by name or SKU..." 
-              className="input-field w-full pl-14 h-16 text-sm font-black uppercase" 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-            />
+            <button onClick={() => setShowScanner(true)} className="w-16 h-16 bg-primary-500 text-white rounded-2xl active:scale-95 transition-all shadow-xl shadow-primary-500/20 flex items-center justify-center" title="Scan Barcode" aria-label="Scan Barcode">
+              <Scan className="w-6 h-6" />
+            </button>
+            <button onClick={async () => {
+                setIsSyncing(true);
+                await SyncService.pushSales();
+                setIsSyncing(false);
+                toast.success('Synced');
+              }} className={clsx("w-16 h-16 bg-surface-card border border-surface-border rounded-2xl text-primary-500 shadow-sm flex items-center justify-center transition-all active:bg-primary-500/5", isSyncing && "animate-spin")} title="Sync Sales" aria-label="Sync Sales">
+              <RefreshCw className="w-6 h-6" />
+            </button>
           </div>
         </header>
 
@@ -826,7 +805,7 @@ const POSPage: React.FC = () => {
                           <div>
                             <div className="font-black text-xl leading-tight uppercase">{item.product.name}</div>
                             {(() => {
-                               const { finalPrice, hasDiscount, badgeText } = calculateEffectiveDiscount(item.product as DiscountableProduct);
+                               const { finalPrice, hasDiscount, badgeText } = calculateEffectiveDiscount(item.product as any);
                                return (
                                  <div className="card-label !mt-1 !mb-0 uppercase flex items-center gap-2">
                                    {hasDiscount && <span className="bg-red-500 text-white px-1.5 rounded text-[8px]">{badgeText}</span>}
@@ -847,7 +826,7 @@ const POSPage: React.FC = () => {
                           <button onClick={() => addToCart(item.product)} className="w-14 h-14 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-center hover:bg-surface-border/30 transition-all active:scale-95" title="Increase quantity" aria-label="Increase quantity"><Plus className="w-6 h-6" /></button>
                         </div>
                         <div className="text-right">
-                           <div className="text-2xl font-black text-primary-500 tracking-tighter uppercase">MK {(calculateEffectiveDiscount(item.product as DiscountableProduct).finalPrice * item.quantity).toLocaleString()}</div>
+                           <div className="text-2xl font-black text-primary-500 tracking-tighter uppercase">MK {(calculateEffectiveDiscount(item.product as any).finalPrice * item.quantity).toLocaleString()}</div>
                         </div>
                       </div>
                     </motion.div>
@@ -989,7 +968,6 @@ const POSPage: React.FC = () => {
                       <button 
                         onClick={handleCheckout} 
                         disabled={
-                          readOnly ||
                           (paymentMode === 'Cash' && parseFloat(amountReceived) < finalTotal) ||
                           ((paymentMode === 'Card' || paymentMode === 'Momo') && (!bankName || !accountNumber))
                         }
@@ -998,8 +976,8 @@ const POSPage: React.FC = () => {
                           paymentMode === 'Credit' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-primary-500 text-white shadow-primary-500/40"
                         )}
                       >
-                        {readOnly ? 'Terminal Read-Only' : (paymentMode === 'Credit' ? <Users className="w-7 h-7" /> : <CheckCircle2 className="w-7 h-7" />)}
-                        {!readOnly && (paymentMode === 'Credit' ? 'Process Credit' : 'Complete Sale')}
+                        {paymentMode === 'Credit' ? <Users className="w-7 h-7" /> : <CheckCircle2 className="w-7 h-7" />}
+                        {paymentMode === 'Credit' ? 'Process Credit' : 'Complete Sale'}
                       </button>
                     </div>
                   </div>

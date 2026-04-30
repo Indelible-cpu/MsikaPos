@@ -247,3 +247,17 @@ export const updateInquiryStatus = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const deleteAllInquiries = async (req: AuthRequest, res: Response) => {
+  try {
+    const where: any = {};
+    if (req.user?.role !== 'SUPER_ADMIN') {
+      where.branchId = req.user?.branchId;
+    }
+
+    await prisma.inquiry.deleteMany({ where });
+    res.status(200).json({ success: true, message: 'All inquiries deleted' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

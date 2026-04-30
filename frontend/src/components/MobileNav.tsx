@@ -25,7 +25,7 @@ const MobileNav: React.FC = () => {
 
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: Home, path: '/staff/dashboard' },
-    { id: 'sales', label: 'Logs', icon: Receipt, path: '/staff/transactions' },
+    { id: 'sales', label: 'Sales', icon: Receipt, path: '/staff/transactions' },
     { id: 'pos', label: 'Pos', icon: ShoppingCart, path: '/staff/pos' },
     { id: 'inquiries', label: 'Inquiry', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
   ];

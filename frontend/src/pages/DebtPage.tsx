@@ -1,26 +1,44 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type LocalCustomer } from '../db/posDB';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../api/client';
+import { db, type LocalCustomer, type LocalProduct } from '../db/posDB';
 import { 
   UserPlus, 
   Search, 
   Users, 
   Phone, 
   History,
-  ArrowRightCircle,
-  AlertCircle,
   Camera,
   Fingerprint,
   Upload,
-  CheckCircle2
+  CheckCircle2,
+  Calendar,
+  X,
+  Trash2,
+  ImageIcon
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
-import { format } from 'date-fns';
+
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
+
+interface Credit {
+  id: number;
+  invoice_no: string;
+  customer_name: string;
+  customer_phone: string;
+  original_amount: number;
+  paid_amount: number;
+  due_date: string;
+  days_late: number;
+  interest: number;
+  current_total: number;
+  status: 'Pending' | 'Late' | 'Paid';
+}
 
 // Malawian format validators
 const MALAWI_PHONE_REGEX = /^\d{10}$|^\d{13}$/;
@@ -32,9 +50,12 @@ const mockEncrypt = (data: string) => btoa(data); // "End to End Encryption" moc
 const DebtPage: React.FC = () => {
   const { isReadOnly } = useFeatureAccess();
   const readOnly = isReadOnly('CUSTOMERS');
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ id: number, total: number } | null>(null);
+  const [payAmount, setPayAmount] = useState('');
   const [clearedReceipt, setClearedReceipt] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // Form State
@@ -62,21 +83,61 @@ const DebtPage: React.FC = () => {
     });
   };
 
-  // Data
+  // Data (Customers from Dexie)
   const customers = useLiveQuery(
     () => db.customers.where('name').startsWithIgnoreCase(searchTerm).toArray(),
     [searchTerm]
   );
 
-  const customerSales = useLiveQuery(
-    () => selectedCustomer ? db.salesQueue.where('customerId').equals(selectedCustomer.id).reverse().toArray() : [],
-    [selectedCustomer]
-  );
+  // React Query for Credit Invoices from Backend
+  const { data: allCredits, isLoading: loadingCredits } = useQuery({
+    queryKey: ['credits'],
+    queryFn: async () => {
+      const res = await api.get('/credits');
+      return res.data.data as Credit[];
+    }
+  });
 
-  const customerPayments = useLiveQuery(
-    () => selectedCustomer ? db.debtPayments.where('customerId').equals(selectedCustomer.id).reverse().toArray() : [],
-    [selectedCustomer]
-  );
+  const payMutation = useMutation({
+    mutationFn: async (data: { id: number, amount: number }) => {
+      return api.post('/credits/payment', data);
+    },
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['credits'] });
+      
+      const credit = allCredits?.find(c => c.id === variables.id);
+      if (credit && Number(payAmount) >= (credit.current_total - credit.paid_amount)) {
+          setClearedReceipt({
+            items: [{ 
+              product: { name: 'Credit Balance Clearance', sellPrice: Number(payAmount), costPrice: 0, id: 0, sku: 'CREDIT-PAY', categoryId: 0, quantity: 1, isService: true } as unknown as LocalProduct,
+              quantity: 1 
+            }],
+            total: Number(payAmount),
+            subtotal: Number(payAmount),
+            discount: 0,
+            tax: 0,
+            invoiceNo: `REC-${Date.now()}`,
+            date: new Date().toISOString(),
+            mode: 'Cash',
+            paid: Number(payAmount),
+            change: 0,
+            customerName: credit.customer_name
+          });
+      }
+
+      setPaymentModal(null);
+      setPayAmount('');
+      toast.success('Payment received and balance updated.');
+    }
+  });
+
+  const filteredCredits = useMemo(() => {
+    if (!selectedCustomer) return [];
+    return allCredits?.filter(c => 
+      c.customer_phone === selectedCustomer.phone || 
+      c.customer_name.toLowerCase() === selectedCustomer.name.toLowerCase()
+    ) || [];
+  }, [allCredits, selectedCustomer]);
 
   const startCamera = async () => {
     setUseCamera(true);
@@ -125,7 +186,6 @@ const DebtPage: React.FC = () => {
   };
 
   const captureFingerprint = async () => {
-    // Simulating biometric capture/WebAuthn
     toast.loading('Scanning fingerprint...', { id: 'fp' });
     setTimeout(() => {
       const mockHash = "FP_" + Math.random().toString(36).substring(2, 15);
@@ -163,362 +223,422 @@ const DebtPage: React.FC = () => {
       });
       toast.success('Customer profile created securely');
       setIsAddModalOpen(false);
-      setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '', fingerprintData: '' });
+      resetForm();
       stopCamera();
     } catch {
       toast.error('Failed to add customer');
     }
   };
 
-
-
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
-                <Users className="w-5 h-5" />
-             </div>
-             <h1 className="text-2xl font-black tracking-tighter uppercase">Customers & Debt</h1>
+    <div className="flex flex-col h-screen bg-surface-bg overflow-hidden">
+      {/* Header */}
+      <header className="bg-surface-card border-b border-surface-border px-6 py-4 flex items-center justify-between z-30">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary-500/10 rounded-xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+            <Users className="w-4 h-4" />
           </div>
-          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Manage client profiles and credit records</p>
+          <div>
+            <h1 className="text-lg font-black tracking-tighter uppercase">Credit Center</h1>
+            <p className="text-[8px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Unified Customer & Ledger Management</p>
+          </div>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center gap-6">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="Search customers..."
-              title="Search customers"
-              aria-label="Search customers"
-              className="input-field w-full md:w-64 pl-11 text-xs font-bold"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+        <div className="flex items-center gap-4">
           {!readOnly && (
             <button 
               onClick={() => { resetForm(); setIsAddModalOpen(true); }}
-              className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 uppercase whitespace-nowrap"
+              className="btn-primary !px-4 !py-2 text-[9px] font-black tracking-widest uppercase shadow-lg shadow-primary-500/20"
             >
-              <UserPlus className="w-4 h-4 mr-2 inline" /> Add Customer
+              <UserPlus className="w-3.5 h-3.5 mr-2 inline" /> Add Customer
             </button>
           )}
         </div>
       </header>
 
-      <div className="p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0">
-        <AnimatePresence mode="popLayout">
-          {customers?.map(customer => (
-            <motion.div
-              layout
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              key={customer.id}
-              onClick={() => setSelectedCustomer(customer)}
-              className="px-6 md:px-12 py-8 group transition-all cursor-pointer border-b border-r border-surface-border/50 hover:bg-primary-500/[0.02]"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-surface-bg rounded-xl overflow-hidden flex items-center justify-center border border-surface-border group-hover:border-primary-500/30 transition-colors">
-                  {customer.livePhoto ? (
-                    <img src={customer.livePhoto} alt={customer.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <UserPlus className="w-6 h-6 text-surface-text/40 group-hover:text-primary-400" />
-                  )}
-                </div>
-                {customer.balance > 0 && (
-                  <div className="bg-amber-500/10 text-amber-500 px-2 py-1 rounded-md text-[8px] font-black border border-amber-500/20 flex items-center gap-1 uppercase">
-                    <AlertCircle className="w-2.5 h-2.5" /> Owing
-                  </div>
-                )}
-              </div>
-              
-              <h3 className="font-black text-lg leading-tight tracking-tight mb-1 group-hover:text-primary-400 transition-colors">{customer.name}</h3>
-              <div className="flex flex-col gap-1 text-[10px] font-black text-surface-text/30 mb-6 tracking-widest uppercase">
-                <div className="flex items-center gap-2"><Phone className="w-3 h-3" /> {customer.phone}</div>
-                {customer.idNumber && <div className="flex items-center gap-2 mt-1">ID: {customer.idNumber}</div>}
-                {customer.fingerprintData && <div className="flex items-center gap-2 mt-1 text-emerald-500"><Fingerprint className="w-3 h-3" /> SECURED: {customer.fingerprintData.substring(0, 15)}...</div>}
-              </div>
-
-              <div className="pt-4 border-t border-surface-border flex justify-between items-end">
-                <div>
-                  <div className="text-[9px] font-black text-surface-text/20 mb-1 uppercase">Balance</div>
-                  <div className={clsx(
-                    "text-lg font-black tracking-tighter",
-                    customer.balance > 0 ? "text-amber-500" : "text-emerald-500"
-                  )}>
-                    MK {customer.balance.toLocaleString()}
-                  </div>
-                </div>
-                <ArrowRightCircle className="w-5 h-5 text-surface-text/20 group-hover:text-primary-400 transition-transform group-hover:translate-x-1" />
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      <Modal 
-        isOpen={!!selectedCustomer} 
-        onClose={() => setSelectedCustomer(null)} 
-        title={selectedCustomer?.name || ''}
-        maxWidth="max-w-2xl"
-      >
-        {selectedCustomer && (
-          <div className="p-4 md:p-8 space-y-8">
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-               <div className="w-32 h-32 md:w-48 md:h-48 bg-surface-bg rounded-3xl overflow-hidden border border-surface-border shrink-0 shadow-2xl">
-                 {selectedCustomer.livePhoto ? (
-                   <img src={selectedCustomer.livePhoto} alt={selectedCustomer.name} className="w-full h-full object-cover" />
-                 ) : (
-                   <div className="w-full h-full flex items-center justify-center text-surface-text/10">
-                     <UserPlus className="w-16 h-16" />
-                   </div>
-                 )}
-               </div>
-               <div className="flex-1 space-y-4 w-full">
-                  <div>
-                    <h4 className="text-[10px] font-black tracking-widest text-surface-text/20 uppercase mb-1">Customer Details</h4>
-                    <p className="text-2xl font-black">{selectedCustomer.name}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase">Phone</div>
-                      <div className="text-sm font-bold">{selectedCustomer.phone}</div>
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase">National ID</div>
-                      <div className="text-sm font-bold">{selectedCustomer.idNumber || 'Not provided'}</div>
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase">Village/Location</div>
-                      <div className="text-sm font-bold">{selectedCustomer.village || 'Not provided'}</div>
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase">Biometrics</div>
-                      <div className={clsx("text-[10px] font-black tracking-widest uppercase", selectedCustomer.fingerprintData ? "text-emerald-500" : "text-surface-text/20")}>
-                        {selectedCustomer.fingerprintData ? 'Secured' : 'Not captured'}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Master Sidebar */}
+        <aside className="w-full md:w-80 lg:w-96 border-r border-surface-border bg-surface-card flex flex-col shrink-0">
+          <div className="p-4 border-b border-surface-border">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-text/40 w-3.5 h-3.5" />
+              <input 
+                type="text" 
+                placeholder="Search customers..."
+                className="input-field w-full pl-9 text-[10px] py-2.5 font-bold"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {customers?.length === 0 ? (
+              <div className="p-10 text-center text-surface-text/20 font-black text-[9px] uppercase tracking-widest">No customers found</div>
+            ) : (
+              <div className="divide-y divide-surface-border/50">
+                {customers?.map(customer => (
+                  <div 
+                    key={customer.id}
+                    onClick={() => setSelectedCustomer(customer)}
+                    className={clsx(
+                      "p-4 cursor-pointer transition-all hover:bg-primary-500/[0.02]",
+                      selectedCustomer?.id === customer.id ? "bg-primary-500/[0.05] border-l-4 border-l-primary-500" : "border-l-4 border-l-transparent"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-surface-bg border border-surface-border overflow-hidden">
+                        {customer.livePhoto ? (
+                          <img src={customer.livePhoto} alt={customer.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-surface-text/10"><Users className="w-5 h-5" /></div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-[11px] font-black truncate uppercase">{customer.name}</h3>
+                        <p className="text-[9px] text-surface-text/30 font-bold">{customer.phone}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className={clsx("text-xs font-black tracking-tighter", customer.balance > 0 ? "text-amber-500" : "text-emerald-500")}>
+                          MK {customer.balance.toLocaleString()}
+                        </div>
+                        {customer.balance > 0 && <span className="text-[7px] font-black text-amber-500/50 uppercase">Owes</span>}
                       </div>
                     </div>
                   </div>
-                  <button 
-                    onClick={async () => {
-                      if (confirm(`Are you sure you want to PERMANENTLY DELETE ${selectedCustomer.name}? All debt history will be lost.`)) {
-                        await db.customers.delete(selectedCustomer.id);
-                        setSelectedCustomer(null);
-                        toast.success('Customer profile removed');
-                      }
-                    }}
-                    className="text-[10px] font-black tracking-widest text-red-500 hover:underline pt-2 uppercase"
-                  >
-                    Delete customer record
-                  </button>
-               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <div className="bg-surface-bg/50 p-6 rounded-3xl border border-surface-border flex flex-col justify-between">
-                <div>
-                  <div className="text-[10px] font-bold text-surface-text/30">Total balance</div>
-                  <div className="text-3xl font-black text-amber-500 mt-2">MK {selectedCustomer.balance.toLocaleString()}</div>
-                </div>
-                {selectedCustomer.balance > 0 && (
-                  <button 
-                    onClick={async () => {
-                      if (confirm(`Are you sure you want to clear MK ${selectedCustomer.balance.toLocaleString()} for ${selectedCustomer.name}? This cannot be undone.`)) {
-                        try {
-                          await db.customers.update(selectedCustomer.id, { balance: 0, updatedAt: new Date().toISOString() });
-                          
-                          setClearedReceipt({
-                            items: [{ 
-                              product: { name: 'Debt Clearance Payment', sellPrice: selectedCustomer.balance, costPrice: 0, id: 0, sku: 'DEBT-PAYMENT', categoryId: 0, quantity: 1, isService: true } as unknown as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-                              quantity: 1 
-                            }],
-                            total: selectedCustomer.balance,
-                            subtotal: selectedCustomer.balance,
-                            discount: 0,
-                            tax: 0,
-                            invoiceNo: `REC-${Date.now()}`,
-                            date: new Date().toISOString(),
-                            mode: 'Cash',
-                            paid: selectedCustomer.balance,
-                            change: 0,
-                            customerName: selectedCustomer.name,
-                            customerId: selectedCustomer.id
-                          });
-
-                          setSelectedCustomer({ ...selectedCustomer, balance: 0 });
-                          toast.success('Balance cleared successfully');
-                        } catch {
-                          toast.error('Failed to clear balance');
-                        }
-                      }
-                    }}
-                    className="mt-6 w-full btn-primary !bg-emerald-500 !shadow-emerald-500/20 !py-3 text-[10px] font-black tracking-widest"
-                  >
-                    Clear balance
-                  </button>
-                )}
-              </div>
-              <div className="bg-surface-bg/50 p-6 rounded-3xl border border-surface-border flex flex-col justify-center items-center text-center opacity-40 ">
-                <div className="text-[10px] font-bold text-surface-text/30 mb-2 tracking-widest ">Manual Credit Blocked</div>
-                <div className="text-[8px] font-bold">Credit must only be added through POS Terminal for audit security.</div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-[10px] font-bold text-surface-text/30 flex items-center gap-2">
-                <History className="w-4 h-4" /> Recent transactions
-              </h3>
-              <div className="bg-surface-border/20 rounded-none overflow-hidden border border-surface-border divide-y divide-surface-border">
-                {customerSales?.length === 0 && customerPayments?.length === 0 && (
-                  <div className="p-12 text-center text-surface-text/20 font-bold text-[10px]">No transaction history</div>
-                )}
-                {customerSales?.map(sale => (
-                  <div key={sale.id} className="p-4 bg-surface-card flex justify-between items-center group hover:bg-primary-500/5 transition-colors">
-                    <div>
-                      <div className="text-xs font-bold">Sale #{sale.id.slice(0,8)}</div>
-                      <div className="text-[9px] text-surface-text/30 font-bold">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-black text-red-500">- MK {sale.total.toLocaleString()}</div>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); /* Logic to view this specific sale */ }} 
-                        className="text-[8px] text-primary-500 font-black tracking-widest uppercase hover:underline"
-                      >
-                        View details
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {customerPayments?.map(payment => (
-                  <div key={payment.id} className="p-4 bg-surface-card flex justify-between items-center group hover:bg-primary-500/5 transition-colors">
-                    <div>
-                      <div className="text-xs font-bold text-emerald-500">Payment received</div>
-                      <div className="text-[9px] text-surface-text/30 font-bold">{format(new Date(payment.createdAt), 'MMM dd, HH:mm')}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-black text-emerald-500">+ MK {payment.amount.toLocaleString()}</div>
-                      <div className="text-[8px] text-surface-text/20 font-bold">{payment.paymentMethod}</div>
-                    </div>
-                  </div>
                 ))}
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </Modal>
+        </aside>
+
+        {/* Detail View */}
+        <main className="flex-1 bg-surface-bg overflow-y-auto custom-scrollbar">
+          {selectedCustomer ? (
+            <div className="p-6 md:p-10 space-y-10 animate-slide-in">
+              {/* Profile Card */}
+              <div className="flex flex-col lg:flex-row gap-10">
+                <div className="w-48 h-48 rounded-[2.5rem] bg-surface-card border border-surface-border shadow-2xl shadow-black/10 overflow-hidden relative group shrink-0">
+                  {selectedCustomer.livePhoto ? (
+                    <img src={selectedCustomer.livePhoto} alt={selectedCustomer.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-surface-text/5"><Users className="w-20 h-20" /></div>
+                  )}
+                  {selectedCustomer.fingerprintData && (
+                    <div className="absolute top-4 right-4 bg-emerald-500 p-1.5 rounded-full shadow-lg">
+                      <Fingerprint className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-6">
+                  <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                    <div>
+                      <h2 className="text-3xl font-black tracking-tighter mb-1">{selectedCustomer.name}</h2>
+                      <div className="flex items-center gap-4 text-[10px] font-black tracking-widest text-surface-text/30 uppercase">
+                        <span className="flex items-center gap-1.5"><Phone className="w-3 h-3" /> {selectedCustomer.phone}</span>
+                        {selectedCustomer.idNumber && <span className="flex items-center gap-1.5"><ImageIcon className="w-3 h-3" /> ID: {selectedCustomer.idNumber}</span>}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                       <div className="text-[10px] font-black text-surface-text/20 uppercase mb-1">Total Outstanding</div>
+                       <div className="text-4xl font-black text-rose-500 tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                     <div className="bg-surface-card p-4 rounded-2xl border border-surface-border">
+                        <div className="text-[8px] font-black text-surface-text/20 uppercase mb-2 tracking-widest">Village / Location</div>
+                        <div className="text-xs font-black">{selectedCustomer.village || 'Not specified'}</div>
+                     </div>
+                     <div className="bg-surface-card p-4 rounded-2xl border border-surface-border">
+                        <div className="text-[8px] font-black text-surface-text/20 uppercase mb-2 tracking-widest">Security Status</div>
+                        <div className={clsx("text-xs font-black uppercase tracking-tight", selectedCustomer.fingerprintData ? "text-emerald-500" : "text-surface-text/20")}>
+                          {selectedCustomer.fingerprintData ? 'Biometric Verified' : 'Standard Profile'}
+                        </div>
+                     </div>
+                     <div className="flex items-center justify-end gap-3">
+                        <button 
+                          onClick={async () => {
+                            if (window.confirm(`Are you sure you want to PERMANENTLY DELETE ${selectedCustomer.name}? All history will be lost.`)) {
+                              await db.customers.delete(selectedCustomer.id);
+                              setSelectedCustomer(null);
+                              toast.success('Customer profile removed');
+                            }
+                          }}
+                          className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                          title="Delete Customer Profile"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Invoices Table */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-surface-border pb-4">
+                  <h3 className="text-lg font-black tracking-tighter uppercase flex items-center gap-3">
+                    <History className="w-5 h-5 text-primary-500" /> Outstanding Ledger
+                  </h3>
+                  <div className="text-[10px] font-black text-surface-text/30 uppercase tracking-widest">
+                    Showing {filteredCredits.length} unpaid credit invoices
+                  </div>
+                </div>
+
+                <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[800px]">
+                      <thead>
+                        <tr className="bg-surface-bg/50 text-[9px] font-black text-surface-text/40 tracking-widest uppercase border-b border-surface-border">
+                          <th className="px-8 py-5">Invoice #</th>
+                          <th className="px-8 py-5">Due Date</th>
+                          <th className="px-8 py-5 text-right">Original Amt</th>
+                          <th className="px-8 py-5 text-right">Current Balance</th>
+                          <th className="px-8 py-5 text-center">Status</th>
+                          <th className="px-8 py-5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-surface-border/50">
+                        {loadingCredits ? (
+                          <tr><td colSpan={6} className="p-20 text-center text-[10px] font-bold text-surface-text/20 animate-pulse uppercase tracking-widest">Awaiting ledger data...</td></tr>
+                        ) : filteredCredits.length === 0 ? (
+                          <tr><td colSpan={6} className="p-20 text-center text-[10px] font-bold text-surface-text/20 uppercase tracking-widest">No active credit invoices for this profile</td></tr>
+                        ) : (
+                          filteredCredits.map(credit => (
+                            <tr key={credit.id} className="hover:bg-primary-500/[0.01] transition-all">
+                              <td className="px-8 py-6">
+                                <span className="text-[11px] font-black font-mono tracking-tighter text-surface-text/60">#{credit.invoice_no}</span>
+                              </td>
+                              <td className="px-8 py-6">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-3.5 h-3.5 text-surface-text/20" />
+                                  <span className={clsx("text-[11px] font-black tracking-tight", credit.status === 'Late' ? 'text-rose-500' : 'text-surface-text/60')}>{credit.due_date}</span>
+                                </div>
+                                {credit.days_late > 0 && <div className="text-[8px] font-black text-rose-400 mt-1 uppercase">{credit.days_late} Days Overdue</div>}
+                              </td>
+                              <td className="px-8 py-6 text-right text-[11px] font-black">MK {credit.original_amount.toLocaleString()}</td>
+                              <td className="px-8 py-6 text-right">
+                                <div className="text-sm font-black text-rose-500 tracking-tighter">MK {(credit.current_total - credit.paid_amount).toLocaleString()}</div>
+                                {credit.interest > 0 && <div className="text-[8px] font-black text-rose-400 uppercase tracking-widest mt-1">Incl. MK {credit.interest} Late Fees</div>}
+                              </td>
+                              <td className="px-8 py-6 text-center">
+                                <span className={clsx(
+                                  "px-4 py-1.5 rounded-xl text-[8px] font-black tracking-widest uppercase shadow-sm",
+                                  credit.status === 'Paid' ? "bg-emerald-500/10 text-emerald-500" :
+                                  credit.status === 'Late' ? "bg-rose-500/10 text-rose-500" :
+                                  "bg-surface-bg text-surface-text/30 border border-surface-border"
+                                )}>
+                                  {credit.status}
+                                </span>
+                              </td>
+                              <td className="px-8 py-6 text-right">
+                                {credit.status !== 'Paid' && (
+                                  <button 
+                                    onClick={() => {
+                                      setPaymentModal({ id: credit.id, total: credit.current_total - credit.paid_amount });
+                                      setPayAmount(String(credit.current_total - credit.paid_amount));
+                                    }}
+                                    className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary-500/20 hover:bg-primary-600 transition-all active:scale-95"
+                                  >
+                                    Pay Balance
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center p-20 text-center opacity-30 select-none">
+              <div className="w-24 h-24 bg-surface-card rounded-[3rem] border-2 border-dashed border-surface-border flex items-center justify-center mb-6">
+                <Users className="w-10 h-10" />
+              </div>
+              <h2 className="text-xl font-black tracking-tighter uppercase mb-2">No Record Selected</h2>
+              <p className="text-[10px] font-black tracking-widest uppercase max-w-xs leading-relaxed">Select a client from the master list to view their biometric profile and outstanding credit ledger.</p>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Payment Modal */}
+      {paymentModal && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-zinc-900/60 backdrop-blur-md p-6 animate-blur-fade" onClick={() => setPaymentModal(null)}>
+           <div className="bg-surface-card w-full max-w-md rounded-[2.5rem] overflow-hidden animate-slide-in border border-surface-border shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <header className="px-10 py-8 border-b border-surface-border bg-surface-bg/30 flex justify-between items-center">
+                 <div>
+                    <h3 className="text-xl font-black tracking-tight uppercase">Pay balance</h3>
+                    <p className="text-[9px] font-black text-surface-text/30 mt-1 uppercase tracking-widest">Record an offline payment.</p>
+                 </div>
+                 <button onClick={() => setPaymentModal(null)} className="p-3 bg-surface-bg rounded-xl text-surface-text/40 hover:text-white transition-colors" title="Close modal"><X className="w-5 h-5" /></button>
+              </header>
+              <div className="p-10 space-y-10">
+                 <div className="space-y-4">
+                    <label htmlFor="pay-amt-input" className="text-[10px] font-black text-surface-text/30 ml-1 uppercase tracking-[0.2em]">Payment amount (MK)</label>
+                    <div className="relative">
+                       <span className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/20 font-black text-sm font-mono">MK</span>
+                       <input 
+                          id="pay-amt-input"
+                          type="number"
+                          value={payAmount}
+                          onChange={e => setPayAmount(e.target.value)}
+                          className="input-field !text-2xl !py-6 pl-16 w-full" 
+                       />
+                    </div>
+                    <div className="flex justify-between px-2 pt-2">
+                       <span className="text-[10px] font-black text-surface-text/20 uppercase tracking-widest">Active balance</span>
+                       <span className="text-xs font-black font-mono">MK {paymentModal.total.toLocaleString()}</span>
+                    </div>
+                 </div>
+                 <div className="flex gap-4">
+                    <button onClick={() => setPaymentModal(null)} className="flex-1 py-5 bg-surface-bg border border-surface-border rounded-2xl font-black text-[10px] text-surface-text/30 uppercase tracking-widest hover:bg-surface-border transition-all">Cancel</button>
+                    <button 
+                       onClick={() => payMutation.mutate({ id: paymentModal.id, amount: Number(payAmount) })}
+                       disabled={payMutation.isPending}
+                       className="flex-[2] py-5 bg-primary-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary-500/25 hover:bg-primary-600 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                       {payMutation.isPending ? 'Processing...' : 'Confirm payment'}
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* Add Customer Modal */}
       <Modal 
         isOpen={isAddModalOpen} 
         onClose={() => { setIsAddModalOpen(false); stopCamera(); }} 
-        title="New customer profile"
+        title="Register New Profile"
         maxWidth="max-w-xl"
       >
-        <form onSubmit={handleAddCustomer} className="p-4 md:p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+        <form onSubmit={handleAddCustomer} className="p-6 md:p-8 space-y-6 max-h-[85vh] overflow-y-auto custom-scrollbar">
           
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-1 space-y-4">
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex-1 space-y-6">
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-surface-text/30 pl-1">Full name</label>
-                <input required type="text" className="input-field w-full" placeholder="e.g. John Phiri" value={custForm.name} onChange={(e) => setCustForm({...custForm, name: e.target.value})} />
+                <label className="text-[9px] font-black text-surface-text/30 pl-1 uppercase tracking-[0.2em]">Full name</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="e.g. John Phiri"
+                  className="input-field w-full text-xs font-bold py-4"
+                  value={custForm.name}
+                  onChange={(e) => setCustForm({ ...custForm, name: e.target.value })}
+                />
               </div>
+
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-surface-text/30 pl-1">Phone number</label>
-                <input required type="text" className="input-field w-full" placeholder="e.g. 0881234567 or +265..." value={custForm.phone} onChange={(e) => setCustForm({...custForm, phone: e.target.value})} />
+                <label className="text-[9px] font-black text-surface-text/30 pl-1 uppercase tracking-[0.2em]">Phone number</label>
+                <input 
+                  type="tel" 
+                  required
+                  placeholder="e.g. 0888..."
+                  className="input-field w-full text-xs font-bold py-4"
+                  value={custForm.phone}
+                  onChange={(e) => setCustForm({ ...custForm, phone: e.target.value })}
+                />
               </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-surface-text/30 pl-1">National ID (8 chars)</label>
-                <input type="text" className="input-field w-full" placeholder="e.g. ABC12345" value={custForm.idNumber} onChange={(e) => setCustForm({...custForm, idNumber: e.target.value})} />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-surface-text/30 pl-1">Village / location</label>
-                <input type="text" className="input-field w-full" placeholder="e.g. Lilongwe" value={custForm.village} onChange={(e) => setCustForm({...custForm, village: e.target.value})} />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black text-surface-text/30 pl-1 uppercase tracking-[0.2em]">National ID</label>
+                  <input 
+                    type="text" 
+                    placeholder="8 chars"
+                    className="input-field w-full text-xs font-bold py-4 uppercase"
+                    value={custForm.idNumber}
+                    onChange={(e) => setCustForm({ ...custForm, idNumber: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black text-surface-text/30 pl-1 uppercase tracking-[0.2em]">Village/Location</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Area 25"
+                    className="input-field w-full text-xs font-bold py-4"
+                    value={custForm.village}
+                    onChange={(e) => setCustForm({ ...custForm, village: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="w-full md:w-48 space-y-4">
-              {/* Photo Capture */}
-              <div className="space-y-2">
-                <label className="text-[9px] font-bold text-surface-text/30 pl-1">Live photo</label>
-                <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl overflow-hidden relative flex flex-col items-center justify-center">
+            <div className="w-full md:w-56 shrink-0 space-y-4">
+               <label className="text-[9px] font-black text-surface-text/30 pl-1 uppercase tracking-[0.2em]">Biometric ID Photo</label>
+               <div className="relative aspect-square bg-surface-bg rounded-3xl overflow-hidden border border-surface-border flex items-center justify-center group shadow-inner">
                   {custForm.livePhoto ? (
-                    <img src={custForm.livePhoto} alt="Preview" className="w-full h-full object-cover" />
+                    <img src={custForm.livePhoto} alt="Customer Preview" className="w-full h-full object-cover" />
                   ) : useCamera ? (
-                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover mirror" />
                   ) : (
-                    <UserPlus className="w-8 h-8 text-surface-text/20 mb-2" />
+                    <Camera className="w-10 h-10 text-surface-text/10" />
                   )}
                   
-                  {useCamera && !custForm.livePhoto && (
-                    <button type="button" title="Capture photo" aria-label="Capture photo" onClick={capturePhoto} className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-red-500 text-white w-10 h-10 rounded-full shadow-lg border-2 border-white"></button>
-                  )}
-                  <canvas ref={canvasRef} className="hidden" />
-                </div>
-                
-                <div className="flex gap-2">
-                  {!useCamera && !custForm.livePhoto && (
-                    <button type="button" onClick={startCamera} className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 hover:bg-surface-border/50">
-                      <Camera className="w-3 h-3" /> Camera
-                    </button>
-                  )}
-                  {custForm.livePhoto && (
-                    <button type="button" onClick={() => setCustForm({...custForm, livePhoto: ''})} className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-[9px] font-bold text-red-500 hover:bg-red-500/10">
-                      Retake
-                    </button>
-                  )}
-                  <label className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 cursor-pointer hover:bg-surface-border/50">
-                    <Upload className="w-3 h-3" /> Upload
-                    <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-                  </label>
-                </div>
-              </div>
-
-              {/* Fingerprint Capture */}
-              <div className="space-y-2 pt-2 border-t border-surface-border">
-                <label className="text-[9px] font-bold text-surface-text/30 pl-1">Biometrics (encrypted)</label>
-                <button 
-                  type="button" 
-                  onClick={captureFingerprint}
-                  disabled={!!custForm.fingerprintData}
-                  className={`w-full py-4 rounded-xl flex flex-col items-center gap-2 border transition-all ${custForm.fingerprintData ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' : 'bg-surface-bg border-surface-border hover:border-primary-500/30 text-surface-text/60'}`}
-                >
-                  {custForm.fingerprintData ? (
-                    <>
-                      <CheckCircle2 className="w-6 h-6" />
-                      <span className="text-[9px] font-bold">Captured</span>
-                    </>
-                  ) : (
-                    <>
-                      <Fingerprint className="w-6 h-6" />
-                      <span className="text-[9px] font-bold">Scan fingerprint</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/60 to-transparent flex gap-2">
+                    {!useCamera && !custForm.livePhoto && (
+                      <button type="button" onClick={startCamera} title="Start Camera" className="flex-1 bg-white/20 backdrop-blur-md p-2 rounded-xl text-white hover:bg-white/30 transition-all">
+                        <Camera className="w-4 h-4 mx-auto" />
+                      </button>
+                    )}
+                    {useCamera && (
+                      <button type="button" onClick={capturePhoto} title="Capture Photo" className="flex-1 bg-emerald-500 p-2 rounded-xl text-white shadow-lg">
+                         <CheckCircle2 className="w-4 h-4 mx-auto" />
+                      </button>
+                    )}
+                    {!useCamera && custForm.livePhoto && (
+                      <button type="button" onClick={() => setCustForm({ ...custForm, livePhoto: '' })} title="Remove Photo" className="flex-1 bg-rose-500 p-2 rounded-xl text-white">
+                         <Trash2 className="w-4 h-4 mx-auto" />
+                      </button>
+                    )}
+                    <label className="flex-1 bg-white/20 backdrop-blur-md p-2 rounded-xl text-white cursor-pointer hover:bg-white/30" title="Upload Photo">
+                       <Upload className="w-4 h-4 mx-auto" />
+                       <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} title="Upload customer photo" />
+                    </label>
+                  </div>
+               </div>
+               <canvas ref={canvasRef} className="hidden" />
+               
+               <button 
+                type="button" 
+                onClick={captureFingerprint}
+                className={clsx(
+                  "w-full py-4 rounded-2xl border flex items-center justify-center gap-3 transition-all active:scale-95",
+                  custForm.fingerprintData 
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" 
+                    : "bg-surface-bg border-surface-border text-surface-text/30 hover:border-primary-500/50 hover:text-primary-500"
+                )}
+               >
+                 <Fingerprint className="w-5 h-5" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">{custForm.fingerprintData ? 'Biometric Encrypted' : 'Capture Fingerprint'}</span>
+               </button>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-6 mt-4 border-t border-surface-border">
-            <button type="button" onClick={() => { setIsAddModalOpen(false); stopCamera(); }} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-bold">Cancel</button>
-            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-bold">Create secure profile</button>
+          <div className="pt-6 flex gap-4">
+            <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl font-black text-[10px] text-surface-text/30 uppercase tracking-widest hover:bg-surface-border">Discard</button>
+            <button type="submit" className="flex-[2] btn-primary !py-4 text-[10px] font-black uppercase tracking-widest">Register Customer Profile</button>
           </div>
         </form>
       </Modal>
 
       {/* Receipt Modal */}
-      <Modal isOpen={!!clearedReceipt} onClose={() => setClearedReceipt(null)} title="Payment Receipt" maxWidth="max-w-md">
+      <Modal isOpen={!!clearedReceipt} onClose={() => setClearedReceipt(null)} title="System Receipt" maxWidth="max-w-md">
         {clearedReceipt && (
-           <div className="p-4 flex flex-col items-center">
-             <div className="bg-white p-4 shadow-xl border border-zinc-200 w-full flex justify-center" id="printable-receipt">
+           <div className="p-6 flex flex-col items-center gap-6">
+             <div className="bg-white p-6 shadow-2xl border border-zinc-100 w-full" id="printable-receipt">
                <Receipt {...clearedReceipt} />
              </div>
-             <button onClick={() => { window.print(); setClearedReceipt(null); }} className="mt-6 btn-primary w-full max-w-xs !py-4 text-[10px] uppercase font-black tracking-widest">
-                Print Receipt & Close
-             </button>
+             <div className="flex gap-4 w-full">
+               <button onClick={() => window.print()} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl font-black text-[10px] uppercase tracking-widest">Print Only</button>
+               <button onClick={() => setClearedReceipt(null)} className="flex-[2] py-4 bg-primary-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-primary-500/20">Done</button>
+             </div>
            </div>
         )}
       </Modal>

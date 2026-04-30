@@ -82,16 +82,9 @@ const AuditLogsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
-                <History className="w-5 h-5" />
-             </div>
-             <h1 className="text-2xl font-black tracking-tighter uppercase">Security Logs</h1>
-          </div>
-          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Trace system activity and administrative actions</p>
-        </div>
+      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="flex-1"></div>
         {!readOnly && (
           <button 
             onClick={handleExport}
@@ -100,7 +93,8 @@ const AuditLogsPage: React.FC = () => {
             <FileSpreadsheet className="w-4 h-4" /> Export logs
           </button>
         )}
-      </header>
+        </div>
+      </div>
 
       <div className="px-6 md:px-12 py-8">
         <div className="flex flex-col md:flex-row gap-4 mb-8">

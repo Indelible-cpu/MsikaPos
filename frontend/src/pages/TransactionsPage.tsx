@@ -121,17 +121,9 @@ const TransactionsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
-                <ArrowLeftRight className="w-5 h-5" />
-             </div>
-             <h1 className="text-2xl font-black tracking-tighter uppercase">Sales</h1>
-          </div>
-          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Transaction History & Records</p>
-        </div>
-
+      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="flex-1"></div>
         <div className="flex items-center gap-3">
           {loading && (
             <div className="flex items-center gap-2 px-3 py-1 bg-primary-500/10 text-primary-500 rounded-lg animate-pulse mr-2">
@@ -156,7 +148,8 @@ const TransactionsPage: React.FC = () => {
             </button>
           )}
         </div>
-      </header>
+        </div>
+      </div>
 
       <div className="p-6 md:px-12 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

@@ -81,17 +81,9 @@ const ExpensesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 border border-red-500/20">
-                <Wallet className="w-5 h-5" />
-             </div>
-             <h1 className="text-2xl font-black tracking-tighter uppercase">Expenses</h1>
-          </div>
-          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Expense Tracking & Management</p>
-        </div>
-
+      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+        <div className="flex flex-col md:flex-row justify-between gap-4">
+          <div className="flex-1"></div>
         {!readOnly && (
           <button 
             onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
@@ -100,7 +92,8 @@ const ExpensesPage: React.FC = () => {
             <Plus className="w-4 h-4 mr-2 inline" /> Add expense
           </button>
         )}
-      </header>
+        </div>
+      </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="p-4 border-r border-surface-border/50 flex items-center gap-4">
