@@ -107,14 +107,20 @@ export const fetchUsers = async (req: Request, res: Response) => {
 };
 
 export const saveUser = async (req: Request, res: Response) => {
-  const { id, username, password, roleId, branchId } = req.body;
+  const { id, username, password, roleId, branchId, fullname, email, phone } = req.body;
 
   try {
+    const rId = parseInt(roleId as any);
+    const bId = branchId ? parseInt(branchId as any) : null;
+
     if (id) {
       const data: any = {
         username,
-        roleId: parseInt(roleId),
-        branchId: branchId ? parseInt(branchId) : null,
+        fullname,
+        email,
+        phone,
+        roleId: rId,
+        branchId: bId,
       };
 
       if (password) {
@@ -123,12 +129,16 @@ export const saveUser = async (req: Request, res: Response) => {
       }
 
       await prisma.user.update({
-        where: { id: parseInt(id) },
+        where: { id: parseInt(id as any) },
         data,
       });
 
       return res.status(200).json({ success: true, message: "User updated" });
     } else {
+      // Check if username exists
+      const exists = await prisma.user.findUnique({ where: { username } });
+      if (exists) return res.status(400).json({ success: false, message: "Username already taken" });
+
       const tempPassword = crypto.randomBytes(4).toString('hex'); // 8 char hex
       const hashedPassword = await bcrypt.hash(tempPassword, 10);
       const magicToken = crypto.randomBytes(32).toString('hex');
@@ -137,9 +147,12 @@ export const saveUser = async (req: Request, res: Response) => {
       await prisma.user.create({
         data: {
           username,
+          fullname,
+          email,
+          phone,
           password: hashedPassword,
-          roleId: parseInt(roleId),
-          branchId: branchId ? parseInt(branchId) : null,
+          roleId: rId,
+          branchId: bId,
           mustChangePassword: true,
           isVerified: false,
           magicToken,
@@ -158,6 +171,7 @@ export const saveUser = async (req: Request, res: Response) => {
       });
     }
   } catch (error: any) {
+    console.error('Save User Error:', error);
     return res.status(500).json({ success: false, message: 'Failed to save user', error: error.message });
   }
 };

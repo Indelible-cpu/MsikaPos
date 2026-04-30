@@ -67,7 +67,7 @@ const UsersPage: React.FC = () => {
     fullname: '',
     email: '',
     phone: '',
-    roleId: 2,
+    roleId: 3, // Default to Cashier
     branchId: ''
   });
 
@@ -213,7 +213,7 @@ const UsersPage: React.FC = () => {
       fullname: user.fullname || '',
       email: user.email || '',
       phone: user.phone || '',
-      roleId: user.role === 'SUPER_ADMIN' ? 1 : user.role === 'ADMIN' ? 3 : 2,
+      roleId: user.role === 'SUPER_ADMIN' ? 1 : user.role === 'ADMIN' ? 2 : 3,
       branchId: user.branch_id?.toString() || ''
     });
     setTempPassword(null);
@@ -375,9 +375,9 @@ const UsersPage: React.FC = () => {
                <div className="space-y-1">
                   <label htmlFor="role" className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Role</label>
                   <select id="role" title="Select User Role" className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.roleId} onChange={(e) => setFormData({...formData, roleId: Number(e.target.value)})}>
-                     <option value={1}>SuperAdmin</option>
-                     <option value={2}>Cashier</option>
-                     <option value={3}>Admin</option>
+                     <option value={1}>Super Admin</option>
+                     <option value={2}>Admin</option>
+                     <option value={3}>Cashier</option>
                   </select>
                </div>
                <div className="space-y-1">
