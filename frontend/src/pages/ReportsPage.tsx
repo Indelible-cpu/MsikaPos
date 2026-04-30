@@ -219,6 +219,7 @@ const ReportsPage: React.FC = () => {
       <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
+        </div>
         <div className="flex flex-col md:flex-row md:items-center gap-6">
           <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl overflow-x-auto no-scrollbar w-full md:w-auto">
             {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (

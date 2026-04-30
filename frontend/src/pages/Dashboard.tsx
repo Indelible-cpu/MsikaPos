@@ -18,7 +18,6 @@ import {
   Monitor,
   Package,
   History,
-  CreditCard,
   Receipt,
   Users,
   Store,
@@ -38,7 +37,7 @@ import UsersPage from './UsersPage';
 import SettingsPage from './SettingsPage';
 import ExpensesPage from './ExpensesPage';
 import BranchesPage from './BranchesPage';
-import CreditsPage from './CreditsPage';
+
 
 interface RecentActivity {
   invoice_no: string;
@@ -118,7 +117,6 @@ export default function Dashboard() {
     { id: 'pos', icon: Monitor, label: 'POS', roles: ['superadmin', 'admin', 'cashier'] },
     { id: 'inventory', icon: Package, label: 'Inventory', roles: ['superadmin', 'admin'] },
     { id: 'transactions', icon: History, label: 'Sales History', roles: ['superadmin', 'admin'] },
-    { id: 'credits', icon: CreditCard, label: 'Credits', roles: ['superadmin', 'admin'] },
     { id: 'expenses', icon: Receipt, label: 'Expenses', roles: ['superadmin', 'admin'] },
     { id: 'users', icon: Users, label: 'Staff', roles: ['superadmin', 'admin'] },
     { id: 'branches', icon: Store, label: 'Branches', roles: ['superadmin'] },
@@ -436,7 +434,7 @@ export default function Dashboard() {
                 {activeTab === 'users' && <UsersPage />}
                 {activeTab === 'transactions' && <TransactionsPage />}
                 {activeTab === 'settings' && <SettingsPage />}
-                {activeTab === 'credits' && <CreditsPage />}
+
                 {activeTab === 'expenses' && <ExpensesPage />}
                 {activeTab === 'branches' && <BranchesPage />}
               </div>

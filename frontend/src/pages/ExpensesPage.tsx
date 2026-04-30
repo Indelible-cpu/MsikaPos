@@ -6,8 +6,7 @@ import {
   Search, 
   Trash2, 
   ArrowDownCircle,
-  FileText,
-  Wallet
+  FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';

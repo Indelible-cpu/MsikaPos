@@ -163,6 +163,7 @@ const InquiriesPage: React.FC = () => {
       <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
+        </div>
 
         <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
           <div className="flex flex-wrap gap-2">
