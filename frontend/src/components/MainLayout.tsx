@@ -1,11 +1,11 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import MobileNav from './MobileNav';
 import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
 import { clsx } from 'clsx';
 import AiAssistant from './AiAssistant';
-import { motion, useAnimation } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
 interface MainLayoutProps {
@@ -17,7 +17,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const mainRef = useRef<HTMLElement>(null);
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const controls = useAnimation();
   const startY = useRef(0);
   const hideNav = location.pathname.includes('/login');
 
