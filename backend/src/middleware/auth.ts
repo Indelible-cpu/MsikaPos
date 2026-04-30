@@ -14,6 +14,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
+    console.warn(`🔓 Auth Blocked: Missing token for ${req.method} ${req.originalUrl} from ${req.ip}`);
     return res.status(401).json({ message: 'Authentication required' });
   }
 

@@ -21,7 +21,13 @@ export const SyncService = {
   },
 
   async pushSales() {
-    if (this.isSyncing) return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('📡 Sync skipped: No authentication token found.');
+      this.isSyncing = false;
+      return false;
+    }
+    
     this.isSyncing = true;
 
     try {
@@ -58,9 +64,13 @@ export const SyncService = {
         console.log('✅ Power Sync Completed');
         return true;
       }
+      
+      console.error('❌ Sync failed (Server Response):', response.data);
       throw new Error(response.data.message || 'Server rejected sync');
     } catch (error: unknown) {
-      const err = error as { message: string };
+      const err = error as { response?: { data?: unknown; status?: number }; message: string };
+      console.error('📡 Sync Error Payload:', err.response?.data || err);
+      console.error('📡 Sync Error Summary:', { status: err.response?.status, message: err.message });
       console.warn('⚠️ Sync deferred:', err.message);
       return false;
     } finally {

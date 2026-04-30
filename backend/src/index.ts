@@ -27,10 +27,14 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: '*', // Adjust to your production domain for extra security
+  origin: true, // Reflect the request origin
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-branch-id']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-branch-id', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
+
+app.options('*', cors() as any); // Enable pre-flight for all routes
 
 app.use(express.json({ limit: '1mb' })); 
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
