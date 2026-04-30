@@ -168,26 +168,6 @@ const InventoryPage: React.FC = () => {
   };
 
 
-  const openAddModal = useCallback(async (scannedSku?: string) => {
-    setEditingProduct(null);
-    await resetForm(scannedSku);
-    setIsAddModalOpen(true);
-  }, [resetForm]);
-
-  const handleScan = useCallback(async (scannedText: string) => {
-    setIsScannerOpen(false);
-    const product = await db.products.where('sku').equals(scannedText).first();
-    if (product) {
-      soundService.playBeep();
-      toast.success(`Found: ${product.name}`, { id: 'scan-inv' });
-      openEditModal(product);
-    } else {
-      soundService.playSuccess();
-      toast.success(`New SKU detected: ${scannedText}`, { id: 'scan-inv' });
-      openAddModal(scannedText);
-    }
-  }, [openEditModal, openAddModal]);
-
   const openEditModal = useCallback((p: LocalProduct) => {
     setEditingProduct(p);
     setFormData({
@@ -207,6 +187,26 @@ const InventoryPage: React.FC = () => {
     });
     setIsAddModalOpen(true);
   }, [categories]);
+
+  const openAddModal = useCallback(async (scannedSku?: string) => {
+    setEditingProduct(null);
+    await resetForm(scannedSku);
+    setIsAddModalOpen(true);
+  }, [resetForm]);
+
+  const handleScan = useCallback(async (scannedText: string) => {
+    setIsScannerOpen(false);
+    const product = await db.products.where('sku').equals(scannedText).first();
+    if (product) {
+      soundService.playBeep();
+      toast.success(`Found: ${product.name}`, { id: 'scan-inv' });
+      openEditModal(product);
+    } else {
+      soundService.playSuccess();
+      toast.success(`New SKU detected: ${scannedText}`, { id: 'scan-inv' });
+      openAddModal(scannedText);
+    }
+  }, [openEditModal, openAddModal]);
 
   useEffect(() => {
     let barcodeBuffer = '';

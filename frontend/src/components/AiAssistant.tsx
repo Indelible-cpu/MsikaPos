@@ -14,7 +14,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const getAiHelp = async () => {
     setLoading(true);
     setIsOpen(true);
     setError(null);

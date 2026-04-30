@@ -123,8 +123,6 @@ const ExpensesPage: React.FC = () => {
                 />
              </div>
           </div>
-        </div>
-      </header>
 
       <div className="p-0 border-t border-surface-border">
         <div className="overflow-hidden divide-y divide-surface-border">

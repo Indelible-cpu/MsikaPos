@@ -10,7 +10,6 @@ import {
   Lock, 
   ChevronRight, 
   Check, 
-  Loader2, 
   Camera,
   ShieldCheck,
   Eye,
@@ -31,7 +30,6 @@ const OnboardingPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isTokenValidating, setIsTokenValidating] = useState(!!searchParams.get('magicToken'));
   const [tokenError, setTokenError] = useState<string | null>(null);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -73,7 +71,6 @@ const OnboardingPage: React.FC = () => {
     if (magicToken) {
       if (localStorage.getItem('token')) {
         console.log('✅ [Onboarding] User already has a session, skipping token validation.');
-        setTimeout(() => setIsTokenValidating(false), 0);
         return;
       }
 
@@ -86,13 +83,11 @@ const OnboardingPage: React.FC = () => {
           localStorage.setItem('token', res.data.token);
           localStorage.setItem('user', JSON.stringify(res.data.user));
           setFullname(res.data.user.fullname || '');
-          setIsTokenValidating(false);
           toast.success("Welcome! Please complete your profile.");
         } catch (err: unknown) {
           const error = err as { response?: { data?: { message?: string } }, message?: string };
           console.error('❌ [Onboarding] Token validation FAILED:', error.response?.data?.message || error.message);
           setTokenError("This onboarding link is invalid or expired.");
-          setIsTokenValidating(false);
         }
       };
       validateToken();
@@ -606,7 +601,6 @@ const OnboardingPage: React.FC = () => {
               </motion.div>
             )}
           </AnimatePresence>
-          )}
         </motion.div>
       </div>
 

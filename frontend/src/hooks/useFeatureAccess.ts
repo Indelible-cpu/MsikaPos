@@ -22,7 +22,7 @@ export const useFeatureAccess = () => {
 
       try {
         const res = await api.get('/feature-configs', {
-          params: { branchId: user.branchId, role: user.role }
+          params: { branchId: user.branch_id, role: user.role }
         });
         const configMap = res.data.data.reduce((acc: any, curr: any) => {
           acc[curr.featureKey] = curr.accessLevel;

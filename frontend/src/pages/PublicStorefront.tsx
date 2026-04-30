@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2 } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
 import { formatCurrency } from '../utils/phoneUtils';
