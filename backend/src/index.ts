@@ -40,15 +40,15 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
 app.use(morgan('dev'));
 
+// Health Check (Must be before any middleware that touches DB)
+app.get('/ping', (_req, res) => res.send('pong'));
+app.get('/api/ping', (_req, res) => res.send('pong'));
+
 // Security Middleware
 app.use(Security.ipBlocker as any);
 app.use(Security.securityHeaders as any);
 app.use(Security.parameterPollution as any);
 app.use('/api', Security.globalLimiter as any);
-
-// Health Check
-app.get('/ping', (_req, res) => res.send('pong'));
-app.get('/api/ping', (_req, res) => res.send('pong'));
 
 // Public Routes
 app.post('/api/auth/login', UserCtrl.loginUser as any);
@@ -169,8 +169,12 @@ const initRoles = async () => {
   }
 };
 
-initRoles().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 POS Backend running on http://localhost:${PORT}`);
+// Start Server
+app.listen(PORT, () => {
+  console.log(`🚀 POS Backend running on port ${PORT}`);
+  
+  // Initialize roles in background
+  initRoles().catch(err => {
+    console.error('❌ Role initialization failed:', err);
   });
 });
