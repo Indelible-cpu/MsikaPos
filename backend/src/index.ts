@@ -49,6 +49,7 @@ app.get('/api/ping', (_req, res) => res.send('pong'));
 app.post('/api/auth/login', UserCtrl.loginUser as any);
 app.post('/api/auth/magic-login', UserCtrl.magicLogin as any);
 app.post('/api/auth/forgot-password', UserCtrl.forgotPassword as any);
+app.post('/api/onboarding/validate', UserCtrl.magicLogin as any);
 app.post('/api/customer/register', CustomerCtrl.registerCustomer as any);
 app.post('/api/customer/login', CustomerCtrl.loginCustomer as any);
 

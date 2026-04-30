@@ -269,6 +269,7 @@ const App: React.FC = () => {
           <Route path="/about" element={<AboutPage />} />
 
           {/* Staff Auth */}
+          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/staff" element={<Navigate to="/staff/login" replace />} />
           <Route path="/staff/login" element={<LoginPage />} />
           <Route path="/staff/forgot-password" element={<ForgotPasswordPage />} />

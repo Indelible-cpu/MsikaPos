@@ -28,6 +28,8 @@ const OnboardingPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isTokenValidating, setIsTokenValidating] = useState(!!searchParams.get('magicToken'));
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   // Form States
@@ -44,22 +46,39 @@ const OnboardingPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
 
-  // Magic Link Detection
+  // Magic Link Detection & Validation
   React.useEffect(() => {
     const magicToken = searchParams.get('magicToken');
-    if (magicToken && !localStorage.getItem('token')) {
-      const handleMagicLogin = async () => {
+    console.log('🔍 [Onboarding] Checking for magicToken:', magicToken ? 'FOUND' : 'NOT FOUND');
+
+    if (magicToken) {
+      if (localStorage.getItem('token')) {
+        console.log('✅ [Onboarding] User already has a session, skipping token validation.');
+        setIsTokenValidating(false);
+        return;
+      }
+
+      const validateToken = async () => {
+        console.log('📡 [Onboarding] Validating token with backend...');
         try {
-          const res = await api.post('/auth/magic-login', { token: magicToken });
+          const res = await api.post('/onboarding/validate', { token: magicToken });
+          console.log('✅ [Onboarding] Token is VALID. Received staff info:', res.data.user.username);
+          
           localStorage.setItem('token', res.data.token);
           localStorage.setItem('user', JSON.stringify(res.data.user));
+          setFullname(res.data.user.fullname || '');
+          setIsTokenValidating(false);
           toast.success("Welcome! Please complete your profile.");
-        } catch (err) {
-          toast.error("Invalid or expired magic link");
-          navigate('/login');
+        } catch (err: any) {
+          console.error('❌ [Onboarding] Token validation FAILED:', err.response?.data?.message || err.message);
+          setTokenError("This onboarding link is invalid or expired.");
+          setIsTokenValidating(false);
         }
       };
-      handleMagicLogin();
+      validateToken();
+    } else if (!localStorage.getItem('token')) {
+      console.log('⚠️ [Onboarding] No token and no session. Redirecting to login.');
+      navigate('/staff/login');
     }
   }, [searchParams, navigate]);
 
@@ -172,6 +191,23 @@ const OnboardingPage: React.FC = () => {
           layout
           className="glass-panel p-8 md:p-12 relative overflow-hidden"
         >
+          {isTokenValidating ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <Loader2 className="w-12 h-12 text-primary-500 animate-spin" />
+              <p className="text-[10px] font-black tracking-widest text-surface-text/40 uppercase">Validating onboarding link...</p>
+            </div>
+          ) : tokenError ? (
+            <div className="text-center py-20 space-y-6">
+              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+                 <Lock className="w-10 h-10 text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-red-500 mb-2">Access Denied</h2>
+                <p className="text-surface-text/40 text-[10px] font-black tracking-widest uppercase">{tokenError}</p>
+              </div>
+              <button onClick={() => navigate('/staff/login')} className="btn-primary !px-10 mx-auto">Go to Login</button>
+            </div>
+          ) : (
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
