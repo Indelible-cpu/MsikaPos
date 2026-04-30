@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { securityAlert } from '../middleware/security';
+import { normalizePhone, isValidMalawianPhone } from '../lib/phoneUtils';
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -110,6 +111,10 @@ export const saveUser = async (req: Request, res: Response) => {
   const { id, username, password, roleId, branchId, fullname, email, phone } = req.body;
 
   try {
+    if (phone && !isValidMalawianPhone(phone)) {
+      return res.status(400).json({ success: false, message: 'Invalid Malawian phone number' });
+    }
+
     const rId = parseInt(roleId as any);
     const bId = branchId ? parseInt(branchId as any) : null;
 
@@ -118,7 +123,7 @@ export const saveUser = async (req: Request, res: Response) => {
         username,
         fullname,
         email,
-        phone,
+        phone: normalizePhone(phone),
         roleId: rId,
         branchId: bId,
       };
@@ -149,7 +154,7 @@ export const saveUser = async (req: Request, res: Response) => {
           username,
           fullname,
           email,
-          phone,
+          phone: normalizePhone(phone),
           password: hashedPassword,
           roleId: rId,
           branchId: bId,
@@ -192,15 +197,22 @@ export const updateOnboarding = async (req: Request, res: Response) => {
   } = req.body;
 
   try {
+    if (phone && !isValidMalawianPhone(phone)) {
+      return res.status(400).json({ success: false, message: 'Invalid phone number format' });
+    }
+    if (nextOfKinPhone && !isValidMalawianPhone(nextOfKinPhone)) {
+      return res.status(400).json({ success: false, message: 'Invalid next of kin phone number format' });
+    }
+
     const data: any = {
       fullname,
       nationalId,
-      phone,
+      phone: normalizePhone(phone),
       email,
       profilePic,
       homeAddress,
       nextOfKinName,
-      nextOfKinPhone,
+      nextOfKinPhone: normalizePhone(nextOfKinPhone),
       relationship,
       verificationCode: Math.floor(100000 + Math.random() * 900000).toString(),
       magicToken: null, // Clear magic token once used/profile updated
@@ -212,7 +224,7 @@ export const updateOnboarding = async (req: Request, res: Response) => {
       data.mustChangePassword = false;
     }
 
-    const user = await prisma.user.update({
+    await prisma.user.update({
       where: { id: authUser.id },
       data
     });

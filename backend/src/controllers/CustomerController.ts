@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { securityAlert } from '../middleware/security';
+import { normalizePhone, isValidMalawianPhone } from '../lib/phoneUtils';
 
 interface AuthRequest extends Request {
   user?: {
@@ -17,6 +18,10 @@ export const registerCustomer = async (req: Request, res: Response) => {
   const { username, password, fullname, phone } = req.body;
 
   try {
+    if (phone && !isValidMalawianPhone(phone)) {
+      return res.status(400).json({ success: false, message: 'Invalid Malawian phone number' });
+    }
+
     const existing = await prisma.user.findUnique({ where: { username } });
     if (existing) {
       await securityAlert(req.ip || 'unknown', 'RECONNAISSANCE', `Registration attempt with existing username: ${username}`);
@@ -43,7 +48,7 @@ export const registerCustomer = async (req: Request, res: Response) => {
           password: hashedPassword,
           roleId: customerRole.id,
           fullname,
-          phone,
+          phone: normalizePhone(phone),
           isVerified: true,
           mustChangePassword: false,
         }
@@ -52,7 +57,7 @@ export const registerCustomer = async (req: Request, res: Response) => {
       const customer = await tx.customer.create({
         data: {
           fullname: fullname || username,
-          phone: phone || '',
+          phone: normalizePhone(phone) || '',
           userId: user.id
         }
       });
