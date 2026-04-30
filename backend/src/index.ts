@@ -33,6 +33,13 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('🌊 UNHANDLED REJECTION at:', promise, 'reason:', reason);
 });
 
+if (!process.env.DATABASE_URL) {
+  console.error('❌ CRITICAL ERROR: DATABASE_URL is not defined in environment variables.');
+  process.exit(1);
+} else {
+  console.log('📡 Database connection string found.');
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
