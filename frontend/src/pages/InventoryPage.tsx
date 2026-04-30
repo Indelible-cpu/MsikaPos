@@ -448,13 +448,31 @@ const InventoryPage: React.FC = () => {
                     <div className="text-[9px] font-black text-surface-text/30 tracking-widest uppercase">{product.sku}</div>
                     <div className="flex gap-1">
                       {product.imageUrl && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
-                          className="p-2 hover:bg-emerald-500/10 rounded-xl transition-colors text-emerald-500"
-                          title="View product image"
-                        >
-                          <ImageIcon className="w-4 h-4" />
-                        </button>
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
+                            className="p-2 hover:bg-emerald-500/10 rounded-xl transition-colors text-emerald-500"
+                            title="View product image"
+                          >
+                            <ImageIcon className="w-4 h-4" />
+                          </button>
+                          {isSuperAdmin && (
+                            <button 
+                              onClick={async (e) => { 
+                                e.stopPropagation(); 
+                                if (confirm('Remove product image?')) {
+                                  await db.products.update(product.id, { imageUrl: '' });
+                                  await SyncService.pushProduct({ ...product, imageUrl: '' });
+                                  toast.success('Image removed');
+                                }
+                              }} 
+                              className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
+                              title="Remove product image"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       )}
                       <button 
                         onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 

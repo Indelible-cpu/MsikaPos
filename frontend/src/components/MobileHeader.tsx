@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bell, ChevronLeft } from 'lucide-react';
+import { Bell, ChevronLeft, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db } from '../db/posDB';
 import BranchSwitcher from './BranchSwitcher';
@@ -48,21 +48,21 @@ export default function MobileHeader() {
   const getPageTitle = (pathname: string) => {
     const path = pathname.replace('/staff', '');
     switch (path) {
-      case '/dashboard': return 'Overview';
-      case '/pos': return 'Point of Sale';
-      case '/inventory': return 'Stock Management';
-      case '/sales': return 'Sale Logs';
-      case '/reports': return 'Analytics';
-      case '/settings': return 'Settings';
-      case '/branches': return 'Branches';
-      case '/debt': return 'Credit & Debt';
-      case '/expenses': return 'Expenses';
-      case '/transactions': return 'Audit History';
-      case '/users': return 'Team Management';
-      case '/onboarding': return 'Setup';
-      case '/about': return 'About MsikaPos';
-      case '/inquiries': return 'Customer Inquiries';
-      default: return 'System';
+      case '/dashboard': return 'Dashboard';
+      case '/pos': return 'POS Terminal';
+      case '/inventory': return 'Inventory';
+      case '/sales': return 'Sale History';
+      case '/reports': return 'Business Reports';
+      case '/settings': return 'System Settings';
+      case '/branches': return 'Branch Management';
+      case '/debt': return 'Customer Debt';
+      case '/expenses': return 'Finance Logs';
+      case '/transactions': return 'System Audit';
+      case '/users': return 'Staff Directory';
+      case '/onboarding': return 'Account Setup';
+      case '/about': return 'MsikaPos Info';
+      case '/inquiries': return 'Customer Support';
+      default: return 'MsikaPos';
     }
   };
 
@@ -107,6 +107,14 @@ export default function MobileHeader() {
               <BranchSwitcher />
             </div>
           )}
+          <button 
+            onClick={() => window.location.reload()}
+            className="p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 active:scale-95 transition-all"
+            title="Refresh Page"
+            aria-label="Refresh Page"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
           <button 
             onClick={() => window.location.href = '/staff/inquiries'}
             className="relative p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 active:scale-95 transition-all"

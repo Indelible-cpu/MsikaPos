@@ -55,11 +55,17 @@
   font-size: 18px;
 }
 
-/* Ensure edge-to-edge on mobile */
-html, body {
-  overscroll-behavior-y: none;
+/* Force theme application edge-to-edge */
+html, body, #root {
   height: 100%;
+  margin: 0;
+  padding: 0;
   background-color: var(--bg-main);
+  transition: background-color 0.3s ease;
+}
+
+html {
+  overflow: hidden; /* Prevent bouncing on desktop, main container handles scroll */
 }
 
 /* Hide scrollbars for all elements but allow scrolling (WebKit only to avoid IDE warnings) */
