@@ -95,7 +95,27 @@ const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
+    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+                <TrendingUp className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">Executive Dashboard</h1>
+          </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Real-time business intelligence and performance metrics</p>
+        </div>
+
+        <div className="flex items-center gap-4">
+           <div className="text-right">
+              <div className="text-[10px] font-black text-surface-text/30 uppercase tracking-widest">Local Session</div>
+              <div className="text-xs font-black text-emerald-500 uppercase">System Online</div>
+           </div>
+           <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50" />
+        </div>
+      </header>
+
       <div className="px-0 py-0 md:px-0 md:py-0">
 
         {/* Stats Grid */}

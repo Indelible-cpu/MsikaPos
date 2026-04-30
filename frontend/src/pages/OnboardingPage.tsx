@@ -263,10 +263,9 @@ const OnboardingPage: React.FC = () => {
           layout
           className="glass-panel p-8 md:p-12 relative overflow-hidden"
         >
-          {isTokenValidating ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4">
-              <Loader2 className="w-12 h-12 text-primary-500 animate-spin" />
-              <p className="text-[10px] font-black tracking-widest text-surface-text/40 uppercase">Validating onboarding link...</p>
+            <div className="flex flex-col items-center justify-center py-20 space-y-6">
+              <div className="loading-spinner w-16 h-16 border-8" />
+              <p className="text-[10px] font-black tracking-widest text-surface-text/40 uppercase animate-pulse">Establishing secure connection...</p>
             </div>
           ) : tokenError ? (
             <div className="text-center py-20 space-y-6">
@@ -549,18 +548,18 @@ const OnboardingPage: React.FC = () => {
 
                 <div className="flex justify-between items-center pt-4">
                   <button onClick={() => setStep(1)} className="text-[10px] font-black tracking-widest text-surface-text/30 hover:text-surface-text transition-all">Go Back</button>
-                  <button 
-                    onClick={handleUpdateProfile}
-                    disabled={loading}
-                    className="btn-primary !px-10 h-14"
-                  >
-                    {loading ? <Loader2 className="animate-spin" /> : (
-                      <>
-                        Verify Email
-                        <ChevronRight className="w-5 h-5" />
-                      </>
-                    )}
-                  </button>
+                    <button 
+                      onClick={handleUpdateProfile}
+                      disabled={loading}
+                      className="btn-primary !px-10 h-14"
+                    >
+                      {loading ? <div className="loading-spinner w-5 h-5 border-2 border-t-white" /> : (
+                        <>
+                          Verify Email
+                          <ChevronRight className="w-5 h-5" />
+                        </>
+                      )}
+                    </button>
                 </div>
               </motion.div>
             )}
@@ -592,7 +591,7 @@ const OnboardingPage: React.FC = () => {
                     disabled={loading || verificationCode.length < 6}
                     className="btn-primary w-full h-16 shadow-2xl shadow-primary-500/20"
                   >
-                    {loading ? <Loader2 className="animate-spin" /> : (
+                    {loading ? <div className="loading-spinner w-6 h-6 border-2 border-t-white" /> : (
                       <>
                         Complete Activation
                         <Check className="w-5 h-5" />

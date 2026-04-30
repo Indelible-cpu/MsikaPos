@@ -208,3 +208,42 @@ export const saveProduct = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: 'Failed to save product', error: error.message });
   }
 };
+
+export const rateProduct = async (req: Request, res: Response) => {
+    const { productId, rating, comment, customerId } = req.body;
+
+    if (!productId || !rating) {
+        return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    try {
+        const productRating = await prisma.productRating.create({
+            data: {
+                productId: parseInt(productId as string),
+                rating: parseInt(rating as string),
+                comment: comment || null,
+                customerId: customerId ? parseInt(customerId as string) : null
+            }
+        });
+
+        return res.status(201).json({ success: true, data: productRating });
+    } catch (error: any) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+export const getProductRatings = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        const ratings = await prisma.productRating.findMany({
+            where: { productId: parseInt(id) },
+            include: { customer: { select: { fullname: true } } },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        return res.status(200).json({ success: true, data: ratings });
+    } catch (error: any) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+};

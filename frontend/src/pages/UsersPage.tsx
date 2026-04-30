@@ -25,6 +25,7 @@ import Modal from '../components/Modal';
 import { AuditService } from '../services/AuditService';
 import { normalizePhone } from '../utils/phoneUtils';
 import { useAuthStore } from '../hooks/useAuth';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
 interface User {
   id: number;
@@ -41,6 +42,8 @@ interface User {
 }
 
 const UsersPage: React.FC = () => {
+  const { isReadOnly } = useFeatureAccess();
+  const readOnly = isReadOnly('STAFF');
   const currentUser = useAuthStore(state => state.user);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,9 +72,22 @@ const UsersPage: React.FC = () => {
     fullname: '',
     email: '',
     phone: '',
-    roleId: 3, // Default to Cashier
+    roleId: 3,
     branchId: ''
   });
+
+  const resetForm = () => {
+    setFormData({
+      username: '',
+      fullname: '',
+      email: '',
+      phone: '',
+      roleId: 3,
+      branchId: ''
+    });
+    setTempPassword(null);
+    setMagicToken(null);
+  };
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -222,20 +238,8 @@ const UsersPage: React.FC = () => {
       branchId: user.branch_id?.toString() || ''
     });
     setTempPassword(null);
-    setIsModalOpen(true);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      username: '',
-      fullname: '',
-      email: '',
-      phone: '',
-      roleId: 2,
-      branchId: ''
-    });
-    setTempPassword(null);
     setMagicToken(null);
+    setIsModalOpen(true);
   };
 
   const filteredUsers = users.filter(u => 
@@ -245,37 +249,38 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-bg/80 backdrop-blur-xl md:border-b border-surface-border sticky top-0 z-30">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="hidden md:flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6" />
-              </div>
-              <h1 className="text-2xl font-black tracking-tighter ">Team</h1>
-            </div>
-            <button 
-              onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
-              className="w-12 h-12 bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/20 active:scale-95 transition-all flex items-center justify-center relative group"
-              title="Add staff"
-            >
-              <Users className="w-5 h-5" />
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-surface-bg flex items-center justify-center shadow-sm">
-                <Plus className="w-3 h-3" />
-              </div>
-            </button>
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+                <Users className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">Staff Management</h1>
           </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Control user access and permissions</p>
+        </div>
 
+        <div className="flex flex-col md:flex-row md:items-center gap-6">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
             <input 
               type="text" 
-              placeholder="Search by name or username..."
-              className="input-field w-full pl-11 text-sm font-bold shadow-inner"
+              placeholder="Search staff..."
+              title="Search staff members"
+              aria-label="Search staff members"
+              className="input-field w-full md:w-64 pl-11 text-xs font-bold"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {!readOnly && (
+            <button 
+              onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
+              className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 uppercase whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 mr-2 inline" /> Add Staff
+            </button>
+          )}
         </div>
       </header>
 
@@ -295,17 +300,21 @@ const UsersPage: React.FC = () => {
                    {(currentUser?.role === 'SUPER_ADMIN' || (currentUser?.role === 'ADMIN' && u.role !== 'SUPER_ADMIN' && u.role !== 'ADMIN')) && (
                      <>
                        <button title="Edit user" onClick={() => handleEdit(u)} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-400 transition-colors"><Edit2 className="w-4 h-4" /></button>
-                       {u.status === 'ACTIVE' ? (
+                       {!readOnly && (
                          <>
-                           <button title="Suspend user" onClick={() => setActionModal({ isOpen: true, type: 'SUSPEND', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-orange-500 transition-colors"><Ban className="w-4 h-4" /></button>
-                           <button title="Deactivate user" onClick={() => setActionModal({ isOpen: true, type: 'DEACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-500 transition-colors"><UserX className="w-4 h-4" /></button>
+                           {u.status === 'ACTIVE' ? (
+                             <>
+                               <button title="Suspend user" onClick={() => setActionModal({ isOpen: true, type: 'SUSPEND', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-orange-500 transition-colors"><Ban className="w-4 h-4" /></button>
+                               <button title="Deactivate user" onClick={() => setActionModal({ isOpen: true, type: 'DEACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-500 transition-colors"><UserX className="w-4 h-4" /></button>
+                             </>
+                           ) : (
+                             <button title="Reactivate user" onClick={() => setActionModal({ isOpen: true, type: 'REACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-emerald-500 transition-colors"><Power className="w-4 h-4" /></button>
+                           )}
+                           <button title="Soft delete" onClick={() => setActionModal({ isOpen: true, type: 'DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                           {currentUser?.role === 'SUPER_ADMIN' && (
+                             <button title="Hard delete (permanent)" onClick={() => setActionModal({ isOpen: true, type: 'HARD_DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-black transition-colors"><Trash className="w-4 h-4" /></button>
+                           )}
                          </>
-                       ) : (
-                         <button title="Reactivate user" onClick={() => setActionModal({ isOpen: true, type: 'REACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-emerald-500 transition-colors"><Power className="w-4 h-4" /></button>
-                       )}
-                       <button title="Soft delete" onClick={() => setActionModal({ isOpen: true, type: 'DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                       {currentUser?.role === 'SUPER_ADMIN' && (
-                         <button title="Hard delete (permanent)" onClick={() => setActionModal({ isOpen: true, type: 'HARD_DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-black transition-colors"><Trash className="w-4 h-4" /></button>
                        )}
                      </>
                    )}

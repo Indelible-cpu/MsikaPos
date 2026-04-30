@@ -295,7 +295,7 @@ const LoginPage: React.FC = () => {
             disabled={loading}
             className="w-full h-16 bg-primary-500 text-white rounded-3xl font-black  tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-primary-500/20 active:scale-95 transition-all"
           >
-            {loading ? <Loader2 className="animate-spin" /> : (
+            {loading ? <div className="loading-spinner w-6 h-6 border-2 border-t-white" /> : (
               <>
                 Sign In
                 <ChevronRight className="w-5 h-5" />

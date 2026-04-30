@@ -6,27 +6,31 @@ import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
 import api from '../api/client';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const [pendingCount, setPendingCount] = React.useState(0);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
+  const { canAccess } = useFeatureAccess();
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/staff/dashboard' },
-    { id: 'pos', label: 'POS Terminal', icon: ShoppingCart, path: '/staff/pos' },
-    { id: 'transactions', label: 'Transactions', icon: Receipt, path: '/staff/transactions' },
-    { id: 'debt', label: 'Customers & Debt', icon: Users, path: '/staff/debt' },
-    { id: 'inventory', label: 'Stock Management', icon: Package, path: '/staff/inventory' },
-    { id: 'inquiries', label: 'Inquiries & Requests', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
-    { id: 'expenses', label: 'Finance & Expenses', icon: Wallet, path: '/staff/expenses' },
-    { id: 'team', label: 'Staff Management', icon: UserCheck, path: '/staff/users' },
-    { id: 'branches', label: 'Branch Management', icon: Building2, path: '/staff/branches' },
-    { id: 'reports', label: 'System Reports', icon: BarChart3, path: '/staff/reports' },
-    { id: 'settings', label: 'System Settings', icon: Settings, path: '/staff/settings' },
-    ...(isSuperAdmin ? [{ id: 'audit', label: 'Security & Audits', icon: History, path: '/staff/audit-logs' }] : []),
+    { id: 'dashboard', key: 'DASHBOARD', label: 'Dashboard', icon: Home, path: '/staff/dashboard' },
+    { id: 'pos', key: 'POS_TERMINAL', label: 'POS Terminal', icon: ShoppingCart, path: '/staff/pos' },
+    { id: 'transactions', key: 'SALES_HISTORY', label: 'Sales', icon: Receipt, path: '/staff/transactions' },
+    { id: 'debt', key: 'CUSTOMERS', label: 'Customers & Debt', icon: Users, path: '/staff/debt' },
+    { id: 'inventory', key: 'INVENTORY', label: 'Stock Management', icon: Package, path: '/staff/inventory' },
+    { id: 'inquiries', key: 'INQUIRIES', label: 'Inquiries & Requests', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
+    { id: 'expenses', key: 'FINANCE', label: 'Finance & Expenses', icon: Wallet, path: '/staff/expenses' },
+    { id: 'team', key: 'STAFF', label: 'Staff Management', icon: UserCheck, path: '/staff/users' },
+    { id: 'branches', key: 'BRANCHES', label: 'Branch Management', icon: Building2, path: '/staff/branches' },
+    { id: 'reports', key: 'REPORTS', label: 'System Reports', icon: BarChart3, path: '/staff/reports' },
+    { id: 'settings', key: 'SETTINGS', label: 'System Settings', icon: Settings, path: '/staff/settings' },
+    ...(isSuperAdmin ? [{ id: 'audit', key: 'AUDIT_LOGS', label: 'Security Logs', icon: History, path: '/staff/audit-logs' }] : []),
   ];
+
+  const filteredTabs = tabs.filter(tab => canAccess(tab.key));
 
   const fetchPending = React.useCallback(async () => {
     try {
@@ -84,7 +88,7 @@ const Sidebar: React.FC = () => {
 
       {/* Navigation - Scrollable */}
       <nav className="flex-1 overflow-y-auto px-6 py-4 space-y-1.5 custom-scrollbar">
-        {tabs.map((tab) => (
+        {filteredTabs.map((tab) => (
           <NavLink
             key={tab.id}
             to={tab.path}

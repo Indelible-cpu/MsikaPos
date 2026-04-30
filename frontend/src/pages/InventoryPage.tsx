@@ -24,6 +24,8 @@ import AiAssistant from '../components/AiAssistant';
 import Modal from '../components/Modal';
 import { soundService } from '../services/SoundService';
 import { AuditService } from '../services/AuditService';
+import BarcodeScanner from '../components/BarcodeScanner';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
 const generateNumericId = () => {
   return Date.now() + Math.floor(Math.random() * 1000);
@@ -32,6 +34,8 @@ const generateNumericId = () => {
 const InventoryPage: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
+  const { isReadOnly } = useFeatureAccess();
+  const readOnly = isReadOnly('INVENTORY');
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -56,6 +60,7 @@ const InventoryPage: React.FC = () => {
     discountStartDate: '',
     discountEndDate: '',
   });
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const products = useLiveQuery(
     () => db.products.where('name').startsWithIgnoreCase(searchTerm).toArray(),
@@ -168,6 +173,20 @@ const InventoryPage: React.FC = () => {
     await resetForm(scannedSku);
     setIsAddModalOpen(true);
   }, [resetForm]);
+
+  const handleScan = useCallback(async (scannedText: string) => {
+    setIsScannerOpen(false);
+    const product = await db.products.where('sku').equals(scannedText).first();
+    if (product) {
+      soundService.playBeep();
+      toast.success(`Found: ${product.name}`, { id: 'scan-inv' });
+      openEditModal(product);
+    } else {
+      soundService.playSuccess();
+      toast.success(`New SKU detected: ${scannedText}`, { id: 'scan-inv' });
+      openAddModal(scannedText);
+    }
+  }, [openEditModal, openAddModal]);
 
   const openEditModal = useCallback((p: LocalProduct) => {
     setEditingProduct(p);
@@ -330,11 +349,17 @@ const InventoryPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-black tracking-tighter uppercase">Inventory Manager</h1>
-          <p className="text-[10px] font-black text-surface-text/40 tracking-widest uppercase">Manage stock levels and product catalog</p>
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+                <Package className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">Inventory</h1>
+          </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Stock Management & Control</p>
         </div>
+        
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsCategoryModalOpen(true)}
@@ -352,14 +377,16 @@ const InventoryPage: React.FC = () => {
           >
             <Download className="w-4 h-4" /> Export CSV
           </button>
-          <button 
-            onClick={() => openAddModal()}
-            className="btn-primary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20"
-            title="Add New Product"
-            aria-label="Add New Product"
-          >
-            <Plus className="w-4 h-4 mr-1 inline" /> Add Product
-          </button>
+          {!readOnly && (
+            <button 
+              onClick={() => openAddModal()}
+              className="btn-primary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20"
+              title="Add New Product"
+              aria-label="Add New Product"
+            >
+              <Plus className="w-4 h-4 mr-1 inline" /> Add Product
+            </button>
+          )}
         </div>
       </header>
         
@@ -384,17 +411,26 @@ const InventoryPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <div className="relative group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Search by name or SKU..."
-              title="Search products"
-              aria-label="Search products"
-              className="input-field w-full pl-14 shadow-sm py-4"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="relative group flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Search by name or SKU..."
+                title="Search products"
+                aria-label="Search products"
+                className="input-field w-full pl-14 shadow-sm py-4"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button 
+              onClick={() => setIsScannerOpen(true)}
+              className="w-14 h-14 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-center text-primary-500 hover:bg-primary-500 hover:text-white transition-all shadow-sm active:scale-95 flex-shrink-0"
+              title="Open Barcode Scanner"
+            >
+              <Barcode className="w-6 h-6" />
+            </button>
           </div>
           <div className="flex gap-3 overflow-x-auto no-scrollbar py-2">
             <button 
@@ -456,7 +492,7 @@ const InventoryPage: React.FC = () => {
                           >
                             <ImageIcon className="w-4 h-4" />
                           </button>
-                          {isSuperAdmin && (
+                          {!readOnly && isSuperAdmin && (
                             <button 
                               onClick={async (e) => { 
                                 e.stopPropagation(); 
@@ -474,15 +510,17 @@ const InventoryPage: React.FC = () => {
                           )}
                         </div>
                       )}
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
-                        className="p-2 hover:bg-primary-500/10 rounded-xl transition-colors text-primary-400"
-                        title="Edit product"
-                        aria-label="Edit product"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      {isSuperAdmin && (
+                      {!readOnly && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
+                          className="p-2 hover:bg-primary-500/10 rounded-xl transition-colors text-primary-400"
+                          title="Edit product"
+                          aria-label="Edit product"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {!readOnly && isSuperAdmin && (
                         <button 
                           onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
                           className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
@@ -710,6 +748,9 @@ const InventoryPage: React.FC = () => {
       </Modal>
 
       <AiAssistant type="INVENTORY_STRATEGY" context={products} />
+      {isScannerOpen && (
+        <BarcodeScanner onScan={handleScan} onClose={() => setIsScannerOpen(false)} />
+      )}
     </div>
   );
 };

@@ -14,6 +14,7 @@ import * as CreditCtrl from './controllers/CreditController';
 import * as CustomerCtrl from './controllers/CustomerController';
 import * as ExpenseCtrl from './controllers/ExpenseController';
 import * as AiCtrl from './controllers/AiController';
+import * as FeatureCtrl from './controllers/FeatureController';
 import * as Security from './middleware/security';
 
 import { authenticate, authorize } from './middleware/auth';
@@ -85,6 +86,9 @@ app.get('/api/public/settings', async (_req, res) => {
   }
 });
 
+app.post('/api/public/products/:id/rate', ProductCtrl.rateProduct as any);
+app.get('/api/public/products/:id/ratings', ProductCtrl.getProductRatings as any);
+
 // Protected Routes (Require Authentication)
 app.use('/api', authenticate as any);
 
@@ -139,6 +143,10 @@ app.post('/api/ai/suggestions', staffOnly, AiCtrl.getAiSuggestions as any);
 
 // Settings
 app.post('/api/settings', adminOnly, SettingsCtrl.saveSettings);
+
+// Feature Access Control
+app.get('/api/feature-configs', adminOnly, FeatureCtrl.getFeatureConfigs);
+app.post('/api/feature-configs', adminOnly, FeatureCtrl.updateFeatureConfig);
 
 // Role Initialization
 const initRoles = async () => {

@@ -71,6 +71,7 @@ model Branch {
   securityLogs SecurityLog[]
   syncLogs     SyncLog[]
   users        User[]
+  featureConfigs FeatureConfig[]
 }
 
 model Category {
@@ -105,6 +106,7 @@ model Product {
   branch            Branch?    @relation(fields: [branchId], references: [id])
   category          Category   @relation(fields: [categoryId], references: [id])
   saleItems         SaleItem[]
+  ratings           ProductRating[]
 
   @@index([categoryId])
   @@index([branchId])
@@ -133,6 +135,7 @@ model Customer {
   user          User?     @relation(fields: [userId], references: [id])
   inquiries     Inquiry[]
   sales         Sale[]
+  ratings       ProductRating[]
 
   @@index([branchId])
 }
@@ -304,4 +307,27 @@ enum SaleStatus {
   COMPLETED
   PENDING
   DELETED
+}
+model ProductRating {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  customerId Int?
+  rating     Int      // 1-5 stars
+  comment    String?
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id])
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([productId])
+}
+
+model FeatureConfig {
+  id          Int      @id @default(autoincrement())
+  featureKey  String
+  roleName    RoleName
+  accessLevel String   // "HIDDEN", "READ_ONLY", "FULL"
+  branchId    Int?
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+
+  @@unique([featureKey, roleName, branchId])
 }

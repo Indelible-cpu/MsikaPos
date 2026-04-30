@@ -11,8 +11,11 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
 const ExpensesPage: React.FC = () => {
+  const { isReadOnly } = useFeatureAccess();
+  const readOnly = isReadOnly('FINANCE');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<LocalExpense | null>(null);
@@ -78,22 +81,26 @@ const ExpensesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-bg/80 backdrop-blur-xl md:border-b border-surface-border sticky top-0 z-30">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="hidden md:flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center">
-                <Wallet className="w-6 h-6" />
-              </div>
-              <h1 className="text-2xl font-black tracking-tighter">Expenses</h1>
-            </div>
-            <button 
-              onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
-              className="btn-primary !px-6 !py-4 text-[10px] font-black  tracking-widest bg-red-500 hover:bg-red-600 shadow-xl shadow-red-900/20 w-full md:w-auto"
-            >
-              <Plus className="w-4 h-4 mr-2 inline" /> Add expense
-            </button>
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 border border-red-500/20">
+                <Wallet className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">Expenses</h1>
           </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Expense Tracking & Management</p>
+        </div>
+
+        {!readOnly && (
+          <button 
+            onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
+            className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest bg-red-500 hover:bg-red-600 shadow-xl shadow-red-900/20 w-full md:w-auto uppercase"
+          >
+            <Plus className="w-4 h-4 mr-2 inline" /> Add expense
+          </button>
+        )}
+      </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="p-4 border-r border-surface-border/50 flex items-center gap-4">
@@ -140,9 +147,16 @@ const ExpensesPage: React.FC = () => {
                        <div className="text-base font-black text-red-500">MK {exp.amount.toLocaleString()}</div>
                        <div className="text-[9px] text-surface-text/30 font-black tracking-widest ">{exp.paymentMethod}</div>
                     </div>
-                    <button title="Delete" aria-label="Delete expense" onClick={() => handleDelete(exp.id)} className="p-2 text-surface-text/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                    {!readOnly && (
+                      <button 
+                        title="Delete" 
+                        aria-label="Delete expense" 
+                        onClick={() => handleDelete(exp.id)} 
+                        className="p-2 text-surface-text/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      >
                        <Trash2 className="w-4 h-4" />
-                    </button>
+                      </button>
+                    )}
                  </div>
               </div>
             ))

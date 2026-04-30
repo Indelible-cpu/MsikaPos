@@ -51,17 +51,18 @@ export default function MobileHeader() {
       case '/dashboard': return 'Dashboard';
       case '/pos': return 'POS Terminal';
       case '/inventory': return 'Inventory';
-      case '/sales': return 'Sale History';
+      case '/sales': return 'Sales History';
       case '/reports': return 'Business Reports';
       case '/settings': return 'System Settings';
       case '/branches': return 'Branch Management';
-      case '/debt': return 'Customer Debt';
-      case '/expenses': return 'Finance Logs';
-      case '/transactions': return 'System Audit';
-      case '/users': return 'Staff Directory';
+      case '/debt': return 'Customers & Debt';
+      case '/expenses': return 'Finance & Expenses';
+      case '/transactions': return 'Sales';
+      case '/users': return 'Staff Management';
       case '/onboarding': return 'Account Setup';
       case '/about': return 'MsikaPos Info';
       case '/inquiries': return 'Customer Support';
+      case '/audit-logs': return 'Security Logs';
       default: return 'MsikaPos';
     }
   };
@@ -71,27 +72,28 @@ export default function MobileHeader() {
   return (
     <>
       <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[100] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
-        <div className="flex items-center gap-3 overflow-hidden">
-          {!isBasePage && (
-            <button 
-              onClick={() => window.history.back()}
-              className="p-2 bg-surface-bg rounded-xl border border-surface-border active:scale-95 transition-all flex-shrink-0"
-              title="Go back"
-              aria-label="Go back"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
+        <div className="flex items-center gap-2 overflow-hidden flex-1">
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-10 h-10 rounded-full border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm"
+            className="w-9 h-9 rounded-full border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm"
           >
-            <img src={shopLogo} alt="Logo" className="w-full h-full object-contain" />
+            <img src={shopLogo} alt="Logo" className="w-full h-full object-cover" />
           </motion.div>
+
+          {!isBasePage && (
+            <button 
+              onClick={() => window.history.back()}
+              className="p-1.5 bg-surface-bg rounded-lg border border-surface-border active:scale-90 transition-all flex-shrink-0"
+              title="Go back"
+              aria-label="Go back"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
           
-          <div className="flex flex-col min-w-0">
-            <span className="text-[14px] font-black tracking-tighter text-primary-500 leading-none truncate">
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="text-[14px] font-black tracking-tighter text-primary-500 leading-none truncate block">
               {shopName}
             </span>
             <span className="text-[10px] font-black tracking-[0.2em] text-surface-text/60 truncate !mb-0 uppercase">

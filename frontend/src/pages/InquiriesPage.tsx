@@ -13,6 +13,7 @@ import api from '../api/client';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import Modal from '../components/Modal';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { type LocalProduct } from '../db/posDB';
 
 interface Inquiry {
@@ -30,6 +31,8 @@ interface Inquiry {
 }
 
 const InquiriesPage: React.FC = () => {
+  const { isReadOnly } = useFeatureAccess();
+  const readOnly = isReadOnly('INQUIRIES');
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -143,16 +146,26 @@ const InquiriesPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all w-full">
-      <div className="w-full px-0">
-        <div className="p-6 md:px-12 flex flex-col md:flex-row gap-4 items-center bg-surface-card border-b border-surface-border">
-          <div className="flex flex-wrap gap-2 flex-1">
+    <div className="flex flex-col min-h-screen bg-surface-bg transition-all w-full pb-24 md:pb-0 px-0">
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+                <MessageSquare className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">Inquiries</h1>
+          </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Customer Quotes & Requests</p>
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
+          <div className="flex flex-wrap gap-2">
             {['ALL', 'NEW', 'VIEWED', 'RESPONDED', 'NEGOTIATING', 'CLOSED'].map(s => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
                 className={clsx(
-                  "px-4 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all border",
+                  "px-4 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all border uppercase",
                   statusFilter === s 
                     ? "bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20" 
                     : "bg-surface-bg border-surface-border text-surface-text/40 hover:bg-surface-border/50"
@@ -162,18 +175,20 @@ const InquiriesPage: React.FC = () => {
               </button>
             ))}
           </div>
-          <div className="relative w-full md:w-96">
+          <div className="relative w-full md:w-64">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
             <input 
               type="text" 
               placeholder="Search customers..."
-              className="w-full py-3 pl-12 pr-4 bg-surface-bg border border-surface-border rounded-xl outline-none focus:border-primary-500 font-bold text-xs shadow-inner transition-all"
+              title="Search customer inquiries"
+              aria-label="Search customer inquiries"
+              className="input-field w-full pl-11 text-xs font-bold py-3"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-      </div>
+      </header>
 
       <main className="w-full">
         {loading && inquiries.length === 0 ? (
@@ -241,7 +256,7 @@ const InquiriesPage: React.FC = () => {
                         </button>
                       )}
                       
-                      {normalizedStatus !== 'CLOSED' && (
+                      {normalizedStatus !== 'CLOSED' && !readOnly && (
                         <button 
                           onClick={() => { setSelectedInquiry(i); setIsResponseOpen(true); }}
                           className="w-full py-3 bg-primary-500 text-white rounded-xl text-[9px] font-black tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all"

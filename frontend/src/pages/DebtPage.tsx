@@ -20,6 +20,7 @@ import { clsx } from 'clsx';
 import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
 // Malawian format validators
 const MALAWI_PHONE_REGEX = /^\d{10}$|^\d{13}$/;
@@ -29,6 +30,8 @@ const MALAWI_ID_REGEX = /^[A-Za-z0-9]{8}$/;
 const mockEncrypt = (data: string) => btoa(data); // "End to End Encryption" mock for Dexie
 
 const DebtPage: React.FC = () => {
+  const { isReadOnly } = useFeatureAccess();
+  const readOnly = isReadOnly('CUSTOMERS');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
@@ -47,6 +50,17 @@ const DebtPage: React.FC = () => {
   const [useCamera, setUseCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const resetForm = () => {
+    setCustForm({ 
+      name: '', 
+      phone: '', 
+      idNumber: '', 
+      village: '', 
+      livePhoto: '', 
+      fingerprintData: '' 
+    });
+  };
 
   // Data
   const customers = useLiveQuery(
@@ -160,28 +174,38 @@ const DebtPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 bg-surface-card border-b border-surface-border sticky top-0 z-30">
-        <div className="p-6 md:px-12">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-600/10 text-primary-400 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6" />
-              </div>
-              <h1 className="text-xl md:text-2xl font-black tracking-tighter">Customers & Debt</h1>
-            </div>
-
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+                <Users className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">Customers & Debt</h1>
           </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Manage client profiles and credit records</p>
+        </div>
 
+        <div className="flex flex-col md:flex-row md:items-center gap-6">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
             <input 
               type="text" 
               placeholder="Search customers..."
-              className="input-field w-full pl-11 text-sm font-bold shadow-inner"
+              title="Search customers"
+              aria-label="Search customers"
+              className="input-field w-full md:w-64 pl-11 text-xs font-bold"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {!readOnly && (
+            <button 
+              onClick={() => { resetForm(); setIsAddModalOpen(true); }}
+              className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 uppercase whitespace-nowrap"
+            >
+              <UserPlus className="w-4 h-4 mr-2 inline" /> Add Customer
+            </button>
+          )}
         </div>
       </header>
 

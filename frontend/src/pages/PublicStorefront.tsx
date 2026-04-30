@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, Loader2, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark } from 'lucide-react';
 import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
 import { formatCurrency } from '../utils/phoneUtils';
@@ -60,6 +60,10 @@ export const PublicStorefront: React.FC = () => {
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('fontSize') || 'medium');
   const [taxConfig, setTaxConfig] = useState<{ rate: number, inclusive: boolean }>({ rate: 0, inclusive: true });
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [ratingProduct, setRatingProduct] = useState<StoreProduct | null>(null);
+  const [ratingValue, setRatingValue] = useState(5);
+  const [ratingComment, setRatingComment] = useState('');
 
   const CUSTOM_CATEGORIES = [
     'Phone Accessories',
@@ -337,6 +341,30 @@ export const PublicStorefront: React.FC = () => {
     toast.success('Signed out');
   };
 
+  const handleOpenRating = (product: StoreProduct, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRatingProduct(product);
+    setIsRatingModalOpen(true);
+  };
+
+  const submitRating = async () => {
+    if (!ratingProduct) return;
+    try {
+      await api.post(`/public/products/${ratingProduct.id}/rate`, {
+        productId: ratingProduct.id,
+        rating: ratingValue,
+        comment: ratingComment,
+        customerId: (customer as any)?.id
+      });
+      toast.success("Thank you for your rating!");
+      setIsRatingModalOpen(false);
+      setRatingComment('');
+      setRatingValue(5);
+    } catch {
+      toast.error("Failed to submit rating");
+    }
+  };
+
   useEffect(() => {
     loadStorefront();
     const interval = setInterval(() => loadStorefront(true), 5 * 60 * 1000);
@@ -358,7 +386,7 @@ export const PublicStorefront: React.FC = () => {
     >
       {isRefreshing && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary-500 text-white p-3 rounded-full shadow-2xl flex items-center justify-center animate-in fade-in slide-in-from-top-4 duration-500 border-2 border-white/20">
-          <Loader2 className="w-5 h-5 animate-spin" />
+          <div className="loading-spinner w-5 h-5" />
         </div>
       )}
 
@@ -700,6 +728,19 @@ export const PublicStorefront: React.FC = () => {
                           <Bookmark className={`w-3.5 h-3.5 ${savedItems.has(p.id) ? 'fill-current' : ''}`} />
                         </button>
                       </div>
+                      <button 
+                        onClick={(e) => handleOpenRating(p, e)}
+                        className="w-full py-3 bg-surface-bg border border-surface-border rounded-xl text-[9px] font-black tracking-widest text-surface-text/40 hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center justify-center gap-2 mt-2 uppercase"
+                      >
+                        <span className="flex text-amber-500">
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <svg key={i} className="w-2.5 h-2.5 fill-current" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </span>
+                        Rate this {p.isService ? 'service' : 'item'}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -797,7 +838,7 @@ export const PublicStorefront: React.FC = () => {
                     {taxConfig.rate > 0 && (
                       <div className="flex items-center justify-between text-xs font-black text-surface-text/40 uppercase tracking-widest">
                         <span>Tax ({taxConfig.rate}% {taxConfig.inclusive ? 'Included' : 'Added'})</span>
-                        <span>{taxConfig.inclusive ? 'Included' : `+ \${formatCurrency(taxAmount)}`}</span>
+                        <span>{taxConfig.inclusive ? 'Included' : `+ ${formatCurrency(taxAmount)}`}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between border-t border-surface-border pt-4 mt-2">
@@ -827,6 +868,61 @@ export const PublicStorefront: React.FC = () => {
         onClose={() => setIsAuthOpen(false)} 
         onSuccess={handleAuthSuccess}
       />
+
+      <AnimatePresence>
+        {isRatingModalOpen && ratingProduct && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-surface-bg/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsRatingModalOpen(false)}></div>
+            <div className="relative w-full max-w-sm bg-surface-card border border-surface-border rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 p-8">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="w-8 h-8 text-amber-500" />
+                </div>
+                <h3 className="text-xl font-black tracking-tighter uppercase">Rate this {ratingProduct.isService ? 'Service' : 'Item'}</h3>
+                <p className="text-[10px] font-black tracking-widest text-surface-text/30 uppercase mt-1">Your feedback helps others</p>
+              </div>
+
+              <div className="flex justify-center gap-2 mb-8">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button 
+                    key={star}
+                    onClick={() => setRatingValue(star)}
+                    title={`Rate ${star} stars`}
+                    aria-label={`Rate ${star} stars`}
+                    className={`transition-all ${ratingValue >= star ? 'text-amber-500 scale-125' : 'text-surface-text/10'}`}
+                  >
+                    <svg className="w-8 h-8 fill-current" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+
+              <textarea 
+                placeholder="Write a brief comment (optional)..."
+                className="w-full p-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black outline-none focus:border-primary-500 min-h-[100px] mb-6 resize-none"
+                value={ratingComment}
+                onChange={(e) => setRatingComment(e.target.value)}
+              />
+
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={submitRating}
+                  className="w-full py-4 bg-primary-500 text-white rounded-2xl text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/30 active:scale-95 transition-all uppercase"
+                >
+                  Submit Feedback
+                </button>
+                <button 
+                  onClick={() => setIsRatingModalOpen(false)}
+                  className="w-full py-4 bg-surface-bg text-surface-text/40 rounded-2xl text-[10px] font-black tracking-widest transition-all uppercase"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <footer className="bg-surface-card border-t border-surface-border py-12 px-6 flex flex-col items-center gap-4">
         <div className="flex items-center gap-2 opacity-30">

@@ -216,44 +216,56 @@ const ReportsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-30">
-        <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl overflow-x-auto no-scrollbar w-full md:w-auto">
-          {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
-            <button 
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={clsx(
-                "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none",
-                activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg/50"
-              )}
-            >
-              {tab.toUpperCase()}
-            </button>
-          ))}
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+                <BarChart3 className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">Reports</h1>
+          </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Analytics & Performance Data</p>
         </div>
-        
-        <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
-          {activeTab === 'Financial' && (
-            <select 
-              value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
-              title="Filter by time period"
-              aria-label="Filter by time period"
-              className="px-4 py-2 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-black tracking-widest uppercase text-primary-500 outline-none cursor-pointer"
-            >
-              <option value="Weekly">Weekly</option>
-              <option value="Monthly">Monthly</option>
-              <option value="Quarterly">Quarterly</option>
-              <option value="Annual">Annual</option>
-            </select>
-          )}
 
-          {loading && (
-            <div className="pr-4 flex items-center gap-2">
-              <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
-              <span className="text-[8px] font-black tracking-widest text-primary-500">REFRESHING...</span>
-            </div>
-          )}
+        <div className="flex flex-col md:flex-row md:items-center gap-6">
+          <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl overflow-x-auto no-scrollbar w-full md:w-auto">
+            {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
+              <button 
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={clsx(
+                  "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none uppercase",
+                  activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg/50"
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          
+          <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+            {activeTab === 'Financial' && (
+              <select 
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+                title="Filter by time period"
+                aria-label="Filter by time period"
+                className="px-4 py-2 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-black tracking-widest uppercase text-primary-500 outline-none cursor-pointer"
+              >
+                <option value="Weekly">Weekly</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Quarterly">Quarterly</option>
+                <option value="Annual">Annual</option>
+              </select>
+            )}
+
+            {loading && (
+              <div className="pr-4 flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
+                <span className="text-[8px] font-black tracking-widest text-primary-500">REFRESHING...</span>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 

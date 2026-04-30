@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-
+import { X, Zap, ZapOff } from 'lucide-react';
 
 interface BarcodeScannerProps {
   onScan: (decodedText: string) => void;
@@ -9,9 +9,10 @@ interface BarcodeScannerProps {
 
 export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const [hasFlash, setHasFlash] = useState(false);
+  const [isFlashOn, setIsFlashOn] = useState(false);
 
   const stopScanner = async () => {
-    // 2 corresponds to Html5QrcodeScannerState.SCANNING
     if (html5QrCodeRef.current && html5QrCodeRef.current.getState() === 2) { 
       try {
         await html5QrCodeRef.current.stop();
@@ -22,29 +23,53 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
     }
   };
 
+  const toggleFlash = async () => {
+    if (html5QrCodeRef.current && hasFlash) {
+      try {
+        const newState = !isFlashOn;
+        await html5QrCodeRef.current.applyVideoConstraints({
+          advanced: [{ torch: newState } as any]
+        });
+        setIsFlashOn(newState);
+      } catch (err) {
+        console.error("Flash error:", err);
+      }
+    }
+  };
+
   useEffect(() => {
     const html5QrCode = new Html5Qrcode("reader");
     html5QrCodeRef.current = html5QrCode;
 
     const config = { 
-      fps: 10, 
-      qrbox: { width: 250, height: 150 },
-      aspectRatio: 1.0
+      fps: 20, 
+      qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const boxSize = Math.floor(minEdge * 0.7);
+          return { width: boxSize, height: boxSize * 0.6 };
+      },
+      aspectRatio: window.innerHeight / window.innerWidth
     };
 
-    // Start the camera immediately
     html5QrCode.start(
       { facingMode: "environment" }, 
       config, 
       (decodedText) => {
         onScan(decodedText);
-        // We stop after one successful scan for POS
         void stopScanner();
       },
-      () => {
-        // error (ignored)
-      }
-    ).catch(err => {
+      () => {}
+    ).then(() => {
+        // Try to check for flashlight capability
+        try {
+            const capabilities = html5QrCode.getRunningTrackCapabilities();
+            if ((capabilities as any).torch) {
+                setHasFlash(true);
+            }
+        } catch {
+            // Flash not supported or permission denied
+        }
+    }).catch(err => {
       console.error("Unable to start scanner", err);
     });
 
@@ -54,25 +79,47 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
   }, [onScan]);
 
   return (
-    <div className="fixed inset-0 z-[200] bg-zinc-900/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm animate-blur-fade">
-      <div className="w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl animate-scale-in">
-        <header className="px-8 py-5 border-b border-zinc-100 bg-white flex justify-between items-center">
-           <div>
-              <h3 className="text-xs font-bold text-zinc-800">Scanner active</h3>
-              <p className="text-[9px] font-bold text-zinc-400 mt-1">Camera is ready</p>
-           </div>
-        </header>
-        <div id="reader" className="w-full bg-black aspect-video"></div>
-        <div className="bg-zinc-50/50">
-            <p className="text-[10px] font-bold py-6 text-zinc-400 animate-pulse text-center">Position barcode within the frame</p>
-            
-            <button 
-              onClick={onClose}
-              className="w-full h-16 bg-zinc-900 text-white font-black text-[11px] tracking-widest active:scale-[0.98] transition-all"
-            >
-              Close Camera
-            </button>
-        </div>
+    <div className="fixed inset-0 z-[200] bg-black flex flex-col overflow-hidden animate-in fade-in duration-300">
+      <div id="reader" className="absolute inset-0 w-full h-full object-cover"></div>
+      
+      {/* Controls Overlay */}
+      <div className="absolute inset-0 flex flex-col pointer-events-none">
+          <header className="p-6 flex justify-between items-center pointer-events-auto">
+             <button 
+               onClick={onClose}
+               title="Close Scanner"
+               aria-label="Close Scanner"
+               className="w-12 h-12 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white active:scale-90 transition-all pointer-events-auto"
+             >
+                <X className="w-6 h-6" />
+             </button>
+             
+             {hasFlash && (
+                 <button 
+                    onClick={toggleFlash}
+                    title={isFlashOn ? "Turn Flash Off" : "Turn Flash On"}
+                    aria-label={isFlashOn ? "Turn Flash Off" : "Turn Flash On"}
+                    className={`w-12 h-12 backdrop-blur-md rounded-full flex items-center justify-center transition-all active:scale-90 pointer-events-auto ${isFlashOn ? 'bg-amber-500 text-white' : 'bg-black/40 text-white'}`}
+                 >
+                    {isFlashOn ? <ZapOff className="w-6 h-6" /> : <Zap className="w-6 h-6" />}
+                 </button>
+             )}
+          </header>
+
+          <div className="flex-1 flex items-center justify-center relative">
+              <div className="w-[70vw] h-[40vw] border-2 border-white/20 rounded-[2.5rem] relative">
+                  <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-primary-500 rounded-tl-3xl -translate-x-1 -translate-y-1"></div>
+                  <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-primary-500 rounded-tr-3xl translate-x-1 -translate-y-1"></div>
+                  <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-primary-500 rounded-bl-3xl -translate-x-1 translate-y-1"></div>
+                  <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-primary-500 rounded-br-3xl translate-x-1 translate-y-1"></div>
+                  
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-primary-500 shadow-[0_0_20px_rgba(var(--primary-rgb),0.8)] animate-scan-line"></div>
+              </div>
+          </div>
+
+          <footer className="p-16 text-center">
+              <p className="text-[10px] font-black text-white/30 tracking-[0.5em] uppercase">Align Barcode to Scan</p>
+          </footer>
       </div>
     </div>
   );

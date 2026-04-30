@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, BrainCircuit, Lightbulb, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Sparkles, BrainCircuit, Lightbulb, TrendingUp, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 import { db } from '../db/posDB';
@@ -13,10 +13,11 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const getAiHelp = async () => {
     setLoading(true);
     setIsOpen(true);
+    setError(null);
     try {
       let finalContext: Record<string, unknown> = {};
       if (context && typeof context === 'object') {
@@ -57,9 +58,11 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
       const res = await api.post('/ai/suggestions', { type, context: finalContext });
       if (res.data.success) {
         setSuggestion(res.data.data);
+      } else {
+        throw new Error(res.data.message || "Failed to fetch");
       }
-    } catch {
-      setSuggestion("AI service temporarily unavailable. Please try again.");
+    } catch (err: any) {
+      setError("AI service is currently resting or unavailable. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -114,6 +117,22 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
                       <Sparkles className="absolute inset-0 m-auto w-6 h-6 text-indigo-500 animate-pulse" />
                     </div>
                     <p className="text-xs font-black text-white/40 tracking-widest animate-pulse">ANALYZING BUSINESS DATA...</p>
+                  </div>
+                ) : error ? (
+                  <div className="flex-1 flex flex-col items-center justify-center gap-6 p-4 text-center">
+                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="w-8 h-8 text-red-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-white/80 mb-2 uppercase tracking-tighter">AI Connection Failed</p>
+                      <p className="text-[11px] leading-relaxed text-zinc-500 font-medium">{error}</p>
+                    </div>
+                    <button 
+                      onClick={getAiHelp}
+                      className="px-8 py-4 bg-indigo-500 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase shadow-xl shadow-indigo-500/20 active:scale-95 transition-all"
+                    >
+                      Retry Connection
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-8 animate-fade-in">

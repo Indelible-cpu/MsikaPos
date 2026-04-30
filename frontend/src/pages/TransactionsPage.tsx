@@ -12,9 +12,12 @@ import { format } from 'date-fns';
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import toast from 'react-hot-toast';
 
 const TransactionsPage: React.FC = () => {
+  const { isReadOnly } = useFeatureAccess();
+  const readOnly = isReadOnly('SALES_HISTORY');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterToday, setFilterToday] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
@@ -117,36 +120,46 @@ const TransactionsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 bg-surface-card border-b border-surface-border sticky top-0 z-30">
-        <div className="p-6 md:px-12">
-            <div className="flex items-center justify-between mb-6">
-              <div /> {/* Spacer */}
-            <div className="flex items-center gap-3">
-              {loading && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-primary-500/10 text-primary-500 rounded-lg animate-pulse mr-2">
-                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"></div>
-                  <span className="text-[8px] font-black tracking-widest">SYNCING...</span>
-                </div>
-              )}
-              <button 
-                onClick={() => setFilterToday(!filterToday)}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${
-                  filterToday ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-surface-bg border border-surface-border text-surface-text/60 hover:text-surface-text'
-                }`}
-              >
-                Today Only
-              </button>
-              <button 
-                onClick={handleExport}
-                className="btn-primary !px-6 !py-2 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" /> Export report
-              </button>
-            </div>
+    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+                <ArrowLeftRight className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">Sales</h1>
           </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Transaction History & Records</p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-center gap-3">
+          {loading && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-primary-500/10 text-primary-500 rounded-lg animate-pulse mr-2">
+              <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"></div>
+              <span className="text-[8px] font-black tracking-widest">SYNCING...</span>
+            </div>
+          )}
+          <button 
+            onClick={() => setFilterToday(!filterToday)}
+            className={`px-4 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all ${
+              filterToday ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-surface-bg border border-surface-border text-surface-text/40 hover:text-surface-text'
+            } uppercase`}
+          >
+            Today Only
+          </button>
+          {!readOnly && (
+            <button 
+              onClick={handleExport}
+              className="btn-primary !px-6 !py-3 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2 uppercase"
+            >
+              <Download className="w-4 h-4" /> Export
+            </button>
+          )}
+        </div>
+      </header>
+
+      <div className="p-6 md:px-12 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
              <div className="bg-surface-bg border border-surface-border p-4 rounded-2xl flex items-center gap-6">
                 <div>
                    <div className="text-[9px] font-black tracking-widest text-surface-text/30 uppercase">Total transactions</div>
@@ -167,10 +180,9 @@ const TransactionsPage: React.FC = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="p-0">
         <div className="bg-surface-card border-b border-surface-border overflow-hidden divide-y divide-surface-border">

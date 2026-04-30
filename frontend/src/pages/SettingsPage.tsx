@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Store, Smartphone, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet, Video, X } from 'lucide-react';
+import { User, Store, Smartphone, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet, Video, X, Lock } from 'lucide-react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
@@ -241,8 +241,20 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-32">
-       <div className="p-0 space-y-6 md:space-y-0">
+    <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
+      <header className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sticky top-0 z-30">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20">
+                <Store className="w-5 h-5" />
+             </div>
+             <h1 className="text-2xl font-black tracking-tighter uppercase">System Settings</h1>
+          </div>
+          <p className="text-[10px] font-black text-surface-text/30 tracking-[0.2em] uppercase">Configure business identity and global rules</p>
+        </div>
+      </header>
+
+      <div className="p-0 space-y-6 md:space-y-0">
           <div className="px-6 md:px-12 py-10 bg-surface-card border-b border-surface-border flex flex-col md:flex-row items-center md:items-start gap-8 group transition-all duration-500">
               <div className="relative w-32 h-32 shrink-0">
                  <div className="w-32 h-32 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center overflow-hidden border-2 border-primary-500/20 group-hover:border-primary-500 transition-all shadow-2xl p-1">
@@ -298,11 +310,11 @@ const SettingsPage: React.FC = () => {
                 {isSuperAdmin && (
                   <div className="px-6 md:px-12 py-8 border-b border-surface-border flex flex-col md:flex-row items-start md:items-center justify-between gap-6 group hover:bg-primary-500/[0.02] transition-colors">
                     <div className="flex items-center gap-6">
-                       <div className="w-20 h-20 flex items-center justify-center shrink-0">
+                       <div className="w-20 h-20 flex items-center justify-center shrink-0 bg-surface-bg border border-surface-border rounded-full overflow-hidden shadow-inner">
                           {localStorage.getItem('companyLogo') ? (
-                             <img src={localStorage.getItem('companyLogo')!} alt="Company Logo" className="w-full h-full object-contain" />
+                             <img src={localStorage.getItem('companyLogo')!} alt="Company Logo" className="w-full h-full object-cover" />
                           ) : (
-                             <Store className="w-8 h-8 text-surface-text/20" />
+                             <Store className="w-8 h-8 text-surface-text/10" />
                           )}
                        </div>
                        <div>
@@ -469,14 +481,36 @@ const SettingsPage: React.FC = () => {
 
                           <div className="grid grid-cols-2 gap-4">
                              <div className="space-y-2">
-                                <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Primary System Color</label>
+                                <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">System Theme Color</label>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                   {[
+                                      { hex: '#6366f1', bg: 'bg-[#6366f1]' },
+                                      { hex: '#10b981', bg: 'bg-[#10b981]' },
+                                      { hex: '#f59e0b', bg: 'bg-[#f59e0b]' },
+                                      { hex: '#ef4444', bg: 'bg-[#ef4444]' },
+                                      { hex: '#8b5cf6', bg: 'bg-[#8b5cf6]' },
+                                      { hex: '#ec4899', bg: 'bg-[#ec4899]' }
+                                    ].map(color => (
+                                      <button 
+                                        key={color.hex}
+                                        onClick={() => setPrimaryColor(color.hex)}
+                                        className={clsx(
+                                          "w-8 h-8 rounded-lg border transition-all active:scale-90",
+                                          color.bg,
+                                          primaryColor === color.hex ? "border-white scale-110 shadow-lg" : "border-transparent"
+                                        )}
+                                        title={`Set color to ${color.hex}`}
+                                        aria-label={`Set system theme color to ${color.hex}`}
+                                      />
+                                   ))}
+                                </div>
                                 <div className="flex items-center gap-3">
                                    <input 
                                       type="color" 
                                       value={primaryColor} 
                                       onChange={(e) => setPrimaryColor(e.target.value)}
                                       className="w-12 h-12 rounded-xl border border-surface-border bg-surface-bg cursor-pointer p-1"
-                                      title="Choose primary color"
+                                      title="Custom color picker"
                                    />
                                    <input 
                                       type="text" 
@@ -488,14 +522,19 @@ const SettingsPage: React.FC = () => {
                                 </div>
                              </div>
                              <div className="space-y-2">
-                                <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Currency Symbol</label>
-                                <input 
-                                   type="text" 
+                                <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest uppercase">Base Currency</label>
+                                <select 
                                    value={currency} 
                                    onChange={(e) => setCurrency(e.target.value)}
-                                   className="input-field w-full py-3 px-4 text-sm font-black shadow-inner" 
-                                   placeholder="e.g. MK, $, £"
-                                />
+                                   className="input-field w-full py-3 px-4 text-sm font-black shadow-inner appearance-none bg-surface-bg uppercase"
+                                   title="Select system currency"
+                                >
+                                   <option value="MK">MK - Malawi Kwacha</option>
+                                   <option value="$">USD - Dollar ($)</option>
+                                   <option value="ZAR">ZAR - Rand</option>
+                                   <option value="£">GBP - Pound (£)</option>
+                                   <option value="€">EUR - Euro (€)</option>
+                                </select>
                              </div>
                           </div>
 
@@ -572,7 +611,26 @@ const SettingsPage: React.FC = () => {
                        className="btn-primary !bg-red-500 hover:!bg-red-600 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-red-900/20 uppercase"
                        title="Lock system access"
                     >
-                       Lock system
+                       Lock Access
+                    </button>
+                 </div>
+
+                 <div className="px-6 md:px-12 py-8 flex items-center justify-between group hover:bg-primary-500/5 transition-colors">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center border border-primary-500/20 group-hover:border-primary-500 transition-all">
+                          <Lock className="w-5 h-5 text-primary-500" />
+                       </div>
+                       <div>
+                          <div className="font-black text-sm tracking-tight uppercase">Module permissions</div>
+                          <div className="text-xs text-surface-text/40 font-bold uppercase">Configure what Admins and Cashiers can see and do</div>
+                       </div>
+                    </div>
+                    <button 
+                       onClick={() => window.location.href = '/staff/feature-access'}
+                       className="btn-primary !bg-primary-600 hover:!bg-primary-700 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-900/20 uppercase"
+                       title="Manage Module Access"
+                    >
+                       Manage Access
                     </button>
                  </div>
 
