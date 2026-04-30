@@ -38,7 +38,7 @@ export const PublicStorefront: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [shopName, setShopName] = useState(() => localStorage.getItem('companyName') || 'Marketplace');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [customer, setCustomer] = useState<{ fullname: string; role: string; [key: string]: unknown } | null>(() => {
+  const [customer, setCustomer] = useState<{ id?: number; fullname: string; role: string; [key: string]: unknown } | null>(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const u = JSON.parse(storedUser);
@@ -358,7 +358,7 @@ export const PublicStorefront: React.FC = () => {
         productId: ratingProduct.id,
         rating: ratingValue,
         comment: ratingComment,
-        customerId: (customer as any)?.id
+        customerId: customer?.id
       });
       
       await AuditService.log('PRODUCT_RATED', `Customer rated ${ratingProduct.name} with ${ratingValue} stars. Comment: ${ratingComment}`);
