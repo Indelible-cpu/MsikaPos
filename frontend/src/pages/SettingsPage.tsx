@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Store, Smartphone, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet, Camera, Video, X } from 'lucide-react';
+import { User, Store, Smartphone, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet, Video, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
@@ -741,6 +741,7 @@ const SettingsPage: React.FC = () => {
          <div className="w-full max-w-lg bg-surface-card rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl relative">
            <button 
              onClick={stopCamera}
+             title="Close Camera"
              className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
            >
              <X className="w-5 h-5" />

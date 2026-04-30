@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, User, ShieldCheck, Loader2, ChevronRight, ArrowLeft, Lock, Check } from 'lucide-react';
+import { Mail, User, ShieldCheck, Loader2, ChevronRight, ArrowLeft, Lock, Check, Eye, EyeOff } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../api/client';
 import toast from 'react-hot-toast';

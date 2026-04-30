@@ -174,6 +174,7 @@ const App: React.FC = () => {
     const init = async () => {
       try {
         await initDB(db);
+        SyncService.init();
         // Force unlock if it was set to the old 20:00 lock time
         const hours = await db.settings.get('lockout_hours');
         const val = hours?.value as { start: string; end: string } | undefined;
@@ -206,18 +207,15 @@ const App: React.FC = () => {
     init();
 
     setTimeout(() => {
-      handleSync();
       checkSystemLock();
     }, 100);
 
-    const syncInterval = setInterval(handleSync, 60000);
     const lockInterval = setInterval(checkSystemLock, 60000); // Check lock every min
 
     return () => {
       window.removeEventListener('mousemove', handleActivity);
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('touchstart', handleActivity);
-      clearInterval(syncInterval);
       clearInterval(lockInterval);
     };
   }, [handleSync, checkSystemLock]);

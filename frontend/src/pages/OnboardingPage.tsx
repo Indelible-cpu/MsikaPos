@@ -73,7 +73,7 @@ const OnboardingPage: React.FC = () => {
     if (magicToken) {
       if (localStorage.getItem('token')) {
         console.log('✅ [Onboarding] User already has a session, skipping token validation.');
-        setIsTokenValidating(false);
+        setTimeout(() => setIsTokenValidating(false), 0);
         return;
       }
 
@@ -88,8 +88,9 @@ const OnboardingPage: React.FC = () => {
           setFullname(res.data.user.fullname || '');
           setIsTokenValidating(false);
           toast.success("Welcome! Please complete your profile.");
-        } catch (err: any) {
-          console.error('❌ [Onboarding] Token validation FAILED:', err.response?.data?.message || err.message);
+        } catch (err: unknown) {
+          const error = err as { response?: { data?: { message?: string } }, message?: string };
+          console.error('❌ [Onboarding] Token validation FAILED:', error.response?.data?.message || error.message);
           setTokenError("This onboarding link is invalid or expired.");
           setIsTokenValidating(false);
         }
@@ -148,7 +149,8 @@ const OnboardingPage: React.FC = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error("Camera error:", err);
       toast.error("Could not access camera");
       setIsCameraOpen(false);
     }
@@ -216,8 +218,9 @@ const OnboardingPage: React.FC = () => {
       });
       toast.success("Profile updated! Check your email for verification code.");
       nextStep();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Update failed");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || "Update failed");
     } finally {
       setLoading(false);
     }
@@ -235,8 +238,9 @@ const OnboardingPage: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
       navigate('/dashboard');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Verification failed");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } }, message?: string };
+      toast.error(error.response?.data?.message || "Verification failed");
     } finally {
       setLoading(false);
     }
@@ -302,7 +306,7 @@ const OnboardingPage: React.FC = () => {
                     <div className="absolute -bottom-2 -right-2 flex gap-2">
                       <label className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-all border-4 border-surface-card" title="Upload Photo">
                         <Camera className="w-5 h-5" />
-                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                        <input id="profile-upload" title="Upload Profile Picture" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
                       </label>
                       <button 
                         type="button"
@@ -619,6 +623,7 @@ const OnboardingPage: React.FC = () => {
             <div className="w-full max-w-lg bg-surface-card rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl relative">
               <button 
                 onClick={stopCamera}
+                title="Close Camera"
                 className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
               >
                 <X className="w-5 h-5" />
