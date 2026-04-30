@@ -187,13 +187,10 @@ const LoginPage: React.FC = () => {
         const response = await api.post('/auth/login', { username, password });
         userData = response.data.user;
         userToken = response.data.token;
-      } catch {
-        if (username.toLowerCase() === 'admin' && password === 'admin') {
-           userData = { id: 'admin', username: 'admin', role: 'SUPER_ADMIN', fullname: 'System Admin' };
-           userToken = 'offline-admin-token';
-        } else {
-           throw new Error('Invalid credentials.');
-        }
+      } catch (err: unknown) {
+        const loginError = err as { response?: { data?: { message?: string } } };
+        const msg = loginError.response?.data?.message || 'Invalid credentials';
+        throw new Error(msg);
       }
       
       if (userToken && userData) {
