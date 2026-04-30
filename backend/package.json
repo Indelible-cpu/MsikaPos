@@ -4,13 +4,13 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-  "dev": "tsx watch src/index.ts",
-  "reset-users": "tsx src/reset-users.ts",
-  "build": "npx prisma generate",
-  "seed": "tsx prisma/seed.ts",
-  "start": "echo '🚀 Starting server...' && npx prisma db push && tsx src/index.ts",
-  "test": "echo \"Error: no test specified\" && exit 1"
-},
+    "dev": "tsx watch src/index.ts",
+    "reset-users": "tsx src/reset-users.ts",
+    "build": "npx prisma generate",
+    "seed": "tsx prisma/seed.ts",
+    "start": "echo '🚀 Syncing schema...' && npx prisma db push --skip-generate && echo '✅ Schema ready, starting server...' && tsx src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
