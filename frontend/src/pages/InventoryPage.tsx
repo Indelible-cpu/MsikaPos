@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
+import { toSentenceCase } from '../utils/stringUtils';
 import { SyncService } from '../services/SyncService';
 import type { LocalProduct } from '../db/posDB';
 import { 
@@ -527,7 +528,7 @@ const InventoryPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2">{product.name}</h3>
+                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2">{toSentenceCase(product.name)}</h3>
                   <div className="flex items-center gap-2 mb-6">
                     <span className="text-primary-500 font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
                   </div>

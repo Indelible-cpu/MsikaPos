@@ -1,5 +1,6 @@
 import React from 'react';
 import type { LocalProduct, LocalCustomer } from '../db/posDB';
+import { toSentenceCase } from '../utils/stringUtils';
 
 interface InvoiceProps {
   items: { product: LocalProduct; quantity: number }[];
@@ -85,7 +86,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
           {items.map((item, idx) => (
             <tr key={idx}>
               <td className="py-1">
-                <div className="font-bold">{item.product.name}</div>
+                <div className="font-bold">{toSentenceCase(item.product.name)}</div>
                 <div className="text-[9px]">MK {item.product.sellPrice.toLocaleString()}</div>
               </td>
               <td className="text-center py-1 font-bold">{item.quantity}</td>

@@ -16,6 +16,7 @@ import { clsx } from 'clsx';
 import Modal from '../components/Modal';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { type LocalProduct } from '../db/posDB';
+import { toSentenceCase } from '../utils/stringUtils';
 
 interface Inquiry {
   id: number;
@@ -250,7 +251,7 @@ const SupportPage: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {items.map((item: LocalProduct, idx: number) => (
                           <div key={idx} className="p-4 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-between">
-                            <span className="font-bold text-sm">{item.name}</span>
+                            <span className="font-bold text-sm">{toSentenceCase(item.name)}</span>
                             <span className="text-xs font-black text-primary-500">MK {(item.sellPrice ?? 0).toLocaleString()}</span>
                           </div>
                         ))}

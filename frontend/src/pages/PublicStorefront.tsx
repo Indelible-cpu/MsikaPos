@@ -8,6 +8,7 @@ import { db } from '../db/posDB';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
+import { toSentenceCase } from '../utils/stringUtils';
 import { calculateEffectiveDiscount } from '../utils/discountUtils';
 
 interface StoreProduct {
@@ -668,7 +669,7 @@ export const PublicStorefront: React.FC = () => {
                         </div>
                       </div>
                       <h3 className="font-black text-xs md:text-lg tracking-tight leading-tight group-hover:text-primary-500 transition-colors mb-2 flex flex-wrap items-center gap-2">
-                        {p.name.charAt(0).toUpperCase() + p.name.slice(1).toLowerCase()}
+                        {toSentenceCase(p.name)}
                         {(p.soldCount || 0) > 0 && (
                           <span className="text-[7px] md:text-[9px] font-black text-primary-500/60 bg-primary-500/5 px-2 py-0.5 rounded-full">
                             {p.soldCount}+ sold

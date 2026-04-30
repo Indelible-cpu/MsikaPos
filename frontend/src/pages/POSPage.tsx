@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct } from '../db/posDB';
+import { toSentenceCase } from '../utils/stringUtils';
 import { calculateEffectiveDiscount } from '../utils/discountUtils';
 import { 
   Search, 
@@ -760,7 +761,7 @@ const POSPage: React.FC = () => {
                         </div>
                         <div className="flex flex-col min-w-0">
                           <div className="card-label !mb-0 uppercase tracking-widest text-[8px]">{product.sku}</div>
-                          <div className="font-black text-base text-surface-text group-hover:text-primary-500 transition-colors truncate uppercase">{product.name}</div>
+                          <div className="font-black text-base text-surface-text group-hover:text-primary-500 transition-colors truncate">{toSentenceCase(product.name)}</div>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
@@ -800,7 +801,7 @@ const POSPage: React.FC = () => {
                              {item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover" /> : <PackageSearch className="w-6 h-6 text-surface-text/10" />}
                           </div>
                           <div>
-                            <div className="font-black text-xl leading-tight uppercase">{item.product.name}</div>
+                            <div className="font-black text-xl leading-tight">{toSentenceCase(item.product.name)}</div>
                             {(() => {
                                const { finalPrice, hasDiscount, badgeText } = calculateEffectiveDiscount(item.product as any);
                                return (

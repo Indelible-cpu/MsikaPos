@@ -1,5 +1,6 @@
 import React from 'react';
 import type { LocalProduct, LocalCustomer } from '../db/posDB';
+import { toSentenceCase } from '../utils/stringUtils';
 import { calculateEffectiveDiscount } from '../utils/discountUtils';
 
 interface ReceiptProps {
@@ -85,7 +86,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
             return (
               <tr key={idx}>
                 <td className="py-1 pr-2">
-                  <div className="font-bold ">{item.product.name}</div>
+                  <div className="font-bold ">{toSentenceCase(item.product.name)}</div>
                   <div className="text-[9px]">MK {finalPrice.toLocaleString()}</div>
                 </td>
                 <td className="text-center py-1 font-bold">{item.quantity}</td>
