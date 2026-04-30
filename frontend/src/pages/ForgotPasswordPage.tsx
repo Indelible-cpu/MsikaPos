@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, User, ShieldCheck, Loader2, ChevronRight, ArrowLeft, Lock, Check } from 'lucide-react';
+import { clsx } from 'clsx';
 import api from '../api/client';
 import toast from 'react-hot-toast';
 import { OTPInput } from '../components/OTPInput';
@@ -34,14 +35,35 @@ const ForgotPasswordPage: React.FC = () => {
     }
   };
 
+  const getPasswordStrength = (pass: string) => {
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (pass.length >= 12) score++;
+    if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+    if (score < 2) return { label: 'Weak', color: 'bg-red-500', score };
+    if (score < 4) return { label: 'Medium', color: 'bg-amber-500', score };
+    return { label: 'Strong', color: 'bg-emerald-500', score };
+  };
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (newPassword.length < 8 || newPassword.length > 16) {
+      return toast.error("Password must be between 8 and 16 characters");
+    }
+    
+    const strength = getPasswordStrength(newPassword);
+    if (strength.score < 3) {
+      return toast.error("Please use a stronger password (include letters, numbers and symbols)");
+    }
+
     if (newPassword !== confirmPassword) return toast.error("Passwords don't match");
     
     setLoading(true);
     try {
-      // Re-use onboarding endpoint or a specific reset one if exists
-      // For now, we'll use a placeholder or generic update
       await api.post('/users/verify', { code, newPassword });
       toast.success("Password reset successful!");
       navigate('/login');
@@ -157,10 +179,35 @@ const ForgotPasswordPage: React.FC = () => {
                       required
                       className="input-field w-full pl-10 h-12 text-sm font-bold bg-surface-bg/50 border-surface-border/50"
                       placeholder="••••••••"
+                      maxLength={16}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
                   </div>
+                  {/* Strength Bar */}
+                  {newPassword && (
+                    <div className="px-1 space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[8px] font-black tracking-widest text-surface-text/30 uppercase">Security Strength</span>
+                        <span className={clsx("text-[8px] font-black tracking-widest uppercase", 
+                          getPasswordStrength(newPassword).score >= 3 ? "text-emerald-500" : "text-amber-500"
+                        )}>
+                          {getPasswordStrength(newPassword).label}
+                        </span>
+                      </div>
+                      <div className="h-1 w-full bg-surface-border rounded-full overflow-hidden flex gap-0.5">
+                        {[1, 2, 4].map((s) => (
+                          <div 
+                            key={s}
+                            className={clsx(
+                              "h-full flex-1 transition-all duration-500",
+                              getPasswordStrength(newPassword).score >= s ? getPasswordStrength(newPassword).color : "bg-transparent"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -172,6 +219,7 @@ const ForgotPasswordPage: React.FC = () => {
                       required
                       className="input-field w-full pl-10 h-12 text-sm font-bold bg-surface-bg/50 border-surface-border/50"
                       placeholder="••••••••"
+                      maxLength={16}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                     />

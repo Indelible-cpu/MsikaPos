@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import api from '../api/client';
 import { OTPInput } from '../components/OTPInput';
 import { useSearchParams } from 'react-router-dom';
+import { clsx } from 'clsx';
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +46,19 @@ const OnboardingPage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+
+  const getPasswordStrength = (pass: string) => {
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (pass.length >= 12) score++;
+    if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+
+    if (score < 2) return { label: 'Weak', color: 'bg-red-500', score };
+    if (score < 4) return { label: 'Medium', color: 'bg-amber-500', score };
+    return { label: 'Strong', color: 'bg-emerald-500', score };
+  };
 
   // Magic Link Detection & Validation
   React.useEffect(() => {
@@ -124,8 +138,17 @@ const OnboardingPage: React.FC = () => {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword && newPassword !== confirmPassword) {
-      return toast.error("Passwords don't match");
+    if (user.mustChangePassword) {
+      if (newPassword.length < 8 || newPassword.length > 16) {
+        return toast.error("Password must be between 8 and 16 characters");
+      }
+      const strength = getPasswordStrength(newPassword);
+      if (strength.score < 3) {
+        return toast.error("Please use a stronger password (include letters, numbers and symbols)");
+      }
+      if (newPassword !== confirmPassword) {
+        return toast.error("Passwords don't match");
+      }
     }
 
     if (nextOfKinPhone && !malawianPhoneRegex.test(nextOfKinPhone)) {
@@ -254,22 +277,22 @@ const OnboardingPage: React.FC = () => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label htmlFor="nationalId" className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1">National ID</label>
-                    <div className="relative">
-                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
-                      <input 
-                        id="nationalId"
-                        type="text" 
-                        title="Enter your 8-character national ID"
-                        maxLength={8}
-                        className="input-field w-full pl-10 h-12 text-sm font-bold" 
-                        placeholder="ABC12345"
-                        value={nationalId}
-                        onChange={(e) => setNationalId(e.target.value)}
-                      />
-                    </div>
-                  </div>
+                   <div className="space-y-2">
+                     <label htmlFor="nationalId" className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1 uppercase">National ID (8 Chars)</label>
+                     <div className="relative">
+                       <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
+                       <input 
+                         id="nationalId"
+                         type="text" 
+                         title="Enter your 8-character national ID"
+                         maxLength={8}
+                         className="input-field w-full pl-10 h-12 text-sm font-black tracking-[0.2em] uppercase" 
+                         placeholder="ABC12345"
+                         value={nationalId}
+                         onChange={(e) => setNationalId(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                       />
+                     </div>
+                   </div>
                   <div className="space-y-2">
                     <label htmlFor="email" className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1">Email Address</label>
                     <div className="relative">
@@ -402,6 +425,7 @@ const OnboardingPage: React.FC = () => {
                           title="Enter a strong new password"
                           className="input-field w-full pl-10 pr-12 h-12 text-sm font-bold" 
                           placeholder="••••••••"
+                          maxLength={16}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                         />
@@ -413,6 +437,30 @@ const OnboardingPage: React.FC = () => {
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
+                      {/* Password Strength Bar */}
+                      {newPassword && (
+                        <div className="px-1 space-y-1.5">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[8px] font-black tracking-widest text-surface-text/30 uppercase">Security Strength</span>
+                            <span className={clsx("text-[8px] font-black tracking-widest uppercase", 
+                              getPasswordStrength(newPassword).score >= 3 ? "text-emerald-500" : "text-amber-500"
+                            )}>
+                              {getPasswordStrength(newPassword).label}
+                            </span>
+                          </div>
+                          <div className="h-1 w-full bg-surface-border rounded-full overflow-hidden flex gap-0.5">
+                            {[1, 2, 4].map((s) => (
+                              <div 
+                                key={s}
+                                className={clsx(
+                                  "h-full flex-1 transition-all duration-500",
+                                  getPasswordStrength(newPassword).score >= s ? getPasswordStrength(newPassword).color : "bg-transparent"
+                                )}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="confirmPassword" className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1">Confirm New Password</label>
@@ -424,6 +472,7 @@ const OnboardingPage: React.FC = () => {
                           title="Repeat your new password"
                           className="input-field w-full pl-10 pr-12 h-12 text-sm font-bold" 
                           placeholder="••••••••"
+                          maxLength={16}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                         />

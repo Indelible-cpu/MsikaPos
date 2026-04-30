@@ -204,9 +204,13 @@ export const updateOnboarding = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Invalid next of kin phone number format' });
     }
 
+    if (nationalId && !/^[A-Z0-9]{8}$/.test(nationalId.toUpperCase())) {
+      return res.status(400).json({ success: false, message: 'National ID must be 8 alphanumeric characters' });
+    }
+
     const data: any = {
       fullname,
-      nationalId,
+      nationalId: nationalId?.toUpperCase(),
       phone: normalizePhone(phone),
       email,
       profilePic,
