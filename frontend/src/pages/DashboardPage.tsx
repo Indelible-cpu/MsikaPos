@@ -26,11 +26,38 @@ import {
 } from 'recharts';
 import AiAssistant from '../components/AiAssistant';
 
+interface DashboardStats {
+  today_sales: number;
+  chart_data: Array<{ name: string; revenue: number; customers: number }>;
+}
+
+interface Expense {
+  amount: number;
+  createdAt: string;
+  description: string;
+  category: string;
+}
+
+interface Product {
+  isService: boolean;
+  quantity: number;
+  name: string;
+  sku: string;
+}
+
+interface Credit {
+  status: string;
+  current_total: number;
+  paid_amount: number;
+  customer_name: string;
+  customer_phone: string;
+}
+
 const DashboardPage: React.FC = () => {
-  const [stats, setStats] = useState<any>(null);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [credits, setCredits] = useState<any[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [credits, setCredits] = useState<Credit[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -53,11 +80,11 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   const totalRevenue = stats?.today_sales || 0;
-  const totalExpensesAmt = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
+  const totalExpensesAmt = expenses.reduce((sum: number, e: Expense) => sum + e.amount, 0);
   const netProfit = totalRevenue - totalExpensesAmt;
-  const activeCredits = credits.filter((c: any) => c.status !== 'Paid');
-  const totalCreditAmount = activeCredits.reduce((sum: number, c: any) => sum + (c.current_total - c.paid_amount), 0);
-  const lowStockItems = products.filter((p: any) => !p.isService && p.quantity <= 5);
+  const activeCredits = credits.filter((c: Credit) => c.status !== 'Paid');
+  const totalCreditAmount = activeCredits.reduce((sum: number, c: Credit) => sum + (c.current_total - c.paid_amount), 0);
+  const lowStockItems = products.filter((p: Product) => !p.isService && p.quantity <= 5);
   const chartData = stats?.chart_data || [];
 
   const statCards = [
@@ -176,7 +203,7 @@ const DashboardPage: React.FC = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={chartData}>
                     <Bar dataKey="customers" radius={[10, 10, 0, 0]}>
-                      {chartData.map((_: any, index: number) => (
+                      {chartData.map((_: unknown, index: number) => (
                         <Cell key={`cell-${index}`} fill={index === chartData.length - 1 ? 'var(--color-primary-500)' : 'rgba(255,255,255,0.1)'} />
                       ))}
                     </Bar>
@@ -243,7 +270,7 @@ const DashboardPage: React.FC = () => {
                  <Link to="/staff/inventory" className="text-[10px] font-black text-primary-400 hover:underline uppercase">Manage inventory</Link>
               </div>
               <div className="space-y-4">
-                 {lowStockItems.slice(0, 5).map((p: any, i: number) => (
+                 {lowStockItems.slice(0, 5).map((p: Product, i: number) => (
                    <div key={i} className="flex justify-between items-center p-4 bg-transparent border-b border-surface-border/50 transition-all">
                       <div className="flex items-center gap-3">
                          <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center">
@@ -274,7 +301,7 @@ const DashboardPage: React.FC = () => {
               <Link to="/staff/debt" className="text-[10px] font-black text-primary-400 hover:underline uppercase">Manage all</Link>
            </div>
            <div className="p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
-              {activeCredits?.slice(0, 6).map((customer: any, i: number) => (
+              {activeCredits?.slice(0, 6).map((customer: Credit, i: number) => (
                 <div key={i} className="flex justify-between items-center p-4 bg-transparent border-b border-surface-border/50 group hover:bg-surface-card/5 transition-all">
                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center">

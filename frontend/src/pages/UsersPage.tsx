@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import { AuditService } from '../services/AuditService';
 import { normalizePhone } from '../utils/phoneUtils';
+import { useAuthStore } from '../hooks/useAuth';
 
 interface User {
   id: number;
@@ -40,6 +41,7 @@ interface User {
 }
 
 const UsersPage: React.FC = () => {
+  const currentUser = useAuthStore(state => state.user);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -243,7 +245,7 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 md:px-0 md:py-0 bg-transparent md:border-b border-surface-border sticky top-0 z-30">
+      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-bg/80 backdrop-blur-xl md:border-b border-surface-border sticky top-0 z-30">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="hidden md:flex items-center gap-3">
@@ -289,17 +291,24 @@ const UsersPage: React.FC = () => {
            filteredUsers.map(u => (
              <div key={u.id} className="p-8 group transition-all relative overflow-hidden border-b border-surface-border/50">
                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10">
-                   <button title="Edit User" onClick={() => handleEdit(u)} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-400 transition-colors"><Edit2 className="w-4 h-4" /></button>
-                   {u.status === 'ACTIVE' ? (
+                   {/* Role Based Access Control */}
+                   {(currentUser?.role === 'SUPER_ADMIN' || (currentUser?.role === 'ADMIN' && u.role !== 'SUPER_ADMIN' && u.role !== 'ADMIN')) && (
                      <>
-                       <button title="Suspend User" onClick={() => setActionModal({ isOpen: true, type: 'SUSPEND', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-orange-500 transition-colors"><Ban className="w-4 h-4" /></button>
-                       <button title="Deactivate User" onClick={() => setActionModal({ isOpen: true, type: 'DEACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-500 transition-colors"><UserX className="w-4 h-4" /></button>
+                       <button title="Edit user" onClick={() => handleEdit(u)} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-400 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                       {u.status === 'ACTIVE' ? (
+                         <>
+                           <button title="Suspend user" onClick={() => setActionModal({ isOpen: true, type: 'SUSPEND', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-orange-500 transition-colors"><Ban className="w-4 h-4" /></button>
+                           <button title="Deactivate user" onClick={() => setActionModal({ isOpen: true, type: 'DEACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-500 transition-colors"><UserX className="w-4 h-4" /></button>
+                         </>
+                       ) : (
+                         <button title="Reactivate user" onClick={() => setActionModal({ isOpen: true, type: 'REACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-emerald-500 transition-colors"><Power className="w-4 h-4" /></button>
+                       )}
+                       <button title="Soft delete" onClick={() => setActionModal({ isOpen: true, type: 'DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                       {currentUser?.role === 'SUPER_ADMIN' && (
+                         <button title="Hard delete (permanent)" onClick={() => setActionModal({ isOpen: true, type: 'HARD_DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-black transition-colors"><Trash className="w-4 h-4" /></button>
+                       )}
                      </>
-                   ) : (
-                     <button title="Reactivate User" onClick={() => setActionModal({ isOpen: true, type: 'REACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-emerald-500 transition-colors"><Power className="w-4 h-4" /></button>
                    )}
-                   <button title="Soft Delete" onClick={() => setActionModal({ isOpen: true, type: 'DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                   <button title="Hard Delete (Permanent)" onClick={() => setActionModal({ isOpen: true, type: 'HARD_DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-black transition-colors"><Trash className="w-4 h-4" /></button>
                 </div>
 
                 <div className="flex flex-col items-center text-center">

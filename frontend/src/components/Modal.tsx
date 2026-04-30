@@ -24,14 +24,14 @@ const Modal: React.FC<ModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-0 bg-zinc-900/60 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-zinc-900/60 backdrop-blur-md"
         >
           <motion.div 
             onClick={(e) => e.stopPropagation()}
             initial={{ y: 20, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 20, opacity: 0, scale: 0.95 }}
-            className={`bg-surface-card md:border md:border-surface-border md:rounded-none w-full ${maxWidth} h-full md:h-auto md:max-h-[90vh] shadow-2xl overflow-hidden flex flex-col`}
+            className={`bg-surface-card border border-surface-border rounded-3xl w-full ${maxWidth} max-h-[90vh] shadow-2xl overflow-hidden flex flex-col`}
           >
             <div className="p-6 border-b border-surface-border flex justify-between items-center bg-surface-bg/30">
               <h2 className="text-xl font-black tracking-tighter">{title}</h2>

@@ -244,8 +244,58 @@ const DebtPage: React.FC = () => {
       >
         {selectedCustomer && (
           <div className="p-4 md:p-8 space-y-8">
+            <div className="flex flex-col md:flex-row gap-8 items-start">
+               <div className="w-32 h-32 md:w-48 md:h-48 bg-surface-bg rounded-3xl overflow-hidden border border-surface-border shrink-0 shadow-2xl">
+                 {selectedCustomer.livePhoto ? (
+                   <img src={selectedCustomer.livePhoto} alt={selectedCustomer.name} className="w-full h-full object-cover" />
+                 ) : (
+                   <div className="w-full h-full flex items-center justify-center text-surface-text/10">
+                     <UserPlus className="w-16 h-16" />
+                   </div>
+                 )}
+               </div>
+               <div className="flex-1 space-y-4 w-full">
+                  <div>
+                    <h4 className="text-[10px] font-black tracking-widest text-surface-text/20 uppercase mb-1">Customer Details</h4>
+                    <p className="text-2xl font-black">{selectedCustomer.name}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase">Phone</div>
+                      <div className="text-sm font-bold">{selectedCustomer.phone}</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase">National ID</div>
+                      <div className="text-sm font-bold">{selectedCustomer.idNumber || 'Not provided'}</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase">Village/Location</div>
+                      <div className="text-sm font-bold">{selectedCustomer.village || 'Not provided'}</div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase">Biometrics</div>
+                      <div className={clsx("text-[10px] font-black tracking-widest uppercase", selectedCustomer.fingerprintData ? "text-emerald-500" : "text-surface-text/20")}>
+                        {selectedCustomer.fingerprintData ? 'Secured' : 'Not captured'}
+                      </div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={async () => {
+                      if (confirm(`Are you sure you want to PERMANENTLY DELETE ${selectedCustomer.name}? All debt history will be lost.`)) {
+                        await db.customers.delete(selectedCustomer.id);
+                        setSelectedCustomer(null);
+                        toast.success('Customer profile removed');
+                      }
+                    }}
+                    className="text-[10px] font-black tracking-widest text-red-500 hover:underline pt-2 uppercase"
+                  >
+                    Delete customer record
+                  </button>
+               </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <div className="bg-surface-bg/50 p-6 rounded-none border border-surface-border flex flex-col justify-between">
+              <div className="bg-surface-bg/50 p-6 rounded-3xl border border-surface-border flex flex-col justify-between">
                 <div>
                   <div className="text-[10px] font-bold text-surface-text/30">Total balance</div>
                   <div className="text-3xl font-black text-amber-500 mt-2">MK {selectedCustomer.balance.toLocaleString()}</div>
@@ -288,7 +338,7 @@ const DebtPage: React.FC = () => {
                   </button>
                 )}
               </div>
-              <div className="bg-surface-bg/50 p-6 rounded-none border border-surface-border flex flex-col justify-center items-center text-center opacity-40 ">
+              <div className="bg-surface-bg/50 p-6 rounded-3xl border border-surface-border flex flex-col justify-center items-center text-center opacity-40 ">
                 <div className="text-[10px] font-bold text-surface-text/30 mb-2 tracking-widest ">Manual Credit Blocked</div>
                 <div className="text-[8px] font-bold">Credit must only be added through POS Terminal for audit security.</div>
               </div>
@@ -310,7 +360,12 @@ const DebtPage: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-black text-red-500">- MK {sale.total.toLocaleString()}</div>
-                      <div className="text-[8px] text-surface-text/20 font-bold">Debt incurred</div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); /* Logic to view this specific sale */ }} 
+                        className="text-[8px] text-primary-500 font-black tracking-widest uppercase hover:underline"
+                      >
+                        View details
+                      </button>
                     </div>
                   </div>
                 ))}

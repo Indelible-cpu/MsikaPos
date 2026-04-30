@@ -191,7 +191,12 @@ const TransactionsPage: React.FC = () => {
                  <div className="flex items-center gap-6">
                     <div className="text-right">
                        <div className="text-base font-black text-primary-400">MK {sale.total.toLocaleString()}</div>
-                       <div className="text-[9px] text-surface-text/30 font-black tracking-widest uppercase">{sale.paymentMode}</div>
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); setSelectedSaleId(sale.id); }}
+                         className="text-[9px] text-primary-500 font-black tracking-widest uppercase hover:underline"
+                       >
+                         View details
+                       </button>
                     </div>
                     <ArrowRightCircle className="w-5 h-5 text-surface-text/10 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
                  </div>

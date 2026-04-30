@@ -431,6 +431,26 @@ export const PublicStorefront: React.FC = () => {
                           ))}
                         </div>
                       </div>
+                      {customer && (
+                        <div className="pt-4 border-t border-surface-border">
+                          <button 
+                            onClick={async () => {
+                              if (confirm("Are you sure you want to PERMANENTLY DELETE your account? This action cannot be undone.")) {
+                                try {
+                                  await api.delete('/customer/account');
+                                  handleLogout();
+                                  toast.success("Account deleted successfully");
+                                } catch {
+                                  toast.error("Failed to delete account");
+                                }
+                              }
+                            }}
+                            className="w-full py-3 text-red-500 text-[9px] font-black tracking-widest uppercase hover:bg-red-500/5 rounded-xl transition-all"
+                          >
+                            Delete account
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

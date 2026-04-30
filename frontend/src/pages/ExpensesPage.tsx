@@ -78,7 +78,7 @@ const ExpensesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <header className="px-0 py-0 md:px-6 md:py-6 bg-transparent md:border-b border-surface-border sticky top-0 z-30">
+      <header className="px-0 py-0 md:px-6 md:py-6 bg-surface-bg/80 backdrop-blur-xl md:border-b border-surface-border sticky top-0 z-30">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="hidden md:flex items-center gap-3">
@@ -163,13 +163,13 @@ const ExpensesPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Category</label>
-              <select className="input-field w-full appearance-none bg-surface-bg" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
+              <select title="Select Category" aria-label="Select Category" className="input-field w-full appearance-none bg-surface-bg" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Date</label>
-              <input type="date" className="input-field w-full" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+              <input type="date" title="Select Date" aria-label="Select Date" placeholder="Select Date" className="input-field w-full" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
             </div>
           </div>
           <div className="space-y-1">

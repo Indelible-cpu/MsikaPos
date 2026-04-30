@@ -71,11 +71,11 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ type, context }) => {
         drag
         dragMomentum={false}
         onClick={getAiHelp}
-        className="fixed bottom-24 md:bottom-8 right-6 md:right-8 z-[100] w-12 h-12 bg-gradient-to-tr from-primary-600 to-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center group active:scale-90 transition-all hover:scale-110 cursor-grab active:cursor-grabbing touch-none"
+        className="fixed bottom-20 md:bottom-6 right-6 md:right-6 z-[100] w-10 h-10 bg-gradient-to-tr from-primary-600 to-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center group active:scale-90 transition-all hover:scale-110 cursor-grab active:cursor-grabbing touch-none"
         title="MsikaPos AI Brain (Drag to move)"
       >
         <div className="absolute inset-0 rounded-full bg-primary-500 animate-ping opacity-20 group-hover:hidden"></div>
-        <Sparkles className="w-5 h-5" />
+        <Sparkles className="w-4 h-4" />
       </motion.button>
 
       <AnimatePresence>

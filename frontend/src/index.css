@@ -117,7 +117,7 @@ body {
   }
   
   .input-field {
-    @apply border-b border-surface-border py-4 px-0 focus:border-primary-500 outline-none transition-all font-bold text-sm bg-transparent;
+    @apply border border-surface-border py-4 px-6 rounded-2xl focus:border-primary-500 outline-none transition-all font-bold text-sm bg-surface-bg/50;
   }
 
   .mesh-bg {
