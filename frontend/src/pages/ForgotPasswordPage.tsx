@@ -16,9 +16,14 @@ const ForgotPasswordPage: React.FC = () => {
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return toast.error("Please enter a valid working email address");
+    }
     setLoading(true);
     try {
       await api.post('/auth/forgot-password', { username, email });
@@ -175,7 +180,7 @@ const ForgotPasswordPage: React.FC = () => {
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
                     <input 
-                      type="password" 
+                      type={showPassword ? "text" : "password"} 
                       required
                       className="input-field w-full pl-10 h-12 text-sm font-bold bg-surface-bg/50 border-surface-border/50"
                       placeholder="••••••••"
@@ -183,6 +188,13 @@ const ForgotPasswordPage: React.FC = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-text/20 hover:text-surface-text transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                   {/* Strength Bar */}
                   {newPassword && (
@@ -215,7 +227,7 @@ const ForgotPasswordPage: React.FC = () => {
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
                     <input 
-                      type="password" 
+                      type={showConfirmPassword ? "text" : "password"} 
                       required
                       className="input-field w-full pl-10 h-12 text-sm font-bold bg-surface-bg/50 border-surface-border/50"
                       placeholder="••••••••"
@@ -223,6 +235,13 @@ const ForgotPasswordPage: React.FC = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-text/20 hover:text-surface-text transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 

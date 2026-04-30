@@ -103,6 +103,9 @@ const UsersPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      return toast.error("Please enter a valid working email address");
+    }
     setLoading(true);
     try {
       const res = await api.post('/users', {

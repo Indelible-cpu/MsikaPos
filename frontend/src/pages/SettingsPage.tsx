@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Store, Smartphone, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet } from 'lucide-react';
+import { User, Store, Smartphone, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet, Camera, Video, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
@@ -29,6 +29,9 @@ const SettingsPage: React.FC = () => {
   const [branchName, setBranchName] = React.useState('Main Branch');
   const [branchWhatsApp, setBranchWhatsApp] = React.useState('');
   const [fontSize, setFontSize] = React.useState('medium');
+  const [isCameraOpen, setIsCameraOpen] = React.useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   React.useEffect(() => {
     const loadSettings = async () => {
@@ -89,6 +92,9 @@ const SettingsPage: React.FC = () => {
   }, []);
 
   const saveBrandingConfig = async () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) {
+      return toast.error("Please enter a valid working company email address");
+    }
     try {
       const payload = {
         companyName,
@@ -171,6 +177,58 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const startCamera = async () => {
+    setIsCameraOpen(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      toast.error("Could not access camera");
+      setIsCameraOpen(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(video, 0, 0);
+      
+      const base64 = canvas.toDataURL('image/jpeg', 0.7);
+      updateProfilePic(base64);
+      stopCamera();
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setIsCameraOpen(false);
+  };
+
+  const updateProfilePic = async (base64Pic: string) => {
+    try {
+      const updatedUser = { ...user, profile_pic: base64Pic };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      const token = localStorage.getItem('token');
+      if (token) {
+        await api.put(`/users/\${user.id}`, { profile_pic: base64Pic });
+      }
+      toast.success('Profile picture updated');
+      window.dispatchEvent(new Event('storage'));
+      window.location.reload();
+    } catch {
+      toast.error('Failed to update profile picture');
+    }
+  };
+
   const toggleSystemLock = async (isLocked: boolean) => {
     try {
       await db.settings.put({ key: 'system_lock', value: isLocked });
@@ -186,48 +244,41 @@ const SettingsPage: React.FC = () => {
     <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-32">
        <div className="p-0 space-y-6 md:space-y-0">
           <div className="px-6 md:px-12 py-10 bg-surface-card border-b border-surface-border flex flex-col md:flex-row items-center md:items-start gap-8 group transition-all duration-500">
-             <div className="relative w-32 h-32 shrink-0">
-                <div className="w-32 h-32 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center overflow-hidden border-2 border-primary-500/20 group-hover:border-primary-500 transition-all shadow-2xl p-1">
-                   {user.profile_pic ? (
-                     <img src={user.profile_pic} alt="Profile" className="w-full h-full object-cover rounded-full" />
-                   ) : (
-                     <User className="w-12 h-12" />
-                   )}
-                </div>
-                <label className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform border-4 border-surface-card" title="Change profile picture">
-                   <Plus className="w-5 h-5" />
-                   <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      title="Upload profile picture"
-                      aria-label="Upload profile picture"
-                      onChange={(e) => {
-                         const file = e.target.files?.[0];
-                         if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = async () => {
-                               const base64Pic = reader.result as string;
-                               try {
-                                 const updatedUser = { ...user, profile_pic: base64Pic };
-                                 localStorage.setItem('user', JSON.stringify(updatedUser));
-                                 const token = localStorage.getItem('token');
-                                 if (token) {
-                                   await api.put(`/users/${user.id}`, { profile_pic: base64Pic });
-                                 }
-                                 toast.success('Profile picture updated');
-                                 window.dispatchEvent(new Event('storage'));
-                                 window.location.reload();
-                               } catch {
-                                 toast.error('Failed to update profile picture');
-                               }
-                            };
-                            reader.readAsDataURL(file);
-                         }
-                      }}
-                   />
-                </label>
-             </div>
+              <div className="relative w-32 h-32 shrink-0">
+                 <div className="w-32 h-32 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center overflow-hidden border-2 border-primary-500/20 group-hover:border-primary-500 transition-all shadow-2xl p-1">
+                    {user.profile_pic ? (
+                      <img src={user.profile_pic} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      <User className="w-12 h-12" />
+                    )}
+                 </div>
+                 <div className="absolute -bottom-1 -right-1 flex gap-2">
+                    <label className="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform border-4 border-surface-card" title="Upload Photo">
+                       <Plus className="w-5 h-5" />
+                       <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          title="Upload profile picture"
+                          onChange={(e) => {
+                             const file = e.target.files?.[0];
+                             if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => updateProfilePic(reader.result as string);
+                                reader.readAsDataURL(file);
+                             }
+                          }}
+                       />
+                    </label>
+                    <button 
+                      onClick={startCamera}
+                      className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform border-4 border-surface-card" 
+                      title="Take Photo"
+                    >
+                      <Video className="w-4 h-4" />
+                    </button>
+                 </div>
+              </div>
              <div className="text-center md:text-left flex-1">
                 <h2 className="text-3xl font-black tracking-tighter uppercase">{user.fullname || user.username || 'Employee'}</h2>
                 <div className="card-label !mt-1 uppercase">Branch: {user.branch_name || 'Domasi Main'}</div>
@@ -681,9 +732,46 @@ const SettingsPage: React.FC = () => {
             )}
 
 
-          </div>
+        </div>
+     </div>
+
+     {/* Camera Modal */}
+     {isCameraOpen && (
+       <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
+         <div className="w-full max-w-lg bg-surface-card rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl relative">
+           <button 
+             onClick={stopCamera}
+             className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
+           >
+             <X className="w-5 h-5" />
+           </button>
+           
+           <div className="relative aspect-square bg-black">
+             <video 
+               ref={videoRef} 
+               autoPlay 
+               playsInline 
+               className="w-full h-full object-cover"
+             />
+             <canvas ref={canvasRef} className="hidden" />
+           </div>
+
+           <div className="p-8 text-center space-y-6">
+             <div>
+               <h3 className="text-xl font-black tracking-tighter uppercase">Capture Profile</h3>
+               <p className="text-surface-text/40 text-[10px] font-black tracking-widest">Position yourself clearly in the frame</p>
+             </div>
+             
+             <button 
+               onClick={capturePhoto}
+               className="w-20 h-20 bg-white rounded-full border-8 border-primary-500 shadow-2xl active:scale-90 transition-all mx-auto"
+               title="Capture"
+             />
+           </div>
+         </div>
        </div>
-    </div>
+     )}
+   </div>
   );
 };
 

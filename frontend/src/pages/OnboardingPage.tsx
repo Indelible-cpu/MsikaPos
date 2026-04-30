@@ -14,7 +14,9 @@ import {
   Camera,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  Video,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/client';
@@ -46,6 +48,9 @@ const OnboardingPage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   const getPasswordStrength = (pass: string) => {
     let score = 0;
@@ -136,6 +141,42 @@ const OnboardingPage: React.FC = () => {
     setStep(prev => prev + 1);
   };
 
+  const startCamera = async () => {
+    setIsCameraOpen(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      toast.error("Could not access camera");
+      setIsCameraOpen(false);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(video, 0, 0);
+      
+      const base64 = canvas.toDataURL('image/jpeg', 0.7);
+      setProfilePic(base64);
+      stopCamera();
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setIsCameraOpen(false);
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (user.mustChangePassword) {
@@ -153,6 +194,10 @@ const OnboardingPage: React.FC = () => {
 
     if (nextOfKinPhone && !malawianPhoneRegex.test(nextOfKinPhone)) {
       return toast.error("Next of Kin Phone must be a valid Malawian number");
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return toast.error("Please enter a valid working email address");
     }
 
     setLoading(true);
@@ -254,10 +299,20 @@ const OnboardingPage: React.FC = () => {
                         <User className="w-12 h-12 text-surface-text/10" />
                       )}
                     </div>
-                    <label htmlFor="profile-upload" className="absolute bottom-0 right-0 w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-all border-4 border-surface-card">
-                      <Camera className="w-5 h-5 text-white" />
-                      <input id="profile-upload" title="Upload Profile Picture" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                    </label>
+                    <div className="absolute -bottom-2 -right-2 flex gap-2">
+                      <label className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-all border-4 border-surface-card" title="Upload Photo">
+                        <Camera className="w-5 h-5" />
+                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                      </label>
+                      <button 
+                        type="button"
+                        onClick={startCamera}
+                        className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-all border-4 border-surface-card" 
+                        title="Take Photo"
+                      >
+                        <Video className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -551,6 +606,50 @@ const OnboardingPage: React.FC = () => {
           )}
         </motion.div>
       </div>
+
+      {/* Camera Modal */}
+      <AnimatePresence>
+        {isCameraOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6"
+          >
+            <div className="w-full max-w-lg bg-surface-card rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl relative">
+              <button 
+                onClick={stopCamera}
+                className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <div className="relative aspect-square bg-black">
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  className="w-full h-full object-cover"
+                />
+                <canvas ref={canvasRef} className="hidden" />
+              </div>
+
+              <div className="p-8 text-center space-y-6">
+                <div>
+                  <h3 className="text-xl font-black tracking-tighter uppercase">Capture Profile</h3>
+                  <p className="text-surface-text/40 text-[10px] font-black tracking-widest">Position yourself clearly in the frame</p>
+                </div>
+                
+                <button 
+                  onClick={capturePhoto}
+                  className="w-20 h-20 bg-white rounded-full border-8 border-primary-500 shadow-2xl active:scale-90 transition-all mx-auto"
+                  title="Capture"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
