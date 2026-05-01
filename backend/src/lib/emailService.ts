@@ -1,48 +1,8 @@
-import nodemailer from 'nodemailer';
 import dns from 'dns';
 
 // Force Node.js to prioritize IPv4 over IPv6
 if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
-}
-
-const port = Number(process.env.SMTP_PORT) || 587;
-const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-const secure = port === 465; // Only 465 uses 'secure: true'
-
-console.log(`📧 Email Service Initializing... Host=${host}, Port=${port}, Secure=${secure}`);
-
-const transporter = nodemailer.createTransport({
-  host: host,
-  port: port,
-  secure: secure,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-    servername: 'smtp.gmail.com'
-  },
-  requireTLS: port === 587,
-  pool: true,
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
-  logger: true,
-  debug: true
-});
-
-// Verify connection configuration on startup
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-  console.log('📧 SMTP: Verifying connection...');
-  transporter.verify((error) => {
-    if (error) {
-      console.error('❌ SMTP Verification Failed:', error);
-    } else {
-      console.log('✅ SMTP Verification Success: Server is ready');
-    }
-  });
 }
 
 export interface MailOptions {
@@ -53,29 +13,61 @@ export interface MailOptions {
   from?: string;
 }
 
+/**
+ * Robust Email Service using Brevo API (HTTP)
+ * This bypasses all SMTP blocks on Render by using standard HTTPS (Port 443).
+ */
 export const sendMail = async (options: MailOptions) => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.error('❌ Cannot send email: SMTP Credentials missing in environment variables.');
+  const apiKey = process.env.BREVO_API_KEY;
+
+  if (!apiKey) {
+    console.warn('❌ BREVO_API_KEY missing in environment variables.');
     return;
   }
 
-  const mailOptions = {
-    from: options.from || `"MsikaPos" <${process.env.SMTP_USER}>`,
-    to: options.to.trim(),
-    subject: options.subject,
-    text: options.text,
-    html: options.html || options.text,
-  };
+  const cleanTo = options.to.trim();
+  console.log(`✉️ Sending email via Brevo API to: ${cleanTo} (Subject: ${options.subject})`);
 
   try {
-    console.log(`✉️ Sending SMTP email to: ${mailOptions.to} (Subject: ${options.subject})`);
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent successfully! MessageID: ${info.messageId}`);
-    return info;
-  } catch (error: any) {
-    console.error(`❌ SMTP sendMail failed for ${mailOptions.to}:`, error);
-    throw error;
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { 
+          name: "MsikaPos", 
+          email: process.env.SMTP_USER || "onboarding@brevo.com" 
+        },
+        to: [{ email: cleanTo }],
+        subject: options.subject,
+        htmlContent: options.html || options.text,
+        textContent: options.text
+      })
+    });
+
+    const data = await response.json() as any;
+
+    if (response.ok) {
+      console.log(`✅ Email sent successfully via Brevo API! Message ID: ${data.messageId}`);
+      return { messageId: data.messageId };
+    } else {
+      console.error('❌ Brevo API Error:', data);
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Network error sending email via Brevo:', error);
+    return null;
   }
 };
+
+// Log initialization status
+if (process.env.BREVO_API_KEY) {
+  console.log('📧 Email Service: Brevo API initialized and ready.');
+} else {
+  console.log('📧 Email Service: Waiting for BREVO_API_KEY in Render environment variables.');
+}
 
 export default { sendMail };
