@@ -347,6 +347,50 @@ export const forgotPassword = async (req: Request, res: Response) => {
   }
 };
 
+export const resetPassword = async (req: Request, res: Response) => {
+  const { code, newPassword } = req.body;
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { 
+        verificationCode: code,
+        deleted: false 
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired verification code" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { 
+        password: hashedPassword,
+        verificationCode: null, // Clear code once used
+        isVerified: true,       // Mark as verified if they reset successfully
+        mustChangePassword: false
+      }
+    });
+
+    // Log the security event
+    await prisma.syncLog.create({
+      data: {
+        deviceId: 'SYSTEM',
+        userId: user.id,
+        action: 'PASSWORD_RESET_SUCCESS',
+        status: 'INFO',
+        details: `User ${user.username} successfully reset their password.`
+      }
+    });
+
+    return res.status(200).json({ success: true, message: "Password reset successful! You can now login." });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: 'Reset failed', error: error.message });
+  }
+};
+
 export const deleteUser = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { reason, hardDelete } = req.body;

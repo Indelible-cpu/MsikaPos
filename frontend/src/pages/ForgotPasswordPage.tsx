@@ -69,7 +69,7 @@ const ForgotPasswordPage: React.FC = () => {
     
     setLoading(true);
     try {
-      await api.post('/users/verify', { code, newPassword });
+      await api.post('/auth/reset-password', { code, newPassword });
       toast.success("Password reset successful!");
       navigate('/login');
     } catch (err: any) {
