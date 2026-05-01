@@ -77,16 +77,20 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
-    // 8. Credit Reminders
-    const unpaidCredits = await prisma.$queryRaw`
-      SELECT COUNT(*)::int as count FROM "Sale" 
-      WHERE "isCredit" = true 
-      AND "paid" < "total" 
-      AND "status" != 'DELETED'
-      AND "dueDate" <= ${endOfDay(threeDaysLater)}
-      AND (${bId}::int IS NULL OR "branchId" = ${bId}::int)
-    ` as any;
-    const creditCount = unpaidCredits[0]?.count || 0;
+    let creditCount = 0;
+    try {
+      const unpaidCredits = await prisma.$queryRaw`
+        SELECT COUNT(*)::int as count FROM "Sale" 
+        WHERE "isCredit" = true 
+        AND "paid" < "total" 
+        AND "status" != 'DELETED'
+        AND "dueDate" <= ${endOfDay(threeDaysLater)}
+        AND (${bId}::int IS NULL OR "branchId" = ${bId}::int)
+      ` as { count: number }[];
+      creditCount = unpaidCredits[0]?.count || 0;
+    } catch (e) {
+      console.warn('⚠️ Credit count query failed (schema mismatch?), defaulting to 0:', e);
+    }
 
     // 9. Recent Activity
     const recentActivity = await prisma.sale.findMany({
@@ -144,7 +148,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       recent_activity: recentActivity.map((r: any) => ({
         invoice_no: r.invoiceNo,
         total: Number(r.total),
-        username: r.user.username
+        username: r.user?.username ?? 'Unknown'
       })),
       chart_data: chartData
     };
