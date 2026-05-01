@@ -1,54 +1,8 @@
-import nodemailer from 'nodemailer';
 import dns from 'dns';
 
 // Force Node.js to prioritize IPv4 over IPv6
-// This resolves ENETUNREACH issues on environments like Render that don't support IPv6
 if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
-}
-
-
-/**
- * Robust Email Transporter Configuration
- * Using explicit host/port for Gmail to avoid issues with the 'gmail' service shortcut.
- */
-const port = Number(process.env.SMTP_PORT) || 587;
-const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-const secure = port === 465;
-
-console.log(`📧 Email Service Initializing... Host=${host}, Port=${port}, Secure=${secure}`);
-
-const transporter = nodemailer.createTransport({
-  host: host,
-  port: port,
-  secure: secure,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-    servername: 'smtp.gmail.com'
-  },
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
-  logger: true,
-  debug: true
-});
-
-// Verify connection configuration on startup
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-  console.log('📧 SMTP: Verifying connection...');
-  transporter.verify((error) => {
-    if (error) {
-      console.error('❌ SMTP Verification Failed:', error);
-    } else {
-      console.log('✅ SMTP Verification Success: Server is ready');
-    }
-  });
-} else {
-  console.warn('⚠️ SMTP Credentials missing in process.env!');
 }
 
 export interface MailOptions {
@@ -59,33 +13,67 @@ export interface MailOptions {
   from?: string;
 }
 
+/**
+ * Robust Email Service using Resend API (HTTP)
+ * This bypasses SMTP blocks common on cloud platforms like Render.
+ */
 export const sendMail = async (options: MailOptions) => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.error('❌ Cannot send email: SMTP Credentials missing.');
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.warn('❌ Resend API Key missing. Please set RESEND_API_KEY in Render environment variables.');
+    console.log('🔗 Get a free key at: https://resend.com');
     return;
   }
 
-  const mailOptions = {
-    from: options.from || `"MsikaPos Support" <${process.env.SMTP_USER}>`,
-    to: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html,
-  };
+  // Clean email input
+  const cleanTo = options.to.trim();
+
+  console.log(`✉️ Sending email via Resend API to: ${cleanTo} (Subject: ${options.subject})`);
 
   try {
-    console.log(`✉️ Sending email to: ${options.to} (Subject: ${options.subject})`);
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent successfully: ${info.messageId}`);
-    return info;
-  } catch (error: any) {
-    console.error(`❌ SMTP sendMail failed for ${options.to}:`, error);
-    // Log more details if available
-    if (error.code) console.error(`   Error Code: ${error.code}`);
-    if (error.command) console.error(`   SMTP Command: ${error.command}`);
-    if (error.response) console.error(`   SMTP Response: ${error.response}`);
-    throw error;
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        // For free/onboarding accounts, Resend requires using onboarding@resend.dev
+        // until you verify your custom domain.
+        from: options.from || 'MsikaPos <onboarding@resend.dev>',
+        to: [cleanTo],
+        subject: options.subject,
+        text: options.text,
+        html: options.html || options.text,
+      }),
+    });
+
+    const data = await response.json() as any;
+
+    if (response.ok) {
+      console.log(`✅ Email sent successfully via Resend! ID: ${data.id}`);
+      return { messageId: data.id };
+    } else {
+      console.error('❌ Resend API Error:', data);
+      
+      // Special hint for unverified domains
+      if (data.message && data.message.includes('domain')) {
+        console.warn('💡 Tip: If you are using a free Resend account, you must send to your own email OR verify your domain.');
+      }
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Network error sending email via Resend:', error);
+    return null;
   }
 };
+
+// Log initialization status
+if (process.env.RESEND_API_KEY) {
+  console.log('📧 Email Service: Resend API initialized and ready.');
+} else {
+  console.log('📧 Email Service: Waiting for RESEND_API_KEY in Render environment variables.');
+}
 
 export default { sendMail };
