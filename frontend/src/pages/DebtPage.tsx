@@ -2,7 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../api/client';
-import { db, type LocalCustomer } from '../db/posDB';
+import { db, type LocalCustomer, type LocalProduct } from '../db/posDB';
 import { 
   UserPlus, 
   Search, 
@@ -39,6 +39,20 @@ interface Credit {
   status: 'Pending' | 'Late' | 'Paid';
 }
 
+interface ReceiptData {
+  items: { product: LocalProduct; quantity: number }[];
+  total: number;
+  subtotal: number;
+  tax: number;
+  discount: number;
+  invoiceNo: string;
+  date: string;
+  mode: string;
+  customerName?: string;
+  paid: number;
+  change: number;
+}
+
 const MALAWI_PHONE_REGEX = /^\d{10}$|^\d{13}$/;
 
 const mockEncrypt = (data: string) => btoa(data);
@@ -51,7 +65,7 @@ const DebtPage: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
   const [paymentModal, setPaymentModal] = useState<{ id: number, total: number } | null>(null);
   const [payAmount, setPayAmount] = useState('');
-  const [clearedReceipt, setClearedReceipt] = useState<any | null>(null);
+  const [clearedReceipt, setClearedReceipt] = useState<ReceiptData | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const [custForm, setCustForm] = useState({ 
@@ -112,7 +126,7 @@ const DebtPage: React.FC = () => {
       return { 
         success: true,
         receipt: {
-          items: [{ product: { name: 'DEBT REPAYMENT', sellPrice: data.amount } as any, quantity: 1 }],
+          items: [{ product: { name: 'DEBT REPAYMENT', sellPrice: data.amount } as unknown as LocalProduct, quantity: 1 }],
           total: data.amount,
           subtotal: data.amount,
           tax: 0,
@@ -126,7 +140,7 @@ const DebtPage: React.FC = () => {
         }
       };
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { success: boolean; receipt: ReceiptData }) => {
       setPaymentModal(null);
       setPayAmount('');
       if (data.receipt) {
@@ -223,7 +237,7 @@ const DebtPage: React.FC = () => {
           <h1 className="text-sm font-black uppercase tracking-widest">Credit Center</h1>
         </div>
         {!readOnly && (
-          <button onClick={() => { resetForm(); setIsAddModalOpen(true); }} className="btn-primary !px-4 !py-2 text-[9px] font-black uppercase tracking-widest"><UserPlus className="w-3.5 h-3.5 mr-2 inline" /> Add Customer</button>
+          <button type="button" title="Add New Customer" aria-label="Add New Customer" onClick={() => { resetForm(); setIsAddModalOpen(true); }} className="btn-primary !px-4 !py-2 text-[9px] font-black uppercase tracking-widest"><UserPlus className="w-3.5 h-3.5 mr-2 inline" /> Add Customer</button>
         )}
       </header>
 
@@ -232,7 +246,7 @@ const DebtPage: React.FC = () => {
           <div className="p-4 border-b border-surface-border">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-text/40 w-3.5 h-3.5" />
-              <input placeholder="Search names..." className="input-field w-full pl-9 text-[10px] py-2.5 font-bold" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              <input title="Search Customers" aria-label="Search Customers" placeholder="Search names..." className="input-field w-full pl-9 text-[10px] py-2.5 font-bold" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -243,7 +257,7 @@ const DebtPage: React.FC = () => {
                 {customers?.map(c => (
                   <div key={c.id} className={clsx("p-4 flex items-center justify-between transition-all border-l-4", selectedCustomer?.id === c.id ? "bg-primary-500/[0.05] border-l-primary-500" : "border-l-transparent")}>
                     <div className="flex-1 min-w-0"><h3 className="text-[12px] font-black uppercase truncate">{c.name}</h3></div>
-                    <button onClick={() => { setSelectedCustomer(c); setIsProfileModalOpen(true); }} className="px-4 py-1.5 bg-primary-500/10 text-primary-500 rounded-lg text-[9px] font-black uppercase tracking-widest">View Profile</button>
+                    <button type="button" title={`View profile for ${c.name}`} aria-label={`View profile for ${c.name}`} onClick={() => { setSelectedCustomer(c); setIsProfileModalOpen(true); }} className="px-4 py-1.5 bg-primary-500/10 text-primary-500 rounded-lg text-[9px] font-black uppercase tracking-widest">View Profile</button>
                   </div>
                 ))}
               </div>
@@ -271,7 +285,7 @@ const DebtPage: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-surface-border pb-4">
                   <h3 className="text-lg font-black tracking-tighter flex items-center gap-3"><History className="w-5 h-5 text-primary-500" /> Ledger Details</h3>
-                  <button onClick={() => setIsProfileModalOpen(true)} className="text-[10px] font-black text-primary-500 uppercase tracking-widest underline">Re-verify Profile</button>
+                  <button type="button" title="Open Full Profile" aria-label="Open Full Profile" onClick={() => setIsProfileModalOpen(true)} className="text-[10px] font-black text-primary-500 uppercase tracking-widest underline">Re-verify Profile</button>
                 </div>
                 <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
@@ -301,7 +315,7 @@ const DebtPage: React.FC = () => {
                               <td className="px-8 py-6 text-right"><div className="text-sm font-black text-rose-500">MK {(credit.current_total - credit.paid_amount).toLocaleString()}</div></td>
                               <td className="px-8 py-6 text-right">
                                 {credit.status !== 'Paid' && (
-                                  <button onClick={() => { setPaymentModal({ id: credit.id, total: credit.current_total - credit.paid_amount }); setPayAmount(String(credit.current_total - credit.paid_amount)); }} className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-[9px] font-black uppercase">Pay balance</button>
+                                  <button type="button" title="Pay This Invoice" aria-label="Pay This Invoice" onClick={() => { setPaymentModal({ id: credit.id, total: credit.current_total - credit.paid_amount }); setPayAmount(String(credit.current_total - credit.paid_amount)); }} className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-[9px] font-black uppercase">Pay balance</button>
                                 )}
                               </td>
                             </tr>
@@ -329,11 +343,39 @@ const DebtPage: React.FC = () => {
               <h3 className="text-xl font-black">Confirm Payment</h3>
               <div className="space-y-4">
                 <label className="text-[10px] font-black opacity-30 uppercase tracking-widest">Amount (MK)</label>
-                <input type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="input-field !text-2xl !py-6 w-full" />
+                <input title="Payment Amount" aria-label="Payment Amount" placeholder="0.00" type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="input-field !text-2xl !py-6 w-full" />
               </div>
               <div className="flex gap-4">
-                <button onClick={() => setPaymentModal(null)} className="flex-1 py-5 bg-surface-bg border border-surface-border rounded-2xl font-black text-[10px] uppercase">Cancel</button>
-                <button onClick={() => { if(window.confirm(`Confirm payment of MK ${Number(payAmount).toLocaleString()}?`)) payMutation.mutate({ id: paymentModal.id, amount: Number(payAmount) }); }} className="flex-[2] py-5 bg-primary-500 text-white rounded-2xl font-black text-[10px] uppercase">Confirm</button>
+                <button type="button" title="Cancel Payment" aria-label="Cancel Payment" onClick={() => setPaymentModal(null)} className="flex-1 py-5 bg-surface-bg border border-surface-border rounded-2xl font-black text-[10px] uppercase">Cancel</button>
+                <button
+                  type="button"
+                  title="Confirm Payment"
+                  aria-label="Confirm Payment"
+                  onClick={() => {
+                    const amount = Number(payAmount);
+                    toast(
+                      (t) => (
+                        <div className="flex flex-col gap-3">
+                          <p className="text-sm font-bold">Confirm payment of <span className="text-primary-500">MK {amount.toLocaleString()}</span>?</p>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => { toast.dismiss(t.id); payMutation.mutate({ id: paymentModal.id, amount }); }}
+                              className="flex-1 py-2 bg-primary-500 text-white rounded-lg text-xs font-black"
+                            >Yes, confirm</button>
+                            <button
+                              type="button"
+                              onClick={() => toast.dismiss(t.id)}
+                              className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
+                            >Cancel</button>
+                          </div>
+                        </div>
+                      ),
+                      { duration: 8000 }
+                    );
+                  }}
+                  className="flex-[2] py-5 bg-primary-500 text-white rounded-2xl font-black text-[10px] uppercase"
+                >Confirm</button>
               </div>
             </div>
           </div>
@@ -361,7 +403,34 @@ const DebtPage: React.FC = () => {
             </div>
             {!readOnly && (
               <div className="pt-6 border-t border-surface-border flex justify-end">
-                <button onClick={async () => { if(window.confirm('Delete this profile?')) { await db.customers.delete(selectedCustomer.id); setSelectedCustomer(null); setIsProfileModalOpen(false); toast.success('Removed'); } }} className="flex items-center gap-2 px-6 py-3 bg-red-500/10 text-red-500 rounded-xl text-[9px] font-black uppercase"><Trash2 className="w-4 h-4" /> Delete Profile</button>
+                <button
+                  type="button"
+                  title="Delete Profile Permanently"
+                  aria-label="Delete Profile Permanently"
+                  onClick={() => {
+                    toast(
+                      (t) => (
+                        <div className="flex flex-col gap-3">
+                          <p className="text-sm font-bold">Permanently delete <span className="text-red-500">{selectedCustomer.name}</span>? This cannot be undone.</p>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={async () => { toast.dismiss(t.id); await db.customers.delete(selectedCustomer.id); setSelectedCustomer(null); setIsProfileModalOpen(false); toast.success('Profile removed'); }}
+                              className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-black"
+                            >Yes, delete</button>
+                            <button
+                              type="button"
+                              onClick={() => toast.dismiss(t.id)}
+                              className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
+                            >Cancel</button>
+                          </div>
+                        </div>
+                      ),
+                      { duration: 8000 }
+                    );
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-red-500/10 text-red-500 rounded-xl text-[9px] font-black uppercase"
+                ><Trash2 className="w-4 h-4" /> Delete Profile</button>
               </div>
             )}
           </div>
@@ -372,27 +441,34 @@ const DebtPage: React.FC = () => {
         <form onSubmit={handleAddCustomer} className="p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <input required placeholder="Name" className="input-field w-full py-4" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
-              <input required placeholder="Phone" className="input-field w-full py-4" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
-              <input placeholder="National ID" className="input-field w-full py-4 uppercase" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
-              <input placeholder="Location" className="input-field w-full py-4" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
+              <input required title="Full Name" aria-label="Full Name" placeholder="Name" className="input-field w-full py-4" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
+              <input required title="Phone Number" aria-label="Phone Number" placeholder="Phone" className="input-field w-full py-4" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
+              <input title="National ID" aria-label="National ID" placeholder="National ID" className="input-field w-full py-4 uppercase" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
+              <input title="Location/Village" aria-label="Location/Village" placeholder="Location" className="input-field w-full py-4" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
             </div>
             <div className="space-y-4">
                <div className="aspect-square bg-surface-bg rounded-3xl border border-surface-border flex flex-col items-center justify-center overflow-hidden">
                  {custForm.livePhoto ? <img src={custForm.livePhoto} alt="" className="w-full h-full object-cover" /> : useCamera ? <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" /> : <Camera className="w-10 h-10 opacity-10" />}
                  <div className="flex gap-2 p-2 w-full bg-black/5">
-                   {!useCamera ? <button type="button" onClick={startCamera} className="flex-1 bg-white p-2 rounded-xl"><Camera className="w-4 h-4 mx-auto" /></button> : <button type="button" onClick={capturePhoto} className="flex-1 bg-emerald-500 text-white p-2 rounded-xl"><CheckCircle2 className="w-4 h-4 mx-auto" /></button>}
-                   <label className="flex-1 bg-white p-2 rounded-xl cursor-pointer"><Upload className="w-4 h-4 mx-auto" /><input type="file" className="hidden" onChange={handleFileUpload} /></label>
+                   {!useCamera ? (
+                     <button type="button" title="Start Camera" aria-label="Start Camera" onClick={startCamera} className="flex-1 bg-white p-2 rounded-xl"><Camera className="w-4 h-4 mx-auto" /></button>
+                   ) : (
+                     <button type="button" title="Capture Photo" aria-label="Capture Photo" onClick={capturePhoto} className="flex-1 bg-emerald-500 text-white p-2 rounded-xl"><CheckCircle2 className="w-4 h-4 mx-auto" /></button>
+                   )}
+                   <label title="Upload Photo" aria-label="Upload Photo" className="flex-1 bg-white p-2 rounded-xl cursor-pointer">
+                     <Upload className="w-4 h-4 mx-auto" />
+                     <input title="Select Photo File" aria-label="Select Photo File" type="file" className="hidden" onChange={handleFileUpload} />
+                   </label>
                  </div>
                </div>
-               <button type="button" onClick={captureFingerprint} className={clsx("w-full py-4 rounded-2xl border flex items-center justify-center gap-3", custForm.fingerprintData ? "bg-emerald-500/10 text-emerald-500" : "bg-surface-bg")}>
+               <button type="button" title="Scan Fingerprint" aria-label="Scan Fingerprint" onClick={captureFingerprint} className={clsx("w-full py-4 rounded-2xl border flex items-center justify-center gap-3", custForm.fingerprintData ? "bg-emerald-500/10 text-emerald-500" : "bg-surface-bg")}>
                  <Fingerprint className="w-5 h-5" /> <span className="text-[10px] font-black uppercase">{custForm.fingerprintData ? 'Biometric Verified' : 'Scan Finger'}</span>
                </button>
             </div>
           </div>
           <div className="pt-6 flex gap-4">
-            <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg rounded-2xl font-black text-[10px] uppercase">Discard</button>
-            <button type="submit" className="flex-[2] btn-primary !py-4 text-[10px] font-black uppercase">Register</button>
+            <button type="button" title="Discard Changes" aria-label="Discard Changes" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg rounded-2xl font-black text-[10px] uppercase">Discard</button>
+            <button type="submit" title="Register Customer" aria-label="Register Customer" className="flex-[2] btn-primary !py-4 text-[10px] font-black uppercase">Register</button>
           </div>
         </form>
         <canvas ref={canvasRef} className="hidden" />
@@ -402,7 +478,7 @@ const DebtPage: React.FC = () => {
         {clearedReceipt && (
           <div className="p-6 flex flex-col items-center gap-6">
             <div className="bg-white p-6 w-full" id="printable-receipt"><Receipt {...clearedReceipt} /></div>
-            <button onClick={() => setClearedReceipt(null)} className="w-full py-4 btn-primary font-black text-[10px] uppercase">Close</button>
+            <button type="button" title="Close Receipt View" aria-label="Close Receipt View" onClick={() => setClearedReceipt(null)} className="w-full py-4 btn-primary font-black text-[10px] uppercase">Close</button>
           </div>
         )}
       </Modal>
