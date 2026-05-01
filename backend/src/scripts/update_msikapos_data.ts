@@ -1,3 +1,4 @@
+// @ts-nocheck
 
 import { PrismaClient } from '@prisma/client';
 
@@ -87,3 +88,4 @@ const updateCategorization = async () => {
 updateCategorization()
   .catch(e => console.error(e))
   .finally(() => prisma.$disconnect());
+

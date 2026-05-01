@@ -140,6 +140,7 @@ app.get('/api/products/search', staffOnly, ProductCtrl.searchProducts);
 app.get('/api/products/totals', staffOnly, ProductCtrl.getProductTotals);
 app.post('/api/products/sku', staffOnly, ProductCtrl.generateSku);
 app.post('/api/products', staffOnly, ProductCtrl.saveProduct);
+app.delete('/api/products/:id', adminOnly, ProductCtrl.deleteProduct);
 
 // Sales & Sync
 app.post('/api/sync', staffOnly, SyncCtrl.syncData);

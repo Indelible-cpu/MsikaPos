@@ -189,6 +189,7 @@ export const saveProduct = async (req: Request, res: Response) => {
         discountValue: data.discount_value ? Number(data.discount_value) : 0,
         discountStartDate: data.discount_start_date ? new Date(data.discount_start_date) : null,
         discountEndDate: data.discount_end_date ? new Date(data.discount_end_date) : null,
+        deleted: data.deleted !== undefined ? !!data.deleted : false,
         updatedAt: new Date()
     };
 
@@ -237,7 +238,7 @@ export const getProductRatings = async (req: Request, res: Response) => {
 
     try {
         const ratings = await prisma.productRating.findMany({
-            where: { productId: parseInt(id) },
+            where: { productId: parseInt(id as string) },
             include: { customer: { select: { fullname: true } } },
             orderBy: { createdAt: 'desc' }
         });
@@ -245,5 +246,20 @@ export const getProductRatings = async (req: Request, res: Response) => {
         return res.status(200).json({ success: true, data: ratings });
     } catch (error: any) {
         return res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+export const deleteProduct = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    
+    if (!id) return res.status(400).json({ success: false, message: "Missing product ID" });
+
+    try {
+        await prisma.product.delete({
+            where: { id: parseInt(id as string) }
+        });
+        return res.status(200).json({ success: true, message: "Product deleted permanently" });
+    } catch (error: any) {
+        return res.status(500).json({ success: false, message: 'Failed to delete product', error: error.message });
     }
 };

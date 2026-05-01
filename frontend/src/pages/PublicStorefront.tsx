@@ -713,7 +713,7 @@ export const PublicStorefront: React.FC = () => {
                           className="col-span-1 py-3 bg-surface-bg border border-surface-border rounded-xl text-[8px] font-black tracking-widest hover:bg-surface-card transition-all flex items-center justify-center gap-2 active:scale-95"
                         >
                           {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
-                          Support
+                          Get Quote
                         </button>
                         <button 
                           onClick={() => {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PrismaClient, RoleName, BranchStatus, PaymentMode, SaleStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
@@ -222,3 +223,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

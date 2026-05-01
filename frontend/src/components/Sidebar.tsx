@@ -20,7 +20,7 @@ const Sidebar: React.FC = () => {
     { id: 'transactions', key: 'SALES_HISTORY', label: 'Sales history', icon: Receipt, path: '/staff/transactions' },
     { id: 'debt', key: 'CUSTOMERS', label: 'Credit center', icon: Users, path: '/staff/debt' },
     { id: 'inventory', key: 'INVENTORY', label: 'Stock management', icon: Package, path: '/staff/inventory' },
-    { id: 'inquiries', key: 'INQUIRIES', label: 'Support', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
+    { id: 'inquiries', key: 'INQUIRIES', label: 'Inquiry', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
     { id: 'expenses', key: 'FINANCE', label: 'Finance & expenses', icon: Wallet, path: '/staff/expenses' },
     { id: 'team', key: 'STAFF', label: 'Staff management', icon: UserCheck, path: '/staff/users' },
     { id: 'branches', key: 'BRANCHES', label: 'Branch management', icon: Building2, path: '/staff/branches' },

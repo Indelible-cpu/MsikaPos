@@ -5,9 +5,11 @@ import { Zap, ZapOff } from 'lucide-react';
 interface BarcodeScannerProps {
   onScan: (decodedText: string) => void;
   onClose: () => void;
+  onTimeout?: () => void;
+  timeoutDuration?: number;
 }
 
-export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
+export default function BarcodeScanner({ onScan, onClose, onTimeout, timeoutDuration = 15000 }: BarcodeScannerProps) {
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const [hasFlash, setHasFlash] = useState(false);
   const [isFlashOn, setIsFlashOn] = useState(false);
@@ -38,6 +40,13 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
   };
 
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    if (onTimeout) {
+      timeoutId = setTimeout(() => {
+        onTimeout();
+      }, timeoutDuration);
+    }
+
     const html5QrCode = new Html5Qrcode("reader");
     html5QrCodeRef.current = html5QrCode;
 
@@ -74,9 +83,10 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
     });
 
     return () => {
+      if (timeoutId) clearTimeout(timeoutId);
       void stopScanner();
     };
-  }, [onScan]);
+  }, [onScan, onTimeout, timeoutDuration]);
 
   return (
     <div className="fixed inset-0 z-[200] bg-black flex flex-col overflow-hidden animate-in fade-in duration-300">

@@ -27,7 +27,7 @@ const MobileNav: React.FC = () => {
     { id: 'dashboard', label: 'Home', icon: Home, path: '/staff/dashboard' },
     { id: 'sales', label: 'Sales', icon: Receipt, path: '/staff/transactions' },
     { id: 'pos', label: 'Pos', icon: ShoppingCart, path: '/staff/pos' },
-    { id: 'inquiries', label: 'Support', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
+    { id: 'inquiries', label: 'Inquiry', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
   ];
 
   return (

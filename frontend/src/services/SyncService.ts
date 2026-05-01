@@ -106,6 +106,7 @@ export const SyncService = {
     discountStartDate?: string;
     discount_end_date?: string;
     discountEndDate?: string;
+    deleted?: boolean;
   }) {
     try {
       await api.post('/products', {
@@ -115,6 +116,7 @@ export const SyncService = {
         cost_price: product.cost_price ?? product.costPrice,
         sell_price: product.sell_price ?? product.sellPrice,
         quantity: product.quantity,
+        deleted: product.deleted ?? false,
         category_id: product.category_id ?? product.categoryId,
         is_service: product.is_service ?? product.isService ?? false,
         imageUrl: product.imageUrl || null,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
+import api from '../api/client';
 import { toSentenceCase } from '../utils/stringUtils';
 import { SyncService } from '../services/SyncService';
 import type { LocalProduct } from '../db/posDB';
@@ -64,10 +65,15 @@ const InventoryPage: React.FC = () => {
     discountEndDate: '',
   });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [wasScanned, setWasScanned] = useState(false);
 
   const products = useLiveQuery(
-    () => db.products.where('name').startsWithIgnoreCase(searchTerm).toArray(),
-    [searchTerm]
+    async () => {
+      const all = await db.products.where('name').startsWithIgnoreCase(searchTerm).toArray();
+      return all.filter(p => !!p.deleted === showDeleted);
+    },
+    [searchTerm, showDeleted]
   );
   const categories = useLiveQuery(() => db.categories.toArray());
 
@@ -193,6 +199,7 @@ const InventoryPage: React.FC = () => {
 
   const openAddModal = useCallback(async (scannedSku?: string) => {
     setEditingProduct(null);
+    setWasScanned(!!scannedSku);
     await resetForm(scannedSku);
     setIsAddModalOpen(true);
   }, [resetForm]);
@@ -210,6 +217,12 @@ const InventoryPage: React.FC = () => {
       openAddModal(scannedText);
     }
   }, [openEditModal, openAddModal]);
+
+  const handleScannerTimeout = useCallback(() => {
+    setIsScannerOpen(false);
+    toast.error('Scanning timed out. Switched to manual entry.');
+    openAddModal();
+  }, [openAddModal]);
 
   useEffect(() => {
     let barcodeBuffer = '';
@@ -247,6 +260,25 @@ const InventoryPage: React.FC = () => {
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [openAddModal, openEditModal]);
+
+  useEffect(() => {
+    if (!editingProduct && !wasScanned && formData.name.length > 2 && formData.categoryId) {
+      const timer = setTimeout(async () => {
+        try {
+          if (navigator.onLine) {
+            const res = await api.post('/products/sku', { 
+              name: formData.name, 
+              categoryId: formData.categoryId 
+            });
+            if (res.data.success) {
+              setFormData(prev => ({ ...prev, sku: res.data.data.sku }));
+            }
+          }
+        } catch { /* silent fallback */ }
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [formData.name, formData.categoryId, editingProduct, wasScanned]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -316,20 +348,50 @@ const InventoryPage: React.FC = () => {
 
   const deleteProduct = async (id: number) => {
     if (!isSuperAdmin) {
-      toast.error('Access Denied: Only Super Admins can delete products');
+      toast.error('Access Denied: Only Super Admins can hard delete products');
       return;
     }
     setDeleteConfirmation(id);
   };
 
+  const safeDeleteProduct = async (product: LocalProduct) => {
+    if (!isAdmin) {
+      toast.error('Access Denied');
+      return;
+    }
+    await db.products.update(product.id, { deleted: true });
+    await SyncService.pushProduct({ ...product, deleted: true } as Parameters<typeof SyncService.pushProduct>[0]);
+    await AuditService.log('PRODUCT_SAFE_DELETE', `Safe deleted product: ${product.name} (SKU: ${product.sku})`, 'WARNING');
+    toast.success('Product moved to trash');
+  };
+
+  const restoreProduct = async (product: LocalProduct) => {
+    if (!isAdmin) {
+      toast.error('Access Denied');
+      return;
+    }
+    await db.products.update(product.id, { deleted: false });
+    await SyncService.pushProduct({ ...product, deleted: false } as Parameters<typeof SyncService.pushProduct>[0]);
+    await AuditService.log('PRODUCT_RESTORE', `Restored product: ${product.name} (SKU: ${product.sku})`);
+    toast.success('Product restored');
+  };
+
   const confirmDelete = async () => {
     if (deleteConfirmation) {
       const product = await db.products.get(deleteConfirmation);
-      await db.products.delete(deleteConfirmation);
-      if (product) {
-        await AuditService.log('PRODUCT_DELETE', `Deleted product: ${product.name} (SKU: ${product.sku})`, 'WARNING');
+      try {
+        if (navigator.onLine) {
+          const res = await api.delete(`/products/${deleteConfirmation}`);
+          if (!res.data.success) throw new Error("Failed remote delete");
+        }
+        await db.products.delete(deleteConfirmation);
+        if (product) {
+          await AuditService.log('PRODUCT_DELETE', `Deleted product: ${product.name} (SKU: ${product.sku})`, 'WARNING');
+        }
+        toast.success('Product permanently removed');
+      } catch {
+        toast.error('Failed to permanently delete product');
       }
-      toast.success('Product removed');
       setDeleteConfirmation(null);
     }
   };
@@ -363,6 +425,13 @@ const InventoryPage: React.FC = () => {
               aria-label="Open Category Manager"
             >
               Categories
+            </button>
+            <button 
+              onClick={() => setShowDeleted(!showDeleted)}
+              className={clsx("btn-secondary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2", showDeleted && "!bg-rose-500/10 !text-rose-500 !border-rose-500/20")}
+              title={showDeleted ? "View Active Items" : "View Trash"}
+            >
+              <Trash2 className="w-4 h-4" /> {showDeleted ? 'Active' : 'Trash'}
             </button>
             <button 
               onClick={handleExport}
@@ -516,15 +585,35 @@ const InventoryPage: React.FC = () => {
                           <Edit2 className="w-4 h-4" />
                         </button>
                       )}
-                      {!readOnly && isAdmin && (
+                      {!readOnly && isAdmin && !showDeleted && (
                         <button 
-                          onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
-                          className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
-                          title="Delete product"
-                          aria-label="Delete product"
+                          onClick={(e) => { e.stopPropagation(); safeDeleteProduct(product); }} 
+                          className="p-2 hover:bg-orange-500/10 rounded-xl transition-colors text-orange-500"
+                          title="Safe delete product"
+                          aria-label="Safe delete product"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+                      )}
+                      {!readOnly && isAdmin && showDeleted && (
+                        <>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); restoreProduct(product); }} 
+                            className="p-2 hover:bg-emerald-500/10 rounded-xl transition-colors text-emerald-500"
+                            title="Restore product"
+                            aria-label="Restore product"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
+                            className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
+                            title="Hard delete product"
+                            aria-label="Hard delete product"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -745,7 +834,12 @@ const InventoryPage: React.FC = () => {
 
       <AiAssistant type="INVENTORY_STRATEGY" context={products} />
       {isScannerOpen && (
-        <BarcodeScanner onScan={handleScan} onClose={() => setIsScannerOpen(false)} />
+        <BarcodeScanner 
+          onScan={handleScan} 
+          onClose={() => setIsScannerOpen(false)} 
+          onTimeout={handleScannerTimeout}
+          timeoutDuration={10000}
+        />
       )}
     </div>
   );

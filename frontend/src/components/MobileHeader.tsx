@@ -81,7 +81,7 @@ export default function MobileHeader() {
       case '/users': return 'Staff management';
       case '/onboarding': return 'Account setup';
       case '/about': return 'Msikapos info';
-      case '/inquiries': return 'Support';
+      case '/inquiries': return 'Inquiry';
       case '/audit-logs': return 'Security logs';
       default: return 'Msikapos';
     }

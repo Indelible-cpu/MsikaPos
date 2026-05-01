@@ -22,22 +22,30 @@ export const updateFeatureConfig = async (req: Request, res: Response) => {
   const { featureKey, roleName, accessLevel, branchId } = req.body;
 
   try {
-    const config = await prisma.featureConfig.upsert({
+    const existing = await prisma.featureConfig.findFirst({
       where: {
-        featureKey_roleName_branchId: {
-          featureKey,
-          roleName,
-          branchId: branchId ? parseInt(branchId as any) : null
-        }
-      },
-      update: { accessLevel },
-      create: {
         featureKey,
         roleName,
-        accessLevel,
         branchId: branchId ? parseInt(branchId as any) : null
       }
     });
+
+    let config;
+    if (existing) {
+      config = await prisma.featureConfig.update({
+        where: { id: existing.id },
+        data: { accessLevel }
+      });
+    } else {
+      config = await prisma.featureConfig.create({
+        data: {
+          featureKey,
+          roleName,
+          accessLevel,
+          branchId: branchId ? parseInt(branchId as any) : null
+        }
+      });
+    }
 
     return res.status(200).json({ success: true, data: config });
   } catch (error: any) {
