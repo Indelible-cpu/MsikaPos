@@ -71,7 +71,10 @@ export const fetchUsers = async (req: Request, res: Response) => {
   const authUser = (req as any).user;
 
   try {
-    const where: any = { deleted: false };
+    const where: any = { 
+      deleted: false,
+      role: { name: { not: 'CUSTOMER' } }
+    };
     // Strict Branch Isolation / Context Switch
     if (authUser.branchId) {
       where.branchId = authUser.branchId;

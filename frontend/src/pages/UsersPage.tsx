@@ -287,30 +287,7 @@ const UsersPage: React.FC = () => {
          ) : (
            filteredUsers.map(u => (
              <div key={u.id} className="p-8 group transition-all relative overflow-hidden border-b border-surface-border/50">
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10">
-                   {/* Role Based Access Control */}
-                   {(currentUser?.role === 'SUPER_ADMIN' || (currentUser?.role === 'ADMIN' && u.role !== 'SUPER_ADMIN' && u.role !== 'ADMIN')) && (
-                     <>
-                       <button title="Edit user" onClick={() => handleEdit(u)} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-400 transition-colors"><Edit2 className="w-4 h-4" /></button>
-                       {!readOnly && (
-                         <>
-                           {u.status === 'ACTIVE' ? (
-                             <>
-                               <button title="Suspend user" onClick={() => setActionModal({ isOpen: true, type: 'SUSPEND', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-orange-500 transition-colors"><Ban className="w-4 h-4" /></button>
-                               <button title="Deactivate user" onClick={() => setActionModal({ isOpen: true, type: 'DEACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-500 transition-colors"><UserX className="w-4 h-4" /></button>
-                             </>
-                           ) : (
-                             <button title="Reactivate user" onClick={() => setActionModal({ isOpen: true, type: 'REACTIVATE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-emerald-500 transition-colors"><Power className="w-4 h-4" /></button>
-                           )}
-                           <button title="Soft delete" onClick={() => setActionModal({ isOpen: true, type: 'DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                           {currentUser?.role === 'SUPER_ADMIN' && (
-                             <button title="Hard delete (permanent)" onClick={() => setActionModal({ isOpen: true, type: 'HARD_DELETE', user: u, reason: '' })} className="p-2 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-black transition-colors"><Trash className="w-4 h-4" /></button>
-                           )}
-                         </>
-                       )}
-                     </>
-                   )}
-                </div>
+
 
                 <div className="flex flex-col items-center text-center">
                    <div className="w-24 h-24 bg-primary-600/10 text-primary-400 rounded-full flex items-center justify-center mb-6 border-2 border-primary-500/10 group-hover:border-primary-500/30 group-hover:scale-105 transition-all relative">
@@ -361,6 +338,60 @@ const UsersPage: React.FC = () => {
                       </div>
                    </div>
                 </div>
+
+                {/* Action Bar */}
+                {(currentUser?.role === 'SUPER_ADMIN' || (currentUser?.role === 'ADMIN' && u.role !== 'SUPER_ADMIN' && u.role !== 'ADMIN')) && (
+                  <div className="mt-6 pt-4 border-t border-surface-border flex flex-wrap gap-2">
+                    <button 
+                      onClick={() => handleEdit(u)} 
+                      className="flex-1 py-2 px-3 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center gap-1 text-[9px] font-black tracking-widest text-primary-500 hover:bg-primary-500/10 transition-colors uppercase"
+                    >
+                      <Edit2 className="w-3 h-3" /> Edit
+                    </button>
+                    {!readOnly && (
+                      <>
+                        {u.status === 'ACTIVE' ? (
+                          <>
+                            <button 
+                              onClick={() => setActionModal({ isOpen: true, type: 'SUSPEND', user: u, reason: '' })} 
+                              className="flex-1 py-2 px-3 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center gap-1 text-[9px] font-black tracking-widest text-orange-500 hover:bg-orange-500/10 transition-colors uppercase"
+                            >
+                              <Ban className="w-3 h-3" /> Suspend
+                            </button>
+                            <button 
+                              onClick={() => setActionModal({ isOpen: true, type: 'DEACTIVATE', user: u, reason: '' })} 
+                              className="flex-1 py-2 px-3 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center gap-1 text-[9px] font-black tracking-widest text-amber-600 hover:bg-amber-600/10 transition-colors uppercase"
+                            >
+                              <UserX className="w-3 h-3" /> Deactivate
+                            </button>
+                          </>
+                        ) : (
+                          <button 
+                            onClick={() => setActionModal({ isOpen: true, type: 'REACTIVATE', user: u, reason: '' })} 
+                            className="flex-1 py-2 px-3 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center gap-1 text-[9px] font-black tracking-widest text-emerald-500 hover:bg-emerald-500/10 transition-colors uppercase"
+                          >
+                            <Power className="w-3 h-3" /> Reactivate
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => setActionModal({ isOpen: true, type: 'DELETE', user: u, reason: '' })} 
+                          className="flex-1 py-2 px-3 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center gap-1 text-[9px] font-black tracking-widest text-red-500 hover:bg-red-500/10 transition-colors uppercase"
+                        >
+                          <Trash2 className="w-3 h-3" /> Soft Del
+                        </button>
+                        {currentUser?.role === 'SUPER_ADMIN' && (
+                          <button 
+                            onClick={() => setActionModal({ isOpen: true, type: 'HARD_DELETE', user: u, reason: '' })} 
+                            className="flex-1 py-2 px-3 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center gap-1 text-[9px] font-black tracking-widest text-red-700 hover:bg-red-700/10 transition-colors uppercase"
+                          >
+                            <Trash className="w-3 h-3" /> Hard Del
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
              </div>
            ))
          )}

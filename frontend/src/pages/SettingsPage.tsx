@@ -26,7 +26,7 @@ const SettingsPage: React.FC = () => {
   const [currency, setCurrency] = React.useState('MK');
   const [momoProvider, setMomoProvider] = React.useState('TNM Mpamba, Airtel Money');
   const [bankNameSetting, setBankNameSetting] = React.useState('National Bank, NBS Bank, Standard Bank');
-  const [branchName, setBranchName] = React.useState('Main Branch');
+  const [branchName, setBranchName] = React.useState('Jeff Investment');
   const [branchWhatsApp, setBranchWhatsApp] = React.useState('');
   const [fontSize, setFontSize] = React.useState('medium');
   const [isCameraOpen, setIsCameraOpen] = React.useState(false);
@@ -81,7 +81,7 @@ const SettingsPage: React.FC = () => {
       const currentBranchStr = localStorage.getItem('currentBranch');
       if (currentBranchStr) {
         const branch = JSON.parse(currentBranchStr);
-        setBranchName(branch.name || 'Main Branch');
+        setBranchName(branch.name || 'Jeff Investment');
         setBranchWhatsApp(branch.whatsapp || '');
       }
 
@@ -141,11 +141,25 @@ const SettingsPage: React.FC = () => {
         const branch = JSON.parse(currentBranchStr);
         const normalized = normalizePhone(branchWhatsApp);
         const updatedBranch = { ...branch, name: branchName, whatsapp: normalized };
+        
         await db.branches.put(updatedBranch);
         localStorage.setItem('currentBranch', JSON.stringify(updatedBranch));
+        
+        const token = localStorage.getItem('token');
+        if (token) {
+          await api.post('/branches', { 
+            id: updatedBranch.id, 
+            name: branchName, 
+            phone: normalized,
+            location: updatedBranch.location || updatedBranch.address || 'Unknown'
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        }
+
         setBranchName(updatedBranch.name);
         setBranchWhatsApp(normalized);
-        toast.success('Branch details updated');
+        toast.success('Branch details updated globally');
       }
     } catch {
       toast.error('Failed to save branch details');
@@ -757,7 +771,7 @@ const SettingsPage: React.FC = () => {
                       value={branchName}
                       onChange={(e) => setBranchName(e.target.value)}
                       className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
-                      placeholder="e.g. Main Branch"
+                      placeholder="e.g. Jeff Investment"
                     />
                   </div>
                   <div className="flex-1 w-full">

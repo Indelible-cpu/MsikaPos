@@ -57,7 +57,7 @@ async function main() {
   let branch = await prisma.branch.findFirst();
   if (!branch) {
     branch = await prisma.branch.create({
-      data: { name: 'Main Branch', location: 'Headquarters' }
+      data: { name: 'Jeff Investment', location: 'Headquarters' }
     });
   }
 
