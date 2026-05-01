@@ -547,75 +547,6 @@ const InventoryPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-start mb-4">
                     <div className="text-[9px] font-black text-surface-text/30 tracking-widest uppercase">{product.sku}</div>
-                    <div className="flex gap-1">
-                      {product.imageUrl && (
-                        <div className="flex gap-1">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
-                            className="p-2 hover:bg-emerald-500/10 rounded-xl transition-colors text-emerald-500"
-                            title="View product image"
-                          >
-                            <ImageIcon className="w-4 h-4" />
-                          </button>
-                          {!readOnly && isSuperAdmin && (
-                            <button 
-                              onClick={async (e) => { 
-                                e.stopPropagation(); 
-                                if (confirm('Remove product image?')) {
-                                  await db.products.update(product.id, { imageUrl: '' });
-                                  await SyncService.pushProduct({ ...product, imageUrl: '' });
-                                  toast.success('Image removed');
-                                }
-                              }} 
-                              className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
-                              title="Remove product image"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {!readOnly && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
-                          className="p-2 hover:bg-primary-500/10 rounded-xl transition-colors text-primary-400"
-                          title="Edit product"
-                          aria-label="Edit product"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      )}
-                      {!readOnly && isAdmin && !showDeleted && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); safeDeleteProduct(product); }} 
-                          className="p-2 hover:bg-orange-500/10 rounded-xl transition-colors text-orange-500"
-                          title="Safe delete product"
-                          aria-label="Safe delete product"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                      {!readOnly && isAdmin && showDeleted && (
-                        <>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); restoreProduct(product); }} 
-                            className="p-2 hover:bg-emerald-500/10 rounded-xl transition-colors text-emerald-500"
-                            title="Restore product"
-                            aria-label="Restore product"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
-                            className="p-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
-                            title="Hard delete product"
-                            aria-label="Hard delete product"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
                   </div>
                   <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2">{toSentenceCase(product.name)}</h3>
                   <div className="flex items-center gap-2 mb-6">
@@ -629,7 +560,51 @@ const InventoryPage: React.FC = () => {
                     {product.isService ? 'Service item' : `${product.quantity} in stock`}
                   </div>
                 </div>
-                <div className="px-6 py-4 bg-surface-bg/30 border-t border-surface-border flex justify-between items-center text-[9px] font-black tracking-widest text-surface-text/40">
+                
+                <div className="px-6 py-4 bg-surface-bg/30 border-t border-surface-border flex flex-wrap gap-2">
+                  {product.imageUrl && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
+                      className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-emerald-500 hover:bg-emerald-500/10 transition-colors uppercase"
+                    >
+                      <ImageIcon className="w-3 h-3" /> View
+                    </button>
+                  )}
+                  {!readOnly && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
+                      className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-primary-500 hover:bg-primary-500/10 transition-colors uppercase"
+                    >
+                      <Edit2 className="w-3 h-3" /> Edit
+                    </button>
+                  )}
+                  {!readOnly && isAdmin && !showDeleted && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); safeDeleteProduct(product); }} 
+                      className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-orange-500 hover:bg-orange-500/10 transition-colors uppercase"
+                    >
+                      <Trash2 className="w-3 h-3" /> Safe Del
+                    </button>
+                  )}
+                  {!readOnly && isAdmin && showDeleted && (
+                    <>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); restoreProduct(product); }} 
+                        className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-emerald-500 hover:bg-emerald-500/10 transition-colors uppercase"
+                      >
+                        <CheckCircle2 className="w-3 h-3" /> Restore
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
+                        className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-red-500 hover:bg-red-500/10 transition-colors uppercase"
+                      >
+                        <Trash2 className="w-3 h-3" /> Hard Del
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <div className="px-6 py-4 bg-surface-bg/50 border-t border-surface-border flex justify-between items-center text-[9px] font-black tracking-widest text-surface-text/40">
                   {!product.isService && isAdmin ? (
                     <>
                       <span>Stock profit: MK{((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
