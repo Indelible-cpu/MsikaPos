@@ -1,3 +1,15 @@
+export const restrictPhone = (value: string): string => {
+  if (!value) return '';
+  // Remove non-numeric/plus
+  let clean = value.replace(/[^\d+]/g, '');
+  
+  if (clean.startsWith('+')) {
+    return clean.substring(0, 13);
+  }
+  
+  return clean.substring(0, 10);
+};
+
 export const normalizePhone = (phone: string): string => {
   if (!phone) return '';
   

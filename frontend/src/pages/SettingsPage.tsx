@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
 import { AuditService } from '../services/AuditService';
 import api from '../api/client';
-import { normalizePhone, isValidMalawianPhone } from '../utils/phoneUtils';
+import { normalizePhone, isValidMalawianPhone, restrictPhone } from '../utils/phoneUtils';
 
 const SettingsPage: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -464,9 +464,9 @@ const SettingsPage: React.FC = () => {
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest">Phone</label>
                         <input
-                          type="text"
+                          type="tel"
                           value={companyPhone}
-                          onChange={(e) => setCompanyPhone(e.target.value)}
+                          onChange={(e) => setCompanyPhone(restrictPhone(e.target.value))}
                           className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
                           placeholder="+265..."
                         />
@@ -779,7 +779,7 @@ const SettingsPage: React.FC = () => {
                     <input
                       type="tel"
                       value={branchWhatsApp}
-                      onChange={(e) => setBranchWhatsApp(e.target.value)}
+                      onChange={(e) => setBranchWhatsApp(restrictPhone(e.target.value))}
                       className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
                       placeholder="+265..."
                     />

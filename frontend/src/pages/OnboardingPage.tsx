@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/client';
+import { restrictPhone } from '../utils/phoneUtils';
 import { OTPInput } from '../components/OTPInput';
 import { useSearchParams } from 'react-router-dom';
 import { clsx } from 'clsx';
@@ -365,15 +366,15 @@ const OnboardingPage: React.FC = () => {
                     <label htmlFor="phone" className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1">Phone Number</label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
-                      <input 
-                        id="phone"
-                        type="tel" 
-                        title="Enter your phone number (10 digits or +265...)"
-                        className="input-field w-full pl-10 h-12 text-sm font-bold" 
-                        placeholder="+265..."
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                      />
+<input 
+  id="phone"
+  type="tel" 
+  title="Enter your phone number (10 digits or +265...)"
+  className="input-field w-full pl-10 h-12 text-sm font-bold" 
+  placeholder="+265..."
+  value={phone}
+  onChange={(e) => setPhone(restrictPhone(e.target.value))}
+/>
                     </div>
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -438,15 +439,15 @@ const OnboardingPage: React.FC = () => {
                     <label htmlFor="nok-phone" className="text-[10px] font-black tracking-widest text-surface-text/30 pl-1">Next of Kin Phone</label>
                     <div className="relative">
                       <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/20" />
-                      <input 
-                        id="nok-phone"
-                        type="tel" 
-                        title="Enter next of kin phone number"
-                        className="input-field w-full pl-10 h-12 text-sm font-bold" 
-                        placeholder="088... or 099..."
-                        value={nextOfKinPhone}
-                        onChange={(e) => setNextOfKinPhone(e.target.value)}
-                      />
+<input 
+  id="nok-phone"
+  type="tel" 
+  title="Enter next of kin phone number"
+  className="input-field w-full pl-10 h-12 text-sm font-bold" 
+  placeholder="088... or 099..."
+  value={nextOfKinPhone}
+  onChange={(e) => setNextOfKinPhone(restrictPhone(e.target.value))}
+/>
                     </div>
                   </div>
                   <div className="space-y-2">

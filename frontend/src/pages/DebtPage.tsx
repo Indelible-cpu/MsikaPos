@@ -21,6 +21,7 @@ import {
 
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
+import { restrictPhone } from '../utils/phoneUtils';
 
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
@@ -543,14 +544,14 @@ const DebtPage: React.FC = () => {
 
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-surface-text/30 pl-1 uppercase tracking-[0.2em]">Phone number</label>
-                <input 
-                  type="tel" 
-                  required
-                  placeholder="e.g. 0888..."
-                  className="input-field w-full text-xs font-bold py-4"
-                  value={custForm.phone}
-                  onChange={(e) => setCustForm({ ...custForm, phone: e.target.value })}
-                />
+<input 
+  type="tel" 
+  required
+  placeholder="e.g. 0888..."
+  className="input-field w-full text-xs font-bold py-4"
+  value={custForm.phone}
+  onChange={(e) => setCustForm({ ...custForm, phone: restrictPhone(e.target.value) })}
+/>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

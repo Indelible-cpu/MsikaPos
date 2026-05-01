@@ -22,7 +22,7 @@ import {
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import { AuditService } from '../services/AuditService';
-import { normalizePhone } from '../utils/phoneUtils';
+import { normalizePhone, restrictPhone } from '../utils/phoneUtils';
 import { useAuthStore } from '../hooks/useAuth';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
@@ -435,7 +435,7 @@ const UsersPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
                <div className="space-y-1">
                   <label htmlFor="phone" className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Phone</label>
-                  <input id="phone" type="text" className="input-field w-full" placeholder="+265..." value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                  <input id="phone" type="text" className="input-field w-full" placeholder="+265..." value={formData.phone} onChange={(e) => setFormData({...formData, phone: restrictPhone(e.target.value)})} />
                </div>
                <div className="space-y-1">
                   <label htmlFor="email" className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Email address</label>

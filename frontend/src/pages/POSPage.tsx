@@ -4,6 +4,7 @@ import { db } from '../db/posDB';
 import type { LocalProduct } from '../db/posDB';
 import { toSentenceCase } from '../utils/stringUtils';
 import { calculateEffectiveDiscount } from '../utils/discountUtils';
+import { restrictPhone } from '../utils/phoneUtils';
 import { 
   Search, 
   ShoppingCart, 
@@ -509,7 +510,7 @@ const POSPage: React.FC = () => {
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">Phone number</label>
-                          <input required id="cust-phone" title="Phone number" aria-label="Phone number" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. 0881234567 or +265..." value={custForm.phone} onChange={e => setCustForm({...custForm, phone: e.target.value})} />
+<input required id="cust-phone" title="Phone number" aria-label="Phone number" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. 0881234567 or +265..." value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[9px] font-black tracking-widest text-surface-text/40 pl-1">National ID (8 chars)</label>

@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { AuditService } from '../services/AuditService';
 import clsx from 'clsx';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
+import { restrictPhone } from '../utils/phoneUtils';
 
 interface Branch {
   id: number;
@@ -375,7 +376,7 @@ const BranchesPage: React.FC = () => {
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Primary phone *</label>
-                      <input required className="input-field w-full py-3 px-4 font-black" placeholder="eg. +265..." value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                      <input required className="input-field w-full py-3 px-4 font-black" placeholder="eg. +265..." value={formData.phone} onChange={e => setFormData({...formData, phone: restrictPhone(e.target.value)})} />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Official email</label>
@@ -415,7 +416,7 @@ const BranchesPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Whatsapp number</label>
-                      <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. 265..." value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: e.target.value})} />
+                      <input className="input-field w-full py-3 px-4 font-black" placeholder="eg. 265..." value={formData.whatsapp} onChange={e => setFormData({...formData, whatsapp: restrictPhone(e.target.value)})} />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1">Instagram handle</label>
