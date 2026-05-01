@@ -19,6 +19,7 @@ export interface LocalProduct {
   discountEndDate?: string;
   createdAt: string;
   updatedAt: string;
+  deleted?: boolean;
 }
 
 export interface LocalSaleItem {
