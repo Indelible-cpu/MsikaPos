@@ -27,8 +27,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     const bId = where.branchId || null;
 
-    // 1. Today's Sales
-    const todaySales = await prisma.sale.aggregate({
+    // 1. Today's Sales & Profit
+    const todayStats = await prisma.sale.aggregate({
       where: {
         ...where,
         createdAt: {
@@ -36,16 +36,39 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           lte: endOfDay(today),
         },
       },
-      _sum: { total: true },
+      _sum: { total: true, profit: true },
     });
 
-    // 2. Total Transactions
+    // 2. Today's Expenses
+    const todayExpenses = await prisma.expense.aggregate({
+      where: {
+        ...where,
+        expenseDate: {
+          gte: startOfDay(today),
+          lte: endOfDay(today),
+        },
+      },
+      _sum: { amount: true },
+    });
+
+    // 3. Overall Totals (For performance, we usually show this month or all-time)
+    const overallStats = await prisma.sale.aggregate({
+      where,
+      _sum: { total: true, profit: true },
+    });
+
+    // 4. Total Cost Calculation
+    const totalSales = Number(overallStats._sum.total || 0);
+    const totalProfit = Number(overallStats._sum.profit || 0);
+    const totalCost = totalSales - totalProfit;
+
+    // 5. Total Transactions
     const totalTransactions = await prisma.sale.count({ where });
 
-    // 3. Active Products
+    // 6. Active Products
     const activeProducts = await prisma.product.count({ where: productWhere });
 
-    // 4. Low Stock Alerts
+    // 7. Low Stock Alerts
     const lowStock = await prisma.product.count({
       where: {
         ...productWhere,
@@ -54,7 +77,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
-    // 5. Credit Reminders (Unpaid credit sales due within 3 days)
+    // 8. Credit Reminders
     const unpaidCredits = await prisma.$queryRaw`
       SELECT COUNT(*)::int as count FROM "Sale" 
       WHERE "isCredit" = true 
@@ -65,7 +88,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     ` as any;
     const creditCount = unpaidCredits[0]?.count || 0;
 
-    // 6. Recent Activity
+    // 9. Recent Activity
     const recentActivity = await prisma.sale.findMany({
       where,
       include: { user: { select: { username: true } } },
@@ -73,7 +96,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       take: 5
     });
 
-    // 7. Chart Data (Last 7 Days)
+    // 10. Chart Data (Last 7 Days)
     const lastWeek = subDays(startOfDay(today), 6);
     const salesLastWeek = await prisma.sale.findMany({
       where: {
@@ -107,21 +130,13 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       });
     }
 
-    // Today Profit
-    const todayProfit = await prisma.sale.aggregate({
-      where: {
-        ...where,
-        createdAt: {
-          gte: startOfDay(today),
-          lte: endOfDay(today),
-        },
-      },
-      _sum: { profit: true },
-    });
-
     const stats = {
-      today_sales: Number(todaySales._sum.total || 0),
-      total_profit: Number(todayProfit._sum.profit || 0),
+      today_sales: Number(todayStats._sum.total || 0),
+      today_profit: Number(todayStats._sum.profit || 0),
+      today_expenses: Number(todayExpenses._sum.amount || 0),
+      total_sales: totalSales,
+      total_cost: totalCost,
+      total_profit: totalProfit,
       total_transactions: totalTransactions,
       active_products: activeProducts,
       low_stock: lowStock,

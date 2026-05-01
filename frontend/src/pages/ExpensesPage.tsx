@@ -48,6 +48,7 @@ const ExpensesPage: React.FC = () => {
           ...formData,
           id: crypto.randomUUID(),
           createdAt: new Date().toISOString(),
+          synced: 0
         });
         toast.success('Expense recorded');
       }

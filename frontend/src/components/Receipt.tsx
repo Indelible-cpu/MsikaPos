@@ -18,9 +18,10 @@ interface ReceiptProps {
   accountNumber?: string;
   customerName?: string;
   customerId?: string;
+  signature?: string;
 }
 
-export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, paid, change, mode, bankName, accountNumber, customerName, customerId }) => {
+export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, paid, change, mode, bankName, accountNumber, customerName, customerId, signature }) => {
   const currentBranchStr = localStorage.getItem('currentBranch');
   const branch = currentBranchStr ? JSON.parse(currentBranchStr) : null;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -58,7 +59,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
 
       <div className="flex flex-col gap-1 mb-4 font-bold text-[9px] w-full">
         <div className="flex justify-between">
-          <span>Inv: {invoiceNo}</span>
+          <span>{mode === 'Cash' ? 'Rec:' : 'Inv:'} {invoiceNo}</span>
           <span>{(() => {
             if (!date) return new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
             const d = new Date(date);
@@ -82,7 +83,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
         </thead>
         <tbody className="pt-2">
           {items.map((item, idx) => {
-            const { finalPrice } = calculateEffectiveDiscount(item.product as any);
+            const { finalPrice } = calculateEffectiveDiscount(item.product as LocalProduct);
             return (
               <tr key={idx}>
                 <td className="py-1 pr-2">
@@ -162,6 +163,15 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {signature && (
+          <div className="w-full flex flex-col items-center mb-4 mt-2">
+            <div className="text-[7px] font-black tracking-widest opacity-30 uppercase mb-1 text-center">Digital Signature</div>
+            <img src={signature} alt="sign" className="h-10 w-auto grayscale contrast-200" />
+            <div className="w-24 border-t border-black/30 mt-1"></div>
+            <div className="text-[8px] font-black mt-1 uppercase">{cashierName}</div>
           </div>
         )}
 

@@ -31,30 +31,50 @@ export const SyncService = {
     this.isSyncing = true;
 
     try {
-      const unsyncedSales = await db.salesQueue
-        .where('synced')
-        .equals(0)
-        .toArray();
+      // Fetch all unsynced records
+      const unsyncedSales = await db.salesQueue.where('synced').equals(0).toArray();
+      const unsyncedExpenses = await db.expenses.where('synced').equals(0).toArray();
+      const unsyncedCustomers = await db.customers.where('synced').equals(0).toArray();
+      const unsyncedPayments = await db.debtPayments.where('synced').equals(0).toArray();
 
-      if (unsyncedSales.length === 0) {
+      if (unsyncedSales.length === 0 && unsyncedExpenses.length === 0 && 
+          unsyncedCustomers.length === 0 && unsyncedPayments.length === 0) {
         this.isSyncing = false;
         return true;
       }
 
-      console.log(`🔄 Syncing ${unsyncedSales.length} sales...`);
+      console.log(`🔄 Syncing: ${unsyncedSales.length} sales, ${unsyncedExpenses.length} expenses, ${unsyncedCustomers.length} customers...`);
 
       const deviceId = localStorage.getItem('deviceId') || 'unknown';
       const lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp');
 
       const response = await api.post('/sync', {
         sales: unsyncedSales,
+        expenses: unsyncedExpenses,
+        customers: unsyncedCustomers,
+        debtPayments: unsyncedPayments,
         deviceId,
         lastSyncTimestamp
-      }, { timeout: 30000 });
+      }, { timeout: 45000 });
 
       if (response.data.success) {
-        const saleIds = unsyncedSales.map(s => s.id);
-        await db.salesQueue.where('id').anyOf(saleIds).modify({ synced: 1 });
+        // Mark all as synced
+        if (unsyncedSales.length > 0) {
+          const ids = unsyncedSales.map(s => s.id);
+          await db.salesQueue.where('id').anyOf(ids).modify({ synced: 1 });
+        }
+        if (unsyncedExpenses.length > 0) {
+          const ids = unsyncedExpenses.map(e => e.id);
+          await db.expenses.where('id').anyOf(ids).modify({ synced: 1 });
+        }
+        if (unsyncedCustomers.length > 0) {
+          const ids = unsyncedCustomers.map(c => c.id);
+          await db.customers.where('id').anyOf(ids).modify({ synced: 1 });
+        }
+        if (unsyncedPayments.length > 0) {
+          const ids = unsyncedPayments.map(p => p.id);
+          await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
+        }
         
         const { products, categories } = response.data.updates;
         if (products && products.length > 0) await db.products.bulkPut(products);
@@ -65,13 +85,9 @@ export const SyncService = {
         return true;
       }
       
-      console.error('❌ Sync failed (Server Response):', response.data);
       throw new Error(response.data.message || 'Server rejected sync');
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: unknown; status?: number }; message: string };
-      console.error('📡 Sync Error Payload:', err.response?.data || err);
-      console.error('📡 Sync Error Summary:', { status: err.response?.status, message: err.message });
-      console.warn('⚠️ Sync deferred:', err.message);
+    } catch (error: any) {
+      console.error('📡 Sync Error:', error.response?.data || error.message);
       return false;
     } finally {
       this.isSyncing = false;

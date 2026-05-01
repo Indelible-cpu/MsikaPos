@@ -1,8 +1,8 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../api/client';
-import { db, type LocalCustomer, type LocalProduct } from '../db/posDB';
+import { db, type LocalCustomer } from '../db/posDB';
 import { 
   UserPlus, 
   Search, 
@@ -26,6 +26,7 @@ import { restrictPhone } from '../utils/phoneUtils';
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
+import { SyncService } from '../services/SyncService';
 
 interface Credit {
   id: number;
@@ -51,7 +52,6 @@ const mockEncrypt = (data: string) => btoa(data); // "End to End Encryption" moc
 const DebtPage: React.FC = () => {
   const { isReadOnly } = useFeatureAccess();
   const readOnly = isReadOnly('CUSTOMERS');
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
@@ -101,34 +101,34 @@ const DebtPage: React.FC = () => {
 
   const payMutation = useMutation({
     mutationFn: async (data: { id: number, amount: number }) => {
-      return api.post('/credits/payment', data);
-    },
-    onSuccess: (_, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ['credits'] });
-      
-      const credit = allCredits?.find(c => c.id === variables.id);
-      if (credit && Number(payAmount) >= (credit.current_total - credit.paid_amount)) {
-          setClearedReceipt({
-            items: [{ 
-              product: { name: 'Credit Balance Clearance', sellPrice: Number(payAmount), costPrice: 0, id: 0, sku: 'CREDIT-PAY', categoryId: 0, quantity: 1, isService: true } as unknown as LocalProduct,
-              quantity: 1 
-            }],
-            total: Number(payAmount),
-            subtotal: Number(payAmount),
-            discount: 0,
-            tax: 0,
-            invoiceNo: `REC-${Date.now()}`,
-            date: new Date().toISOString(),
-            mode: 'Cash',
-            paid: Number(payAmount),
-            change: 0,
-            customerName: credit.customer_name
-          });
+      // Record payment locally
+      const paymentId = crypto.randomUUID();
+      await db.debtPayments.add({
+        id: paymentId,
+        customerId: selectedCustomer?.id || '',
+        amount: data.amount,
+        paymentMethod: 'Cash',
+        createdAt: new Date().toISOString(),
+        synced: 0
+      });
+
+      // Update local balance
+      if (selectedCustomer) {
+        await db.customers.update(selectedCustomer.id, {
+          balance: selectedCustomer.balance - data.amount,
+          updatedAt: new Date().toISOString(),
+          synced: 0
+        });
       }
 
+      // Trigger sync in background
+      void SyncService.pushSales();
+      return { success: true };
+    },
+    onSuccess: () => {
       setPaymentModal(null);
       setPayAmount('');
-      toast.success('Payment received and balance updated.');
+      toast.success('Payment recorded locally. Syncing with cloud...');
     }
   });
 
@@ -221,6 +221,7 @@ const DebtPage: React.FC = () => {
         balance: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        synced: 0
       });
       toast.success('Customer profile created securely');
       setIsAddModalOpen(false);

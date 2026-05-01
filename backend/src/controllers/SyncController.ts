@@ -105,7 +105,78 @@ export const syncData = async (req: Request, res: Response) => {
       }
     }
 
-    // 2. Fetch Updates for Client (Since last sync)
+    // 2. Process Incoming Expenses
+    const expenses = req.body.expenses;
+    if (expenses && expenses.length > 0) {
+      for (const exp of expenses) {
+        const existing = await prisma.expense.findUnique({ where: { id: exp.id } });
+        if (!existing) {
+          await prisma.expense.create({
+            data: {
+              id: exp.id,
+              category: exp.category,
+              amount: exp.amount,
+              description: exp.description,
+              paymentMethod: exp.paymentMethod,
+              expenseDate: new Date(exp.date),
+              userId: userId,
+              branchId: (req as any).user.branchId
+            }
+          });
+        }
+      }
+    }
+
+    // 3. Process Incoming Customers
+    const customers = req.body.customers;
+    if (customers && customers.length > 0) {
+      for (const cust of customers) {
+        const existing = await prisma.customer.findUnique({ where: { id: cust.id } });
+        if (!existing) {
+          await prisma.customer.create({
+            data: {
+              id: cust.id,
+              fullname: cust.name,
+              phone: cust.phone,
+              idNumber: cust.idNumber,
+              village: cust.village,
+              livePhoto: cust.livePhoto,
+              fingerprintData: cust.fingerprintData,
+              balance: cust.balance || 0,
+              branchId: (req as any).user.branchId,
+              createdAt: new Date(cust.createdAt)
+            }
+          });
+        }
+      }
+    }
+
+    // 4. Process Incoming Debt Payments
+    const debtPayments = req.body.debtPayments;
+    if (debtPayments && debtPayments.length > 0) {
+      for (const pay of debtPayments) {
+        const existing = await prisma.debtPayment?.findUnique({ where: { id: pay.id } });
+        if (!existing && prisma.debtPayment) {
+          await prisma.$transaction(async (tx) => {
+            await (tx as any).debtPayment.create({
+              data: {
+                id: pay.id,
+                customerId: pay.customerId,
+                amount: pay.amount,
+                paymentMethod: pay.paymentMethod,
+                reference: pay.reference,
+                createdAt: new Date(pay.createdAt)
+              }
+            });
+            // Update customer balance
+            await tx.customer.update({
+              where: { id: pay.customerId },
+              data: { balance: { decrement: pay.amount } }
+            });
+          });
+        }
+      }
+    }
     const user = (req as any).user;
     const updatedProducts = await prisma.product.findMany({
       where: {

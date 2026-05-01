@@ -116,26 +116,27 @@ model Product {
 }
 
 model Customer {
-  id            Int       @id @default(autoincrement())
-  offlineId     String?   @unique
+  id            Int           @id @default(autoincrement())
+  offlineId     String?       @unique
   fullname      String
   phone         String
   email         String?
   address       String?
-  loyaltyPoints Int       @default(0)
+  loyaltyPoints Int           @default(0)
   idNumber      String?
   village       String?
   locationId    String?
   livePhoto     String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  userId        Int?      @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  userId        Int?          @unique
   branchId      Int?
-  branch        Branch?   @relation(fields: [branchId], references: [id])
-  user          User?     @relation(fields: [userId], references: [id])
+  branch        Branch?       @relation(fields: [branchId], references: [id])
+  user          User?         @relation(fields: [userId], references: [id])
   inquiries     Inquiry[]
   sales         Sale[]
   ratings       ProductRating[]
+  debtPayments  DebtPayment[]
 
   @@index([branchId])
 }
@@ -211,8 +212,20 @@ model SaleItem {
   @@index([productId])
 }
 
+model DebtPayment {
+  id            String   @id @default(cuid())
+  customerId    Int
+  amount        Decimal  @db.Decimal(12, 2)
+  paymentMethod String
+  reference     String?
+  createdAt     DateTime @default(now())
+  customer      Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+}
+
 model Expense {
-  id            Int      @id @default(autoincrement())
+  id            String   @id @default(cuid())
   category      String
   amount        Decimal  @db.Decimal(12, 2)
   description   String?

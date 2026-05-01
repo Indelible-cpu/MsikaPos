@@ -65,6 +65,7 @@ export interface LocalCustomer {
   fingerprintData?: string; // Encrypted representation
   createdAt: string;
   updatedAt: string;
+  synced: number; // 0 = unsynced, 1 = synced
 }
 
 export interface LocalDebtPayment {
@@ -74,6 +75,7 @@ export interface LocalDebtPayment {
   paymentMethod: string;
   reference?: string;
   createdAt: string;
+  synced: number;
 }
 
 export interface LocalExpense {
@@ -84,6 +86,7 @@ export interface LocalExpense {
   date: string;
   paymentMethod: string;
   createdAt: string;
+  synced: number;
 }
 
 export interface LocalUser {
@@ -135,14 +138,14 @@ export class POSDatabase extends Dexie {
 
   constructor() {
     super('JEF_POS_DB');
-    this.version(8).stores({
+    this.version(9).stores({
       products: 'id, categoryId, sku, name',
       categories: 'id, slug',
       salesQueue: 'id, status, synced, createdAt',
       settings: 'key',
-      customers: 'id, name, phone, idNumber',
-      debtPayments: 'id, customerId, createdAt',
-      expenses: 'id, category, date',
+      customers: 'id, name, phone, idNumber, synced',
+      debtPayments: 'id, customerId, createdAt, synced',
+      expenses: 'id, category, date, synced',
       users: 'id, username, role',
       auditLogs: 'id, userId, action, createdAt',
       branches: 'id, name, status'

@@ -28,6 +28,15 @@ import AiAssistant from '../components/AiAssistant';
 
 interface DashboardStats {
   today_sales: number;
+  today_profit: number;
+  today_expenses: number;
+  total_sales: number;
+  total_cost: number;
+  total_profit: number;
+  total_transactions: number;
+  active_products: number;
+  low_stock: number;
+  credit_reminders: number;
   chart_data: Array<{ name: string; revenue: number; customers: number }>;
 }
 
@@ -79,19 +88,30 @@ const DashboardPage: React.FC = () => {
     load();
   }, []);
 
-  const totalRevenue = stats?.today_sales || 0;
-  const totalExpensesAmt = expenses.reduce((sum: number, e: Expense) => sum + e.amount, 0);
-  const netProfit = totalRevenue - totalExpensesAmt;
+  const totalRevenueToday = stats?.today_sales || 0;
+  const totalProfitToday = stats?.today_profit || 0;
+  const totalExpensesToday = stats?.today_expenses || 0;
+  
+  const totalSalesAllTime = stats?.total_sales || 0;
+  const totalProfitAllTime = stats?.total_profit || 0;
+  const totalCostAllTime = stats?.total_cost || 0;
+
   const activeCredits = credits.filter((c: Credit) => c.status !== 'Paid');
   const totalCreditAmount = activeCredits.reduce((sum: number, c: Credit) => sum + (c.current_total - c.paid_amount), 0);
   const lowStockItems = products.filter((p: Product) => !p.isService && p.quantity <= 5);
   const chartData = stats?.chart_data || [];
 
   const statCards = [
-    { label: "Today's sales", value: `MK ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
-    { label: 'Total expenses', value: `MK ${totalExpensesAmt.toLocaleString()}`, icon: Wallet, color: 'text-rose-500', trend: 'Monthly spending' },
-    { label: 'Net profit', value: `MK ${netProfit.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-400', trend: 'After expenses' },
+    { label: "Today's sales", value: `MK ${totalRevenueToday.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
+    { label: "Today's profit", value: `MK ${totalProfitToday.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-400', trend: 'Net margin' },
+    { label: "Today's expenses", value: `MK ${totalExpensesToday.toLocaleString()}`, icon: Wallet, color: 'text-rose-500', trend: 'Daily outflow' },
     { label: 'Active credits', value: `MK ${totalCreditAmount.toLocaleString()}`, icon: Users, color: 'text-amber-500', trend: `${activeCredits.length} Users` },
+  ];
+
+  const historicalCards = [
+    { label: "Total Sales", value: `MK ${totalSalesAllTime.toLocaleString()}`, icon: Receipt, color: 'text-emerald-500' },
+    { label: "Total Cost Price", value: `MK ${totalCostAllTime.toLocaleString()}`, icon: Package, color: 'text-rose-500' },
+    { label: "Total Profit Made", value: `MK ${totalProfitAllTime.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-500' },
   ];
 
   return (
@@ -125,7 +145,7 @@ const DashboardPage: React.FC = () => {
                 <div className={`p-3 rounded-2xl bg-surface-bg border border-surface-border group-hover:border-primary-500/20 transition-colors ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <div className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${stat.trend.includes('spending') || stat.trend.includes('Users') || stat.trend.includes('Expenses') ? 'bg-primary-500/10 text-primary-500' : stat.trend.startsWith('+') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                <div className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${stat.trend.includes('outflow') || stat.trend.includes('Users') || stat.trend.includes('margin') ? 'bg-primary-500/10 text-primary-500' : stat.trend.startsWith('+') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
                   {stat.trend.startsWith('+') && <ArrowUpRight className="w-3 h-3" />}
                   {stat.trend}
                 </div>
@@ -134,6 +154,29 @@ const DashboardPage: React.FC = () => {
               <div className="card-label">{stat.label}</div>
             </motion.div>
           ))}
+        </div>
+
+        {/* Historical Financials Section */}
+        <div className="bg-surface-card border-y border-surface-border">
+          <div className="px-12 py-4 border-b border-surface-border/50">
+            <h3 className="text-[10px] font-black text-surface-text/30 uppercase tracking-[0.3em]">Cumulative Financial Performance</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+            {historicalCards.map((stat, i) => (
+              <div key={i} className="p-10 border-r border-surface-border/50 last:border-r-0">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className={`p-2 rounded-xl bg-surface-bg border border-surface-border ${stat.color}`}>
+                    <stat.icon className="w-4 h-4" />
+                  </div>
+                  <div className="text-[9px] font-black text-surface-text/40 uppercase tracking-widest">{stat.label}</div>
+                </div>
+                <div className="text-4xl font-black tracking-tighter">
+                  <span className="text-xs text-surface-text/20 mr-2 font-mono uppercase">MWK</span>
+                  {stat.value.replace('MK ', '')}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Charts Section */}
