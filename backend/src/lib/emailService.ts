@@ -27,8 +27,11 @@ const transporterConfig: any = {
   connectionTimeout: 15000,
   greetingTimeout: 15000,
   socketTimeout: 15000,
+  // Force IPv4 because Render often has issues with IPv6 ENETUNREACH
+  family: 4
 };
 
+/* 
 // If using Gmail, use the service shortcut for best results
 if (host.includes('gmail.com')) {
   console.log('📧 SMTP: Gmail detected, applying service shortcut...');
@@ -38,6 +41,7 @@ if (host.includes('gmail.com')) {
   delete transporterConfig.port;
   delete transporterConfig.secure;
 }
+*/
 
 const transporter = nodemailer.createTransport(transporterConfig);
 
