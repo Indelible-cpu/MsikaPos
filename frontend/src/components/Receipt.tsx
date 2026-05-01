@@ -44,7 +44,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
   }, [customerId]);
 
   return (
-    <div className="receipt p-6 bg-white text-black font-mono w-[80mm] mx-auto text-[11px] leading-tight shadow-sm flex flex-col items-center">
+    <div className="receipt p-0 bg-white text-black font-mono w-full text-[11px] leading-tight shadow-sm flex flex-col items-center">
       <div className="text-center w-full border-b-2 border-black pb-4 mb-4">
         <div className="w-14 h-14 mx-auto mb-2 rounded-full border border-black/10 flex items-center justify-center overflow-hidden">
            <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="w-full h-full object-contain grayscale" />

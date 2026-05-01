@@ -139,7 +139,7 @@ const InventoryPage: React.FC = () => {
     });
   }, [categories, editingProduct]);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!products || products.length === 0) {
       toast.error('No inventory to export');
       return;
@@ -150,7 +150,7 @@ const InventoryPage: React.FC = () => {
       const cat = categories?.find(c => c.id === p.categoryId);
       return [
         p.sku,
-        `"${p.name.replace(/"/g, '""')}"`,
+        p.name,
         cat?.title || 'Uncategorized',
         p.costPrice,
         p.sellPrice,
@@ -159,20 +159,8 @@ const InventoryPage: React.FC = () => {
       ];
     });
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(r => r.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `MsikaPos_Inventory_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const { downloadCSV } = await import('../utils/exportUtils');
+    downloadCSV(headers, rows, `MsikaPos_Inventory_${new Date().toISOString().split('T')[0]}`);
     toast.success('Inventory exported successfully');
   };
 

@@ -1,0 +1,27 @@
+/**
+ * Utility for generating and downloading CSV files with proper escaping.
+ */
+export const downloadCSV = (headers: string[], rows: (string | number)[][], filename: string) => {
+  const escapeField = (field: string | number) => {
+    const stringified = String(field);
+    if (stringified.includes(',') || stringified.includes('"') || stringified.includes('\n')) {
+      return `"${stringified.replace(/"/g, '""')}"`;
+    }
+    return stringified;
+  };
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(escapeField).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${filename}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};

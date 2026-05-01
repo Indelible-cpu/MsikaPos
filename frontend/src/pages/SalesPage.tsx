@@ -7,9 +7,11 @@ import {
   Search, 
   TrendingUp, 
   DollarSign, 
-  Package
+  Package,
+  Download
 } from 'lucide-react';
 import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
@@ -106,6 +108,27 @@ const SalesPage: React.FC = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5" />
             <input type="text" placeholder="Search invoices..." className="input-field w-full pl-12 py-4 text-sm font-medium shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
+          
+          <button 
+            onClick={async () => {
+              const { downloadCSV } = await import('../utils/exportUtils');
+              const headers = ['Invoice No', 'Date', 'Total (MK)', 'Payment Mode', 'Items Count'];
+              const rows = filteredSales.map(s => [
+                s.invoiceNo,
+                new Date(s.createdAt).toLocaleString(),
+                s.total,
+                s.paymentMode,
+                s.itemsCount
+              ]);
+              downloadCSV(headers, rows, `MsikaPos_Sales_${new Date().toISOString().split('T')[0]}`);
+              toast.success('Sales history exported');
+            }}
+            title="Export Sales History"
+            className="p-4 bg-surface-card border border-surface-border rounded-xl text-primary-500 hover:bg-primary-500/10 transition-all shadow-sm"
+          >
+            <Download className="w-5 h-5" />
+          </button>
+
           {loading && (
             <div className="flex items-center gap-2 px-4 py-2 bg-primary-500/10 text-primary-500 rounded-xl animate-pulse">
                <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>

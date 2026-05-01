@@ -7,7 +7,8 @@ import {
   Users, 
   DollarSign, 
   ArrowUpRight, 
-  BarChart3
+  BarChart3,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -254,6 +255,26 @@ const ReportsPage: React.FC = () => {
                 <option value="Annual">Annual</option>
               </select>
             )}
+
+            <button 
+              onClick={async () => {
+                const { downloadCSV } = await import('../utils/exportUtils');
+                const data = activeTab === 'Financial' ? analyticsData.financial : 
+                             activeTab === 'Staff' ? analyticsData.staff : 
+                             activeTab === 'Branches' ? analyticsData.branches : 
+                             analyticsData.payment;
+                
+                downloadCSV(
+                  ['Label', 'Value'],
+                  data.map(d => [d.label, d.value]),
+                  `MsikaPos_${activeTab}_Report_${new Date().toISOString().split('T')[0]}`
+                );
+              }}
+              title="Export Report Data"
+              className="p-2.5 bg-surface-bg border border-surface-border rounded-xl text-primary-500 hover:bg-primary-500/10 transition-all"
+            >
+              <Download className="w-4 h-4" />
+            </button>
 
             {loading && (
               <div className="pr-4 flex items-center gap-2">

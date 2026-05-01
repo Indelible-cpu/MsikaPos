@@ -36,7 +36,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
   }, [customerId]);
 
   return (
-    <div className="invoice relative p-6 bg-white text-black font-mono w-[80mm] mx-auto text-[11px] border-4 border-double border-black leading-tight shadow-sm flex flex-col items-center">
+    <div className="invoice relative p-0 bg-white text-black font-mono w-full text-[11px] leading-tight shadow-sm flex flex-col items-center">
       <div className="absolute top-2 right-2 border border-black px-2 py-0.5 font-black text-[8px] tracking-tighter bg-black text-white">
         Credit Note
       </div>
