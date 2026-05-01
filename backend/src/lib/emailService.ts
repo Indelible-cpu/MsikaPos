@@ -1,5 +1,12 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
+// Force Node.js to prioritize IPv4 over IPv6
+// This resolves ENETUNREACH issues on environments like Render that don't support IPv6
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 dotenv.config();
 
@@ -13,7 +20,7 @@ const secure = port === 465;
 
 console.log(`📧 Email Service Initializing... Host=${host}, Port=${port}, Secure=${secure}`);
 
-const transporterConfig: any = {
+const transporter = nodemailer.createTransport({
   host: host,
   port: port,
   secure: secure,
@@ -24,26 +31,10 @@ const transporterConfig: any = {
   tls: {
     rejectUnauthorized: false
   },
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 15000,
-  // Force IPv4 because Render often has issues with IPv6 ENETUNREACH
-  family: 4
-};
-
-/* 
-// If using Gmail, use the service shortcut for best results
-if (host.includes('gmail.com')) {
-  console.log('📧 SMTP: Gmail detected, applying service shortcut...');
-  transporterConfig.service = 'gmail';
-  // Service shortcut handles port and secure internally
-  delete transporterConfig.host;
-  delete transporterConfig.port;
-  delete transporterConfig.secure;
-}
-*/
-
-const transporter = nodemailer.createTransport(transporterConfig);
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000
+});
 
 // Verify connection configuration on startup
 if (process.env.SMTP_USER && process.env.SMTP_PASS) {
