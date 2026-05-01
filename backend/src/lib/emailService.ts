@@ -36,7 +36,9 @@ if (host.includes('gmail.com')) {
 const transporter = nodemailer.createTransport(transporterConfig);
 
 // Verify connection configuration on startup
+console.log('📧 Email Service Initializing...');
 if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  console.log(`📧 SMTP Detected: User=${process.env.SMTP_USER}, Host=${host}, Port=${port}`);
   transporter.verify((error) => {
     if (error) {
       console.error('❌ SMTP Connection Error:', error);
@@ -45,7 +47,9 @@ if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     }
   });
 } else {
-  console.warn('⚠️ SMTP Credentials missing. Emails will not be sent.');
+  console.warn('⚠️ SMTP Credentials missing in process.env!');
+  if (!process.env.SMTP_USER) console.warn('   - SMTP_USER is missing');
+  if (!process.env.SMTP_PASS) console.warn('   - SMTP_PASS is missing');
 }
 
 export interface MailOptions {
@@ -71,11 +75,16 @@ export const sendMail = async (options: MailOptions) => {
   };
 
   try {
+    console.log(`✉️ Sending email to: ${options.to} (Subject: ${options.subject})`);
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent: ${info.messageId} to ${options.to}`);
+    console.log(`✅ Email sent successfully: ${info.messageId}`);
     return info;
-  } catch (error) {
-    console.error(`❌ Failed to send email to ${options.to}:`, error);
+  } catch (error: any) {
+    console.error(`❌ SMTP sendMail failed for ${options.to}:`, error);
+    // Log more details if available
+    if (error.code) console.error(`   Error Code: ${error.code}`);
+    if (error.command) console.error(`   SMTP Command: ${error.command}`);
+    if (error.response) console.error(`   SMTP Response: ${error.response}`);
     throw error;
   }
 };

@@ -240,7 +240,6 @@ export const updateOnboarding = async (req: Request, res: Response) => {
     // Send Verification Email (Background)
     if (email) {
       sendMail({
-        from: `"MsikaPos Security" <${process.env.SMTP_USER}>`,
         to: email,
         subject: "MsikaPos Account Verification",
         text: `Your MsikaPos verification code is: ${data.verificationCode}. For security reasons, do not share this code with anyone.`,
@@ -309,7 +308,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
       });
 
       sendMail({
-        from: `"MsikaPos Support" <${process.env.SMTP_USER}>`,
         to: cleanEmail,
         subject: "Password Reset Code",
         text: `Your MsikaPos password reset code is: ${code}. For security reasons, do not share this code with anyone.`,
@@ -368,7 +366,6 @@ export const deleteUser = async (req: Request, res: Response) => {
 
     if (user.email) {
       sendMail({
-        from: `"MsikaPos Security" <${process.env.SMTP_USER}>`,
         to: user.email,
         subject: `Account ${hardDelete ? 'Permanently Removed' : 'Deleted'}`,
         text: `Your account (${user.username}) has been ${hardDelete ? 'permanently removed' : 'deleted'} from MsikaPos.\n\nReason: ${reason || 'No reason provided.'}`,
@@ -404,7 +401,6 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 
     if (user.email) {
       sendMail({
-        from: `"MsikaPos Security" <${process.env.SMTP_USER}>`,
         to: user.email,
         subject: `Account Status Update: ${status}`,
         text: `Your account status has been changed to ${status}.\n\nReason: ${reason || 'Administrative action.'}`,
