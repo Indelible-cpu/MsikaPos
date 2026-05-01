@@ -56,9 +56,9 @@ const Sidebar: React.FC = () => {
 
 
   return (
-    <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0 overflow-hidden">
+    <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0">
       {/* Navigation - Scrollable */}
-      <nav className="flex-1 overflow-y-auto px-6 py-8 space-y-1.5 custom-scrollbar">
+      <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1 custom-scrollbar">
         {filteredTabs.map((tab) => (
           <NavLink
             key={tab.id}

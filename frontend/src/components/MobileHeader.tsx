@@ -91,7 +91,7 @@ export default function MobileHeader() {
 
   return (
     <>
-      <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[100] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
+      <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[100] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent md:hidden">
         <div className="flex items-center gap-2 overflow-hidden flex-1">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
