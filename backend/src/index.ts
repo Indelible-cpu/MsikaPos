@@ -43,6 +43,9 @@ if (!process.env.DATABASE_URL) {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust Render/Cloud Proxy
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors({
   origin: true, // Reflect the request origin
