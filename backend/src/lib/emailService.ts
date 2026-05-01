@@ -9,47 +9,38 @@ dotenv.config();
  */
 const port = Number(process.env.SMTP_PORT) || 465;
 const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+const secure = port === 465;
 
-const transporterConfig: any = {
+console.log(`📧 Email Service Initializing... Host=${host}, Port=${port}, Secure=${secure}`);
+
+const transporter = nodemailer.createTransport({
   host: host,
   port: port,
-  secure: port === 465,
+  secure: secure,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
   tls: {
     rejectUnauthorized: false
-  }
-};
-
-// Use service shortcut for Gmail as it handles many common issues internally
-if (host.includes('gmail.com')) {
-  delete transporterConfig.host;
-  delete transporterConfig.port;
-  delete transporterConfig.secure;
-  transporterConfig.service = 'gmail';
-} else if (port === 587) {
-  transporterConfig.requireTLS = true;
-}
-
-const transporter = nodemailer.createTransport(transporterConfig);
+  },
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 15000,
+});
 
 // Verify connection configuration on startup
-console.log('📧 Email Service Initializing...');
 if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-  console.log(`📧 SMTP Detected: User=${process.env.SMTP_USER}, Host=${host}, Port=${port}`);
+  console.log('📧 SMTP: Calling transporter.verify()...');
   transporter.verify((error) => {
     if (error) {
-      console.error('❌ SMTP Connection Error:', error);
+      console.error('❌ SMTP Verification Failed:', error);
     } else {
-      console.log('✅ SMTP Server is ready to take our messages');
+      console.log('✅ SMTP Verification Success: Server is ready');
     }
   });
 } else {
   console.warn('⚠️ SMTP Credentials missing in process.env!');
-  if (!process.env.SMTP_USER) console.warn('   - SMTP_USER is missing');
-  if (!process.env.SMTP_PASS) console.warn('   - SMTP_PASS is missing');
 }
 
 export interface MailOptions {
