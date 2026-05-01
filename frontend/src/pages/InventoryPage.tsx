@@ -570,20 +570,23 @@ const InventoryPage: React.FC = () => {
                       <ImageIcon className="w-3 h-3" /> View
                     </button>
                   )}
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
-                    className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-primary-500 hover:bg-primary-500/10 transition-colors uppercase"
-                  >
-                    <Edit2 className="w-3 h-3" /> Edit
-                  </button>
-                  {!showDeleted ? (
+                  {!readOnly && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
+                      className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-primary-500 hover:bg-primary-500/10 transition-colors uppercase"
+                    >
+                      <Edit2 className="w-3 h-3" /> Edit
+                    </button>
+                  )}
+                  {!readOnly && isAdmin && !showDeleted && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); safeDeleteProduct(product); }} 
                       className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-orange-500 hover:bg-orange-500/10 transition-colors uppercase"
                     >
                       <Trash2 className="w-3 h-3" /> Safe Del
                     </button>
-                  ) : (
+                  )}
+                  {!readOnly && isAdmin && showDeleted && (
                     <>
                       <button 
                         onClick={(e) => { e.stopPropagation(); restoreProduct(product); }} 
