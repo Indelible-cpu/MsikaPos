@@ -477,6 +477,16 @@ export const PublicStorefront: React.FC = () => {
                           {theme === 'light' ? '☀️ Light' : theme === 'dark' ? '🌙 Dark' : '💻 System'}
                         </button>
                       </div>
+
+                      {/* PWA Install Guide */}
+                      <div className="pt-2">
+                        <p className="text-[10px] font-bold text-surface-text/40 mb-3 ml-1">App Access</p>
+                        <div className="p-3 bg-primary-500/5 border border-primary-500/10 rounded-xl">
+                          <p className="text-[9px] font-bold text-primary-500 leading-relaxed">
+                            For the best experience, add this store to your home screen via your browser menu (Install App or Add to Home Screen).
+                          </p>
+                        </div>
+                      </div>
                       <div>
                         <p className="text-[10px] font-bold text-surface-text/40 mb-3 ml-1">Font size</p>
                         <div className="flex gap-2">
