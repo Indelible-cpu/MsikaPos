@@ -831,16 +831,13 @@ export const PublicStorefront: React.FC = () => {
                   const { finalPrice } = calculateEffectiveDiscount(item as unknown as Parameters<typeof calculateEffectiveDiscount>[0]);
                   return acc + finalPrice;
                 }, 0);
+                
                 let taxAmount = 0;
-                let total = subtotal;
+                // Force tax to be added on top (exclusive) to match user's expected math: 7500 + 37.31 = 7537.31
                 if (taxConfig.rate > 0) {
-                  if (taxConfig.inclusive) {
-                    taxAmount = subtotal - (subtotal / (1 + (taxConfig.rate / 100)));
-                  } else {
-                    taxAmount = subtotal * (taxConfig.rate / 100);
-                    total = subtotal + taxAmount;
-                  }
+                  taxAmount = subtotal * (taxConfig.rate / 100);
                 }
+                const total = subtotal + taxAmount;
                 return (
                   <div className="flex flex-col gap-2 w-full">
                     <div className="flex items-center justify-between text-xs font-black text-surface-text/40 tracking-widest">
@@ -849,14 +846,14 @@ export const PublicStorefront: React.FC = () => {
                     </div>
                     {taxConfig.rate > 0 && (
                       <div className="flex items-center justify-between text-xs font-black text-surface-text/40 tracking-widest">
-                        <span>Tax ({taxConfig.rate}% {taxConfig.inclusive ? 'included' : 'added'})</span>
-                        <span>{taxConfig.inclusive ? formatCurrency(taxAmount) : `+ ${formatCurrency(taxAmount)}`}</span>
+                        <span>Tax ({taxConfig.rate}% added)</span>
+                        <span>+ {formatCurrency(taxAmount)}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between border-t border-surface-border pt-4 mt-2">
                       <div>
                         <p className="text-sm font-black text-surface-text tracking-widest">Grand total</p>
-                        <p className="text-[10px] font-bold text-surface-text/30">{taxConfig.inclusive ? 'All taxes included' : 'Total including taxes'}</p>
+                        <p className="text-[10px] font-bold text-surface-text/30">Total including taxes</p>
                       </div>
                       <p className="text-3xl font-black text-primary-500 tracking-tighter">
                         {formatCurrency(total)}

@@ -3,7 +3,6 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, MessageSquare, History } from 'lucide-react';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
-import { db } from '../db/posDB';
 import api from '../api/client';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
@@ -46,43 +45,20 @@ const Sidebar: React.FC = () => {
     navigate('/staff/login');
   };
 
-  const [shopLogo, setShopLogo] = React.useState('/icon.png?v=2');
-
   React.useEffect(() => {
     const loadSidebar = async () => {
-      const company = await db.settings.get('company_config');
-      if (company?.value) {
-        // Logo is still in storage for now
-      }
-      const storedLogo = localStorage.getItem('companyLogo');
-      if (storedLogo) setShopLogo(storedLogo);
-      
-      
       fetchPending();
     };
     loadSidebar();
     const interval = setInterval(fetchPending, 15000); // Poll every 15s
     return () => clearInterval(interval);
-  }, [fetchPending, isSuperAdmin]);
+  }, [fetchPending]);
 
 
   return (
     <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0 overflow-hidden">
-      {/* Brand Header - Fixed */}
-      <div className="p-8 pb-4 shrink-0 flex flex-col items-center text-center">
-        <div className="w-24 h-24 flex items-center justify-center overflow-hidden flex-shrink-0 rounded-full bg-surface-bg border border-surface-border shadow-2xl p-1 mb-4 group-hover:scale-105 transition-transform">
-          <img src={shopLogo} alt="MsikaPos Logo" className="w-full h-full object-cover" />
-        </div>
-        <div className="space-y-1">
-          <div className="text-[10px] font-black text-primary-500 tracking-[0.3em] opacity-80">Cloud powered pos</div>
-          <div className="w-12 h-1 bg-primary-500/20 mx-auto rounded-full"></div>
-        </div>
-
-
-      </div>
-
       {/* Navigation - Scrollable */}
-      <nav className="flex-1 overflow-y-auto px-6 py-4 space-y-1.5 custom-scrollbar">
+      <nav className="flex-1 overflow-y-auto px-6 py-8 space-y-1.5 custom-scrollbar">
         {filteredTabs.map((tab) => (
           <NavLink
             key={tab.id}
@@ -97,7 +73,7 @@ const Sidebar: React.FC = () => {
             {({ isActive }) => (
               <>
                 <tab.icon className={clsx("w-6 h-6 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 3 : 2} />
-                <span className="truncate">{tab.label}</span>
+                <span className="truncate">{tab.label.charAt(0).toUpperCase() + tab.label.slice(1).toLowerCase()}</span>
                 {tab.badge ? (
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[8px] font-black border-2 border-surface-card animate-pulse shadow-lg shadow-rose-500/20">
                     {tab.badge}
