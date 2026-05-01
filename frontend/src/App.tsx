@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import DashboardPage from './pages/DashboardPage';
 import POSPage from './pages/POSPage';
 import LoginPage from './pages/LoginPage';
@@ -53,31 +53,49 @@ const App: React.FC = () => {
       }
     },
     onNeedRefresh() {
-      // Automatically update and reload when a new version is found
-      updateServiceWorker(true);
+      toast((t) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-[10px] font-black tracking-widest text-white">New update available!</p>
+          <button 
+            onClick={() => {
+              updateServiceWorker(true);
+              toast.dismiss(t.id);
+            }}
+            className="px-4 py-2 bg-primary-500 text-white rounded-lg text-[9px] font-black tracking-[0.2em]"
+          >
+            REFRESH NOW
+          </button>
+        </div>
+      ), { 
+        duration: Infinity,
+        position: 'bottom-center'
+      });
     }
   });
 
 
   useEffect(() => {
-    // 1. Don't show if already installed (standalone mode)
+    // 1. Don't show if already installed
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    if (isStandalone) return;
+    if (isStandalone || localStorage.getItem('pwa-installed') === 'true') return;
 
-    // 2. Don't show if user dismissed it recently (e.g., in last 7 days)
-    const lastDismissed = localStorage.getItem('pwa-prompt-dismissed');
-    if (lastDismissed) {
-      const daysSinceDismissal = (Date.now() - parseInt(lastDismissed)) / (1000 * 60 * 60 * 24);
-      if (daysSinceDismissal < 7) return;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
+
+    const handleAppInstalled = () => {
+      localStorage.setItem('pwa-installed', 'true');
+      setDeferredPrompt(null);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
   }, []);
 
   const handleInstallClick = async () => {

@@ -282,20 +282,39 @@ export const PublicStorefront: React.FC = () => {
         
         // Load tax and discount settings from server
         if (s.tax_config) setTaxConfig(typeof s.tax_config === 'string' ? JSON.parse(s.tax_config) : s.tax_config);
-        else {
-          const localTax = await db.settings.get('tax_config');
-          if (localTax?.value) setTaxConfig(localTax.value as { rate: number; inclusive: boolean });
-        }
-
+        
         if (s.global_discount !== undefined) setGlobalDiscount(Number(s.global_discount));
-        else {
-          const localDiscount = await db.settings.get('global_discount');
-          if (localDiscount?.value) setGlobalDiscount(localDiscount.value as number);
-        }
       }
     } catch (err) {
-      console.error('Storefront load error:', err);
-      toast.error('Failed to load marketplace. Please refresh.');
+      console.error('Storefront load error (falling back to offline data):', err);
+      
+      // OFFLINE FALLBACK: Load from local IndexedDB
+      const [localProducts, localCats, localTax, localDiscount, localCompany] = await Promise.all([
+        db.products.toArray(),
+        db.categories.toArray(),
+        db.settings.get('tax_config'),
+        db.settings.get('global_discount'),
+        db.settings.get('company_config')
+      ]);
+
+      if (localProducts.length > 0) {
+        const productsWithCats = localProducts.map(p => ({
+          ...p,
+          category: { name: localCats.find(c => c.id === p.categoryId)?.title || 'Uncategorized' }
+        }));
+        setProducts(productsWithCats as unknown as StoreProduct[]);
+        const cats = Array.from(new Set(productsWithCats.map((p) => p.category.name)))
+          .filter((c) => c !== 'Uncategorized') as string[];
+        setCategories(cats);
+        toast('Operating in offline mode', { icon: '📡' });
+      } else {
+        toast.error('Marketplace is offline and no local data found.');
+      }
+
+      if (localTax?.value) setTaxConfig(localTax.value as { rate: number; inclusive: boolean });
+      if (localDiscount?.value) setGlobalDiscount(localDiscount.value as number);
+      if (localCompany?.value) setShopName((localCompany.value as { name: string }).name);
+
     } finally {
       setLoading(false);
       setIsRefreshing(false);
