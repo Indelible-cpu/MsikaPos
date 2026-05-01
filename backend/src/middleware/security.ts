@@ -3,16 +3,10 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import { prisma } from '../lib/prisma';
-import nodemailer from 'nodemailer';
+import { sendMail } from '../lib/emailService';
 
 // Email transporter for alerts
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// Centralized email service is used instead of local transporter
 
 // 1. HELMET for secure headers
 export const securityHeaders = helmet({
@@ -124,9 +118,15 @@ export const securityAlert = async (ip: string, event: string, details: string) 
     }
 
     // Notify Super Admin
+    const adminEmail = process.env.SMTP_USER;
+    if (!adminEmail) {
+      console.warn('⚠️ No admin email (SMTP_USER) configured for security alerts. Skipping email notification.');
+      return;
+    }
+
     const mailOptions = {
-      from: process.env.SMTP_USER,
-      to: process.env.SMTP_USER, // Assuming admin email is SMTP_USER or add a separate env
+      from: adminEmail,
+      to: adminEmail,
       subject: '🚨 SECURITY ALERT: MsikaPos Intrusion Attempt',
       html: `
         <div style="font-family: sans-serif; padding: 20px; border: 2px solid #ef4444; border-radius: 10px;">
@@ -145,7 +145,7 @@ export const securityAlert = async (ip: string, event: string, details: string) 
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendMail(mailOptions);
     console.log(`🚨 Security Alert Sent: ${event} from ${ip}`);
   } catch (err) {
     console.error('Failed to send security alert:', err);

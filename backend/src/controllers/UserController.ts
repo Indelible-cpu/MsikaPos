@@ -2,18 +2,12 @@ import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { sendMail } from '../lib/emailService';
 import { securityAlert } from '../middleware/security';
 import { normalizePhone, isValidMalawianPhone } from '../lib/phoneUtils';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+// Centralized email service is used instead of local transporter
 
 export const loginUser = async (req: Request, res: Response) => {
   const { username, password } = req.body;
@@ -245,29 +239,22 @@ export const updateOnboarding = async (req: Request, res: Response) => {
 
     // Send Verification Email (Background)
     if (email) {
-      console.log(`✉️ Attempting to send verification email to: ${email}`);
-      if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        console.error('❌ SMTP Credentials missing in Environment Variables!');
-      } else {
-        transporter.sendMail({
-          from: `"MsikaPos Security" <${process.env.SMTP_USER}>`,
-          to: email,
-          subject: "MsikaPos Account Verification",
-          text: `Your MsikaPos verification code is: ${data.verificationCode}. For security reasons, do not share this code with anyone.`,
-          html: `
-            <div style="font-family: sans-serif; padding: 20px; color: #333;">
-              <h2 style="color: #10b981;">Account Verification</h2>
-              <p>Your verification code is: <strong style="font-size: 24px; letter-spacing: 2px;">${data.verificationCode}</strong></p>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-              <p style="color: #ef4444; font-weight: bold;">⚠️ Security Warning: Do not share this code with anyone. MsikaPos staff will never ask for your code.</p>
-            </div>
-          `
-        }).then(() => {
-          console.log(`✅ Verification email sent successfully to: ${email}`);
-        }).catch(err => {
-          console.error('❌ Verification email failed:', err);
-        });
-      }
+      sendMail({
+        from: `"MsikaPos Security" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: "MsikaPos Account Verification",
+        text: `Your MsikaPos verification code is: ${data.verificationCode}. For security reasons, do not share this code with anyone.`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #10b981;">Account Verification</h2>
+            <p>Your verification code is: <strong style="font-size: 24px; letter-spacing: 2px;">${data.verificationCode}</strong></p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #ef4444; font-weight: bold;">⚠️ Security Warning: Do not share this code with anyone. MsikaPos staff will never ask for your code.</p>
+          </div>
+        `
+      }).catch(err => {
+        console.error('❌ Verification email failed:', err);
+      });
     }
 
     return res.status(200).json({
@@ -305,7 +292,11 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
   try {
     const user = await prisma.user.findFirst({
-      where: { username, email, deleted: false }
+      where: { 
+        username, 
+        email: { equals: email, mode: 'insensitive' },
+        deleted: false 
+      }
     });
 
     if (user) {
@@ -315,7 +306,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
         data: { verificationCode: code }
       });
 
-      transporter.sendMail({
+      sendMail({
         from: `"MsikaPos Support" <${process.env.SMTP_USER}>`,
         to: email,
         subject: "Password Reset Code",
@@ -374,7 +365,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     }
 
     if (user.email) {
-      transporter.sendMail({
+      sendMail({
         from: `"MsikaPos Security" <${process.env.SMTP_USER}>`,
         to: user.email,
         subject: `Account ${hardDelete ? 'Permanently Removed' : 'Deleted'}`,
@@ -410,7 +401,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     });
 
     if (user.email) {
-      transporter.sendMail({
+      sendMail({
         from: `"MsikaPos Security" <${process.env.SMTP_USER}>`,
         to: user.email,
         subject: `Account Status Update: ${status}`,
