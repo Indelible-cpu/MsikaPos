@@ -191,7 +191,6 @@ export const updateOnboarding = async (req: Request, res: Response) => {
     fullname,
     nationalId,
     phone,
-    email,
     profilePic,
     homeAddress,
     nextOfKinName,
@@ -199,6 +198,7 @@ export const updateOnboarding = async (req: Request, res: Response) => {
     relationship,
     newPassword
   } = req.body;
+  const email = req.body.email?.trim();
 
   try {
     if (phone && !isValidMalawianPhone(phone)) {
@@ -289,12 +289,14 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
 export const forgotPassword = async (req: Request, res: Response) => {
   const { username, email } = req.body;
+  const cleanUsername = username?.trim();
+  const cleanEmail = email?.trim();
 
   try {
     const user = await prisma.user.findFirst({
       where: { 
-        username, 
-        email: { equals: email, mode: 'insensitive' },
+        username: cleanUsername, 
+        email: { equals: cleanEmail, mode: 'insensitive' },
         deleted: false 
       }
     });
@@ -308,7 +310,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
       sendMail({
         from: `"MsikaPos Support" <${process.env.SMTP_USER}>`,
-        to: email,
+        to: cleanEmail,
         subject: "Password Reset Code",
         text: `Your MsikaPos password reset code is: ${code}. For security reasons, do not share this code with anyone.`,
         html: `
