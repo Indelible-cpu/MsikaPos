@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2 } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2, RefreshCw } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
@@ -398,8 +398,8 @@ export const PublicStorefront: React.FC = () => {
       onTouchEnd={handleTouchEnd}
     >
       {isRefreshing && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-primary-500 text-white p-3 rounded-full shadow-2xl flex items-center justify-center animate-in fade-in slide-in-from-top-4 duration-500 border-2 border-white/20">
-          <div className="loading-spinner w-5 h-5" />
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-surface-card/80 backdrop-blur-md text-primary-500 p-2 rounded-full shadow-xl flex items-center justify-center animate-in fade-in slide-in-from-top-4 duration-500 border border-surface-border">
+          <RefreshCw className="w-4 h-4 animate-spin" />
         </div>
       )}
 
@@ -950,13 +950,13 @@ export const PublicStorefront: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <footer className="bg-surface-card border-t border-surface-border py-12 px-6 flex flex-col items-center gap-4">
+      <footer className="bg-surface-card border-t border-surface-border py-6 px-6 flex flex-col items-center gap-3">
         <div className="flex items-center gap-2 opacity-30">
-          <span className="text-[8px] font-black tracking-[0.3em] uppercase">Powered by MsikaPOS</span>
+          <span className="text-[8px] font-black tracking-[0.3em]">Powered by Msikapos</span>
         </div>
-        <div className="text-center space-y-2">
-          <p className="text-[10px] font-black text-surface-text/20 tracking-widest uppercase">© {new Date().getFullYear()} {shopName}. All rights reserved.</p>
-          <p className="text-[8px] font-black text-surface-text/20 tracking-widest uppercase">Developed by J Dickson Petro</p>
+        <div className="text-center space-y-1">
+          <p className="text-[10px] font-black text-surface-text/20 tracking-widest">© {new Date().getFullYear()} {shopName}. All rights reserved.</p>
+          <p className="text-[8px] font-black text-surface-text/20 tracking-widest">Developed by J Dickson Petro</p>
         </div>
       </footer>
     </div>
