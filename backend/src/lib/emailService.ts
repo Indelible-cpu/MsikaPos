@@ -14,11 +14,12 @@ dotenv.config();
  * Robust Email Transporter Configuration
  * Using explicit host/port for Gmail to avoid issues with the 'gmail' service shortcut.
  */
-const port = Number(process.env.SMTP_PORT) || 465;
-const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-const secure = port === 465;
+// Using explicit IPv4 for smtp.gmail.com to bypass broken IPv6 resolution on Render
+const host = '74.125.133.108';
+const port = 465;
+const secure = true;
 
-console.log(`📧 Email Service Initializing... Host=${host}, Port=${port}, Secure=${secure}`);
+console.log(`📧 Email Service Initializing... Force IPv4 Host=${host}, Port=${port}`);
 
 const transporter = nodemailer.createTransport({
   host: host,
@@ -29,6 +30,8 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS,
   },
   tls: {
+    // Crucial: Match the certificate hostname
+    servername: 'smtp.gmail.com',
     rejectUnauthorized: false
   },
   connectionTimeout: 20000,

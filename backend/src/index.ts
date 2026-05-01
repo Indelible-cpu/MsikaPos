@@ -1,7 +1,14 @@
+import dns from 'dns';
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+
+// FORCE IPv4 PRIORITIZATION AT ENTRY POINT
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 // Controllers
 import * as UserCtrl from './controllers/UserController';
 import * as ProductCtrl from './controllers/ProductController';
