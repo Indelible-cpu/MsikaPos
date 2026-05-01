@@ -12,12 +12,11 @@ if (dns.setDefaultResultOrder) {
  * Robust Email Transporter Configuration
  * Using explicit host/port for Gmail to avoid issues with the 'gmail' service shortcut.
  */
-// Using standard hostname now that IPv4 prioritization is enforced at entry point
-const host = 'smtp.gmail.com';
-const port = 465;
-const secure = true;
+const port = Number(process.env.SMTP_PORT) || 587;
+const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+const secure = port === 465;
 
-console.log(`📧 Email Service Initializing... Host=${host}, Port=${port}`);
+console.log(`📧 Email Service Initializing... Host=${host}, Port=${port}, Secure=${secure}`);
 
 const transporter = nodemailer.createTransport({
   host: host,
@@ -28,13 +27,14 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASS,
   },
   tls: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    servername: 'smtp.gmail.com'
   },
   connectionTimeout: 20000,
   greetingTimeout: 20000,
   socketTimeout: 20000,
-  logger: true, // Log internal SMTP traffic
-  debug: true   // Include debug output
+  logger: true,
+  debug: true
 });
 
 // Verify connection configuration on startup
