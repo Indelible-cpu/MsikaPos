@@ -33,7 +33,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Public pages that do NOT require auth
-      const publicPaths = ['/login', '/staff/login', '/store', '/'];
+      const publicPaths = ['/login', '/staff/login', '/store', '/', '/onboarding'];
       const isPublic = publicPaths.some(p => window.location.pathname === p || window.location.pathname.startsWith('/store'));
       
       if (!isPublic) {

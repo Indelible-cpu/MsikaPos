@@ -64,9 +64,10 @@ const OnboardingPage: React.FC = () => {
     return { label: 'Strong', color: 'bg-emerald-500', score };
   };
 
+  const magicToken = searchParams.get('magicToken');
+
   // Magic Link Detection & Validation
   React.useEffect(() => {
-    const magicToken = searchParams.get('magicToken');
     console.log('🔍 [Onboarding] Checking for magicToken:', magicToken ? 'FOUND' : 'NOT FOUND');
 
     if (magicToken) {
@@ -99,7 +100,7 @@ const OnboardingPage: React.FC = () => {
       console.log('⚠️ [Onboarding] No token and no session. Redirecting to login.');
       navigate('/staff/login');
     }
-  }, [searchParams, navigate]);
+  }, [magicToken, navigate]);
 
   const malawianPhoneRegex = /^(\+265|0)[89]\d{8}$/;
 
