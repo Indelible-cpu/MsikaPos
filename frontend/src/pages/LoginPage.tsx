@@ -140,16 +140,7 @@ const LoginPage: React.FC = () => {
           window.location.href = '/staff/dashboard';
         }
       }
-    } catch (err: unknown) {
-      console.error('Registration error:', err);
-      const error = err as Error;
-      if (error.name === 'NotAllowedError') {
-        toast.error('Registration canceled or not allowed.');
-      } else {
-        toast.error('Could not register biometrics.');
-      }
-      setShowBiometricPrompt(false);
-      
+      // On success, redirect based on role
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       if (user.role === 'CUSTOMER') {
         window.location.href = '/';
@@ -158,6 +149,18 @@ const LoginPage: React.FC = () => {
       } else {
         window.location.href = '/staff/dashboard';
       }
+    } catch (err: unknown) {
+      console.error('Biometric error:', err);
+      const error = err as Error;
+      
+      // If it's a real error (not just a cancel), show a toast
+      if (error.name !== 'NotAllowedError' && error.name !== 'AbortError') {
+        toast.error('Biometric verification failed.');
+      }
+      
+      // Stay on login page but offer password fallback
+      setLoginMode('password');
+      setLoading(false);
     } finally {
       setLoading(false);
     }
