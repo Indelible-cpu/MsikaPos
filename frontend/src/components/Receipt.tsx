@@ -149,18 +149,34 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
 
       <div className="text-center mt-6 border-t border-black border-dashed pt-4 flex flex-col items-center w-full">
         {customer && (
-          <div className="w-full py-3 mb-4 border border-black border-dotted flex flex-col items-center gap-2">
-            <div className="text-[8px] font-black tracking-widest opacity-40 uppercase">Customer Verification</div>
-            <div className="flex items-center gap-4">
+          <div className="w-full py-4 mb-4 border border-black border-dotted flex flex-col items-center gap-3">
+            <div className="text-[8px] font-black tracking-widest opacity-40 uppercase">Credit Ledger Summary</div>
+            
+            <div className="flex items-center gap-4 w-full px-4 mb-2">
               {customer.livePhoto && (
                 <img src={customer.livePhoto} alt="cust" className="w-10 h-10 rounded-lg object-cover border border-black/10 grayscale" />
               )}
-              <div className="text-left">
-                <div className="font-bold text-[9px]">{customer.name}</div>
+              <div className="text-left flex-1">
+                <div className="font-bold text-[10px]">{customer.name}</div>
                 <div className="text-[7px] font-bold opacity-60">ID: {customer.idNumber || 'N/A'}</div>
                 {customer.fingerprintData && (
-                  <div className="text-[7px] font-black text-emerald-600 mt-0.5">✓ BIOMETRIC SECURED</div>
+                  <div className="text-[7px] font-black text-emerald-600 mt-0.5 uppercase tracking-tighter">✓ Biometric Identity Secured</div>
                 )}
+              </div>
+            </div>
+
+            <div className="w-full px-4 space-y-1 text-[9px] border-t border-black/10 pt-2">
+              <div className="flex justify-between font-bold">
+                <span>Total Credit Limit</span>
+                <span>MK {(customer.totalCreditAmount || customer.balance).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between font-bold text-emerald-700">
+                <span>Total Paid to Date</span>
+                <span>MK {(customer.totalPaidAmount || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between font-black text-[11px] border-t border-black/20 pt-1 mt-1">
+                <span>REMAINING BALANCE</span>
+                <span>MK {customer.balance.toLocaleString()}</span>
               </div>
             </div>
           </div>

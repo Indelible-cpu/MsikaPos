@@ -1,19 +1,21 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../api/client';
-import { db, type LocalCustomer, type LocalProduct } from '../db/posDB';
+import { db, type LocalCustomer, type LocalProduct, type LocalDebtPayment } from '../db/posDB';
+import { useLocation } from 'react-router-dom';
 import { 
-  UserPlus, 
   Search, 
   Users, 
-  History,
+  History as HistoryIcon,
   Camera,
   Fingerprint,
   Upload,
   CheckCircle2,
   Calendar,
-  Trash2
+  Trash2,
+  Save,
+  RotateCcw
 } from 'lucide-react';
 
 import toast from 'react-hot-toast';
@@ -22,7 +24,6 @@ import { restrictPhone } from '../utils/phoneUtils';
 
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
-import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { SyncService } from '../services/SyncService';
 
 interface Credit {
@@ -58,8 +59,7 @@ const MALAWI_PHONE_REGEX = /^\d{10}$|^\d{13}$/;
 const mockEncrypt = (data: string) => btoa(data);
 
 const DebtPage: React.FC = () => {
-  const { isReadOnly } = useFeatureAccess();
-  const readOnly = isReadOnly('CUSTOMERS');
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
@@ -67,6 +67,10 @@ const DebtPage: React.FC = () => {
   const [payAmount, setPayAmount] = useState('');
   const [clearedReceipt, setClearedReceipt] = useState<ReceiptData | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const [signature, setSignature] = useState<string | null>(null);
+  const sigCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [custForm, setCustForm] = useState({ 
     name: '', 
@@ -85,12 +89,28 @@ const DebtPage: React.FC = () => {
     setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '', fingerprintData: '' });
   };
 
+  // Handle POS Redirect
+  useEffect(() => {
+    if (location.state?.creditSale) {
+      resetForm();
+      const timer = setTimeout(() => setIsAddModalOpen(true), 0);
+      // Clean up state so it doesn't re-trigger on refresh
+      window.history.replaceState({}, document.title);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
+
   const customers = useLiveQuery(
     async () => {
       const all = await db.customers.where('name').startsWithIgnoreCase(searchTerm).toArray();
       return all.filter(c => c.balance > 0);
     },
     [searchTerm]
+  );
+
+  const payments = useLiveQuery<LocalDebtPayment[]>(
+    () => selectedCustomer ? db.debtPayments.where('customerId').equals(selectedCustomer.id).reverse().toArray() : Promise.resolve([] as LocalDebtPayment[]),
+    [selectedCustomer]
   );
 
   const { data: allCredits, isLoading: loadingCredits } = useQuery({
@@ -103,23 +123,32 @@ const DebtPage: React.FC = () => {
 
   const payMutation = useMutation({
     mutationFn: async (data: { id: number, amount: number }) => {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const cashierName = user.fullname || 'Unknown Cashier';
       const paymentId = crypto.randomUUID();
+      
+      if (!selectedCustomer) throw new Error('No customer selected');
+      
+      const newTotalPaid = (selectedCustomer.totalPaidAmount || 0) + data.amount;
+      const newBalance = selectedCustomer.balance - data.amount;
+
       await db.debtPayments.add({
         id: paymentId,
-        customerId: selectedCustomer?.id || '',
+        customerId: selectedCustomer.id,
         amount: data.amount,
         paymentMethod: 'Cash',
+        cashierName,
+        signature: signature || undefined,
         createdAt: new Date().toISOString(),
         synced: 0
       });
 
-      if (selectedCustomer) {
-        await db.customers.update(selectedCustomer.id, {
-          balance: selectedCustomer.balance - data.amount,
-          updatedAt: new Date().toISOString(),
-          synced: 0
-        });
-      }
+      await db.customers.update(selectedCustomer.id, {
+        balance: newBalance,
+        totalPaidAmount: newTotalPaid,
+        updatedAt: new Date().toISOString(),
+        synced: 0
+      });
 
       void SyncService.pushSales();
       
@@ -134,9 +163,10 @@ const DebtPage: React.FC = () => {
           invoiceNo: `REPAY-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
           date: new Date().toISOString(),
           mode: 'Cash',
-          customerName: selectedCustomer?.name,
+          customerName: selectedCustomer.name,
           paid: data.amount,
-          change: 0
+          change: 0,
+          signature: signature || undefined
         }
       };
     },
@@ -193,6 +223,30 @@ const DebtPage: React.FC = () => {
     setUseCamera(false);
   };
 
+  const startSignature = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000';
+    const rect = canvas.getBoundingClientRect();
+    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
+    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
+    ctx.beginPath(); ctx.moveTo(x, y);
+    const draw = (me: MouseEvent | TouchEvent) => {
+      const mx = ('touches' in me) ? me.touches[0].clientX - rect.left : (me as MouseEvent).clientX - rect.left;
+      const my = ('touches' in me) ? me.touches[0].clientY - rect.top : (me as MouseEvent).clientY - rect.top;
+      ctx.lineTo(mx, my); ctx.stroke();
+    };
+    const stop = () => {
+      window.removeEventListener('mousemove', draw as EventListener); window.removeEventListener('mouseup', stop);
+      window.removeEventListener('touchmove', draw as EventListener); window.removeEventListener('touchend', stop);
+      setSignature(canvas.toDataURL());
+    };
+    window.addEventListener('mousemove', draw as EventListener); window.addEventListener('mouseup', stop);
+    window.addEventListener('touchmove', draw as EventListener, { passive: false }); window.addEventListener('touchend', stop);
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -212,31 +266,90 @@ const DebtPage: React.FC = () => {
 
   const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!MALAWI_PHONE_REGEX.test(custForm.phone)) return toast.error('Invalid phone');
+    if (!MALAWI_PHONE_REGEX.test(custForm.phone)) return toast.error('Invalid Malawian phone format (10 or 13 digits)');
+    if (!custForm.name || !custForm.village || !custForm.idNumber) return toast.error('Please fill all mandatory fields');
+    
     try {
-      await db.customers.add({
+      const customerId = crypto.randomUUID();
+      const creditSale = location.state?.creditSale;
+      
+      const newCustomer: LocalCustomer = {
         ...custForm,
-        id: crypto.randomUUID(),
+        id: customerId,
         idNumber: custForm.idNumber.toUpperCase(),
-        balance: 0,
+        balance: creditSale ? creditSale.total : 0,
+        totalCreditAmount: creditSale ? creditSale.total : 0,
+        totalPaidAmount: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         synced: 0
-      });
-      toast.success('Customer registered');
+      };
+
+      await db.customers.add(newCustomer);
+
+      if (creditSale) {
+        // Log the initial sale
+        const saleData = {
+          ...creditSale,
+          id: crypto.randomUUID(),
+          customerId,
+          paymentMode: 'Credit',
+          synced: 0
+        };
+        await db.salesQueue.add(saleData);
+        
+        // Update product quantities
+        for (const item of creditSale.items) {
+          const product = await db.products.get(item.product.id);
+          if (product && !product.isService) {
+            await db.products.update(item.product.id, {
+              quantity: Math.max(0, product.quantity - item.quantity),
+              updatedAt: new Date().toISOString()
+            });
+          }
+        }
+      }
+
+      toast.success(creditSale ? 'Credit sale registered successfully' : 'Customer profile registered');
       setIsAddModalOpen(false);
       resetForm();
-    } catch { toast.error('Failed to add'); }
+      
+      if (creditSale) {
+        setSelectedCustomer(newCustomer);
+      }
+    } catch (err) { 
+      console.error(err);
+      toast.error('Registration failed'); 
+    }
+  };
+
+  const handleUpdateCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCustomer) return;
+    if (!MALAWI_PHONE_REGEX.test(custForm.phone)) return toast.error('Invalid phone format');
+    
+    try {
+      await db.customers.update(selectedCustomer.id, {
+        ...custForm,
+        idNumber: custForm.idNumber.toUpperCase(),
+        updatedAt: new Date().toISOString(),
+        synced: 0
+      });
+      
+      const updated = await db.customers.get(selectedCustomer.id);
+      if (updated) setSelectedCustomer(updated);
+      
+      toast.success('Profile updated');
+      setIsEditing(false);
+    } catch { toast.error('Update failed'); }
   };
 
   return (
     <div className="flex flex-col h-screen bg-surface-bg overflow-hidden">
       <header className="bg-surface-card border-b border-surface-border px-6 py-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
+          <h1 className="text-sm font-black uppercase tracking-widest text-primary-500">Credit Center</h1>
         </div>
-        {!readOnly && (
-          <button type="button" title="Add New Customer" aria-label="Add New Customer" onClick={() => { resetForm(); setIsAddModalOpen(true); }} className="btn-primary !px-4 !py-2 text-[9px] font-black uppercase tracking-widest"><UserPlus className="w-3.5 h-3.5 mr-2 inline" /> Add Customer</button>
-        )}
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -268,21 +381,31 @@ const DebtPage: React.FC = () => {
             <div className="p-6 md:p-10 space-y-10 animate-slide-in">
               <div className="bg-surface-card p-10 rounded-[3rem] border border-surface-border shadow-xl flex flex-col md:flex-row justify-between items-center gap-8">
                 <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 bg-primary-500/10 rounded-3xl flex items-center justify-center text-primary-500"><History className="w-10 h-10" /></div>
+                  <div className="w-20 h-20 bg-primary-500/10 rounded-3xl flex items-center justify-center text-primary-500"><HistoryIcon className="w-10 h-10" /></div>
                   <div>
                     <h2 className="text-3xl font-black tracking-tighter uppercase">{selectedCustomer.name}</h2>
                     <p className="text-[10px] font-black opacity-30 tracking-[0.2em] uppercase mt-1">Outstanding Ledger Account</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-[10px] font-black text-rose-500/40 uppercase mb-1 tracking-widest">Total Debt Amount</div>
-                  <div className="text-5xl font-black text-rose-500 tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
+                <div className="flex gap-12 text-right">
+                  <div>
+                    <div className="text-[9px] font-black opacity-30 uppercase mb-1 tracking-widest">Total Credit</div>
+                    <div className="text-xl font-black tracking-tighter">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] font-black opacity-30 uppercase mb-1 tracking-widest">Total Paid</div>
+                    <div className="text-xl font-black text-emerald-500 tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-[9px] font-black text-rose-500/40 uppercase mb-1 tracking-widest">Balance Due</div>
+                    <div className="text-5xl font-black text-rose-500 tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-surface-border pb-4">
-                  <h3 className="text-lg font-black tracking-tighter flex items-center gap-3"><History className="w-5 h-5 text-primary-500" /> Ledger Details</h3>
+                  <h3 className="text-lg font-black tracking-tighter flex items-center gap-3"><HistoryIcon className="w-5 h-5 text-primary-500" /> Ledger Details</h3>
                   <button type="button" title="Open Full Profile" aria-label="Open Full Profile" onClick={() => setIsProfileModalOpen(true)} className="text-[10px] font-black text-primary-500 uppercase tracking-widest underline">Re-verify Profile</button>
                 </div>
                 <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
@@ -323,6 +446,42 @@ const DebtPage: React.FC = () => {
                     </table>
                   </div>
                 </div>
+
+                <div className="space-y-6 pt-10">
+                  <h3 className="text-lg font-black tracking-tighter flex items-center gap-3"><HistoryIcon className="w-5 h-5 text-emerald-500" /> Repayment History</h3>
+                  <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                          <tr className="bg-surface-bg/50 text-[9px] font-black text-surface-text/40 tracking-widest border-b border-surface-border">
+                            <th className="px-8 py-5">Date</th>
+                            <th className="px-8 py-5">Cashier</th>
+                            <th className="px-8 py-5 text-right">Amount Paid</th>
+                            <th className="px-8 py-5 text-right">Method</th>
+                            <th className="px-8 py-5 text-center">Verification</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-surface-border/50">
+                          {payments?.length === 0 ? (
+                            <tr><td colSpan={5} className="p-10 text-center text-[10px] font-bold text-surface-text/20 uppercase">No payment history</td></tr>
+                          ) : (
+                            payments?.map(p => (
+                              <tr key={p.id} className="hover:bg-emerald-500/[0.01]">
+                                <td className="px-8 py-5"><span className="text-[11px] font-black">{new Date(p.createdAt).toLocaleDateString()}</span></td>
+                                <td className="px-8 py-5"><span className="text-[11px] font-black uppercase">{p.cashierName || 'System'}</span></td>
+                                <td className="px-8 py-5 text-right font-black text-emerald-500">MK {p.amount.toLocaleString()}</td>
+                                <td className="px-8 py-5 text-right text-[11px] font-black uppercase opacity-40">{p.paymentMethod}</td>
+                                <td className="px-8 py-5 text-center">
+                                  {p.signature ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-rose-500 font-black text-[8px]">NO SIGN</span>}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -335,32 +494,45 @@ const DebtPage: React.FC = () => {
       </div>
 
       {paymentModal && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-zinc-900/60 backdrop-blur-md p-6" onClick={() => setPaymentModal(null)}>
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-zinc-900/60 backdrop-blur-md p-6" onClick={() => { setPaymentModal(null); setSignature(null); }}>
           <div className="bg-surface-card w-full max-w-md rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="p-10 space-y-8">
-              <h3 className="text-xl font-black">Confirm Payment</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter">Record Payment</h3>
               <div className="space-y-4">
-                <label className="text-[10px] font-black opacity-30 uppercase tracking-widest">Amount (MK)</label>
-                <input title="Payment Amount" aria-label="Payment Amount" placeholder="0.00" type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="input-field !text-2xl !py-6 w-full" />
+                <label className="text-[10px] font-black opacity-30 uppercase tracking-widest ml-1">Amount (MK)</label>
+                <input title="Payment Amount" aria-label="Payment Amount" placeholder="0.00" type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="input-field !text-2xl !py-6 w-full font-black" />
               </div>
-              <div className="flex gap-4">
-                <button type="button" title="Cancel Payment" aria-label="Cancel Payment" onClick={() => setPaymentModal(null)} className="flex-1 py-5 bg-surface-bg border border-surface-border rounded-2xl font-black text-[10px] uppercase">Cancel</button>
+
+              <div className="space-y-4 pt-4 border-t border-surface-border/30">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-black opacity-30 uppercase tracking-widest ml-1">Authorized Signature</label>
+                  <button type="button" title="Clear Signature" aria-label="Clear Signature" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 hover:bg-rose-500/10 p-2 rounded-lg transition-colors"><RotateCcw className="w-4 h-4" /></button>
+                </div>
+                <div className="bg-white border-2 border-surface-border rounded-2xl h-32 relative overflow-hidden group">
+                  <canvas ref={sigCanvasRef} width={800} height={240} onMouseDown={startSignature} onTouchStart={startSignature} className="w-full h-full cursor-crosshair touch-none" />
+                  {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none uppercase font-black text-[10px] tracking-[0.3em]">Sign here to confirm</div>}
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button type="button" onClick={() => { setPaymentModal(null); setSignature(null); }} className="flex-1 py-5 bg-surface-bg border border-surface-border rounded-2xl font-black text-[10px] uppercase">Discard</button>
                 <button
                   type="button"
-                  title="Confirm Payment"
-                  aria-label="Confirm Payment"
+                  disabled={!signature || !payAmount || Number(payAmount) <= 0}
                   onClick={() => {
                     const amount = Number(payAmount);
+                    if (amount > (selectedCustomer?.balance || 0)) return toast.error('Overpayment not allowed');
+                    
                     toast(
                       (t) => (
                         <div className="flex flex-col gap-3">
-                          <p className="text-sm font-bold">Confirm payment of <span className="text-primary-500">MK {amount.toLocaleString()}</span>?</p>
+                          <p className="text-sm font-bold">Confirm payment of <span className="text-emerald-500">MK {amount.toLocaleString()}</span>?</p>
                           <div className="flex gap-2">
                             <button
                               type="button"
                               onClick={() => { toast.dismiss(t.id); payMutation.mutate({ id: paymentModal.id, amount }); }}
                               className="flex-1 py-2 bg-primary-500 text-white rounded-lg text-xs font-black"
-                            >Yes, confirm</button>
+                            >Yes, Confirm</button>
                             <button
                               type="button"
                               onClick={() => toast.dismiss(t.id)}
@@ -372,8 +544,8 @@ const DebtPage: React.FC = () => {
                       { duration: 8000 }
                     );
                   }}
-                  className="flex-[2] py-5 bg-primary-500 text-white rounded-2xl font-black text-[10px] uppercase"
-                >Confirm</button>
+                  className={clsx("flex-[2] py-5 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg", (!signature || !payAmount) ? "bg-surface-bg border border-surface-border opacity-50 cursor-not-allowed" : "bg-primary-500 text-white shadow-primary-500/20 active:scale-95")}
+                >Complete Payment</button>
               </div>
             </div>
           </div>
@@ -383,52 +555,96 @@ const DebtPage: React.FC = () => {
       <Modal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} title="Full customer profile" maxWidth="max-w-2xl">
         {selectedCustomer && (
           <div className="p-10 space-y-10">
-            <div className="flex flex-col md:flex-row gap-10 items-center md:items-start">
-              <div className="w-48 h-48 rounded-[3rem] bg-surface-bg border border-surface-border overflow-hidden shadow-2xl shrink-0">
-                {selectedCustomer.livePhoto ? <img src={selectedCustomer.livePhoto} alt="" className="w-full h-full object-cover" /> : <Users className="w-20 h-20 opacity-10 mx-auto mt-12" />}
-              </div>
-              <div className="flex-1 space-y-6">
-                <div><h3 className="text-3xl font-black uppercase">{selectedCustomer.name}</h3><p className="text-primary-500 text-[10px] font-black uppercase">Registered {new Date(selectedCustomer.createdAt).toLocaleDateString()}</p></div>
-                <div className="grid grid-cols-2 gap-4">
-                  {[ {label: 'Phone', val: selectedCustomer.phone}, {label: 'ID Number', val: selectedCustomer.idNumber || 'N/A'}, {label: 'Location', val: selectedCustomer.village || 'N/A'}, {label: 'Biometrics', val: selectedCustomer.fingerprintData ? 'VERIFIED' : 'NOT ENROLLED'} ].map((item, i) => (
-                    <div key={i} className="bg-surface-bg p-5 rounded-2xl border border-surface-border">
-                      <div className="text-[8px] font-black opacity-30 uppercase mb-1">{item.label}</div>
-                      <div className="text-sm font-black">{item.val}</div>
+            {isEditing ? (
+              <form onSubmit={handleUpdateCustomer} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black opacity-30 uppercase ml-1">Full Name</label>
+                      <input required placeholder="Name" className="input-field w-full" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
                     </div>
-                  ))}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black opacity-30 uppercase ml-1">Phone</label>
+                      <input required placeholder="Phone" className="input-field w-full" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black opacity-30 uppercase ml-1">National ID</label>
+                      <input placeholder="National ID" className="input-field w-full uppercase" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black opacity-30 uppercase ml-1">Location/Village</label>
+                      <input placeholder="Location" className="input-field w-full" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="aspect-square bg-surface-bg rounded-3xl border border-surface-border flex flex-col items-center justify-center overflow-hidden group relative">
+                      {custForm.livePhoto ? <img src={custForm.livePhoto} alt="" className="w-full h-full object-cover" /> : useCamera ? <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" /> : <Camera className="w-10 h-10 opacity-10" />}
+                      <div className="absolute inset-x-0 bottom-0 p-3 bg-black/40 backdrop-blur-md flex gap-2">
+                        {!useCamera ? (
+                          <button type="button" title="Start Camera" aria-label="Start Camera" onClick={startCamera} className="flex-1 bg-white p-2 rounded-xl"><Camera className="w-4 h-4 mx-auto" /></button>
+                        ) : (
+                          <button type="button" title="Capture Photo" aria-label="Capture Photo" onClick={capturePhoto} className="flex-1 bg-emerald-500 text-white p-2 rounded-xl"><CheckCircle2 className="w-4 h-4 mx-auto" /></button>
+                        )}
+                        <label className="flex-1 bg-white p-2 rounded-xl cursor-pointer"><Upload className="w-4 h-4 mx-auto" /><input type="file" title="Upload Photo" aria-label="Upload Photo" className="hidden" onChange={handleFileUpload} /></label>
+                      </div>
+                    </div>
+                    <button type="button" onClick={captureFingerprint} className={clsx("w-full py-4 rounded-2xl border flex items-center justify-center gap-3", custForm.fingerprintData ? "bg-emerald-500/10 text-emerald-500" : "bg-surface-bg")}>
+                      <Fingerprint className="w-5 h-5" /> <span className="text-[10px] font-black uppercase">{custForm.fingerprintData ? 'Update Biometrics' : 'Scan Finger'}</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </div>
-            {!readOnly && (
-              <div className="pt-6 border-t border-surface-border flex justify-end">
-                <button
-                  type="button"
-                  title="Delete Profile Permanently"
-                  aria-label="Delete Profile Permanently"
-                  onClick={() => {
-                    toast(
-                      (t) => (
-                        <div className="flex flex-col gap-3">
-                          <p className="text-sm font-bold">Permanently delete <span className="text-red-500">{selectedCustomer.name}</span>? This cannot be undone.</p>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={async () => { toast.dismiss(t.id); await db.customers.delete(selectedCustomer.id); setSelectedCustomer(null); setIsProfileModalOpen(false); toast.success('Profile removed'); }}
-                              className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-black"
-                            >Yes, delete</button>
-                            <button
-                              type="button"
-                              onClick={() => toast.dismiss(t.id)}
-                              className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
-                            >Cancel</button>
-                          </div>
+                <div className="flex gap-4 pt-6 border-t border-surface-border">
+                   <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-4 bg-surface-bg rounded-2xl font-black text-[10px] uppercase">Cancel</button>
+                   <button type="submit" className="flex-[2] btn-primary !py-4 text-[10px] font-black uppercase flex items-center justify-center gap-3"><Save className="w-4 h-4" /> Save Changes</button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex flex-col md:flex-row gap-10 items-center md:items-start">
+                  <div className="w-48 h-48 rounded-[3rem] bg-surface-bg border border-surface-border overflow-hidden shadow-2xl shrink-0">
+                    {selectedCustomer.livePhoto ? <img src={selectedCustomer.livePhoto} alt="" className="w-full h-full object-cover" /> : <Users className="w-20 h-20 opacity-10 mx-auto mt-12" />}
+                  </div>
+                  <div className="flex-1 space-y-6">
+                    <div><h3 className="text-3xl font-black uppercase">{selectedCustomer.name}</h3><p className="text-primary-500 text-[10px] font-black uppercase">Registered {new Date(selectedCustomer.createdAt).toLocaleDateString()}</p></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {[ {label: 'Phone', val: selectedCustomer.phone}, {label: 'ID Number', val: selectedCustomer.idNumber || 'N/A'}, {label: 'Location', val: selectedCustomer.village || 'N/A'}, {label: 'Biometrics', val: selectedCustomer.fingerprintData ? 'VERIFIED' : 'NOT ENROLLED'} ].map((item, i) => (
+                        <div key={i} className="bg-surface-bg p-5 rounded-2xl border border-surface-border">
+                          <div className="text-[8px] font-black opacity-30 uppercase mb-1">{item.label}</div>
+                          <div className="text-sm font-black">{item.val}</div>
                         </div>
-                      ),
-                      { duration: 8000 }
-                    );
-                  }}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-500/10 text-red-500 rounded-xl text-[9px] font-black uppercase"
-                ><Trash2 className="w-4 h-4" /> Delete Profile</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center pt-6 border-t border-surface-border">
+                  <button type="button" onClick={() => { setCustForm({ ...selectedCustomer } as typeof custForm); setIsEditing(true); }} className="px-8 py-3 bg-primary-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-primary-500/20">Edit Details</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toast(
+                        (t) => (
+                          <div className="flex flex-col gap-3">
+                            <p className="text-sm font-bold">Permanently delete <span className="text-red-500">{selectedCustomer.name}</span>? This cannot be undone.</p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={async () => { toast.dismiss(t.id); await db.customers.delete(selectedCustomer.id); setSelectedCustomer(null); setIsProfileModalOpen(false); toast.success('Profile removed'); }}
+                                className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-black"
+                              >Yes, delete</button>
+                              <button
+                                type="button"
+                                onClick={() => toast.dismiss(t.id)}
+                                className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
+                              >Cancel</button>
+                            </div>
+                          </div>
+                        ),
+                        { duration: 8000 }
+                      );
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-red-500/5 text-red-500/40 hover:text-red-500 rounded-xl text-[9px] font-black uppercase transition-colors"
+                  ><Trash2 className="w-4 h-4" /> Delete Profile</button>
+                </div>
               </div>
             )}
           </div>

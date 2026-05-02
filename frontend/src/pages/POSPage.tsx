@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
-import type { LocalProduct, LocalSale, LocalCustomer, LocalSaleItem } from '../db/posDB';
+import type { LocalProduct, LocalSale, LocalSaleItem } from '../db/posDB';
 import { toSentenceCase } from '../utils/stringUtils';
 import { calculateEffectiveDiscount } from '../utils/discountUtils';
-import { restrictPhone } from '../utils/phoneUtils';
 import { 
   Search, 
   ShoppingCart, 
   RefreshCw, 
   Users, 
-  ChevronRight, 
   Plus, 
   Minus, 
   PackageSearch, 
@@ -32,6 +30,7 @@ import clsx from 'clsx';
 import * as h2i from 'html-to-image';
 
 import { Receipt } from '../components/Receipt';
+import { useNavigate } from 'react-router-dom';
 import BarcodeScanner from '../components/BarcodeScanner';
 
 const generateInvoiceNo = () => `INV-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -42,24 +41,11 @@ interface TaxConfig {
 }
 
 const POSPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentMode, setPaymentMode] = useState<'Cash' | 'Card' | 'Momo' | 'Credit'>('Cash');
   const [cart, setCart] = useState<{ product: LocalProduct; quantity: number }[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [showCustomerSelector, setShowCustomerSelector] = useState(false);
-  const [isAddingCustomer, setIsAddingCustomer] = useState(false);
-  const [custSearch, setCustSearch] = useState('');
-  
-  const [custForm, setCustForm] = useState({ 
-    name: '', 
-    phone: '',
-    idNumber: '',
-    village: '',
-    livePhoto: '',
-    fingerprintData: ''
-  });
-
   const [showScanner, setShowScanner] = useState(false);
   const [amountReceived, setAmountReceived] = useState<string>('');
   const [discount, setDiscount] = useState<number>(0);
@@ -133,11 +119,6 @@ const POSPage: React.FC = () => {
       : Promise.resolve([] as LocalProduct[]),
     [searchTerm]
   );
-  
-  const customers = useLiveQuery(
-    () => db.customers.where('name').startsWithIgnoreCase(custSearch).toArray(),
-    [custSearch]
-  );
 
   const addToCart = useCallback((product: LocalProduct) => {
     soundService.playBeep();
@@ -174,10 +155,21 @@ const POSPage: React.FC = () => {
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     
-    if (paymentMode === 'Credit' && !selectedCustomerId) {
-      toast.error('Customer required for credit sale');
-      setIsAddingCustomer(true);
-      setShowCustomerSelector(true);
+    if (paymentMode === 'Credit') {
+      // Navigate to Credit Center with transaction data
+      navigate('/staff/debt', { 
+        state: { 
+          creditSale: {
+            items: cart,
+            subtotal: cartSubtotal,
+            discount,
+            tax: taxAmount,
+            total: finalTotal,
+            invoiceNo: generateInvoiceNo(),
+            date: new Date().toISOString()
+          } 
+        } 
+      });
       return;
     }
 
@@ -216,23 +208,11 @@ const POSPage: React.FC = () => {
         bankName,
         accountNumber,
         amountReceived: parseFloat(amountReceived) || paid,
-        customerId: selectedCustomerId || undefined
+        customerId: undefined
       };
 
       await db.salesQueue.add(saleData);
 
-      let customerName = undefined;
-      if (selectedCustomerId) {
-        const customer = await db.customers.get(selectedCustomerId);
-        if (customer) {
-          customerName = customer.name;
-          await db.customers.update(selectedCustomerId, {
-            balance: customer.balance + (paymentMode === 'Credit' ? finalTotal : 0),
-            updatedAt: new Date().toISOString(),
-            synced: 0
-          });
-        }
-      }
 
       soundService.playSaleComplete();
       
@@ -245,17 +225,16 @@ const POSPage: React.FC = () => {
         invoiceNo,
         date: new Date().toISOString(),
         mode: paymentMode,
-        customerName,
+        customerName: undefined,
         paid,
         change: changeDue,
         bankName,
         accountNumber,
-        customerId: selectedCustomerId || undefined,
+        customerId: undefined,
         signature: signature || undefined
       });
 
       setCart([]);
-      setSelectedCustomerId(null);
       setAmountReceived('');
       setBankName('');
       setAccountNumber('');
@@ -294,27 +273,6 @@ const POSPage: React.FC = () => {
     window.addEventListener('touchmove', draw as EventListener, { passive: false }); window.addEventListener('touchend', stop);
   };
 
-  const handleQuickAddCustomer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!custForm.name || !custForm.phone) return;
-    try {
-      const id = crypto.randomUUID();
-      const newCustomer: LocalCustomer = {
-        ...custForm,
-        id,
-        idNumber: custForm.idNumber.toUpperCase(),
-        balance: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        synced: 0
-      };
-      await db.customers.add(newCustomer);
-      setSelectedCustomerId(id);
-      setIsAddingCustomer(false);
-      setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '', fingerprintData: '' });
-      toast.success('Customer added');
-    } catch { toast.error('Failed to add customer'); }
-  };
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-surface-bg overflow-hidden relative">
@@ -330,42 +288,6 @@ const POSPage: React.FC = () => {
           />
         )}
 
-        {showCustomerSelector && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card rounded-3xl w-full max-w-md max-h-[80vh] flex flex-col border border-surface-border overflow-hidden">
-              <div className="p-8 border-b border-surface-border">
-                <h3 className="text-xl font-black uppercase mb-4">Attach Customer</h3>
-                {!isAddingCustomer ? (
-                  <div className="space-y-4">
-                    <input title="Search Customers" aria-label="Search Customers" placeholder="Search..." className="input-field w-full" value={custSearch} onChange={e => setCustSearch(e.target.value)} />
-                    <button type="button" title="Add New Customer" aria-label="Add New Customer" onClick={() => setIsAddingCustomer(true)} className="w-full py-4 bg-primary-500/10 text-primary-500 rounded-2xl font-black uppercase">New Customer</button>
-                  </div>
-                ) : (
-                  <button type="button" title="Go Back" aria-label="Go Back" onClick={() => setIsAddingCustomer(false)} className="text-xs font-black uppercase text-primary-500">← Back</button>
-                )}
-              </div>
-              <div className="flex-1 overflow-y-auto p-4">
-                {isAddingCustomer ? (
-                  <form onSubmit={handleQuickAddCustomer} className="space-y-4">
-                    <input required title="Full Name" aria-label="Full Name" placeholder="Name" className="input-field w-full" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
-                    <input required title="Phone Number" aria-label="Phone Number" placeholder="Phone" className="input-field w-full" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
-                    <button type="submit" title="Save Customer Profile" aria-label="Save Customer Profile" className="w-full btn-primary !py-4">Save Profile</button>
-                  </form>
-                ) : (
-                  <div className="space-y-2">
-                    {customers?.map(c => (
-                      <button key={c.id} type="button" title={`Select ${c.name}`} aria-label={`Select ${c.name}`} onClick={() => { setSelectedCustomerId(c.id); setShowCustomerSelector(false); }} className="w-full p-4 flex justify-between items-center border border-surface-border rounded-xl">
-                        <span className="font-bold uppercase">{c.name}</span>
-                        <ChevronRight className="w-4 h-4 opacity-20" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button type="button" title="Close Selector" aria-label="Close Selector" onClick={() => setShowCustomerSelector(false)} className="p-4 uppercase font-black text-[10px]">Close</button>
-            </motion.div>
-          </motion.div>
-        )}
 
         {showReceipt && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -563,7 +485,7 @@ const POSPage: React.FC = () => {
                            : "bg-primary-500 text-white shadow-primary-500/20"
                        )}
                      >
-                       {paymentMode === 'Credit' && !selectedCustomerId ? 'Add Customer Detail' : 'Complete Sale'}
+                       {paymentMode === 'Credit' ? 'Add To Customer' : 'Complete Sale'}
                      </button>
                   </div>
                 </div>

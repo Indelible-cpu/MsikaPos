@@ -59,6 +59,8 @@ export interface LocalCustomer {
   name: string;
   phone: string;
   balance: number; 
+  totalCreditAmount: number; // Added: sum of all credit sales
+  totalPaidAmount: number;   // Added: sum of all payments
   idNumber?: string;
   village?: string;
   livePhoto?: string;
@@ -73,6 +75,8 @@ export interface LocalDebtPayment {
   customerId: string;
   amount: number;
   paymentMethod: string;
+  cashierName?: string;
+  signature?: string;
   reference?: string;
   createdAt: string;
   synced: number;
@@ -138,7 +142,7 @@ export class POSDatabase extends Dexie {
 
   constructor() {
     super('JEF_POS_DB');
-    this.version(9).stores({
+    this.version(10).stores({
       products: 'id, categoryId, sku, name',
       categories: 'id, slug',
       salesQueue: 'id, status, synced, createdAt',
