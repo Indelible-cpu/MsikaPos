@@ -41,9 +41,9 @@ const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   // PWA Auto-Update Logic
-  const {
-    updateServiceWorker
-  } = useRegisterSW({
+  const updateSWRef = React.useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
+
+  const pwaOptions = React.useMemo(() => ({
     onRegistered(r: ServiceWorkerRegistration | undefined) {
       // Check for updates every 10 minutes
       if (r) {
@@ -58,7 +58,7 @@ const App: React.FC = () => {
           <p className="text-[10px] font-black tracking-widest text-white">New update available!</p>
           <button 
             onClick={() => {
-              updateServiceWorker(true);
+              if (updateSWRef.current) updateSWRef.current(true);
               toast.dismiss(t.id);
             }}
             className="px-4 py-2 bg-primary-500 text-white rounded-lg text-[9px] font-black tracking-[0.2em]"
@@ -71,7 +71,13 @@ const App: React.FC = () => {
         position: 'bottom-center'
       });
     }
-  });
+  }), []);
+
+  const { updateServiceWorker } = useRegisterSW(pwaOptions);
+
+  useEffect(() => {
+    updateSWRef.current = updateServiceWorker;
+  }, [updateServiceWorker]);
 
 
   useEffect(() => {
