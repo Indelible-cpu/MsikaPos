@@ -23,6 +23,8 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+  const [loginMode, setLoginMode] = useState<'biometric' | 'password'>('password');
+  const [hasPromptedBiometric, setHasPromptedBiometric] = useState(false);
 
   const handleBiometricLogin = useCallback(async () => {
     try {
@@ -164,16 +166,32 @@ const LoginPage: React.FC = () => {
   useEffect(() => {
     const checkBiometrics = async () => {
       const isMobile = window.innerWidth < 768;
-      if (window.PublicKeyCredential && isMobile) {
+      if (window.PublicKeyCredential) {
+        // We check availability but also if the user HAS a registered ID for THIS site
         const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         const registered = localStorage.getItem('biometricRegistered') === 'true';
-        setIsBiometricAvailable(available && registered);
+        
+        setIsBiometricAvailable(available);
+        if (registered) {
+          setLoginMode('biometric');
+        }
       } else {
         setIsBiometricAvailable(false);
       }
     };
     checkBiometrics();
   }, []);
+
+  // Auto-trigger biometric prompt
+  useEffect(() => {
+    if (loginMode === 'biometric' && !hasPromptedBiometric && !loading) {
+      const timer = setTimeout(() => {
+        handleBiometricLogin();
+        setHasPromptedBiometric(true);
+      }, 500); // Small delay for smooth entry
+      return () => clearTimeout(timer);
+    }
+  }, [loginMode, hasPromptedBiometric, loading, handleBiometricLogin]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,72 +265,135 @@ const LoginPage: React.FC = () => {
           </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black  tracking-widest text-surface-text/30 pl-1">Username</label>
-            <div className="relative">
-              <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-text/20" />
-              <input 
-                type="text" 
-                required
-                autoComplete="username"
-                className="input-field w-full pl-12 h-14 text-sm font-bold bg-surface-bg/50 border-surface-border/50"
-                placeholder="Enter username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-          </div>
+        <AnimatePresence mode="wait">
+          {loginMode === 'password' ? (
+            <motion.form 
+              key="password-form"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              onSubmit={handleLogin} 
+              className="space-y-6"
+            >
+              <div className="space-y-2">
+                <label className="text-[10px] font-black  tracking-widest text-surface-text/30 pl-1">Username</label>
+                <div className="relative">
+                  <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-text/20" />
+                  <input 
+                    type="text" 
+                    required
+                    autoComplete="username"
+                    className="input-field w-full pl-12 h-14 text-sm font-bold bg-surface-bg/50 border-surface-border/50"
+                    placeholder="Enter username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black  tracking-widest text-surface-text/30 pl-1">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-text/20" />
-              <input 
-                type={showPassword ? 'text' : 'password'}
-                required
-                autoComplete="current-password"
-                className="input-field w-full pl-12 pr-12 h-14 text-sm font-bold bg-surface-bg/50 border-surface-border/50"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-text/20 hover:text-surface-text transition-colors"
+              <div className="space-y-2">
+                <label className="text-[10px] font-black  tracking-widest text-surface-text/30 pl-1">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-text/20" />
+                  <input 
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    autoComplete="current-password"
+                    className="input-field w-full pl-12 pr-12 h-14 text-sm font-bold bg-surface-bg/50 border-surface-border/50"
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-text/20 hover:text-surface-text transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full h-16 bg-primary-500 text-white rounded-3xl font-black  tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-primary-500/20 active:scale-95 transition-all"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {loading ? <div className="loading-spinner w-6 h-6 border-2 border-t-white" /> : (
+                  <>
+                    Sign in
+                    <ChevronRight className="w-5 h-5" />
+                  </>
+                )}
               </button>
-            </div>
-          </div>
 
-          <button 
-            type="submit"
-            disabled={loading}
-            className="w-full h-16 bg-primary-500 text-white rounded-3xl font-black  tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-primary-500/20 active:scale-95 transition-all"
-          >
-            {loading ? <div className="loading-spinner w-6 h-6 border-2 border-t-white" /> : (
-              <>
-                Sign in
-                <ChevronRight className="w-5 h-5" />
-              </>
-            )}
-          </button>
-        </form>
+              {localStorage.getItem('biometricRegistered') === 'true' && (
+                <div className="text-center">
+                  <button 
+                    type="button"
+                    onClick={() => setLoginMode('biometric')}
+                    className="text-[10px] font-black tracking-widest text-primary-500 hover:text-primary-400 transition-colors"
+                  >
+                    Use Biometric Unlock
+                  </button>
+                </div>
+              )}
+            </motion.form>
+          ) : (
+            <motion.div
+              key="biometric-view"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="flex flex-col items-center py-4"
+            >
+              <div className="text-center mb-8">
+                <h2 className="text-xl font-black tracking-tight mb-2">Biometric Security</h2>
+                <p className="text-[9px] font-black tracking-widest text-surface-text/30 uppercase">Fingerprint or Face Recognition</p>
+              </div>
+
+              <button 
+                onClick={handleBiometricLogin}
+                disabled={loading}
+                className="group relative w-32 h-32 rounded-full bg-surface-bg border-4 border-surface-border flex items-center justify-center hover:border-primary-500/50 transition-all active:scale-90 overflow-hidden shadow-2xl"
+              >
+                {loading && (
+                  <motion.div 
+                    initial={{ rotate: 0 }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 border-4 border-transparent border-t-primary-500 rounded-full"
+                  />
+                )}
+                <Fingerprint className="w-12 h-12 text-primary-500 group-hover:scale-110 transition-transform" />
+              </button>
+
+              <div className="mt-12 space-y-4 w-full">
+                <button 
+                  onClick={handleBiometricLogin}
+                  disabled={loading}
+                  className="w-full h-14 bg-primary-500 text-white rounded-2xl font-black tracking-widest text-[10px] shadow-xl shadow-primary-500/20 active:scale-95 transition-all"
+                >
+                  Unlock System
+                </button>
+                <button 
+                  onClick={() => setLoginMode('password')}
+                  className="w-full h-14 bg-surface-card border border-surface-border rounded-2xl font-black tracking-widest text-[10px] text-surface-text/40 hover:text-surface-text active:scale-95 transition-all"
+                >
+                  Use Password instead
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="mt-10 flex flex-col items-center gap-6">
-          {isBiometricAvailable && (
-            <button 
-              onClick={handleBiometricLogin}
-              className="group flex flex-col items-center gap-2 text-surface-text/40 hover:text-primary-500 transition-all active:scale-90"
-              title="Unlock with biometrics"
-            >
-              <div className="w-16 h-16 rounded-full bg-surface-bg border border-surface-border flex items-center justify-center group-hover:border-primary-500/50 group-hover:bg-primary-500/5 transition-all">
-                <Fingerprint className="w-8 h-8" />
-              </div>
-              <span className="text-[9px] font-black  tracking-widest">Biometric unlock</span>
-            </button>
+          {!isBiometricAvailable && (
+            <div className="px-6 py-4 bg-surface-card border border-surface-border rounded-2xl text-center">
+              <p className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase leading-relaxed">
+                Biometric security is unavailable on this browser/device.
+              </p>
+            </div>
           )}
 
           <Link to="/about" className="md:hidden w-full h-14 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black tracking-widest text-surface-text/40 active:scale-95 transition-all">
