@@ -85,7 +85,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           onTouchEnd={handleTouchEnd}
           className={clsx(
             "flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth",
-            "pb-24 md:pb-0 pt-0",
+            "pb-24 md:pb-6 pt-0",
             "px-0 max-w-full transition-transform duration-300 ease-out"
           )}
         >
