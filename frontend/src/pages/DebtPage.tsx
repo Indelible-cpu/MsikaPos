@@ -4,7 +4,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../api/client';
 import { db, type LocalCustomer, type LocalProduct } from '../db/posDB';
 import { 
-  UserPlus, 
   Search, 
   Users, 
   History,
