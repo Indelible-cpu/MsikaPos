@@ -165,7 +165,6 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     const checkBiometrics = async () => {
-      const isMobile = window.innerWidth < 768;
       if (window.PublicKeyCredential) {
         // We check availability but also if the user HAS a registered ID for THIS site
         const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
