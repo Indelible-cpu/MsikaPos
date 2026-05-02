@@ -486,8 +486,6 @@ const POSPage: React.FC = () => {
                         );
                       })}
                     </div>
-
-                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-surface-border/30">
