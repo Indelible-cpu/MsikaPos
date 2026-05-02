@@ -69,7 +69,7 @@ export default function MobileHeader() {
     const path = pathname.replace('/staff', '');
     switch (path) {
       case '/dashboard': return 'Dashboard';
-      case '/pos': return 'Pos terminal';
+      case '/pos': return 'Pos';
       case '/inventory': return 'Inventory';
       case '/sales': return 'Sales history';
       case '/reports': return 'Business reports';

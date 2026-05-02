@@ -15,7 +15,7 @@ const Sidebar: React.FC = () => {
 
   const tabs = [
     { id: 'dashboard', key: 'DASHBOARD', label: 'Dashboard', icon: Home, path: '/staff/dashboard' },
-    { id: 'pos', key: 'POS_TERMINAL', label: 'Pos terminal', icon: ShoppingCart, path: '/staff/pos' },
+    { id: 'pos', key: 'POS_TERMINAL', label: 'Pos', icon: ShoppingCart, path: '/staff/pos' },
     { id: 'transactions', key: 'SALES_HISTORY', label: 'Sales history', icon: Receipt, path: '/staff/transactions' },
     { id: 'debt', key: 'CUSTOMERS', label: 'Credit center', icon: Users, path: '/staff/debt' },
     { id: 'inventory', key: 'INVENTORY', label: 'Stock management', icon: Package, path: '/staff/inventory' },

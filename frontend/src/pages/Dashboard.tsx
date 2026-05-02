@@ -114,7 +114,7 @@ export default function Dashboard() {
   };
 
   const navItems = [
-    { id: 'pos', icon: Monitor, label: 'Pos terminal', roles: ['superadmin', 'admin', 'cashier'] },
+    { id: 'pos', icon: Monitor, label: 'Pos', roles: ['superadmin', 'admin', 'cashier'] },
     { id: 'inventory', icon: Package, label: 'Inventory', roles: ['superadmin', 'admin'] },
     { id: 'transactions', icon: History, label: 'Sales history', roles: ['superadmin', 'admin'] },
     { id: 'expenses', icon: Receipt, label: 'Expenses', roles: ['superadmin', 'admin'] },

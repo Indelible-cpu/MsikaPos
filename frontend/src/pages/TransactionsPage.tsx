@@ -247,11 +247,6 @@ const TransactionsPage: React.FC = () => {
         <div className="flex flex-col gap-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex flex-col">
-              <h2 className="text-2xl font-black tracking-tight uppercase flex items-center gap-3">
-                <ArrowLeftRight className="w-6 h-6 text-primary-500" />
-                Sales history
-              </h2>
-              <p className="text-[10px] font-black text-surface-text/30 tracking-widest uppercase mt-1">Manage and track your business transactions</p>
             </div>
             
             <div className="flex items-center gap-3 w-full md:w-auto">
