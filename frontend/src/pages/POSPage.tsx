@@ -411,7 +411,7 @@ const POSPage: React.FC = () => {
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col bg-surface-bg overflow-y-auto custom-scrollbar">
-        <header className="px-12 py-8 border-b border-surface-border bg-surface-card sticky top-0 z-40">
+        <header className="px-4 md:px-8 py-6 border-b border-surface-border bg-surface-card sticky top-0 z-40">
           <div className="flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 opacity-20 w-5 h-5" />
@@ -422,7 +422,7 @@ const POSPage: React.FC = () => {
           </div>
         </header>
 
-        <main className="p-12 space-y-12">
+        <main className="p-4 md:p-8 space-y-8 overflow-x-hidden">
           {searchTerm.length >= 2 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <AnimatePresence>
@@ -440,14 +440,14 @@ const POSPage: React.FC = () => {
           )}
 
           <div className="pb-40">
-            <h2 className="text-xl font-black uppercase flex items-center gap-3 mb-8"><ShoppingCart className="w-6 h-6 text-primary-500" /> Active Cart</h2>
+            <h2 className="text-xl font-black uppercase flex items-center gap-3 mb-8"><ShoppingCart className="w-6 h-6 text-primary-500" /> Cart</h2>
             {cart.length === 0 ? (
               <div className="py-32 flex flex-col items-center border-2 border-dashed border-surface-border rounded-[3rem] opacity-20 uppercase font-black text-[10px]">Cart is empty</div>
             ) : (
               <div className="space-y-4">
                 <AnimatePresence>
                   {cart.map(item => (
-                    <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} key={item.product.id} className="p-8 bg-surface-card border border-surface-border rounded-[2rem] flex items-center justify-between">
+                    <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} key={item.product.id} className="p-4 md:p-6 bg-surface-card border border-surface-border rounded-[2rem] flex items-center justify-between">
                       <div className="flex items-center gap-6">
                          <div className="w-16 h-16 bg-surface-bg rounded-2xl flex items-center justify-center">{item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover rounded-2xl" /> : <PackageSearch className="opacity-10" />}</div>
                          <div className="font-black uppercase">{toSentenceCase(item.product.name)}</div>
@@ -465,7 +465,7 @@ const POSPage: React.FC = () => {
                   ))}
                 </AnimatePresence>
 
-                <div className="mt-12 p-10 bg-surface-card border border-surface-border rounded-[3rem] space-y-8 shadow-xl">
+                <div className="mt-8 p-6 md:p-10 bg-surface-card border border-surface-border rounded-[3rem] space-y-8 shadow-xl">
                   <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase opacity-40">Payment Method</label>
                     <div className="flex flex-wrap gap-2">
@@ -483,6 +483,23 @@ const POSPage: React.FC = () => {
                         );
                       })}
                     </div>
+
+                    {paymentMode === 'Credit' && (
+                      <div className={clsx("mt-4 p-6 rounded-2xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2", selectedCustomerId ? "bg-emerald-500/5 border-emerald-500/20" : "bg-rose-500/5 border-rose-500/20")}>
+                        <div className="flex items-center gap-4">
+                          <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center border", selectedCustomerId ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-rose-500/10 border-rose-500/20 text-rose-500")}>
+                            <Users className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <div className="text-[11px] font-black uppercase tracking-tight">{selectedCustomerId ? 'Account Verified' : 'Identification Required'}</div>
+                            <div className="text-[9px] font-bold opacity-40 uppercase tracking-widest">{selectedCustomerId ? 'Credit sale authorized' : 'Link a customer to proceed'}</div>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => { setIsAddingCustomer(false); setShowCustomerSelector(true); }} className={clsx("px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", selectedCustomerId ? "bg-surface-bg border border-surface-border hover:border-primary-500" : "bg-rose-500 text-white shadow-lg shadow-rose-500/20")}>
+                          {selectedCustomerId ? 'Change User' : 'Link Customer'}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-surface-border/30">
@@ -521,9 +538,28 @@ const POSPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-8 border-t border-surface-border/30">
-                    <div className="flex items-center gap-8">
-                       <div className="flex flex-col"><span className="text-[10px] font-black opacity-30 uppercase">Total</span><span className="text-4xl font-black text-primary-500">MK {finalTotal.toLocaleString()}</span></div>
+                    <div className="pt-8 space-y-4 border-t border-surface-border/30">
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
+                        <span>Subtotal</span>
+                        <span>MK {cartSubtotal.toLocaleString()}</span>
+                      </div>
+                      {discount > 0 && (
+                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-rose-500">
+                          <span>Discount</span>
+                          <span>- MK {discount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {taxConfig.rate > 0 && (
+                        <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
+                          <span>Tax ({taxConfig.rate}% {taxConfig.inclusive ? 'Incl.' : 'Excl.'})</span>
+                          <span>MK {taxAmount.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-8 border-t border-surface-border/30">
+                      <div className="flex items-center gap-8">
+                         <div className="flex flex-col"><span className="text-[10px] font-black opacity-30 uppercase">Total Payable</span><span className="text-4xl font-black text-primary-500">MK {finalTotal.toLocaleString()}</span></div>
                        <div className="flex items-center gap-3 bg-surface-bg/50 px-4 py-2 rounded-xl border border-surface-border/50">
                         <input type="checkbox" id="printReceipt" checked={printReceipt} onChange={e => setPrintReceipt(e.target.checked)} className="w-5 h-5 text-primary-500" />
                         <label htmlFor="printReceipt" className="text-[10px] font-black uppercase cursor-pointer">Print Receipt</label>
