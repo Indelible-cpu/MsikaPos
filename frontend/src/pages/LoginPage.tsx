@@ -140,15 +140,6 @@ const LoginPage: React.FC = () => {
           window.location.href = '/staff/dashboard';
         }
       }
-      // On success, redirect based on role
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (user.role === 'CUSTOMER') {
-        window.location.href = '/';
-      } else if (user.role === 'CASHIER') {
-        window.location.href = '/staff/pos';
-      } else {
-        window.location.href = '/staff/dashboard';
-      }
     } catch (err: unknown) {
       console.error('Biometric error:', err);
       const error = err as Error;
