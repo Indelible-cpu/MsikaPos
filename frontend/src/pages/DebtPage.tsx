@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../api/client';
 import { db, type LocalCustomer, type LocalProduct } from '../db/posDB';
 import { 
+  UserPlus, 
   Search, 
   Users, 
   History,
@@ -235,6 +236,9 @@ const DebtPage: React.FC = () => {
           <div className="w-10 h-10 bg-primary-500/10 rounded-2xl flex items-center justify-center text-primary-500 border border-primary-500/20"><Users className="w-5 h-5" /></div>
           <h1 className="text-sm font-black uppercase tracking-widest">Credit Center</h1>
         </div>
+        {!readOnly && (
+          <button type="button" title="Add New Customer" aria-label="Add New Customer" onClick={() => { resetForm(); setIsAddModalOpen(true); }} className="btn-primary !px-4 !py-2 text-[9px] font-black uppercase tracking-widest"><UserPlus className="w-3.5 h-3.5 mr-2 inline" /> Add Customer</button>
+        )}
       </header>
 
       <div className="flex flex-1 overflow-hidden">
