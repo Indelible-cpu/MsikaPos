@@ -450,7 +450,10 @@ const POSPage: React.FC = () => {
                     <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} key={item.product.id} className="p-8 bg-surface-card border border-surface-border rounded-[2rem] flex items-center justify-between">
                       <div className="flex items-center gap-6">
                          <div className="w-16 h-16 bg-surface-bg rounded-2xl flex items-center justify-center">{item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover rounded-2xl" /> : <PackageSearch className="opacity-10" />}</div>
-                         <div className="font-black uppercase">{toSentenceCase(item.product.name)}</div>
+                         <div className="flex flex-col">
+                           <div className="font-black uppercase">{toSentenceCase(item.product.name)}</div>
+                           <div className="font-black text-[10px] text-primary-500/60 uppercase mt-1">MK {item.product.sellPrice.toLocaleString()} / unit</div>
+                         </div>
                       </div>
                       <div className="flex items-center gap-8">
                          <div className="flex items-center gap-4">
@@ -471,13 +474,13 @@ const POSPage: React.FC = () => {
                     <div className="flex flex-wrap gap-2">
                       {(['Cash', 'Card', 'Momo', 'Credit'] as const).map(id => {
                         const m = {
-                          Cash: { icon: Wallet, label: 'Cash' },
-                          Card: { icon: CreditCard, label: 'Bank' },
-                          Momo: { icon: Smartphone, label: 'MoMo' },
-                          Credit: { icon: Users, label: 'Credit' }
+                          Cash: { icon: Wallet, label: 'Cash', color: 'bg-emerald-500' },
+                          Card: { icon: CreditCard, label: 'Bank', color: 'bg-blue-500' },
+                          Momo: { icon: Smartphone, label: 'MoMo', color: 'bg-purple-500' },
+                          Credit: { icon: Users, label: 'Credit', color: 'bg-amber-500' }
                         }[id];
                         return (
-                          <button key={id} type="button" title={`Pay via ${m.label}`} aria-label={`Pay via ${m.label}`} onClick={() => setPaymentMode(id)} className={clsx("px-6 py-3 rounded-xl border flex items-center gap-3 transition-all", paymentMode === id ? "bg-primary-500 text-white border-transparent" : "bg-surface-bg border-surface-border opacity-40")}>
+                          <button key={id} type="button" title={`Pay via ${m.label}`} aria-label={`Pay via ${m.label}`} onClick={() => setPaymentMode(id)} className={clsx("px-6 py-3 rounded-xl border flex items-center gap-3 transition-all", paymentMode === id ? `${m.color} text-white border-transparent` : "bg-surface-bg border-surface-border opacity-40")}>
                             <m.icon className="w-4 h-4" /> <span className="text-[9px] font-black uppercase">{m.label}</span>
                           </button>
                         );
@@ -507,6 +510,36 @@ const POSPage: React.FC = () => {
                           <input title="Reference Number" aria-label="Reference Number" className="input-field w-full h-16 px-6 font-black uppercase" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
                         </div>
                       </>
+                    ) : paymentMode === 'Credit' ? (
+                      <div className="space-y-4 col-span-2">
+                        <label className="text-[10px] font-black uppercase opacity-40">Credit Customer Details</label>
+                        <div className="flex gap-4">
+                          <button 
+                            type="button" 
+                            title="Add or Select Customer" 
+                            aria-label="Add or Select Customer" 
+                            onClick={() => { setIsAddingCustomer(false); setShowCustomerSelector(true); }} 
+                            className={clsx(
+                              "flex-1 h-16 rounded-2xl border flex items-center justify-center gap-3 font-black text-[10px] uppercase transition-all",
+                              selectedCustomerId ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-amber-500 text-white border-transparent shadow-lg shadow-amber-500/20"
+                            )}
+                          >
+                            <Users className="w-4 h-4" />
+                            {selectedCustomerId ? 'Change Customer' : 'Add Customer Details'}
+                          </button>
+                          {selectedCustomerId && (
+                            <div className="flex-[2] h-16 bg-surface-bg border border-surface-border rounded-2xl flex items-center px-6 gap-4">
+                              <div className="w-10 h-10 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center font-black">
+                                <CheckCircle2 className="w-5 h-5" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[8px] font-black opacity-30 uppercase tracking-widest">Attached to</span>
+                                <span className="text-xs font-black uppercase tracking-tight">Customer Selected</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     ) : null}
                   </div>
 
