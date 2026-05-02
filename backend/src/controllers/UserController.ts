@@ -473,13 +473,20 @@ export const magicLogin = async (req: Request, res: Response) => {
     const user = await prisma.user.findFirst({
       where: {
         magicToken: token,
-        magicTokenExpires: { gt: new Date() },
         deleted: false
       },
       include: { role: true }
     });
 
-    if (!user || user.status !== 'ACTIVE') {
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid or already used magic link' });
+    }
+
+    if (user.magicTokenExpires && user.magicTokenExpires < new Date()) {
+      return res.status(401).json({ success: false, message: 'This magic link has expired' });
+    }
+
+    if (user.status !== 'ACTIVE') {
       return res.status(401).json({ success: false, message: 'Account is not active' });
     }
 

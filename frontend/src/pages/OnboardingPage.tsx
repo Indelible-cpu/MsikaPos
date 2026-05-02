@@ -76,6 +76,7 @@ const OnboardingPage: React.FC = () => {
       }
 
       const validateToken = async () => {
+        setLoading(true);
         console.log('📡 [Onboarding] Validating token with backend...');
         try {
           const res = await api.post('/onboarding/validate', { token: magicToken });
@@ -88,7 +89,9 @@ const OnboardingPage: React.FC = () => {
         } catch (err: unknown) {
           const error = err as { response?: { data?: { message?: string } }, message?: string };
           console.error('❌ [Onboarding] Token validation FAILED:', error.response?.data?.message || error.message);
-          setTokenError("This onboarding link is invalid or expired.");
+          setTokenError(error.response?.data?.message || "Connection failed. Please refresh or try again.");
+        } finally {
+          setLoading(false);
         }
       };
       validateToken();
@@ -259,11 +262,14 @@ const OnboardingPage: React.FC = () => {
           layout
           className="glass-panel p-8 md:p-12 relative overflow-hidden"
         >
+          {loading && (
             <div className="flex flex-col items-center justify-center py-20 space-y-6">
               <div className="loading-spinner w-16 h-16 border-8" />
               <p className="text-[10px] font-black tracking-widest text-surface-text/40 uppercase animate-pulse">Establishing secure connection...</p>
             </div>
-          ) : tokenError ? (
+          )}
+
+          {!loading && tokenError && (
             <div className="text-center py-20 space-y-6">
               <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
                  <Lock className="w-10 h-10 text-red-500" />
@@ -274,7 +280,9 @@ const OnboardingPage: React.FC = () => {
               </div>
               <button onClick={() => navigate('/staff/login')} className="btn-primary !px-10 mx-auto">Go to Login</button>
             </div>
-          ) : (
+          )}
+
+          {!loading && !tokenError && (
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
@@ -602,6 +610,7 @@ const OnboardingPage: React.FC = () => {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
         </motion.div>
       </div>
 
