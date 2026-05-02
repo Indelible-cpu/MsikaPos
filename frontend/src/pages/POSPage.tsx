@@ -427,12 +427,15 @@ const POSPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <AnimatePresence>
                 {products?.map(p => (
-                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-6 cursor-pointer bg-surface-card border border-surface-border rounded-3xl flex items-center justify-between hover:border-primary-500/20">
+                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-6 cursor-pointer bg-surface-card border border-surface-border rounded-3xl flex flex-col gap-3 hover:border-primary-500/20 shadow-sm transition-all">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-surface-bg rounded-xl flex items-center justify-center">{p.imageUrl ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover rounded-xl" /> : <PackageSearch className="opacity-10" />}</div>
-                      <div className="font-black uppercase text-sm">{toSentenceCase(p.name)}</div>
+                      <div className="w-16 h-16 bg-surface-bg rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">{p.imageUrl ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" /> : <PackageSearch className="opacity-10" />}</div>
+                      <div className="font-black uppercase text-sm leading-tight">{toSentenceCase(p.name)}</div>
                     </div>
-                    <div className="font-black text-primary-500">MK {p.sellPrice.toLocaleString()}</div>
+                    <div className="pt-3 border-t border-surface-border/30">
+                      <div className="text-[10px] font-black opacity-30 uppercase tracking-widest mb-1">Retail Price</div>
+                      <div className="font-black text-primary-500 text-lg">MK {p.sellPrice.toLocaleString()}</div>
+                    </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -484,22 +487,7 @@ const POSPage: React.FC = () => {
                       })}
                     </div>
 
-                    {paymentMode === 'Credit' && (
-                      <div className={clsx("mt-4 p-6 rounded-2xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2", selectedCustomerId ? "bg-emerald-500/5 border-emerald-500/20" : "bg-rose-500/5 border-rose-500/20")}>
-                        <div className="flex items-center gap-4">
-                          <div className={clsx("w-12 h-12 rounded-xl flex items-center justify-center border", selectedCustomerId ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-rose-500/10 border-rose-500/20 text-rose-500")}>
-                            <Users className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <div className="text-[11px] font-black uppercase tracking-tight">{selectedCustomerId ? 'Account Verified' : 'Identification Required'}</div>
-                            <div className="text-[9px] font-bold opacity-40 uppercase tracking-widest">{selectedCustomerId ? 'Credit sale authorized' : 'Link a customer to proceed'}</div>
-                          </div>
-                        </div>
-                        <button type="button" onClick={() => { setIsAddingCustomer(false); setShowCustomerSelector(true); }} className={clsx("px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", selectedCustomerId ? "bg-surface-bg border border-surface-border hover:border-primary-500" : "bg-rose-500 text-white shadow-lg shadow-rose-500/20")}>
-                          {selectedCustomerId ? 'Change User' : 'Link Customer'}
-                        </button>
-                      </div>
-                    )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-surface-border/30">
@@ -565,7 +553,20 @@ const POSPage: React.FC = () => {
                         <label htmlFor="printReceipt" className="text-[10px] font-black uppercase cursor-pointer">Print Receipt</label>
                       </div>
                     </div>
-                    <button type="button" title="Finalize Sale" aria-label="Finalize Sale" onClick={handleCheckout} className="w-full md:w-80 h-16 bg-primary-500 text-white rounded-2xl font-black text-lg uppercase shadow-xl shadow-primary-500/20 active:scale-95">Complete Sale</button>
+                     <button 
+                       type="button" 
+                       title="Finalize Sale" 
+                       aria-label="Finalize Sale" 
+                       onClick={handleCheckout} 
+                       className={clsx(
+                         "w-full md:w-80 h-16 rounded-2xl font-black text-lg uppercase shadow-xl transition-all active:scale-95",
+                         paymentMode === 'Credit' 
+                           ? "bg-amber-500 text-white shadow-amber-500/20" 
+                           : "bg-primary-500 text-white shadow-primary-500/20"
+                       )}
+                     >
+                       {paymentMode === 'Credit' && !selectedCustomerId ? 'Add Customer Detail' : 'Complete Sale'}
+                     </button>
                   </div>
                 </div>
               </div>

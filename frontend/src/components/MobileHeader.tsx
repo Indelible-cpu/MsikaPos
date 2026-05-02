@@ -112,11 +112,11 @@ export default function MobileHeader() {
             </button>
           )}
 
-          <div className="flex flex-col min-w-0 flex-1 ml-1">
+          <div className="flex flex-col min-w-0 flex-1 ml-0.5">
             <span className="text-[17px] font-black tracking-tighter text-primary-500 leading-none truncate block">
               {shopName}
             </span>
-            <span className="text-[8px] font-black tracking-[0.3em] text-surface-text/40 truncate !mb-0 uppercase mt-1">
+            <span className="text-[8px] font-black tracking-[0.3em] text-surface-text/40 truncate !mb-0 uppercase mt-0.5">
               {getPageTitle(location.pathname)}
             </span>
           </div>
