@@ -350,14 +350,20 @@ const POSPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <AnimatePresence>
                 {products?.map(p => (
-                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-6 cursor-pointer bg-surface-card border border-surface-border rounded-3xl flex flex-col gap-3 hover:border-primary-500/20 shadow-sm transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-surface-bg rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">{p.imageUrl ? <img src={p.imageUrl} alt="" className="w-full h-full object-cover" /> : <PackageSearch className="opacity-10" />}</div>
-                      <div className="font-black uppercase text-sm leading-tight">{toSentenceCase(p.name)}</div>
+                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-4 cursor-pointer bg-surface-card border border-surface-border rounded-3xl flex flex-col gap-4 hover:border-primary-500/20 shadow-sm transition-all group">
+                    <div className="w-full aspect-square bg-surface-bg rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-surface-border/50">
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      ) : (
+                        <PackageSearch className="opacity-10 w-10 h-10" />
+                      )}
                     </div>
-                    <div className="pt-3 border-t border-surface-border/30">
-                      <div className="text-[10px] font-black opacity-30 uppercase tracking-widest mb-1">Retail Price</div>
-                      <div className="font-black text-primary-500 text-lg">MK {p.sellPrice.toLocaleString()}</div>
+                    <div className="space-y-2">
+                      <div className="font-black uppercase text-[11px] leading-tight line-clamp-2 min-h-[2.4em]">{toSentenceCase(p.name)}</div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black opacity-30 uppercase tracking-widest">Retail Price</span>
+                        <span className="font-black text-primary-500 text-lg leading-none">MK {p.sellPrice.toLocaleString()}</span>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -385,21 +391,30 @@ const POSPage: React.FC = () => {
               <div className="space-y-4">
                 <AnimatePresence>
                   {cart.map(item => (
-                    <motion.div layout initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} key={item.product.id} className="p-4 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-between group">
-                      <div className="flex items-center gap-4">
-                         <div className="w-12 h-12 bg-surface-card rounded-xl flex items-center justify-center overflow-hidden shrink-0">{item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover" /> : <PackageSearch className="opacity-10 w-6 h-6" />}</div>
-                         <div>
-                           <div className="font-black uppercase text-[11px] truncate w-32">{toSentenceCase(item.product.name)}</div>
-                           <div className="text-[10px] font-black text-primary-500">MK {item.product.sellPrice.toLocaleString()}</div>
-                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center bg-surface-card rounded-lg border border-surface-border">
-                          <button type="button" onClick={() => setCart(prev => prev.map(i => i.product.id === item.product.id ? {...i, quantity: Math.max(1, i.quantity - 1)} : i))} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Minus className="w-3 h-3" /></button>
-                          <span className="font-black text-xs w-6 text-center">{item.quantity}</span>
-                          <button type="button" onClick={() => addToCart(item.product)} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Plus className="w-3 h-3" /></button>
+                    <motion.div layout initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} key={item.product.id} className="p-4 bg-surface-bg border border-surface-border rounded-2xl flex flex-col gap-4 group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 bg-surface-card rounded-xl flex items-center justify-center overflow-hidden shrink-0">{item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover" /> : <PackageSearch className="opacity-10 w-5 h-5" />}</div>
+                           <div>
+                             <div className="font-black uppercase text-[10px] truncate w-32">{toSentenceCase(item.product.name)}</div>
+                             <div className="text-[9px] font-black opacity-40">MK {item.product.sellPrice.toLocaleString()} × {item.quantity}</div>
+                           </div>
                         </div>
-                        <button type="button" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-5 h-5" /></button>
+                        <div className="text-right">
+                          <div className="text-[8px] font-black opacity-30 uppercase">Subtotal</div>
+                          <div className="text-sm font-black text-primary-500 leading-none">MK {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-3 border-t border-surface-border/30">
+                        <div className="flex items-center bg-surface-card rounded-lg border border-surface-border">
+                          <button type="button" title="Decrease Quantity" aria-label="Decrease Quantity" onClick={() => setCart(prev => prev.map(i => i.product.id === item.product.id ? {...i, quantity: Math.max(1, i.quantity - 1)} : i))} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Minus className="w-3 h-3" /></button>
+                          <span className="font-black text-xs w-6 text-center">{item.quantity}</span>
+                          <button type="button" title="Increase Quantity" aria-label="Increase Quantity" onClick={() => addToCart(item.product)} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Plus className="w-3 h-3" /></button>
+                        </div>
+                        <button type="button" title="Remove Item" aria-label="Remove Item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-rose-500 opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 text-[8px] font-black uppercase">
+                          <X className="w-4 h-4" /> Remove
+                        </button>
                       </div>
                     </motion.div>
                   ))}
@@ -453,14 +468,14 @@ const POSPage: React.FC = () => {
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase opacity-40">{paymentMode === 'Card' ? 'Bank' : 'Provider'}</label>
-                      <select className="input-field w-full font-black uppercase" value={bankName} onChange={e => setBankName(e.target.value)}>
+                      <select title={paymentMode === 'Card' ? 'Select Bank' : 'Select Provider'} className="input-field w-full font-black uppercase" value={bankName} onChange={e => setBankName(e.target.value)}>
                         <option value="">Choose...</option>
                         {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).split(',').map(p => <option key={p.trim()} value={p.trim()}>{p.trim()}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase opacity-40">Ref #</label>
-                      <input className="input-field w-full font-black uppercase" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
+                      <input title="Reference Number" placeholder="Enter Ref #" className="input-field w-full font-black uppercase" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
                     </div>
                   </div>
                 ) : null}
@@ -468,7 +483,7 @@ const POSPage: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <label className="text-[10px] font-black uppercase opacity-40">Signature</label>
-                    <button onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 hover:rotate-180 transition-transform duration-500"><RotateCcw className="w-4 h-4" /></button>
+                    <button type="button" title="Reset Signature" aria-label="Reset Signature" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 hover:rotate-180 transition-transform duration-500"><RotateCcw className="w-4 h-4" /></button>
                   </div>
                   <div className="bg-white border border-surface-border rounded-2xl h-24 relative overflow-hidden">
                     <canvas ref={sigCanvasRef} width={800} height={200} onMouseDown={startSignature} onTouchStart={startSignature} className="w-full h-full cursor-crosshair touch-none" />
