@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
         crypto.getRandomValues(challenge);
         
         const credentialId = localStorage.getItem('biometricCredentialId');
-        const allowCredentials: any[] = [];
+        const allowCredentials: PublicKeyCredentialDescriptor[] = [];
         
         if (credentialId) {
           // Convert base64 back to Uint8Array
