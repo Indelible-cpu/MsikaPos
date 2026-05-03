@@ -342,7 +342,7 @@ const LoginPage: React.FC = () => {
             >
               <div className="text-center mb-8">
                 <h2 className="text-xl font-black tracking-tight mb-2">Biometric Security</h2>
-                <p className="text-[9px] font-black tracking-widest text-surface-text/30 uppercase">Fingerprint or Face Recognition</p>
+                <p className="text-[9px] font-black tracking-widest text-surface-text/60 uppercase">Fingerprint or Face ID</p>
               </div>
 
               <button 
@@ -389,17 +389,17 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          <Link to="/about" className="md:hidden w-full h-14 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black tracking-widest text-surface-text/40 active:scale-95 transition-all">
+          <Link to="/about" className="md:hidden w-full h-14 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black tracking-widest text-surface-text/60 active:scale-95 transition-all">
             <Info className="w-4 h-4" />
-            About Msikapos
+            Support
           </Link>
 
-          <Link to="/staff/forgot-password" className="text-[10px] font-black  tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
+          <Link to="/staff/forgot-password" className="text-[10px] font-black  tracking-widest text-surface-text/60 hover:text-primary-500 transition-colors">
              Forgot password?
           </Link>
 
-          <Link to="/about" className="hidden md:block text-[10px] font-black tracking-widest text-surface-text/20 hover:text-primary-500 transition-colors">
-            About Msikapos
+          <Link to="/about" className="hidden md:block text-[10px] font-black tracking-widest text-surface-text/60 hover:text-primary-500 transition-colors">
+            Support
           </Link>
 
           <div className="pt-4 text-center">

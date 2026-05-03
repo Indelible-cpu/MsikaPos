@@ -45,8 +45,8 @@ const AboutPage: React.FC = () => {
       <main className="w-full p-0 md:p-0 space-y-10">
         {/* Brand Hero */}
         <section className="text-center space-y-4 py-10">
-          <div className="w-20 h-20 bg-primary/10 rounded-none flex items-center justify-center mx-auto border border-primary/20">
-            <img src="/icon.png" alt="Logo" className="w-12 h-12 object-contain" />
+          <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mx-auto border border-primary/20 overflow-hidden shadow-md">
+            <img src="/icon.png?v=2" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div>
             <h2 className="text-3xl font-black tracking-tight text-foreground">MsikaPos</h2>
@@ -92,7 +92,7 @@ const AboutPage: React.FC = () => {
 
         <footer className="text-center pt-10 space-y-8">
           <div className="space-y-2">
-            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em]">Technical Support</p>
+            <p className="text-[10px] font-black text-surface-text/60 tracking-[0.3em]">Technical Support</p>
             <div className="flex justify-center gap-4 mt-4">
               {/* WhatsApp Support */}
               <a href="https://wa.me/265993732694" title="WhatsApp Support" aria-label="WhatsApp Support" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-emerald-500/30 transition-all group">
@@ -129,11 +129,11 @@ const AboutPage: React.FC = () => {
           </div>
           
           <div className="space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground/40 tracking-[0.3em] uppercase">System Developer</p>
+            <p className="text-[10px] font-black text-muted-foreground/60 tracking-[0.3em] uppercase">System Developer</p>
             <p className="text-sm font-black tracking-tight text-primary">James Dickson Petro</p>
           </div>
           
-          <p className="text-[9px] font-black text-muted-foreground/20 tracking-[0.4em] pb-10 uppercase">© 2026 MsikaPos • Indelible-cpu</p>
+          <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.4em] pb-10 uppercase">© 2026 MsikaPos • Indelible-cpu</p>
         </footer>
       </main>
     </div>
