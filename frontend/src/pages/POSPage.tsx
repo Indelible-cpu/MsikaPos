@@ -339,7 +339,7 @@ const POSPage: React.FC = () => {
           <div className="flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-              <input title="Search Inventory" aria-label="Search Inventory" placeholder="Search Products..." className="input-field w-full pl-14 h-16 font-black uppercase" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              <input title="Search Inventory" aria-label="Search Inventory" placeholder="Search Products..." className="input-field w-full pl-14 h-16 font-black" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
             <button type="button" title="Scan Barcode" aria-label="Scan Barcode" onClick={() => setShowScanner(true)} className="w-16 h-16 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center shrink-0 btn-press shadow-lg shadow-primary/20"><Scan className="w-6 h-6" /></button>
             <button type="button" title="Sync Offline Data" aria-label="Sync Offline Data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('Synced'); }} className={clsx("w-16 h-16 bg-card/50 border border-border/50 rounded-2xl text-primary flex items-center justify-center shrink-0 btn-press", isSyncing && "animate-spin")}><RefreshCw className="w-6 h-6" /></button>

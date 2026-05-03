@@ -113,7 +113,7 @@ export default function MobileHeader() {
           )}
 
           <div className="flex flex-col min-w-0 flex-1 ml-0.5">
-            <span className="text-[17px] font-black tracking-tighter text-primary leading-none truncate block">
+            <span className="text-[17px] font-black tracking-tighter text-primary leading-none block break-words">
               {shopName}
             </span>
             <span className="text-[8px] font-black tracking-[0.3em] text-muted-foreground truncate !mb-0 uppercase mt-0.5">
