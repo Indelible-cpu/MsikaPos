@@ -61,7 +61,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                  location.pathname.includes('/inventory') ? 'INVENTORY_STRATEGY' : 'GENERAL_SUPPORT';
 
   return (
-    <div className="min-h-screen flex bg-surface-bg transition-colors duration-300 mesh-bg">
+    <div className="min-h-screen flex bg-background transition-colors duration-300 relative overflow-hidden">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       {/* Desktop Sidebar */}
       {!hideNav && <Sidebar />}
 

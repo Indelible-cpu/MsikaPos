@@ -13,7 +13,7 @@ const AboutPage: React.FC = () => {
     {
       id: 'faq',
       title: 'Frequently Asked Questions',
-      icon: <HelpCircle className="w-5 h-5 text-primary-500" />,
+      icon: <HelpCircle className="w-5 h-5 text-primary" />,
       items: [
         { q: "What is MsikaPos?", a: "MsikaPos is a next-generation cloud-based Point of Sale system designed for Malawian businesses to track sales, manage inventory, and monitor staff performance in real-time." },
         { q: "Can I use it offline?", a: "Yes! MsikaPos is built with offline-first technology. You can continue making sales even when the internet is down, and it will sync automatically once you're back online." },
@@ -39,17 +39,18 @@ const AboutPage: React.FC = () => {
   ];
 
   return (
-    <div className="w-full bg-surface-bg text-surface-text selection:bg-primary-500/30 pb-20">
+    <div className="w-full bg-background text-foreground selection:bg-primary/30 pb-20 relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       <main className="w-full p-0 md:p-0 space-y-10">
         {/* Brand Hero */}
         <section className="text-center space-y-4 py-10">
-          <div className="w-20 h-20 bg-primary-500/10 rounded-none flex items-center justify-center mx-auto border border-primary-500/20">
+          <div className="w-20 h-20 bg-primary/10 rounded-none flex items-center justify-center mx-auto border border-primary/20">
             <img src="/icon.png" alt="Logo" className="w-12 h-12 object-contain" />
           </div>
           <div>
-            <h2 className="text-3xl font-black tracking-tight ">MsikaPos</h2>
-            <p className="text-surface-text/40 text-xs font-black tracking-widest">Version 2.4.0 • Cloud Powered</p>
+            <h2 className="text-3xl font-black tracking-tight text-foreground">MsikaPos</h2>
+            <p className="text-muted-foreground/60 text-xs font-black tracking-widest uppercase">Version 2.4.0 • Cloud Powered</p>
           </div>
         </section>
 
@@ -62,25 +63,25 @@ const AboutPage: React.FC = () => {
             className="space-y-6"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-transparent border border-surface-border rounded-none">
+              <div className="p-2 bg-transparent border border-border/50 rounded-none">
                 {section.icon}
               </div>
-              <h3 className="text-lg font-black tracking-tight">{section.title}</h3>
+              <h3 className="text-lg font-black tracking-tight text-foreground uppercase">{section.title}</h3>
             </div>
 
-            <div className="bg-transparent border-t border-surface-border overflow-hidden">
+            <div className="bg-transparent border-t border-border/30 overflow-hidden">
               {section.items ? (
-                <div className="divide-y divide-surface-border">
+                <div className="divide-y divide-border/30">
                   {section.items.map((item, i) => (
-                    <div key={i} className="p-6 space-y-2 hover:bg-surface-bg/50 transition-all">
-                      <h4 className="text-sm font-black text-primary-500 ">Q: {item.q}</h4>
-                      <p className="text-[11px] font-medium text-surface-text/60 leading-relaxed">{item.a}</p>
+                    <div key={i} className="p-6 space-y-2 hover:bg-primary/5 transition-all">
+                      <h4 className="text-sm font-black text-primary uppercase">Q: {item.q}</h4>
+                      <p className="text-[11px] font-black text-muted-foreground leading-relaxed tracking-wide">{item.a}</p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="p-8">
-                  <p className="text-[11px] font-medium text-surface-text/60 leading-relaxed">
+                  <p className="text-[11px] font-black text-muted-foreground leading-relaxed tracking-wide">
                     {section.content}
                   </p>
                 </div>
@@ -128,11 +129,11 @@ const AboutPage: React.FC = () => {
           </div>
           
           <div className="space-y-1">
-            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] ">System Developer</p>
-            <p className="text-sm font-black  tracking-tight text-primary-500">James Dickson Petro</p>
+            <p className="text-[10px] font-black text-muted-foreground/40 tracking-[0.3em] uppercase">System Developer</p>
+            <p className="text-sm font-black tracking-tight text-primary">James Dickson Petro</p>
           </div>
           
-          <p className="text-[9px] font-black text-surface-text/10 tracking-[0.4em] pb-10">© 2026 MsikaPos • Indelible-cpu</p>
+          <p className="text-[9px] font-black text-muted-foreground/20 tracking-[0.4em] pb-10 uppercase">© 2026 MsikaPos • Indelible-cpu</p>
         </footer>
       </main>
     </div>

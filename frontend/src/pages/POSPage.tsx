@@ -276,7 +276,8 @@ const POSPage: React.FC = () => {
 
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-surface-bg overflow-hidden relative">
+    <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <AnimatePresence>
         {showScanner && (
           <BarcodeScanner 
@@ -292,17 +293,17 @@ const POSPage: React.FC = () => {
 
         {showReceipt && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-surface-card max-w-lg w-full p-8 rounded-3xl flex flex-col items-center border border-surface-border">
-              <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-6 border-2 border-emerald-500/20"><CheckCircle2 className="w-8 h-8" /></div>
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="glass-panel max-w-lg w-full p-8 rounded-3xl flex flex-col items-center border border-border/50">
+              <div className="w-16 h-16 bg-success/20 text-success rounded-full flex items-center justify-center mb-6 border-2 border-success/20"><CheckCircle2 className="w-8 h-8" /></div>
               <h2 className="text-2xl font-black mb-2 uppercase">Success</h2>
               <p className="text-[10px] font-black opacity-40 uppercase mb-8">Ref: {showReceipt.invoiceNo}</p>
-              <div id="print-container" className="w-full bg-white rounded-2xl overflow-hidden mb-8 p-4 max-h-[40vh] overflow-y-auto flex justify-center border border-zinc-100">
+              <div id="print-container" className="w-full bg-white rounded-2xl overflow-hidden mb-8 p-4 max-h-[40vh] overflow-y-auto flex justify-center border border-zinc-100 shadow-inner">
                 <div id="receipt-content">
                   <Receipt {...showReceipt} />
                 </div>
               </div>
               <div className="flex gap-3 w-full">
-                <button type="button" title="Print Receipt" aria-label="Print Receipt" onClick={() => window.print()} className="flex-1 py-4 bg-surface-bg rounded-2xl font-black text-[10px] flex items-center justify-center gap-2 border border-surface-border uppercase"><Printer className="w-4 h-4" /> Print</button>
+                <button type="button" title="Print Receipt" aria-label="Print Receipt" onClick={() => window.print()} className="flex-1 py-4 bg-muted/20 rounded-2xl font-black text-[10px] flex items-center justify-center gap-2 border border-border/50 uppercase btn-press"><Printer className="w-4 h-4" /> Print</button>
                 <button 
                   type="button"
                   title="Share Transaction"
@@ -324,45 +325,45 @@ const POSPage: React.FC = () => {
                       } catch { toast.error('Share failed'); }
                     }
                   }} 
-                  className="px-6 py-4 bg-[#25D366] text-white rounded-2xl font-black text-[10px] flex items-center justify-center gap-2 uppercase"
+                  className="px-6 py-4 bg-[#25D366] text-white rounded-2xl font-black text-[10px] flex items-center justify-center gap-2 uppercase btn-press"
                 ><Send className="w-4 h-4" /> Share</button>
               </div>
-              <button type="button" title="New Sale" aria-label="New Sale" onClick={() => setShowReceipt(null)} className="w-full mt-4 btn-primary !py-5 font-black uppercase text-[10px]">New Sale</button>
+              <button type="button" title="New Sale" aria-label="New Sale" onClick={() => setShowReceipt(null)} className="w-full mt-4 btn-primary !py-5 font-black uppercase text-[10px] btn-press">New Sale</button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <main className="flex-1 flex flex-col bg-surface-bg overflow-hidden">
-        <header className="px-4 md:px-8 py-6 border-b border-surface-border bg-surface-card sticky top-0 z-40">
+      <main className="flex-1 flex flex-col bg-background overflow-hidden">
+        <header className="px-4 md:px-8 py-6 border-b border-border/50 glass-panel sticky top-0 z-40">
           <div className="flex gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 opacity-20 w-5 h-5" />
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <input title="Search Inventory" aria-label="Search Inventory" placeholder="Search Products..." className="input-field w-full pl-14 h-16 font-black uppercase" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <button type="button" title="Scan Barcode" aria-label="Scan Barcode" onClick={() => setShowScanner(true)} className="w-16 h-16 bg-primary-500 text-white rounded-2xl flex items-center justify-center shrink-0"><Scan className="w-6 h-6" /></button>
-            <button type="button" title="Sync Offline Data" aria-label="Sync Offline Data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('Synced'); }} className={clsx("w-16 h-16 bg-surface-card border border-surface-border rounded-2xl text-primary-500 flex items-center justify-center shrink-0", isSyncing && "animate-spin")}><RefreshCw className="w-6 h-6" /></button>
+            <button type="button" title="Scan Barcode" aria-label="Scan Barcode" onClick={() => setShowScanner(true)} className="w-16 h-16 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center shrink-0 btn-press shadow-lg shadow-primary/20"><Scan className="w-6 h-6" /></button>
+            <button type="button" title="Sync Offline Data" aria-label="Sync Offline Data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('Synced'); }} className={clsx("w-16 h-16 bg-card/50 border border-border/50 rounded-2xl text-primary flex items-center justify-center shrink-0 btn-press", isSyncing && "animate-spin")}><RefreshCw className="w-6 h-6" /></button>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar stagger-children">
           {searchTerm.length >= 2 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <AnimatePresence>
                 {products?.map(p => (
-                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-4 cursor-pointer bg-surface-card border border-surface-border rounded-3xl flex flex-col gap-4 hover:border-primary-500/20 shadow-sm transition-all group">
-                    <div className="w-full aspect-square bg-surface-bg rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-surface-border/50">
+                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-4 cursor-pointer glass-card border border-border/50 rounded-3xl flex flex-col gap-4 hover:border-primary/20 shadow-sm transition-all group hover-lift active:scale-95">
+                    <div className="w-full aspect-square bg-muted/20 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-border/50">
                       {p.imageUrl ? (
                         <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       ) : (
-                        <PackageSearch className="opacity-10 w-10 h-10" />
+                        <PackageSearch className="text-muted-foreground/20 w-10 h-10" />
                       )}
                     </div>
                     <div className="space-y-2">
                       <div className="font-black uppercase text-[11px] leading-tight line-clamp-2 min-h-[2.4em]">{toSentenceCase(p.name)}</div>
                       <div className="flex flex-col">
-                        <span className="text-[8px] font-black opacity-30 uppercase tracking-widest">Retail Price</span>
-                        <span className="font-black text-primary-500 text-lg leading-none">MK {p.sellPrice.toLocaleString()}</span>
+                        <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Retail Price</span>
+                        <span className="font-black text-primary text-lg leading-none">MK {p.sellPrice.toLocaleString()}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -374,10 +375,10 @@ const POSPage: React.FC = () => {
       </main>
 
       {/* Cart Sidebar / Bottom Area */}
-      <aside className="w-full lg:w-[450px] bg-surface-card border-l border-surface-border flex flex-col h-[50vh] lg:h-full shrink-0 shadow-2xl relative z-50">
-        <header className="p-8 border-b border-surface-border flex justify-between items-center bg-surface-card">
-          <h2 className="text-xl font-black uppercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary-500" /> Cart <span className="bg-primary-500 text-white text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
-          {cart.length > 0 && <button onClick={() => setCart([])} className="text-[10px] font-black uppercase text-rose-500 opacity-40 hover:opacity-100 transition-opacity">Clear All</button>}
+      <aside className="w-full lg:w-[450px] bg-card/80 backdrop-blur-2xl border-l border-border/50 flex flex-col h-[50vh] lg:h-full shrink-0 shadow-2xl relative z-50">
+        <header className="p-8 border-b border-border/50 flex justify-between items-center bg-transparent">
+          <h2 className="text-xl font-black uppercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> Cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
+          {cart.length > 0 && <button onClick={() => setCart([])} className="text-[10px] font-black uppercase text-destructive opacity-40 hover:opacity-100 transition-opacity">Clear All</button>}
         </header>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
@@ -438,9 +439,9 @@ const POSPage: React.FC = () => {
                     <span>MK {taxAmount.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center pt-4 border-t border-surface-border">
+                <div className="flex justify-between items-center pt-4 border-t border-border/50">
                   <span className="text-[10px] font-black uppercase opacity-40">Total</span>
-                  <span className="text-3xl font-black text-primary-500 tracking-tighter">MK {finalTotal.toLocaleString()}</span>
+                  <span className="text-3xl font-black text-primary tracking-tighter">MK {finalTotal.toLocaleString()}</span>
                 </div>
               </div>
               
@@ -451,7 +452,7 @@ const POSPage: React.FC = () => {
                     {(['Cash', 'Card', 'Momo', 'Credit'] as const).map(id => {
                       const m = { Cash: { icon: Wallet, label: 'Cash' }, Card: { icon: CreditCard, label: 'Bank' }, Momo: { icon: Smartphone, label: 'MoMo' }, Credit: { icon: Users, label: 'Credit' } }[id];
                       return (
-                        <button key={id} onClick={() => setPaymentMode(id)} className={clsx("p-4 rounded-xl border flex items-center gap-3 transition-all", paymentMode === id ? "bg-primary-500 text-white border-transparent shadow-lg shadow-primary-500/20" : "bg-surface-bg border-surface-border opacity-40 hover:opacity-100")}>
+                        <button key={id} onClick={() => setPaymentMode(id)} className={clsx("p-4 rounded-xl border flex items-center gap-3 transition-all btn-press", paymentMode === id ? "bg-primary text-primary-foreground border-transparent shadow-lg shadow-primary/20" : "bg-muted/10 border-border/50 opacity-40 hover:opacity-100")}>
                           <m.icon className="w-4 h-4" /> <span className="text-[9px] font-black uppercase">{m.label}</span>
                         </button>
                       );
@@ -500,13 +501,13 @@ const POSPage: React.FC = () => {
           )}
         </div>
 
-        <div className="p-8 border-t border-surface-border bg-surface-card">
+        <div className="p-8 border-t border-border/50 bg-card/50">
           <button 
             disabled={cart.length === 0}
             onClick={handleCheckout} 
             className={clsx(
-              "w-full h-16 rounded-2xl font-black text-sm uppercase shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3",
-              paymentMode === 'Credit' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-primary-500 text-white shadow-primary-500/20",
+              "w-full h-16 rounded-2xl font-black text-sm uppercase shadow-xl transition-all btn-press flex items-center justify-center gap-3",
+              paymentMode === 'Credit' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
               cart.length === 0 && "opacity-50 grayscale cursor-not-allowed"
             )}
           >

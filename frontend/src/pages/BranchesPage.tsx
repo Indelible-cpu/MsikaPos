@@ -201,15 +201,15 @@ const BranchesPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
+      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
 
         {!readOnly && isSuperAdmin && (
           <button 
             onClick={() => { setEditingBranch(null); resetForm(); setIsModalOpen(true); }}
-            className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20"
+            className="btn-primary btn-press hover-lift !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary/20 uppercase"
           >
             <Plus className="w-4 h-4 mr-2 inline" /> Add branch
           </button>
@@ -217,22 +217,22 @@ const BranchesPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-6 md:px-12 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 bg-surface-card border border-surface-border rounded-3xl overflow-hidden mb-12">
+      <div className="px-6 md:px-12 py-8 stagger-children">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-0 glass-panel border border-border/50 rounded-3xl overflow-hidden mb-12">
           {stats.map((stat, i) => (
-            <div key={i} className={clsx("p-8 bg-surface-card", i < stats.length - 1 && "md:border-r border-surface-border/50")}>
-              <div className={`p-2 rounded-xl bg-surface-bg border border-surface-border w-fit mb-4 ${stat.color}`}>
+            <div key={i} className={clsx("p-8 bg-card/50", i < stats.length - 1 && "md:border-r border-border/50")}>
+              <div className={`p-2 rounded-xl bg-muted/30 border border-border/50 w-fit mb-4 ${stat.color}`}>
                 <stat.icon className="w-4 h-4" />
               </div>
               <div className="text-xl md:text-2xl font-black tracking-tighter leading-none">{stat.value}</div>
-              <div className="text-[9px] font-black text-surface-text/30 tracking-widest mt-2">{stat.label}</div>
+              <div className="text-[9px] font-black text-muted-foreground tracking-widest mt-2">{stat.label}</div>
             </div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading && branches.length === 0 ? (
-            <div className="col-span-full py-40 flex flex-col items-center justify-center gap-4 bg-surface-card border border-dashed border-surface-border rounded-3xl">
+            <div className="col-span-full py-40 flex flex-col items-center justify-center gap-4 glass-panel border border-dashed border-border/50 rounded-3xl">
               <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
               <p className="text-[10px] font-black tracking-widest text-surface-text/20 uppercase">Loading branches...</p>
             </div>
@@ -242,7 +242,7 @@ const BranchesPage: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
-              className="overflow-hidden group transition-all bg-surface-card border border-surface-border rounded-3xl hover:border-primary-500/20 shadow-sm"
+              className="overflow-hidden group transition-all glass-card border border-border/50 rounded-3xl hover:border-primary/20 shadow-sm"
             >
               <div className="h-28 bg-gradient-to-br from-primary-600/10 to-primary-900/40 relative">
                  <div className="absolute -bottom-6 left-6 w-14 h-14 bg-surface-card border-2 border-primary-500/10 rounded-2xl flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform group-hover:border-primary-500/30 overflow-hidden">
@@ -289,7 +289,7 @@ const BranchesPage: React.FC = () => {
                   {isSuperAdmin && (
                     <button 
                       onClick={() => openEditModal(branch)}
-                      className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest hover:bg-primary-500/5 transition-all active:scale-95 shadow-sm uppercase"
+                      className="flex-1 py-4 bg-muted/30 border border-border/50 rounded-2xl text-[10px] font-black tracking-widest hover:bg-primary/5 transition-all btn-press shadow-sm uppercase"
                     >
                         Configure
                     </button>
@@ -300,7 +300,7 @@ const BranchesPage: React.FC = () => {
                         toast.success(`Switched to ${branch.name}`);
                         setTimeout(() => window.location.reload(), 500);
                       }}
-                      className="p-4 bg-primary-500 text-white rounded-2xl shadow-xl shadow-primary-500/20 active:scale-95 transition-all flex items-center justify-center"
+                      className="p-4 bg-primary text-primary-foreground rounded-2xl shadow-xl shadow-primary/20 btn-press transition-all flex items-center justify-center"
                       title="Switch to this branch"
                       aria-label={`Switch to ${branch.name}`}
                     >

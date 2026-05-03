@@ -41,26 +41,26 @@ const MoreSheet: React.FC<MoreSheetProps> = ({ isOpen, onClose }) => {
             onDragEnd={(_, info) => {
               if (info.offset.y > 100 || info.offset.y < -100) onClose();
             }}
-            className="fixed bottom-0 left-0 right-0 bg-surface-card border-t border-surface-border rounded-t-[3rem] z-[101] overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.3)] pb-safe"
+            className="fixed bottom-0 left-0 right-0 glass-panel border-t border-border/50 rounded-t-[3rem] z-[101] overflow-hidden shadow-[0_-20px_60px_rgba(0,0,0,0.4)] pb-safe"
           >
             {/* Handle */}
-            <div className="w-12 h-1.5 bg-surface-border rounded-full mx-auto mt-4 mb-2" />
+            <div className="w-12 h-1.5 bg-border/50 rounded-full mx-auto mt-4 mb-2" />
 
             <div className="px-8 pt-2 pb-12">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary-500/10 flex items-center justify-center">
-                    <LayoutGrid className="w-5 h-5 text-primary-500" />
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <LayoutGrid className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-xl font-black  tracking-tighter ">More Options</h2>
+                  <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">More Options</h2>
                 </div>
                 <button 
                   onClick={onClose}
-                  className="w-10 h-10 rounded-full bg-surface-bg flex items-center justify-center border border-surface-border"
+                  className="w-10 h-10 rounded-full bg-muted/10 flex items-center justify-center border border-border/50 btn-press"
                   title="Close"
                   aria-label="Close"
                 >
-                  <X className="w-5 h-5 text-surface-text/40" />
+                  <X className="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
 
@@ -71,10 +71,10 @@ const MoreSheet: React.FC<MoreSheetProps> = ({ isOpen, onClose }) => {
                     to={item.path}
                     onClick={onClose}
                     className={({ isActive }) => clsx(
-                      "flex flex-col items-center justify-center p-6 rounded-[2rem] border transition-all gap-3 group",
+                      "flex flex-col items-center justify-center p-6 rounded-[2rem] border transition-all gap-3 group btn-press",
                       isActive 
-                        ? "bg-primary-500 border-primary-400 text-white shadow-xl shadow-primary-500/20" 
-                        : "bg-surface-bg border-surface-border text-surface-text/40 hover:border-primary-500/20 hover:text-primary-500"
+                        ? "bg-primary border-primary/80 text-primary-foreground shadow-xl shadow-primary/20" 
+                        : "glass-card border-border/50 text-muted-foreground hover:border-primary/30 hover:text-primary"
                     )}
                   >
                     <item.icon className="w-8 h-8 group-hover:scale-110 transition-transform" />

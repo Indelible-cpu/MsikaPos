@@ -19,32 +19,32 @@ type ReportTab = 'Financial' | 'Staff' | 'Branches' | 'Payment';
 const BarChart = ({ data, label, valuePrefix = '' }: { data: { label: string, value: number }[], label: string, valuePrefix?: string }) => {
   const maxVal = Math.max(...data.map(d => d.value), 1);
   return (
-    <div className="bg-surface-card border border-surface-border rounded-3xl p-6">
+    <div className="glass-panel border border-border/50 rounded-3xl p-6 shadow-xl">
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-500/10 text-primary-500 rounded-lg">
+          <div className="p-2 bg-primary/10 text-primary rounded-lg">
             <BarChart3 className="w-4 h-4" />
           </div>
-          <h3 className="text-sm font-black tracking-wider">{label}</h3>
+          <h3 className="text-xs font-black tracking-[0.2em] uppercase text-muted-foreground">{label}</h3>
         </div>
       </div>
       <div className="h-64 flex items-end justify-between gap-2 pt-4">
         {data.length === 0 ? (
-          <div className="w-full h-full flex items-center justify-center text-surface-text/10 font-black text-xs tracking-widest">No data available</div>
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground/20 font-black text-xs tracking-widest uppercase">No data available</div>
         ) : data.map((item, i) => (
           <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
             <div className="relative w-full flex flex-col justify-end h-full">
               <motion.div 
                 initial={{ height: 0 }}
                 animate={{ height: `${(item.value / maxVal) * 100}%` }}
-                className="w-full bg-primary-500/20 group-hover:bg-primary-500/40 border-t-4 border-primary-500 rounded-t-lg transition-all relative"
+                className="w-full bg-primary/20 group-hover:bg-primary/40 border-t-4 border-primary rounded-t-lg transition-all relative"
               >
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface-text text-surface-bg text-[8px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-foreground text-background text-[8px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 uppercase tracking-widest">
                   {valuePrefix}{item.value.toLocaleString()}
                 </div>
               </motion.div>
             </div>
-            <span className="text-[9px] font-bold text-surface-text/30 truncate w-full text-center tracking-tighter">{item.label}</span>
+            <span className="text-[9px] font-black text-muted-foreground/60 truncate w-full text-center tracking-tighter uppercase">{item.label}</span>
           </div>
         ))}
       </div>
@@ -216,20 +216,21 @@ const ReportsPage: React.FC = () => {
 
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+    <div className="flex flex-col min-h-screen w-full bg-background transition-all pb-24 md:pb-0 px-0 relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-6">
-          <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl overflow-x-auto no-scrollbar w-full md:w-auto">
+          <div className="flex gap-2 p-1 bg-muted/20 border border-border/50 rounded-2xl overflow-x-auto no-scrollbar w-full md:w-auto">
             {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={clsx(
-                  "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none uppercase",
-                  activeTab === tab ? "bg-primary-500 text-white shadow-lg shadow-primary-500/20" : "text-surface-text/40 hover:bg-surface-bg/50"
+                  "px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none uppercase btn-press",
+                  activeTab === tab ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-muted/50"
                 )}
               >
                 {tab === 'Financial' ? 'Financial reports' : 
@@ -247,7 +248,7 @@ const ReportsPage: React.FC = () => {
                 onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
                 title="Filter by time period"
                 aria-label="Filter by time period"
-                className="px-4 py-2 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-black tracking-widest uppercase text-primary-500 outline-none cursor-pointer"
+                className="px-4 py-2 bg-card/50 border border-border/50 rounded-xl text-[10px] font-black tracking-widest uppercase text-primary outline-none cursor-pointer btn-press"
               >
                 <option value="Weekly">Weekly</option>
                 <option value="Monthly">Monthly</option>
@@ -271,15 +272,15 @@ const ReportsPage: React.FC = () => {
                 );
               }}
               title="Export Report Data"
-              className="p-2.5 bg-surface-bg border border-surface-border rounded-xl text-primary-500 hover:bg-primary-500/10 transition-all"
+              className="p-2.5 bg-card/50 border border-border/50 rounded-xl text-primary hover:bg-primary/10 transition-all btn-press"
             >
               <Download className="w-4 h-4" />
             </button>
 
             {loading && (
               <div className="pr-4 flex items-center gap-2">
-                <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
-                <span className="text-[8px] font-black tracking-widest text-primary-500">REFRESHING...</span>
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                <span className="text-[8px] font-black tracking-widest text-primary uppercase">REFRESHING...</span>
               </div>
             )}
           </div>
@@ -288,20 +289,20 @@ const ReportsPage: React.FC = () => {
 
       <div className="px-6 md:px-12">
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-children">
           {stats.map((stat, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="bg-surface-card border border-surface-border p-5 rounded-3xl group hover:border-primary-500/30 transition-all shadow-sm shadow-primary-500/5"
+              className="glass-card border border-border/50 p-5 rounded-3xl group hover:border-primary/30 transition-all shadow-sm shadow-primary/5"
             >
-              <div className={`p-2.5 rounded-xl bg-surface-bg border border-surface-border w-fit mb-4 ${stat.color}`}>
+              <div className={`p-2.5 rounded-xl bg-muted/10 border border-border/50 w-fit mb-4 ${stat.color}`}>
                 <stat.icon className="w-5 h-5" />
               </div>
-              <div className="text-lg font-black tracking-tighter">{stat.value}</div>
-              <div className="text-[9px] font-black text-surface-text/30 tracking-[0.15em] mt-1 uppercase">{stat.label}</div>
+              <div className="text-lg font-black tracking-tighter text-foreground">{stat.value}</div>
+              <div className="text-[9px] font-black text-muted-foreground tracking-[0.15em] mt-1 uppercase">{stat.label}</div>
             </motion.div>
           ))}
         </div>
@@ -323,11 +324,11 @@ const ReportsPage: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        <div className="bg-surface-card border border-surface-border rounded-3xl p-6">
-          <h4 className="text-[10px] font-black tracking-widest text-surface-text/30 mb-4 uppercase">Market Intelligence</h4>
-          <p className="text-xs font-bold leading-relaxed text-surface-text/60">
-            Revenue is primarily driven by <span className="text-primary-500">{analyticsData.payment[0]?.label || 'Cash'}</span>. 
-            {analyticsData.staff[0] && <span> The top cashier is <span className="text-emerald-500 font-black">{analyticsData.staff[0].label}</span>. </span>}
+        <div className="glass-panel border border-border/50 rounded-3xl p-8 mb-8">
+          <h4 className="text-[10px] font-black tracking-widest text-muted-foreground/60 mb-6 uppercase">Market Intelligence</h4>
+          <p className="text-sm font-black leading-relaxed text-muted-foreground tracking-tight">
+            Revenue is primarily driven by <span className="text-primary">{analyticsData.payment[0]?.label || 'Cash'}</span>. 
+            {analyticsData.staff[0] && <span> The top cashier is <span className="text-success font-black">{analyticsData.staff[0].label}</span>. </span>}
             {analyticsData.branches[0] && <span> The leading location is <span className="text-amber-500 font-black">{analyticsData.branches[0].label}</span>. </span>}
             This data assists Super Admins in performance-based promotions and multi-branch resource allocation.
           </p>

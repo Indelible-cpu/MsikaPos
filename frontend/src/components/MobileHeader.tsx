@@ -91,12 +91,12 @@ export default function MobileHeader() {
 
   return (
     <>
-    <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-surface-bg/95 backdrop-blur-md border-b border-surface-border flex items-center justify-between px-4 z-[100] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary-500/20 after:to-transparent">
+    <header className="sticky top-0 w-full h-[calc(64px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-background/80 backdrop-blur-xl border-b border-border/50 flex items-center justify-between px-4 z-[100] shadow-sm after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-primary/20 after:to-transparent">
       <div className="flex items-center gap-1.5 overflow-hidden flex-1">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-9 h-9 rounded-full border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm"
+            className="w-9 h-9 rounded-full border border-primary/20 bg-background flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm"
           >
             <img src={shopLogo} alt="Logo" className="w-full h-full object-cover" />
           </motion.div>
@@ -104,7 +104,7 @@ export default function MobileHeader() {
           {!isBasePage && (
             <button
               onClick={() => window.history.back()}
-              className="p-1.5 bg-surface-bg rounded-lg border border-surface-border active:scale-90 transition-all flex-shrink-0"
+              className="p-1.5 bg-background rounded-lg border border-border/50 active:scale-90 transition-all flex-shrink-0 btn-press"
               title="Go back"
               aria-label="Go back"
             >
@@ -113,10 +113,10 @@ export default function MobileHeader() {
           )}
 
           <div className="flex flex-col min-w-0 flex-1 ml-0.5">
-            <span className="text-[17px] font-black tracking-tighter text-primary-500 leading-none truncate block">
+            <span className="text-[17px] font-black tracking-tighter text-primary leading-none truncate block">
               {shopName}
             </span>
-            <span className="text-[8px] font-black tracking-[0.3em] text-surface-text/40 truncate !mb-0 uppercase mt-0.5">
+            <span className="text-[8px] font-black tracking-[0.3em] text-muted-foreground truncate !mb-0 uppercase mt-0.5">
               {getPageTitle(location.pathname)}
             </span>
           </div>
@@ -131,13 +131,13 @@ export default function MobileHeader() {
 
           <button
             onClick={() => window.location.href = '/staff/inquiries'}
-            className="relative p-2.5 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 active:scale-95 transition-all"
+            className="relative p-2.5 bg-background border border-border/50 rounded-xl text-muted-foreground hover:text-primary active:scale-95 transition-all btn-press"
             title="Notifications"
             aria-label="Notifications"
           >
             <Bell className="w-5 h-5" />
             {pendingCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-surface-card animate-pulse shadow-lg shadow-rose-500/20">
+              <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[8px] font-black rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-lg shadow-destructive/20">
                 {pendingCount}
               </span>
             )}

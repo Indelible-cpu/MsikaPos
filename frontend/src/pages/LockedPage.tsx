@@ -9,7 +9,8 @@ interface LockedPageProps {
 
 const LockedPage: React.FC<LockedPageProps> = ({ isSuperAdmin, onUnlock }) => {
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-surface-bg text-surface-text">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-background text-foreground relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-destructive/5 via-transparent to-transparent pointer-events-none" />
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -27,7 +28,7 @@ const LockedPage: React.FC<LockedPageProps> = ({ isSuperAdmin, onUnlock }) => {
         </p>
         
         <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center justify-center gap-3 py-4 px-6 bg-surface-card border border-surface-border rounded-2xl text-[10px] font-bold text-surface-text/30 w-full">
+          <div className="flex items-center justify-center gap-3 py-4 px-6 glass-card border border-border/50 rounded-2xl text-[10px] font-black text-muted-foreground w-full">
             <Clock className="w-4 h-4" />
             Operating hours enforcement active
           </div>
@@ -35,7 +36,7 @@ const LockedPage: React.FC<LockedPageProps> = ({ isSuperAdmin, onUnlock }) => {
           {isSuperAdmin && onUnlock && (
             <button 
               onClick={onUnlock}
-              className="flex items-center justify-center gap-2 w-full py-4 bg-primary-600/10 text-primary-500 hover:bg-primary-500 hover:text-white border border-primary-500/20 rounded-2xl font-bold transition-all"
+              className="flex items-center justify-center gap-2 w-full py-4 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground border border-primary/20 rounded-2xl font-black tracking-widest text-[10px] transition-all btn-press uppercase"
             >
               <Key className="w-5 h-5" />
               Unlock system temporarily (30m)

@@ -105,7 +105,7 @@ const SalesPage: React.FC = () => {
 
         <div className="mt-8 relative flex items-center gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <input type="text" placeholder="Search invoices..." className="input-field w-full pl-12 py-4 text-sm font-medium shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
           
@@ -124,36 +124,36 @@ const SalesPage: React.FC = () => {
               toast.success('Sales history exported');
             }}
             title="Export Sales History"
-            className="p-4 bg-surface-card border border-surface-border rounded-xl text-primary-500 hover:bg-primary-500/10 transition-all shadow-sm"
+            className="p-4 bg-card/50 backdrop-blur-md border border-border/50 rounded-xl text-primary hover:bg-primary/10 transition-all shadow-sm btn-press"
           >
             <Download className="w-5 h-5" />
           </button>
 
           {loading && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-primary-500/10 text-primary-500 rounded-xl animate-pulse">
-               <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce"></div>
-               <span className="text-[10px] font-bold">Syncing cloud logs...</span>
+            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl animate-pulse">
+               <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+               <span className="text-[10px] font-black uppercase tracking-widest">Syncing cloud logs...</span>
             </div>
           )}
         </div>
       </div>
 
       <div className="p-0 md:p-8">
-        <div className="bg-surface-card border-y md:border md:rounded-3xl border-surface-border overflow-hidden divide-y divide-surface-border">
+        <div className="glass-panel border-y md:border md:rounded-3xl border-border/50 overflow-hidden divide-y divide-border/30 stagger-children">
           {filteredSales?.length === 0 ? (
-            <div className="p-20 flex flex-col items-center justify-center text-surface-text/20 font-bold text-sm">
-              <ReceiptIcon className="w-16 h-16 mb-4 opacity-20" /> No transactions found
+            <div className="p-20 flex flex-col items-center justify-center text-muted-foreground/20 font-black text-[10px] uppercase tracking-[0.2em]">
+              <ReceiptIcon className="w-16 h-16 mb-4 opacity-10" /> No transactions found
             </div>
           ) : (
             filteredSales?.map((sale) => (
-              <div key={sale.id} onClick={() => setSelectedSale(sale)} className="group hover:bg-primary-500/5 transition-all cursor-pointer p-6 flex justify-between items-center">
+              <div key={sale.id} onClick={() => setSelectedSale(sale)} className="group hover:bg-primary/5 transition-all cursor-pointer p-6 flex justify-between items-center btn-press">
                 <div className="flex flex-col">
-                  <span className="font-bold text-sm tracking-tight group-hover:text-primary-400 transition-colors">{sale.invoiceNo}</span>
-                  <span className="text-[10px] text-surface-text/40 font-bold">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')} • {sale.itemsCount} items</span>
+                  <span className="font-black text-sm tracking-tight group-hover:text-primary transition-colors uppercase">{sale.invoiceNo}</span>
+                  <span className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')} • {sale.itemsCount} items</span>
                 </div>
                 <div className="text-right">
-                  <div className="font-black text-base text-primary-400">MK{sale.total.toLocaleString()}</div>
-                  <div className="text-[9px] text-surface-text/30 font-bold">{sale.paymentMode}</div>
+                  <div className="font-black text-base text-primary">MK{sale.total.toLocaleString()}</div>
+                  <div className="text-[8px] text-muted-foreground font-black uppercase tracking-widest">{sale.paymentMode}</div>
                 </div>
               </div>
             ))

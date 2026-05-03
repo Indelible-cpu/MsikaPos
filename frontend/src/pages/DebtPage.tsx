@@ -346,33 +346,34 @@ const DebtPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-surface-bg overflow-hidden">
-      <header className="bg-surface-card border-b border-surface-border px-6 py-4 flex items-center justify-between z-30">
+    <div className="flex flex-col w-full bg-background transition-all pb-24 md:pb-0 relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <header className="glass-panel border-b border-border/50 px-6 py-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
-          <h1 className="text-sm font-black uppercase tracking-widest text-primary-500">Credit Center</h1>
+          <h1 className="text-sm font-black uppercase tracking-widest text-primary">Credit Center</h1>
         </div>
       </header>
 
       <div className="flex flex-1 flex-col md:flex-row overflow-hidden relative">
         <aside className={clsx(
-          "w-full md:w-80 lg:w-96 border-r border-surface-border bg-surface-card flex flex-col shrink-0 transition-transform duration-300",
+          "w-full md:w-80 lg:w-96 border-r border-border/50 bg-card/50 backdrop-blur-xl flex flex-col shrink-0 transition-transform duration-300",
           selectedCustomer && "hidden md:flex"
         )}>
-          <div className="p-4 border-b border-surface-border">
+          <div className="p-4 border-b border-border/50">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-text/40 w-3.5 h-3.5" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
               <input title="Search Customers" aria-label="Search Customers" placeholder="Search names..." className="input-field w-full pl-9 text-[10px] py-2.5 font-bold" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 overflow-y-auto custom-scrollbar stagger-children">
             {customers?.length === 0 ? (
-              <div className="p-10 text-center text-surface-text/20 font-black text-[9px] uppercase">No active credit accounts</div>
+              <div className="p-10 text-center text-muted-foreground/20 font-black text-[9px] uppercase">No active credit accounts</div>
             ) : (
-              <div className="divide-y divide-surface-border/50">
+              <div className="divide-y divide-border/30">
                 {customers?.map(c => (
-                  <div key={c.id} className={clsx("p-4 flex items-center justify-between transition-all border-l-4", selectedCustomer?.id === c.id ? "bg-primary-500/[0.05] border-l-primary-500" : "border-l-transparent")}>
+                  <div key={c.id} className={clsx("p-4 flex items-center justify-between transition-all border-l-4 btn-press cursor-pointer", selectedCustomer?.id === c.id ? "bg-primary/5 border-l-primary" : "border-l-transparent hover:bg-muted/5")}>
                     <div className="flex-1 min-w-0"><h3 className="text-[12px] font-black uppercase truncate">{c.name}</h3></div>
-                    <button type="button" title={`View profile for ${c.name}`} aria-label={`View profile for ${c.name}`} onClick={() => { setSelectedCustomer(c); setIsProfileModalOpen(true); }} className="px-4 py-1.5 bg-primary-500/10 text-primary-500 rounded-lg text-[9px] font-black uppercase tracking-widest">View Profile</button>
+                    <button type="button" title={`View profile for ${c.name}`} aria-label={`View profile for ${c.name}`} onClick={() => { setSelectedCustomer(c); setIsProfileModalOpen(true); }} className="px-4 py-1.5 bg-primary/10 text-primary rounded-lg text-[9px] font-black uppercase tracking-widest btn-press">View Profile</button>
                   </div>
                 ))}
               </div>
@@ -381,40 +382,40 @@ const DebtPage: React.FC = () => {
         </aside>
 
         <main className={clsx(
-          "flex-1 bg-surface-bg overflow-y-auto custom-scrollbar transition-all duration-300",
+          "flex-1 bg-background overflow-y-auto custom-scrollbar transition-all duration-300 relative",
           !selectedCustomer && "hidden md:block"
         )}>
           {selectedCustomer ? (
-            <div className="p-4 md:p-10 space-y-6 md:space-y-10 animate-slide-in">
+            <div className="p-4 md:p-10 space-y-6 md:space-y-10 animate-slide-in stagger-children">
               {/* Mobile Back Button */}
               <button 
                 type="button" 
                 onClick={() => setSelectedCustomer(null)}
-                className="md:hidden flex items-center gap-2 mb-4 text-primary-500 font-black text-[10px] uppercase tracking-widest"
+                className="md:hidden flex items-center gap-2 mb-4 text-primary font-black text-[10px] uppercase tracking-widest btn-press"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to list
               </button>
 
-              <div className="bg-surface-card p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-surface-border shadow-xl flex flex-col xl:flex-row justify-between items-center gap-8">
+              <div className="glass-panel p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-border/50 shadow-xl flex flex-col xl:flex-row justify-between items-center gap-8">
                 <div className="flex items-center gap-6 w-full xl:w-auto">
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-primary-500/10 rounded-3xl flex items-center justify-center text-primary-500 shrink-0"><HistoryIcon className="w-8 h-8 md:w-10 md:h-10" /></div>
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/10 rounded-3xl flex items-center justify-center text-primary shrink-0"><HistoryIcon className="w-8 h-8 md:w-10 md:h-10" /></div>
                   <div>
                     <h2 className="text-xl md:text-3xl font-black tracking-tighter uppercase truncate max-w-[200px] md:max-w-none">{selectedCustomer.name}</h2>
-                    <p className="text-[8px] md:text-[10px] font-black opacity-30 tracking-[0.2em] uppercase mt-1">Outstanding Ledger Account</p>
+                    <p className="text-[8px] md:text-[10px] font-black text-muted-foreground tracking-[0.2em] uppercase mt-1">Outstanding Ledger Account</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12 text-right w-full xl:w-auto border-t xl:border-t-0 border-surface-border pt-6 xl:pt-0">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12 text-right w-full xl:w-auto border-t xl:border-t-0 border-border/50 pt-6 xl:pt-0">
                   <div>
-                    <div className="text-[8px] md:text-[9px] font-black opacity-30 uppercase mb-1 tracking-widest">Total Credit</div>
-                    <div className="text-sm md:text-xl font-black tracking-tighter">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
+                    <div className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase mb-1 tracking-widest">Total Credit</div>
+                    <div className="text-sm md:text-xl font-black tracking-tighter text-foreground">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="text-[8px] md:text-[9px] font-black opacity-30 uppercase mb-1 tracking-widest">Total Paid</div>
-                    <div className="text-sm md:text-xl font-black text-emerald-500 tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
+                    <div className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase mb-1 tracking-widest">Total Paid</div>
+                    <div className="text-sm md:text-xl font-black text-success tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
                   </div>
-                  <div className="col-span-2 lg:col-span-1 border-t lg:border-t-0 border-surface-border pt-4 lg:pt-0">
-                    <div className="text-[8px] md:text-[9px] font-black text-rose-500/40 uppercase mb-1 tracking-widest">Balance Due</div>
-                    <div className="text-3xl md:text-5xl font-black text-rose-500 tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
+                  <div className="col-span-2 lg:col-span-1 border-t lg:border-t-0 border-border/50 pt-4 lg:pt-0">
+                    <div className="text-[8px] md:text-[9px] font-black text-destructive/40 uppercase mb-1 tracking-widest">Balance Due</div>
+                    <div className="text-3xl md:text-5xl font-black text-destructive tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
                   </div>
                 </div>
               </div>

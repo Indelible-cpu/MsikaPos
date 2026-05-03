@@ -401,14 +401,14 @@ const InventoryPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+    <div className="flex flex-col min-h-screen w-full bg-background transition-all pb-24 md:pb-0 px-0">
+      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
           <div className="flex flex-wrap items-center gap-3">
             <button 
               onClick={() => setIsCategoryModalOpen(true)}
-              className="btn-secondary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest"
+              className="btn-secondary btn-press !px-6 !py-4 uppercase text-[10px] font-black tracking-widest"
               title="Open Category Manager"
               aria-label="Open Category Manager"
             >
@@ -416,14 +416,14 @@ const InventoryPage: React.FC = () => {
             </button>
             <button 
               onClick={() => setShowDeleted(!showDeleted)}
-              className={clsx("btn-secondary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2", showDeleted && "!bg-rose-500/10 !text-rose-500 !border-rose-500/20")}
+              className={clsx("btn-secondary btn-press !px-6 !py-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2", showDeleted && "!bg-destructive/10 !text-destructive !border-destructive/20")}
               title={showDeleted ? "View Active Items" : "View Trash"}
             >
               <Trash2 className="w-4 h-4" /> {showDeleted ? 'Active' : 'Trash'}
             </button>
             <button 
               onClick={handleExport}
-              className="btn-secondary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
+              className="btn-secondary btn-press !px-6 !py-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
               title="Export CSV"
               aria-label="Export CSV"
             >
@@ -432,7 +432,7 @@ const InventoryPage: React.FC = () => {
             {!readOnly && (
               <button 
                 onClick={() => openAddModal()}
-                className="btn-primary !px-6 !py-4 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20"
+                className="btn-primary btn-press hover-lift !px-6 !py-4 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-primary/20"
                 title="Add New Product"
                 aria-label="Add New Product"
               >
@@ -443,30 +443,30 @@ const InventoryPage: React.FC = () => {
         </div>
       </div>
         
-      <div className="px-6 md:px-12 py-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-0 bg-surface-card border border-surface-border rounded-3xl overflow-hidden mb-8">
-          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
+      <div className="px-6 md:px-12 py-8 stagger-children">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-0 glass-panel border border-border/50 rounded-3xl overflow-hidden mb-8">
+          <div className="p-8 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
             <div className="card-label">Total stock cost</div>
             <div className="text-xl md:text-2xl font-black tracking-tighter">MK{analytics.totalCost.toLocaleString()}</div>
           </div>
-          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
-            <div className="card-label !text-emerald-500">Expected profit</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter text-emerald-500">MK{analytics.totalProfit.toLocaleString()}</div>
+          <div className="p-8 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
+            <div className="card-label !text-success">Expected profit</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-success">MK{analytics.totalProfit.toLocaleString()}</div>
           </div>
-          <div className="p-8 border-b md:border-b-0 md:border-r border-surface-border/50 bg-surface-card">
-            <div className="card-label !text-red-500">Est. ageing loss</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter text-red-500">MK{analytics.totalLoss.toLocaleString()}</div>
+          <div className="p-8 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
+            <div className="card-label !text-destructive">Est. ageing loss</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-destructive">MK{analytics.totalLoss.toLocaleString()}</div>
           </div>
-          <div className="p-8 bg-surface-card">
-            <div className="card-label !text-primary-500">Low stock alert</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter text-primary-500">{analytics.lowStock} <span className="text-[10px] text-surface-text/20">Items</span></div>
+          <div className="p-8 bg-card/50">
+            <div className="card-label !text-primary">Low stock alert</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-primary">{analytics.lowStock} <span className="text-[10px] text-muted-foreground">Items</span></div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           <div className="relative group flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-5 h-5 group-focus-within:text-primary-500 transition-colors" />
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 group-focus-within:text-primary transition-colors" />
               <input 
                 type="text" 
                 placeholder="Search by name or SKU..."
@@ -479,7 +479,7 @@ const InventoryPage: React.FC = () => {
             </div>
             <button 
               onClick={() => setIsScannerOpen(true)}
-              className="w-14 h-14 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-center text-primary-500 hover:bg-primary-500 hover:text-white transition-all shadow-sm active:scale-95 flex-shrink-0"
+              className="w-14 h-14 bg-card/50 backdrop-blur-md border border-border/50 rounded-2xl flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all shadow-sm btn-press flex-shrink-0"
               title="Open Barcode Scanner"
             >
               <Barcode className="w-6 h-6" />
@@ -523,7 +523,7 @@ const InventoryPage: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 key={product.id}
-                className="overflow-hidden group transition-all flex flex-col bg-surface-card border border-surface-border rounded-3xl hover:border-primary-500/20 duration-500"
+                className="overflow-hidden group transition-all flex flex-col glass-card border border-border/50 rounded-3xl hover:border-primary/20 duration-500"
               >
                 <div className="p-6 flex-1 flex flex-col">
                   <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center">
@@ -534,11 +534,11 @@ const InventoryPage: React.FC = () => {
                     )}
                   </div>
                   <div className="flex justify-between items-start mb-4">
-                    <div className="text-[9px] font-black text-surface-text/30 tracking-widest uppercase">{product.sku}</div>
+                    <div className="text-[9px] font-black text-muted-foreground tracking-widest uppercase">{product.sku}</div>
                   </div>
-                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary-500 transition-colors tracking-tight line-clamp-2">{toSentenceCase(product.name)}</h3>
+                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary transition-colors tracking-tight line-clamp-2">{toSentenceCase(product.name)}</h3>
                   <div className="flex items-center gap-2 mb-6">
-                    <span className="text-primary-500 font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
+                    <span className="text-primary font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
                   </div>
                   <div className={clsx(
                     "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black tracking-widest",
@@ -549,11 +549,11 @@ const InventoryPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="px-6 py-4 bg-surface-bg/30 border-t border-surface-border flex flex-wrap gap-2">
+                <div className="px-6 py-4 bg-muted/30 border-t border-border/50 flex flex-wrap gap-2">
                   {product.imageUrl && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
-                      className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-emerald-500 hover:bg-emerald-500/10 transition-colors uppercase"
+                      className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-success hover:bg-success/10 transition-colors uppercase btn-press"
                     >
                       <ImageIcon className="w-3 h-3" /> View
                     </button>
@@ -561,7 +561,7 @@ const InventoryPage: React.FC = () => {
                   {!readOnly && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
-                      className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-primary-500 hover:bg-primary-500/10 transition-colors uppercase"
+                      className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-primary hover:bg-primary/10 transition-colors uppercase btn-press"
                     >
                       <Edit2 className="w-3 h-3" /> Edit
                     </button>
@@ -569,7 +569,7 @@ const InventoryPage: React.FC = () => {
                   {!readOnly && isAdmin && !showDeleted && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); safeDeleteProduct(product); }} 
-                      className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-orange-500 hover:bg-orange-500/10 transition-colors uppercase"
+                      className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-orange-500 hover:bg-orange-500/10 transition-colors uppercase btn-press"
                     >
                       <Trash2 className="w-3 h-3" /> Safe Del
                     </button>

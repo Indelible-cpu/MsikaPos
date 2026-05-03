@@ -247,13 +247,13 @@ const UsersPage: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0">
+      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
         <div className="flex flex-col md:flex-row md:items-center gap-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input 
               type="text" 
               placeholder="Search staff..."
@@ -267,7 +267,7 @@ const UsersPage: React.FC = () => {
           {!readOnly && (
             <button 
               onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
-              className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 whitespace-nowrap"
+              className="btn-primary btn-press hover-lift !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary/20 whitespace-nowrap"
             >
               <Plus className="w-4 h-4 mr-2 inline" /> Add staff
             </button>
@@ -276,30 +276,30 @@ const UsersPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-0 md:p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
+            <div className="p-0 md:p-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 stagger-children">
          {loading && users.length === 0 ? (
-            <div className="col-span-full py-40 flex flex-col items-center justify-center gap-4">
-               <Loader2 className="w-10 h-10 text-primary-500 animate-spin" />
-               <p className="text-[10px] font-black tracking-[0.3em] text-surface-text/20 ">Retrieving Team Intelligence...</p>
+            <div className="col-span-full py-40 flex flex-col items-center justify-center gap-4 bg-muted/20">
+               <Loader2 className="w-10 h-10 text-primary animate-spin" />
+               <p className="text-[10px] font-black tracking-[0.3em] text-muted-foreground">Retrieving Team Intelligence...</p>
             </div>
          ) : filteredUsers.length === 0 ? (
-            <div className="col-span-full py-20 text-center text-surface-text/20 font-black text-xs tracking-widest">No team members found</div>
+            <div className="col-span-full py-20 text-center text-muted-foreground font-black text-xs tracking-widest">No team members found</div>
          ) : (
-           filteredUsers.map(u => (
-             <div key={u.id} className="p-8 group transition-all relative overflow-hidden border-b border-surface-border/50">
+            filteredUsers.map(u => (
+             <div key={u.id} className="p-8 group transition-all relative overflow-hidden border-b border-border/50 hover:bg-primary/[0.02]">
 
 
                 <div className="flex flex-col items-center text-center">
-                   <div className="w-24 h-24 bg-primary-600/10 text-primary-400 rounded-full flex items-center justify-center mb-6 border-2 border-primary-500/10 group-hover:border-primary-500/30 group-hover:scale-105 transition-all relative">
+                   <div className="w-24 h-24 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6 border-2 border-primary/10 group-hover:border-primary transition-all relative shadow-inner">
                       {u.role === 'SUPER_ADMIN' && (
-                        <div className="absolute -top-1 -right-1 bg-emerald-500 text-white p-2 rounded-full border-4 border-surface-bg shadow-sm">
+                        <div className="absolute -top-1 -right-1 bg-success text-success-foreground p-2 rounded-full border-4 border-background shadow-sm">
                           <ShieldCheck className="w-3.5 h-3.5" />
                         </div>
                       )}
                       <UserIcon className="w-12 h-12" />
                    </div>
                    <h3 className="text-xl font-black tracking-tight">{u.fullname || 'New User'}</h3>
-                   <p className="text-[10px] font-black text-surface-text/30 mb-4 tracking-[0.2em]">@{u.username}</p>
+                   <p className="text-[10px] font-black text-muted-foreground mb-4 tracking-[0.2em]">@{u.username}</p>
                    
                    <div className="flex gap-2 mb-6">
                       <div className="px-3 py-1 bg-primary-600/10 text-primary-400 border border-primary-500/20 rounded-full text-[8px] font-black tracking-widest">
@@ -317,9 +317,9 @@ const UsersPage: React.FC = () => {
                       )}
                    </div>
 
-                   <div className="w-full pt-6 border-t border-surface-border space-y-3">
-                      <div className="flex items-center gap-3 text-surface-text/40">
-                         <div className="w-8 h-8 bg-surface-bg border border-surface-border rounded-lg flex items-center justify-center">
+                   <div className="w-full pt-6 border-t border-border/50 space-y-3">
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                         <div className="w-8 h-8 bg-muted/30 border border-border/50 rounded-lg flex items-center justify-center">
                             <Store className="w-3.5 h-3.5" />
                          </div>
                          <span className="text-[10px] font-bold truncate">{u.branch_name}</span>
@@ -344,7 +344,7 @@ const UsersPage: React.FC = () => {
                   <div className="mt-6 pt-4 border-t border-surface-border flex flex-wrap gap-2">
                     <button 
                       onClick={() => handleEdit(u)} 
-                      className="flex-1 py-2 px-3 rounded-xl bg-surface-bg border border-surface-border flex items-center justify-center gap-1 text-[9px] font-black tracking-widest text-primary-500 hover:bg-primary-500/10 transition-colors uppercase"
+                      className="flex-1 py-2 px-3 rounded-xl bg-background border border-border/50 flex items-center justify-center gap-1 text-[9px] font-black tracking-widest text-primary hover:bg-primary/10 transition-colors uppercase btn-press"
                     >
                       <Edit2 className="w-3 h-3" /> Edit
                     </button>

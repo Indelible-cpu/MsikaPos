@@ -88,8 +88,9 @@ const FeatureAccessPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
 
@@ -97,20 +98,20 @@ const FeatureAccessPage: React.FC = () => {
       </div>
 
       <main className="p-6 md:p-12 max-w-6xl mx-auto w-full">
-        <div className="bg-surface-card rounded-[2.5rem] border border-surface-border shadow-2xl overflow-hidden">
+        <div className="glass-panel rounded-[2.5rem] border border-border/50 shadow-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-surface-border bg-surface-bg/50">
-                  <th className="p-8 text-[10px] font-black tracking-[0.2em] text-surface-text/30 uppercase">Feature Module</th>
+                <tr className="border-b border-border/50 bg-muted/10">
+                  <th className="p-8 text-[10px] font-black tracking-[0.2em] text-muted-foreground uppercase">Feature Module</th>
                   {ROLES.map(role => (
-                    <th key={role} className="p-8 text-[10px] font-black tracking-[0.2em] text-surface-text/30 uppercase text-center">{role}</th>
+                    <th key={role} className="p-8 text-[10px] font-black tracking-[0.2em] text-muted-foreground uppercase text-center">{role}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-border/50">
+              <tbody className="divide-y divide-border/30">
                 {FEATURES.map(feature => (
-                  <tr key={feature.key} className="group hover:bg-primary-500/5 transition-colors">
+                  <tr key={feature.key} className="group hover:bg-primary/5 transition-all">
                     <td className="p-8">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-center text-surface-text/40 group-hover:text-primary-500 group-hover:border-primary-500/20 transition-all">
@@ -152,17 +153,17 @@ const FeatureAccessPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 flex items-start gap-4 p-6 bg-primary-500/5 rounded-3xl border border-primary-500/10 max-w-2xl">
-          <Info className="w-5 h-5 text-primary-500 mt-1" />
+        <div className="mt-8 flex items-start gap-4 p-6 bg-primary/5 rounded-3xl border border-primary/10 max-w-2xl glass-card">
+          <Info className="w-5 h-5 text-primary mt-1 shrink-0" />
           <div className="space-y-2">
-            <p className="text-xs font-bold text-surface-text/60 leading-relaxed">
-              Permissions are applied instantly. If a feature is set to <strong className="text-red-500">HIDDEN</strong>, it will be removed from the sidebar and navigation for that role. <strong className="text-amber-500">READ ONLY</strong> will disable all save/edit/delete actions within that module.
+            <p className="text-xs font-black text-muted-foreground leading-relaxed tracking-wide">
+              Permissions are applied instantly. If a feature is set to <strong className="text-destructive">HIDDEN</strong>, it will be removed from the sidebar and navigation for that role. <strong className="text-amber-500">READ ONLY</strong> will disable all save/edit/delete actions within that module.
             </p>
           </div>
         </div>
 
         <div className="mt-8 flex justify-center">
-          <a href="/staff/settings" className="px-8 py-4 bg-surface-card border border-surface-border rounded-2xl text-[10px] font-black tracking-widest text-surface-text/40 hover:text-primary-500 transition-all uppercase shadow-sm flex items-center gap-2">
+          <a href="/staff/settings" className="px-8 py-4 glass-card border border-border/50 rounded-2xl text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-all uppercase shadow-sm flex items-center gap-2 btn-press">
             Close Access Control
           </a>
         </div>

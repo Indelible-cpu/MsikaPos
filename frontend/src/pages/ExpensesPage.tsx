@@ -80,14 +80,15 @@ const ExpensesPage: React.FC = () => {
   const categories = ['Utilities', 'Stock Purchase', 'Salaries', 'Rent', 'Maintenance', 'Marketing', 'Other'];
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0">
-      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-6 sticky top-0 z-30">
+    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
         {!readOnly && (
           <button 
             onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
-            className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest bg-red-500 hover:bg-red-600 shadow-xl shadow-red-900/20 w-full md:w-auto uppercase"
+            className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 w-full md:w-auto uppercase btn-press"
           >
             <Plus className="w-4 h-4 mr-2 inline" /> Add expense
           </button>
@@ -95,55 +96,55 @@ const ExpensesPage: React.FC = () => {
         </div>
       </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div className="p-4 border-r border-surface-border/50 flex items-center gap-4">
-                <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-xl flex items-center justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
+             <div className="p-4 border-r border-border/30 flex items-center gap-4 glass-card m-2 rounded-2xl">
+                <div className="w-12 h-12 bg-destructive/10 text-destructive rounded-xl flex items-center justify-center">
                    <ArrowDownCircle className="w-6 h-6" />
                 </div>
                 <div>
-                   <div className="text-[9px] font-black  tracking-widest text-surface-text/30">Total outflow</div>
-                   <div className="text-2xl font-black">MK {totalSpent.toLocaleString()}</div>
+                   <div className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">Total outflow</div>
+                   <div className="text-2xl font-black text-foreground">MK {totalSpent.toLocaleString()}</div>
                 </div>
              </div>
-             <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+             <div className="relative glass-card m-2 rounded-2xl flex items-center">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input 
-                  type="text" 
-                  placeholder="Search description or category..."
-                  className="input-field w-full pl-11 text-sm h-full font-bold shadow-inner"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                   type="text" 
+                   placeholder="Search description or category..."
+                   className="input-field w-full pl-14 text-sm h-full font-bold shadow-inner bg-transparent border-none"
+                   value={searchTerm}
+                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
              </div>
           </div>
 
-      <div className="p-0 border-t border-surface-border">
-        <div className="overflow-hidden divide-y divide-surface-border">
+      <div className="p-0 border-t border-border/50 stagger-children">
+        <div className="overflow-hidden divide-y divide-border/30">
           {expenses?.length === 0 ? (
-            <div className="p-20 text-center text-surface-text/20 font-black text-xs  tracking-widest">No expenses recorded</div>
+            <div className="p-20 text-center text-muted-foreground/20 font-black text-[10px] tracking-widest uppercase">No expenses recorded</div>
           ) : (
             expenses?.map(exp => (
-              <div key={exp.id} className="p-6 flex justify-between items-center group hover:bg-red-500/5 transition-colors">
+              <div key={exp.id} className="p-6 flex justify-between items-center group hover:bg-destructive/5 transition-colors btn-press">
                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-surface-bg border border-surface-border rounded-xl flex items-center justify-center text-surface-text/20 group-hover:text-red-500 transition-colors">
+                    <div className="w-10 h-10 bg-background border border-border/50 rounded-xl flex items-center justify-center text-muted-foreground/20 group-hover:text-destructive transition-colors">
                        <FileText className="w-5 h-5" />
                     </div>
                     <div>
-                       <div className="font-black text-sm tracking-tight">{exp.description || 'No description'}</div>
-                       <div className="text-[10px] text-surface-text/40 font-black  tracking-widest">{exp.category} • {exp.date}</div>
+                       <div className="font-black text-sm tracking-tight uppercase">{exp.description || 'No description'}</div>
+                       <div className="text-[9px] text-muted-foreground font-black tracking-widest uppercase">{exp.category} • {exp.date}</div>
                     </div>
                  </div>
                  <div className="flex items-center gap-6">
                     <div className="text-right">
-                       <div className="text-base font-black text-red-500">MK {exp.amount.toLocaleString()}</div>
-                       <div className="text-[9px] text-surface-text/30 font-black tracking-widest ">{exp.paymentMethod}</div>
+                       <div className="text-base font-black text-destructive">MK {exp.amount.toLocaleString()}</div>
+                       <div className="text-[8px] text-muted-foreground/40 font-black tracking-widest uppercase">{exp.paymentMethod}</div>
                     </div>
                     {!readOnly && (
                       <button 
                         title="Delete" 
                         aria-label="Delete expense" 
                         onClick={() => handleDelete(exp.id)} 
-                        className="p-2 text-surface-text/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-2 text-muted-foreground/20 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 btn-press"
                       >
                        <Trash2 className="w-4 h-4" />
                       </button>
@@ -182,8 +183,8 @@ const ExpensesPage: React.FC = () => {
             <input required type="number" className="input-field w-full text-3xl font-black text-red-500" placeholder="0.00" value={formData.amount} onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})} onFocus={(e) => e.target.select()} />
           </div>
           <div className="flex gap-4 pt-4">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black  tracking-widest">Cancel</button>
-            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black  tracking-widest bg-red-500 hover:bg-red-600 shadow-xl shadow-red-900/20">Save expense</button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-muted/10 border border-border/50 rounded-2xl text-[10px] font-black tracking-widest uppercase btn-press">Cancel</button>
+            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 uppercase btn-press">Save expense</button>
           </div>
         </form>
       </Modal>

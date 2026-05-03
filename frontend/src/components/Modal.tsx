@@ -31,20 +31,20 @@ const Modal: React.FC<ModalProps> = ({
             initial={{ y: 20, opacity: 0, scale: 0.95 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 20, opacity: 0, scale: 0.95 }}
-            className={`bg-surface-card border border-surface-border rounded-3xl w-full ${maxWidth} max-h-[90vh] shadow-2xl overflow-hidden flex flex-col`}
+            className={`glass-panel border border-border/60 rounded-3xl w-full ${maxWidth} max-h-[90vh] shadow-2xl overflow-hidden flex flex-col`}
           >
-            <div className="p-6 border-b border-surface-border flex justify-between items-center bg-surface-bg/30">
-              <h2 className="text-xl font-black tracking-tighter">{title}</h2>
+            <div className="p-6 border-b border-border/50 flex justify-between items-center bg-muted/10">
+              <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">{title}</h2>
             </div>
             
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               {children}
             </div>
 
-            <div className="border-t border-surface-border bg-surface-bg/10">
+            <div className="border-t border-border/50 bg-muted/5">
               <button 
                 onClick={onClose}
-                className="w-full h-14 bg-surface-bg text-[10px] font-black tracking-widest hover:bg-surface-border/50 transition-all active:scale-[0.98]"
+                className="w-full h-14 bg-transparent text-[10px] font-black tracking-widest text-muted-foreground hover:bg-muted/20 transition-all btn-press uppercase"
               >
                 Close Window
               </button>

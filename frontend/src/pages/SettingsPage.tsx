@@ -258,10 +258,10 @@ const SettingsPage: React.FC = () => {
     <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
 
 
-      <div className="p-0 space-y-6 md:space-y-0">
-        <div className="px-6 md:px-12 py-10 bg-surface-card border-b border-surface-border flex flex-col md:flex-row items-center md:items-start gap-8 group transition-all duration-500">
+      <div className="p-0 space-y-6 md:space-y-0 stagger-children">
+        <div className="px-6 md:px-12 py-10 glass-panel border-b border-border/50 flex flex-col md:flex-row items-center md:items-start gap-8 group transition-all duration-500">
           <div className="relative w-32 h-32 shrink-0">
-            <div className="w-32 h-32 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center overflow-hidden border-2 border-primary-500/20 group-hover:border-primary-500 transition-all shadow-2xl p-1">
+            <div className="w-32 h-32 bg-primary/10 text-primary rounded-full flex items-center justify-center overflow-hidden border-2 border-primary/20 group-hover:border-primary transition-all shadow-2xl p-1">
               {user.profile_pic ? (
                 <img src={user.profile_pic} alt="Profile" className="w-full h-full object-cover rounded-full" />
               ) : (
@@ -299,26 +299,26 @@ const SettingsPage: React.FC = () => {
             <h2 className="text-3xl font-black tracking-tighter uppercase">{user.fullname || user.username || 'Employee'}</h2>
             <div className="card-label !mt-1 uppercase">Branch: {user.branch_name || 'Domasi Main'}</div>
             <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-3">
-              <span className="px-4 py-1.5 bg-primary-500/10 text-primary-500 rounded-none text-[10px] font-black tracking-widest border border-primary-500/20 uppercase">Role: {user.role || 'Staff'}</span>
-              <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-none text-[10px] font-black tracking-widest border border-emerald-500/20 uppercase">Online Status</span>
+              <span className="px-4 py-1.5 bg-primary/10 text-primary rounded-none text-[10px] font-black tracking-widest border border-primary/20 uppercase">Role: {user.role || 'Staff'}</span>
+              <span className="px-4 py-1.5 bg-success/10 text-success rounded-none text-[10px] font-black tracking-widest border border-success/20 uppercase">Online Status</span>
             </div>
           </div>
         </div>
 
-        <div className="space-y-px">
-          <div className="bg-surface-card border-b border-surface-border overflow-hidden">
-            <div className="px-6 md:px-12 py-5 bg-surface-bg border-b border-surface-border">
-              <div className="card-label !mb-0 uppercase">System preferences</div>
+        <div className="space-y-px stagger-children">
+          <div className="glass-card border-b border-border/50 overflow-hidden">
+            <div className="px-6 md:px-12 py-5 bg-muted/30 border-b border-border/50">
+              <div className="card-label !mb-0 uppercase text-primary">System preferences</div>
             </div>
 
             {isSuperAdmin && (
               <div className="px-6 md:px-12 py-8 border-b border-surface-border flex flex-col md:flex-row items-start md:items-center justify-between gap-6 group hover:bg-primary-500/[0.02] transition-colors">
                 <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 flex items-center justify-center shrink-0 bg-surface-bg border border-surface-border rounded-full overflow-hidden shadow-inner">
+                  <div className="w-20 h-20 flex items-center justify-center shrink-0 bg-background border border-border rounded-full overflow-hidden shadow-inner">
                     {localStorage.getItem('companyLogo') ? (
                       <img src={localStorage.getItem('companyLogo')!} alt="Company Logo" className="w-full h-full object-cover" />
                     ) : (
-                      <Store className="w-8 h-8 text-surface-text/10" />
+                      <Store className="w-8 h-8 text-foreground/10" />
                     )}
                   </div>
                   <div>
@@ -326,7 +326,7 @@ const SettingsPage: React.FC = () => {
                     <div className="card-label !mb-0 uppercase">Set a circular logo for the system header</div>
                   </div>
                 </div>
-                <label className="btn-primary !px-6 !py-3 text-[10px] font-black tracking-widest cursor-pointer w-full md:w-auto text-center shadow-lg shadow-primary-500/20 uppercase" title="Upload company logo">
+                <label className="btn-primary btn-press hover-lift !px-6 !py-3 text-[10px] font-black tracking-widest cursor-pointer w-full md:w-auto text-center shadow-lg shadow-primary/20 uppercase" title="Upload company logo">
                   Upload logo
                   <input
                     type="file"
@@ -364,30 +364,30 @@ const SettingsPage: React.FC = () => {
               </div>
             )}
 
-            <div className="px-6 md:px-12 py-6 flex items-center justify-between group hover:bg-primary-500/[0.02] transition-colors border-b border-surface-border">
+            <div className="px-6 md:px-12 py-6 flex items-center justify-between group hover:bg-primary/5 transition-colors border-b border-border/50">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-surface-bg rounded-2xl flex items-center justify-center border border-surface-border group-hover:border-primary-500/20 transition-all">
-                  <Smartphone className="w-5 h-5 text-primary-400" />
+                <div className="w-10 h-10 bg-background rounded-2xl flex items-center justify-center border border-border group-hover:border-primary/20 transition-all">
+                  <Smartphone className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <div className="font-black text-sm tracking-tight">Appearance</div>
-                  <div className="text-xs text-surface-text/40 font-bold">Switch between light and dark themes</div>
+                  <div className="text-xs text-muted-foreground font-bold">Switch between light and dark themes</div>
                 </div>
               </div>
               <ThemeToggle />
             </div>
 
-            <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors border-b border-surface-border">
+            <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary/5 transition-colors border-b border-border/50">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-surface-bg rounded-2xl flex items-center justify-center border border-surface-border group-hover:border-primary-500/20 transition-all">
-                  <TrendingUp className="w-5 h-5 text-primary-400" />
+                <div className="w-10 h-10 bg-background rounded-2xl flex items-center justify-center border border-border group-hover:border-primary/20 transition-all">
+                  <TrendingUp className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <div className="font-black text-sm tracking-tight">Font size</div>
-                  <div className="text-xs text-surface-text/40 font-bold">Adjust the system typography scale</div>
+                  <div className="text-xs text-muted-foreground font-bold">Adjust the system typography scale</div>
                 </div>
               </div>
-              <div className="flex gap-2 p-1 bg-surface-bg border border-surface-border rounded-2xl w-full md:w-fit">
+              <div className="flex gap-2 p-1 bg-background border border-border rounded-2xl w-full md:w-fit">
                 {['small', 'medium', 'large'].map((size) => {
                   const isSelected = fontSize === size;
                   return (
@@ -401,8 +401,8 @@ const SettingsPage: React.FC = () => {
                         toast.success(`Font size set to ${size}`);
                       }}
                       className={clsx(
-                        "px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all flex-1 md:flex-none",
-                        isSelected ? "bg-primary-500 text-white shadow-lg" : "text-surface-text/40 hover:bg-surface-border/50"
+                        "px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all flex-1 md:flex-none btn-press",
+                        isSelected ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground hover:bg-muted/50"
                       )}
                     >
                       {size}

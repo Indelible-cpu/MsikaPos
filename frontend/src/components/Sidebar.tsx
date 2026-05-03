@@ -56,18 +56,18 @@ const Sidebar: React.FC = () => {
 
 
   return (
-    <aside className="hidden md:flex flex-col w-72 bg-surface-card border-r border-surface-border h-screen sticky top-0">
+    <aside className="hidden md:flex flex-col w-72 bg-card/50 backdrop-blur-xl border-r border-border/50 h-screen sticky top-0 z-40">
       {/* Navigation - Scrollable */}
-      <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1 custom-scrollbar">
+      <nav className="flex-1 overflow-y-auto px-4 py-8 space-y-2 custom-scrollbar">
         {filteredTabs.map((tab) => (
           <NavLink
             key={tab.id}
             to={tab.path}
             className={({ isActive }) => clsx(
-              "flex items-center gap-4 px-5 h-14 rounded-[2rem] font-black tracking-widest text-[13px] transition-all group shrink-0 relative",
+              "flex items-center gap-4 px-6 h-12 rounded-2xl font-bold tracking-tight text-[14px] transition-all group shrink-0 relative btn-press",
               isActive 
-                ? "bg-primary-500 text-white shadow-xl shadow-primary-500/20 scale-[1.02]" 
-                : "text-surface-text/40 hover:text-primary-500 hover:bg-primary-500/5 border border-transparent hover:border-primary-500/10"
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]" 
+                : "text-muted-foreground hover:text-primary hover:bg-primary/5 border border-transparent"
             )}
           >
             {({ isActive }) => (

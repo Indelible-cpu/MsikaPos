@@ -242,8 +242,9 @@ const TransactionsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <div className="bg-surface-card border-b border-surface-border px-6 md:px-12 py-8 sticky top-0 z-30">
+    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0 relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-8 sticky top-0 z-30">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex flex-col">
@@ -251,8 +252,8 @@ const TransactionsPage: React.FC = () => {
             
             <div className="flex items-center gap-3 w-full md:w-auto">
               {loading && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-primary-500/10 text-primary-500 rounded-lg animate-pulse mr-2">
-                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full animate-bounce"></div>
+                <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-lg animate-pulse mr-2">
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
                   <span className="text-[8px] font-black tracking-widest">SYNCING...</span>
                 </div>
               )}
@@ -260,7 +261,7 @@ const TransactionsPage: React.FC = () => {
               <select 
                 value={timeFilter} 
                 onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
-                className="bg-surface-bg border border-surface-border text-surface-text text-[10px] font-black tracking-widest px-4 py-3 rounded-xl appearance-none cursor-pointer hover:border-primary-500/50 transition-all uppercase"
+                className="bg-card/50 border border-border/50 text-foreground text-[10px] font-black tracking-widest px-4 py-3 rounded-xl appearance-none cursor-pointer hover:border-primary/50 transition-all uppercase btn-press"
                 title="Select time scope"
               >
                 {['Today', 'Weekly', 'Monthly', 'Quarterly', 'Annual'].map(f => (
@@ -271,7 +272,7 @@ const TransactionsPage: React.FC = () => {
               {!readOnly && (
                 <button 
                   onClick={handleExport}
-                  className="btn-primary !px-6 !py-3 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/10 flex items-center gap-2 uppercase"
+                  className="btn-primary !px-6 !py-3 text-[10px] font-black tracking-widest shadow-xl shadow-primary/10 flex items-center gap-2 uppercase btn-press"
                 >
                   <Download className="w-4 h-4" /> Export
                 </button>
@@ -281,7 +282,7 @@ const TransactionsPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative col-span-1 md:col-span-2">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input 
                 type="text" 
                 placeholder="Search invoice or customer..."
@@ -291,7 +292,7 @@ const TransactionsPage: React.FC = () => {
               />
             </div>
             <div className="relative">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input 
                 type="date" 
                 className="input-field w-full pl-11 text-[11px] h-12 font-black uppercase shadow-inner"
@@ -302,7 +303,7 @@ const TransactionsPage: React.FC = () => {
               {dateFilter && (
                 <button 
                   onClick={() => setDateFilter('')} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-text/40 hover:text-red-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive"
                   title="Clear date filter"
                 >
                   <X className="w-3 h-3" />
@@ -310,7 +311,7 @@ const TransactionsPage: React.FC = () => {
               )}
             </div>
             <div className="relative">
-              <PackageSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+              <PackageSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input 
                 type="text" 
                 placeholder="Search by SKU..."
@@ -321,7 +322,7 @@ const TransactionsPage: React.FC = () => {
               {skuFilter && (
                 <button 
                   onClick={() => setSkuFilter('')} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-text/40 hover:text-red-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive"
                   title="Clear SKU filter"
                 >
                   <X className="w-3 h-3" />
@@ -332,44 +333,44 @@ const TransactionsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6 md:px-12 pt-6">
+      <div className="p-6 md:px-12 pt-6 stagger-children">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-             <div className="bg-surface-bg border border-surface-border p-5 rounded-2xl flex items-center gap-8 shadow-sm">
+             <div className="glass-card border border-border/50 p-5 rounded-2xl flex items-center gap-8 shadow-sm">
                 <div>
-                   <div className="text-[9px] font-black tracking-widest text-surface-text/30 uppercase mb-1">Volume</div>
-                   <div className="text-2xl font-black">{totalSalesCount}</div>
+                   <div className="text-[9px] font-black tracking-widest text-muted-foreground uppercase mb-1">Volume</div>
+                   <div className="text-2xl font-black text-foreground">{totalSalesCount}</div>
                 </div>
-                <div className="h-10 w-px bg-surface-border"></div>
+                <div className="h-10 w-px bg-border/50"></div>
                 <div>
-                   <div className="text-[9px] font-black tracking-widest text-surface-text/30 uppercase mb-1">Net revenue</div>
-                   <div className="text-2xl font-black text-primary-500">MK {totalRevenue.toLocaleString()}</div>
+                   <div className="text-[9px] font-black tracking-widest text-muted-foreground uppercase mb-1">Net revenue</div>
+                   <div className="text-2xl font-black text-primary">MK {totalRevenue.toLocaleString()}</div>
                 </div>
              </div>
-             <div className="hidden md:flex items-center justify-end px-4 text-[9px] font-black text-surface-text/20 tracking-widest uppercase">
-                Filter: {timeFilter} {dateFilter ? `| \${dateFilter}` : ''} {skuFilter ? `| SKU: \${skuFilter}` : ''}
+             <div className="hidden md:flex items-center justify-end px-4 text-[9px] font-black text-muted-foreground/20 tracking-widest uppercase">
+                Filter: {timeFilter} {dateFilter ? `| ${dateFilter}` : ''} {skuFilter ? `| SKU: ${skuFilter}` : ''}
              </div>
         </div>
       </div>
 
-      <div className="p-0">
-        <div className="bg-surface-card border-b border-surface-border overflow-hidden divide-y divide-surface-border">
+      <div className="p-0 stagger-children">
+        <div className="glass-panel border-b border-border/50 overflow-hidden divide-y divide-border/30">
           {sales?.length === 0 ? (
-            <div className="p-20 text-center text-surface-text/20 font-black text-xs tracking-widest uppercase">No transactions found matching your filters</div>
+            <div className="p-20 text-center text-muted-foreground/20 font-black text-[10px] tracking-widest uppercase">No transactions found matching your filters</div>
           ) : (
             sales?.map(sale => (
-              <div key={sale.id} className="px-6 md:px-12 py-6 flex justify-between items-center group hover:bg-primary-500/[0.02] transition-colors relative">
+              <div key={sale.id} className="px-6 md:px-12 py-6 flex justify-between items-center group hover:bg-primary/5 transition-all relative btn-press">
                  <div className="flex items-center gap-6 cursor-pointer" onClick={() => { setSelectedSaleId(sale.id); setViewMode('receipt'); }}>
-                    <div className="w-12 h-12 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-center text-surface-text/20 group-hover:border-primary-500/20 group-hover:text-primary-500 transition-all shadow-sm">
+                    <div className="w-12 h-12 bg-background border border-border/50 rounded-2xl flex items-center justify-center text-muted-foreground/20 group-hover:border-primary/20 group-hover:text-primary transition-all shadow-sm">
                        <ArrowLeftRight className="w-6 h-6" />
                     </div>
                     <div>
-                       <div className="font-black text-base tracking-tight group-hover:text-primary-500 transition-colors uppercase">{sale.invoiceNo}</div>
+                       <div className="font-black text-base tracking-tight group-hover:text-primary transition-colors uppercase">{sale.invoiceNo}</div>
                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] text-surface-text/40 font-black tracking-widest uppercase">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')}</span>
-                          <span className="text-[10px] text-surface-text/10">•</span>
-                          <span className="text-[10px] text-surface-text/40 font-black tracking-widest uppercase">{sale.itemsCount} items</span>
-                          <span className="text-[10px] text-surface-text/10">•</span>
-                          <span className={clsx("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", sale.paymentMode === 'Credit' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary-500/10 text-primary-500')}>
+                          <span className="text-[10px] text-muted-foreground font-black tracking-widest uppercase">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')}</span>
+                          <span className="text-[10px] text-muted-foreground/10">•</span>
+                          <span className="text-[10px] text-muted-foreground font-black tracking-widest uppercase">{sale.itemsCount} items</span>
+                          <span className="text-[10px] text-muted-foreground/10">•</span>
+                          <span className={clsx("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", sale.paymentMode === 'Credit' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary')}>
                              {sale.paymentMode}
                           </span>
                        </div>
@@ -378,14 +379,14 @@ const TransactionsPage: React.FC = () => {
 
                  <div className="flex items-center gap-8">
                     <div className="text-right hidden sm:block">
-                       <div className="text-lg font-black text-primary-500 uppercase">MK {sale.total.toLocaleString()}</div>
-                       <div className="text-[9px] text-surface-text/30 font-black uppercase tracking-widest">{sale.customerId || 'Walk-in customer'}</div>
+                       <div className="text-lg font-black text-primary uppercase">MK {sale.total.toLocaleString()}</div>
+                       <div className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">{sale.customerId || 'Walk-in customer'}</div>
                     </div>
 
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                        <button 
                          onClick={() => { setSelectedSaleId(sale.id); setViewMode('receipt'); }}
-                         className="p-3 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-primary-500 hover:border-primary-500/20 transition-all shadow-sm"
+                         className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-primary hover:border-primary/20 transition-all shadow-sm btn-press"
                          title="View Receipt"
                        >
                          <Eye className="w-4 h-4" />
@@ -394,14 +395,14 @@ const TransactionsPage: React.FC = () => {
                          <>
                            <button 
                              onClick={() => handleEditSale(sale)}
-                             className="p-3 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-amber-500 hover:border-amber-500/20 transition-all shadow-sm"
+                             className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-amber-500 hover:border-amber-500/20 transition-all shadow-sm btn-press"
                              title="Edit Transaction"
                            >
                              <Edit className="w-4 h-4" />
                            </button>
                            <button 
                              onClick={() => handleDeleteSale(sale.id)}
-                             className="p-3 bg-surface-bg border border-surface-border rounded-xl text-surface-text/40 hover:text-red-500 hover:border-red-500/20 transition-all shadow-sm"
+                             className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-destructive hover:border-destructive/20 transition-all shadow-sm btn-press"
                              title="Delete Transaction"
                            >
                              <Trash2 className="w-4 h-4" />
@@ -409,7 +410,7 @@ const TransactionsPage: React.FC = () => {
                          </>
                        )}
                     </div>
-                    <ArrowRightCircle className="w-5 h-5 text-surface-text/10 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
+                    <ArrowRightCircle className="w-5 h-5 text-muted-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                  </div>
               </div>
             ))

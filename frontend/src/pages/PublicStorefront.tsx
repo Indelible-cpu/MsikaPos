@@ -412,25 +412,25 @@ export const PublicStorefront: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen flex flex-col bg-surface-bg text-surface-text transition-colors duration-300 selection:bg-primary-500/30 overflow-x-hidden"
+      className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 overflow-x-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {isRefreshing && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-surface-card/80 backdrop-blur-md text-primary-500 p-2 rounded-full shadow-xl flex items-center justify-center animate-in fade-in slide-in-from-top-4 duration-500 border border-surface-border">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] glass-panel text-primary p-2 rounded-full shadow-xl flex items-center justify-center animate-in fade-in slide-in-from-top-4 duration-500 border border-border/50">
           <RefreshCw className="w-4 h-4 animate-spin" />
         </div>
       )}
 
       <div className="fixed top-0 left-0 right-0 z-50">
-        <header className="bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border">
+        <header className="glass-panel border-b border-border/50">
         <div className="w-full px-6 md:px-12 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full border border-primary-500/20 bg-surface-bg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+            <div className="w-10 h-10 rounded-full border border-primary/20 bg-muted/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
               {shopLogo ? (
                 <img src={shopLogo} alt={shopName} className="w-full h-full object-cover" />
               ) : (
-                <ShoppingBag className="w-4 h-4 text-primary-500" />
+                <ShoppingBag className="w-4 h-4 text-primary" />
               )}
             </div>
             <h1 className="text-lg font-black tracking-tighter">{shopName}</h1>
@@ -442,7 +442,7 @@ export const PublicStorefront: React.FC = () => {
                 <div className="text-right hidden md:block">
                   <div className="flex items-center justify-end gap-1 mb-0.5">
                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-[8px] font-black tracking-widest text-surface-text/30 uppercase">Online</span>
+                    <span className="text-[8px] font-black tracking-widest text-muted-foreground/60 uppercase">Online</span>
                   </div>
                   <p className="text-[10px] font-black">{customer.fullname}</p>
                 </div>
@@ -459,20 +459,20 @@ export const PublicStorefront: React.FC = () => {
               <div className="relative" ref={settingsRef}>
                 <button 
                   onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                  className="w-8 h-8 bg-surface-card border border-surface-border rounded-full flex items-center justify-center text-surface-text/60 hover:text-primary-500 transition-all text-xs"
+                  className="w-8 h-8 glass-card border border-border/50 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary transition-all btn-press"
                   title="Settings & Accessibility"
                 >
                   <Settings className="w-4 h-4" />
                 </button>
                 {isSettingsOpen && (
-                  <div className="absolute top-12 right-0 w-56 bg-surface-card border border-surface-border rounded-2xl shadow-2xl p-6 z-50 animate-in fade-in zoom-in-95 duration-200">
-                    <h4 className="text-[10px] font-black tracking-widest uppercase text-primary-500 mb-5">Personalization</h4>
+                  <div className="absolute top-12 right-0 w-56 glass-panel border border-border/50 rounded-2xl shadow-2xl p-6 z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <h4 className="text-[10px] font-black tracking-widest uppercase text-primary mb-5">Personalization</h4>
                     <div className="space-y-6">
                       <div>
-                        <p className="text-[10px] font-bold text-surface-text/40 mb-3 ml-1">Theme</p>
+                        <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">Theme</p>
                         <button 
                           onClick={() => { toggleTheme(); setIsSettingsOpen(false); }} 
-                          className="w-full py-3 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-black hover:bg-primary-500 hover:text-white transition-all uppercase tracking-widest"
+                          className="w-full py-3 glass-card border border-border/50 rounded-xl text-[10px] font-black hover:bg-primary hover:text-primary-foreground transition-all uppercase tracking-widest btn-press"
                         >
                           {theme === 'light' ? '☀️ Light' : theme === 'dark' ? '🌙 Dark' : '💻 System'}
                         </button>
@@ -480,21 +480,21 @@ export const PublicStorefront: React.FC = () => {
 
                       {/* PWA Install Guide */}
                       <div className="pt-2">
-                        <p className="text-[10px] font-bold text-surface-text/40 mb-3 ml-1">App Access</p>
-                        <div className="p-3 bg-primary-500/5 border border-primary-500/10 rounded-xl">
-                          <p className="text-[9px] font-bold text-primary-500 leading-relaxed">
+                        <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">App Access</p>
+                        <div className="p-3 bg-primary/5 border border-primary/10 rounded-xl">
+                          <p className="text-[9px] font-black text-primary leading-relaxed">
                             For the best experience, add this store to your home screen via your browser menu (Install App or Add to Home Screen).
                           </p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-surface-text/40 mb-3 ml-1">Font size</p>
+                        <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">Font size</p>
                         <div className="flex gap-2">
                           {['small', 'medium', 'large'].map(s => (
                             <button 
                               key={s}
                               onClick={() => { handleFontSize(s); setIsSettingsOpen(false); }}
-                              className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all ${fontSize === s ? 'bg-primary-500 text-white shadow-lg' : 'bg-surface-bg border border-surface-border text-surface-text/40 hover:bg-surface-border/50'}`}
+                              className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all btn-press ${fontSize === s ? 'bg-primary text-primary-foreground shadow-lg' : 'glass-card border border-border/50 text-muted-foreground hover:bg-muted/50'}`}
                             >
                               {s.charAt(0).toUpperCase() + s.slice(1)}
                             </button>
@@ -502,7 +502,7 @@ export const PublicStorefront: React.FC = () => {
                         </div>
                       </div>
                       {customer && (
-                        <div className="pt-4 border-t border-surface-border">
+                        <div className="pt-4 border-t border-border/50">
                           <button 
                             onClick={async () => {
                               if (confirm("Are you sure you want to PERMANENTLY DELETE your account? This action cannot be undone.")) {
@@ -515,7 +515,7 @@ export const PublicStorefront: React.FC = () => {
                                 }
                               }
                             }}
-                            className="w-full py-3 text-red-500 text-[9px] font-black tracking-widest uppercase hover:bg-red-500/5 rounded-xl transition-all"
+                            className="w-full py-3 text-destructive text-[9px] font-black tracking-widest uppercase hover:bg-destructive/5 rounded-xl transition-all btn-press"
                           >
                             Delete account
                           </button>
@@ -529,11 +529,11 @@ export const PublicStorefront: React.FC = () => {
                 onClick={() => setIsCartOpen(true)}
                 className="relative group"
               >
-                <div className="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
                   <ShoppingCart className="w-4 h-4" />
                 </div>
                 {cartItems.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-surface-bg">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-background">
                     {cartItems.length}
                   </span>
                 )}
@@ -543,9 +543,9 @@ export const PublicStorefront: React.FC = () => {
         </div>
       </header>
 
-      <div className="w-full bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border relative">
-        <div id="fade-left" className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-surface-bg via-surface-bg/60 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-500"></div>
-        <div id="fade-right" className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-surface-bg via-surface-bg/60 to-transparent z-10 pointer-events-none transition-opacity duration-500"></div>
+      <div className="w-full glass-panel border-b border-border/50 relative">
+        <div id="fade-left" className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background via-background/60 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-500"></div>
+        <div id="fade-right" className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background via-background/60 to-transparent z-10 pointer-events-none transition-opacity duration-500"></div>
 
         <div 
           ref={categoryNavRef}
@@ -554,10 +554,10 @@ export const PublicStorefront: React.FC = () => {
         >
           <button 
             onClick={() => setSelectedCategory('All')}
-            className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap ${
+            className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap btn-press ${
               selectedCategory === 'All' 
-                ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30' 
-                : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
+                ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
+                : 'glass-card border border-border/50 text-muted-foreground hover:text-foreground'
             }`}
           >
             ALL ITEMS
@@ -566,10 +566,10 @@ export const PublicStorefront: React.FC = () => {
             <button 
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap ${
+              className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap btn-press ${
                 selectedCategory === cat 
-                  ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30' 
-                  : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
+                  : 'glass-card border border-border/50 text-muted-foreground hover:text-foreground'
               }`}
             >
               {cat.toUpperCase()}
@@ -579,10 +579,10 @@ export const PublicStorefront: React.FC = () => {
             <button 
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap ${
+              className={`px-6 py-2 rounded-full text-[9px] font-black tracking-widest transition-all whitespace-nowrap btn-press ${
                 selectedCategory === cat 
-                  ? 'bg-primary-500 text-white shadow-md shadow-primary-500/30' 
-                  : 'bg-surface-card border border-surface-border text-surface-text/40 hover:text-surface-text'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
+                  : 'glass-card border border-border/50 text-muted-foreground hover:text-foreground'
               }`}
             >
               {cat.toUpperCase()}
@@ -593,26 +593,26 @@ export const PublicStorefront: React.FC = () => {
     </div>
 
     <main className="flex-1 w-full pt-[130px] md:pt-[150px]">
-      <div className="w-full bg-surface-bg border-b border-surface-border/50 transition-colors">
+      <div className="w-full glass-panel border-b border-border/30 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <h2 className="text-xl md:text-3xl font-black tracking-tighter leading-none text-primary-500">Market Place</h2>
-            <p className="text-[10px] md:text-[14px] font-black text-surface-text/60 mt-1"> Premium Products & Services</p>
+            <h2 className="text-xl md:text-3xl font-black tracking-tighter leading-none text-primary">Market Place</h2>
+            <p className="text-[10px] md:text-[14px] font-black text-muted-foreground/60 mt-1 uppercase tracking-widest"> Premium Products & Services</p>
           </div>
           
           <div className="relative w-full md:max-w-sm">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input 
               type="text" 
               placeholder="Search"
-              className="w-full py-4 pl-14 pr-12 bg-surface-card border border-surface-border rounded-full outline-none focus:border-primary-500 font-bold text-xs shadow-lg transition-all"
+              className="w-full py-4 pl-14 pr-12 glass-card border border-border/50 rounded-full outline-none focus:border-primary font-black text-xs shadow-lg transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
               <button 
                 onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-surface-text/20 hover:text-rose-500 transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 transition-colors btn-press"
                 title="Clear search"
               >
                 <X className="w-4 h-4" />
@@ -626,17 +626,17 @@ export const PublicStorefront: React.FC = () => {
         {loading ? (
           <div className="py-32 text-center flex flex-col items-center gap-8">
             <div className="relative">
-              <Loader2 className="w-16 h-16 animate-spin text-primary-500" />
-              <div className="absolute inset-0 blur-2xl bg-primary-500/20 rounded-full animate-pulse"></div>
+              <Loader2 className="w-16 h-16 animate-spin text-primary" />
+              <div className="absolute inset-0 blur-2xl bg-primary/20 rounded-full animate-pulse"></div>
             </div>
             <div className="flex flex-col items-center gap-2">
-              <p className="text-[10px] font-black tracking-[0.5em] text-surface-text/30 uppercase animate-pulse">Establishing Connection...</p>
+              <p className="text-[10px] font-black tracking-[0.5em] text-muted-foreground/30 uppercase animate-pulse">Establishing Connection...</p>
             </div>
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
-            <Package className="w-16 h-16 text-surface-text/10 mb-4" />
-            <p className="text-[10px] font-black tracking-widest text-surface-text/30">No items found</p>
+            <Package className="w-16 h-16 text-muted-foreground/10 mb-4" />
+            <p className="text-[10px] font-black tracking-widest text-muted-foreground/30">No items found</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
@@ -647,12 +647,12 @@ export const PublicStorefront: React.FC = () => {
                 <div key={p.id} className="px-1.5 pb-1.5 mb-1.5 border-b border-surface-border/30">
                   <div 
                     id={`product-${p.id}`}
-                    className="group relative bg-surface-card border border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 flex flex-col h-full"
+                    className="group relative glass-card border border-border/50 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-1 flex flex-col h-full"
                   >
                     <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
                     <div className={`px-3 md:px-5 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] font-black tracking-widest backdrop-blur-md shadow-xl pointer-events-auto border-2 ${
                       p.isService 
-                        ? 'bg-primary-500 text-white border-white/20' 
+                        ? 'bg-primary text-primary-foreground border-white/20' 
                         : 'bg-emerald-600 text-white border-white/20'
                     }`}>
                       {p.isService ? 'Service' : 'Product'}
@@ -681,26 +681,26 @@ export const PublicStorefront: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="aspect-square bg-surface-bg border-b border-surface-border/30 flex items-center justify-center relative overflow-hidden shrink-0">
+                  <div className="aspect-square bg-muted/10 border-b border-border/30 flex items-center justify-center relative overflow-hidden shrink-0">
                     <img 
                       src={p.imageUrl || "/premium-item.png"} 
                       alt={p.name} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-surface-card/60 via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                   </div>
                   
                   <div className="p-4 md:p-6 flex flex-col flex-1">
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-1.5">
-                        <div className="text-[7px] md:text-[9px] font-black text-primary-500 tracking-[0.3em] opacity-60">
+                        <div className="text-[7px] md:text-[9px] font-black text-primary tracking-[0.3em] opacity-60">
                           {p.category?.name || 'FEATURED'}
                         </div>
                       </div>
-                      <h3 className="font-black text-xs md:text-lg tracking-tight leading-tight group-hover:text-primary-500 transition-colors mb-2 flex flex-wrap items-center gap-2">
+                      <h3 className="font-black text-xs md:text-lg tracking-tight leading-tight group-hover:text-primary transition-colors mb-2 flex flex-wrap items-center gap-2">
                         {toSentenceCase(p.name)}
                         {(p.soldCount || 0) > 0 && (
-                          <span className="text-[7px] md:text-[9px] font-black text-primary-500/60 bg-primary-500/5 px-2 py-0.5 rounded-full">
+                          <span className="text-[7px] md:text-[9px] font-black text-primary/60 bg-primary/5 px-2 py-0.5 rounded-full">
                             {p.soldCount}+ sold
                           </span>
                         )}
@@ -711,10 +711,10 @@ export const PublicStorefront: React.FC = () => {
                         </div>
                       )}
                     </div>
-                      <div className="mt-auto pt-4 border-t border-surface-border/50 flex flex-col gap-3">
+                      <div className="mt-auto pt-4 border-t border-border/30 flex flex-col gap-3">
                         <div className="flex flex-col gap-1 w-full">
                           <div className="flex items-center justify-between">
-                            <span className="text-[7px] md:text-[9px] font-black text-surface-text/20 uppercase tracking-widest">
+                            <span className="text-[7px] md:text-[9px] font-black text-muted-foreground/40 uppercase tracking-widest">
                               {hasDiscount ? 'Special Offer' : 'Price'}
                             </span>
                             {hasDiscount && (
@@ -724,7 +724,7 @@ export const PublicStorefront: React.FC = () => {
                             )}
                           </div>
                           <div className="flex items-baseline justify-between">
-                            <p className={`font-black tracking-tighter ${hasDiscount ? 'text-surface-text/40 line-through text-[10px] md:text-sm' : 'text-sm md:text-xl text-primary-500'}`}>
+                            <p className={`font-black tracking-tighter ${hasDiscount ? 'text-muted-foreground/40 line-through text-[10px] md:text-sm' : 'text-sm md:text-xl text-primary'}`}>
                               {formatCurrency(Number(p.sellPrice ?? 0))}
                             </p>
                             {hasDiscount && (
@@ -739,7 +739,7 @@ export const PublicStorefront: React.FC = () => {
                         <button 
                           onClick={() => handleInquiry(p)}
                           disabled={submitting}
-                          className="col-span-1 py-3 bg-surface-bg border border-surface-border rounded-xl text-[8px] font-black tracking-widest hover:bg-surface-card transition-all flex items-center justify-center gap-2 active:scale-95"
+                          className="col-span-1 py-3 glass-card border border-border/50 rounded-xl text-[8px] font-black tracking-widest hover:bg-muted/30 transition-all flex items-center justify-center gap-2 btn-press"
                         >
                           {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <MessageSquare className="w-3 h-3" />}
                           Get Quote
@@ -760,10 +760,10 @@ export const PublicStorefront: React.FC = () => {
                         </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); toggleSave(p.id); }}
-                          className={`col-span-1 py-3 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
+                          className={`col-span-1 py-3 rounded-xl flex items-center justify-center transition-all btn-press shadow-lg ${
                             savedItems.has(p.id) 
-                              ? 'bg-primary-500 text-white shadow-primary-500/20' 
-                              : 'bg-surface-bg border border-surface-border text-surface-text/40 hover:text-primary-500 shadow-primary-500/5'
+                              ? 'bg-primary text-primary-foreground shadow-primary/20' 
+                              : 'glass-card border border-border/50 text-muted-foreground hover:text-primary shadow-primary/5'
                           }`}
                           title="Save for Later"
                         >
@@ -772,7 +772,7 @@ export const PublicStorefront: React.FC = () => {
                       </div>
                       <button 
                         onClick={(e) => handleOpenRating(p, e)}
-                        className="w-full py-3 bg-surface-bg border border-surface-border rounded-xl text-[9px] font-black tracking-widest text-surface-text/40 hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center justify-center gap-2 mt-2"
+                        className="w-full py-3 glass-card border border-border/50 rounded-xl text-[9px] font-black tracking-widest text-muted-foreground hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center justify-center gap-2 mt-2 btn-press"
                       >
                         <span className="flex items-center gap-1.5 text-amber-500">
                           <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
@@ -795,18 +795,18 @@ export const PublicStorefront: React.FC = () => {
 
       {isCartOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-          <div className="absolute inset-0 bg-surface-bg/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsCartOpen(false)}></div>
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsCartOpen(false)}></div>
           
-          <div className="relative w-full max-w-xl bg-surface-card border border-surface-border rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-8 border-b border-surface-border flex items-center justify-between">
+          <div className="relative w-full max-w-xl glass-panel border border-border/50 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8 border-b border-border/50 flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-black tracking-tighter">Your selection</h3>
-                <p className="text-[10px] font-black tracking-widest text-surface-text/30 mt-1">Review items in your cart</p>
+                <p className="text-[10px] font-black tracking-widest text-muted-foreground/60 mt-1 uppercase">Review items in your cart</p>
               </div>
               <button 
                 onClick={() => setIsCartOpen(false)}
                 title="Close cart"
-                className="w-10 h-10 bg-surface-bg border border-surface-border rounded-full flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
+                className="w-10 h-10 glass-card border border-border/50 rounded-full flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-all btn-press"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -815,29 +815,29 @@ export const PublicStorefront: React.FC = () => {
             <div className="max-h-[60vh] overflow-y-auto p-6 md:p-8 space-y-4 no-scrollbar">
               {cartItems.length === 0 ? (
                 <div className="py-20 text-center flex flex-col items-center">
-                  <ShoppingBag className="w-12 h-12 text-surface-text/10 mb-4" />
-                  <p className="text-[10px] font-black tracking-widest text-surface-text/30">Your cart is empty</p>
+                  <ShoppingBag className="w-12 h-12 text-muted-foreground/10 mb-4" />
+                  <p className="text-[10px] font-black tracking-widest text-muted-foreground/30">Your cart is empty</p>
                 </div>
               ) : (
                 cartItems.map(item => (
                   <div 
                     key={item.id} 
-                    className="group bg-surface-bg border border-surface-border p-4 rounded-2xl flex items-center gap-4 hover:border-primary-500/30 transition-all cursor-pointer"
+                    className="group glass-card border border-border/50 p-4 rounded-2xl flex items-center gap-4 hover:border-primary/30 transition-all cursor-pointer"
                     onClick={() => scrollToProduct(item.id)}
                   >
-                    <div className="w-16 h-16 bg-surface-card border border-surface-border rounded-xl overflow-hidden shrink-0">
+                    <div className="w-16 h-16 glass-card border border-border/30 rounded-xl overflow-hidden shrink-0">
                       <img src={item.imageUrl || '/premium-item.png'} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-black text-primary-500 tracking-widest mb-0.5">{item.category?.name ? item.category.name.charAt(0).toUpperCase() + item.category.name.slice(1).toLowerCase() : 'Item'}</p>
+                      <p className="text-[10px] font-black text-primary tracking-widest mb-0.5">{item.category?.name ? item.category.name.charAt(0).toUpperCase() + item.category.name.slice(1).toLowerCase() : 'Item'}</p>
                       <h4 className="font-black text-sm truncate">{item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase()}</h4>
-                      <p className="text-xs font-bold text-surface-text/40">{formatCurrency(Number(item.sellPrice ?? 0))}</p>
+                      <p className="text-xs font-black text-muted-foreground/60">{formatCurrency(Number(item.sellPrice ?? 0))}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={(e) => { e.stopPropagation(); scrollToProduct(item.id); }}
                         title="View product"
-                        className="w-8 h-8 bg-primary-500/10 text-primary-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                        className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                       >
                         <ArrowRight className="w-4 h-4" />
                       </button>
@@ -854,7 +854,7 @@ export const PublicStorefront: React.FC = () => {
               )}
             </div>
 
-            <div className="p-8 bg-surface-bg/50 border-t border-surface-border flex flex-col gap-4">
+            <div className="p-8 bg-muted/5 border-t border-border/50 flex flex-col gap-4">
               {(() => {
                 const subtotal = cartItems.reduce((acc, item) => {
                   const { finalPrice } = calculateEffectiveDiscount(item as unknown as Parameters<typeof calculateEffectiveDiscount>[0]);
@@ -869,22 +869,22 @@ export const PublicStorefront: React.FC = () => {
                 const total = subtotal + taxAmount;
                 return (
                   <div className="flex flex-col gap-2 w-full">
-                    <div className="flex items-center justify-between text-xs font-black text-surface-text/40 tracking-widest">
+                    <div className="flex items-center justify-between text-xs font-black text-muted-foreground/60 tracking-widest">
                       <span>Subtotal {globalDiscount > 0 && `(with ${globalDiscount}% discount)`}</span>
                       <span>{formatCurrency(subtotal)}</span>
                     </div>
                     {taxConfig.rate > 0 && (
-                      <div className="flex items-center justify-between text-xs font-black text-surface-text/40 tracking-widest">
+                      <div className="flex items-center justify-between text-xs font-black text-muted-foreground/60 tracking-widest">
                         <span>Tax ({taxConfig.rate}% added)</span>
                         <span>+ {formatCurrency(taxAmount)}</span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between border-t border-surface-border pt-4 mt-2">
+                    <div className="flex items-center justify-between border-t border-border/50 pt-4 mt-2">
                       <div>
-                        <p className="text-sm font-black text-surface-text tracking-widest">Grand total</p>
-                        <p className="text-[10px] font-bold text-surface-text/30">Total including taxes</p>
+                        <p className="text-sm font-black text-foreground tracking-widest uppercase">Grand total</p>
+                        <p className="text-[10px] font-black text-muted-foreground/40 uppercase tracking-widest">Total including taxes</p>
                       </div>
-                      <p className="text-3xl font-black text-primary-500 tracking-tighter">
+                      <p className="text-3xl font-black text-primary tracking-tighter">
                         {formatCurrency(total)}
                       </p>
                     </div>
@@ -922,14 +922,14 @@ export const PublicStorefront: React.FC = () => {
       <AnimatePresence>
         {isRatingModalOpen && ratingProduct && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-surface-bg/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsRatingModalOpen(false)}></div>
-            <div className="relative w-full max-w-sm bg-surface-card border border-surface-border rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 p-8">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsRatingModalOpen(false)}></div>
+            <div className="relative w-full max-w-sm glass-panel border border-border/50 rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 p-8">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Heart className="w-8 h-8 text-amber-500" />
                 </div>
                 <h3 className="text-xl font-black tracking-tighter">Rate this {ratingProduct.isService ? 'service' : 'product'}</h3>
-                <p className="text-[10px] font-black tracking-widest text-surface-text/30 uppercase mt-1">Your feedback helps others</p>
+                <p className="text-[10px] font-black tracking-widest text-muted-foreground/40 uppercase mt-1">Your feedback helps others</p>
               </div>
 
               <div className="flex justify-center gap-2 mb-8">
@@ -939,7 +939,7 @@ export const PublicStorefront: React.FC = () => {
                     onClick={() => setRatingValue(star)}
                     title={`Rate ${star} stars`}
                     aria-label={`Rate ${star} stars`}
-                    className={`transition-all ${ratingValue >= star ? 'text-amber-500 scale-125' : 'text-surface-text/10'}`}
+                    className={`transition-all ${ratingValue >= star ? 'text-amber-500 scale-125' : 'text-muted-foreground/10'}`}
                   >
                     <svg className="w-8 h-8 fill-current" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -950,7 +950,7 @@ export const PublicStorefront: React.FC = () => {
 
               <textarea 
                 placeholder="Write a brief comment (optional)..."
-                className="w-full p-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black outline-none focus:border-primary-500 min-h-[100px] mb-6 resize-none"
+                className="w-full p-4 bg-muted/10 border border-border/50 rounded-2xl text-[10px] font-black outline-none focus:border-primary min-h-[100px] mb-6 resize-none"
                 value={ratingComment}
                 onChange={(e) => setRatingComment(e.target.value)}
               />
@@ -958,13 +958,13 @@ export const PublicStorefront: React.FC = () => {
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={submitRating}
-                  className="w-full py-4 bg-primary-500 text-white rounded-2xl text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/30 active:scale-95 transition-all uppercase"
+                  className="w-full py-4 bg-primary text-primary-foreground rounded-2xl text-[10px] font-black tracking-widest shadow-xl shadow-primary/30 btn-press transition-all uppercase"
                 >
                   Submit Feedback
                 </button>
                 <button 
                   onClick={() => setIsRatingModalOpen(false)}
-                  className="w-full py-4 bg-surface-bg text-surface-text/40 rounded-2xl text-[10px] font-black tracking-widest transition-all uppercase"
+                  className="w-full py-4 glass-card text-muted-foreground rounded-2xl text-[10px] font-black tracking-widest transition-all uppercase btn-press"
                 >
                   Maybe Later
                 </button>
@@ -974,13 +974,13 @@ export const PublicStorefront: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <footer className="bg-surface-card border-t border-surface-border py-6 px-6 flex flex-col items-center gap-3">
+      <footer className="glass-panel border-t border-border/50 py-6 px-6 flex flex-col items-center gap-3">
         <div className="flex items-center gap-2 opacity-30">
-          <span className="text-[8px] font-black tracking-[0.3em]">Powered by Msikapos</span>
+          <span className="text-[8px] font-black tracking-[0.3em] uppercase">Powered by Msikapos</span>
         </div>
         <div className="text-center space-y-1">
-          <p className="text-[10px] font-black text-surface-text/20 tracking-widest">© {new Date().getFullYear()} {shopName}. All rights reserved.</p>
-          <p className="text-[8px] font-black text-surface-text/20 tracking-widest">Developed by J Dickson Petro</p>
+          <p className="text-[10px] font-black text-muted-foreground/40 tracking-widest uppercase">© {new Date().getFullYear()} {shopName}. All rights reserved.</p>
+          <p className="text-[8px] font-black text-muted-foreground/30 tracking-widest uppercase">Developed by J Dickson Petro</p>
         </div>
       </footer>
     </div>

@@ -52,9 +52,9 @@ const AuditLogsPage: React.FC = () => {
 
   const getLogIcon = (type: string) => {
     switch (type) {
-      case 'ERROR': return <AlertCircle className="w-5 h-5 text-red-500" />;
+      case 'ERROR': return <AlertCircle className="w-5 h-5 text-destructive" />;
       case 'WARNING': return <AlertTriangle className="w-5 h-5 text-amber-500" />;
-      default: return <Info className="w-5 h-5 text-primary-500" />;
+      default: return <Info className="w-5 h-5 text-primary" />;
     }
   };
 
@@ -81,14 +81,15 @@ const AuditLogsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-      <div className="bg-surface-card border-b border-surface-border px-4 md:px-8 py-6 sticky top-0 z-30">
+    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0 relative">
+      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <div className="glass-panel border-b border-border/50 px-4 md:px-8 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>
         {!readOnly && (
           <button 
             onClick={handleExport}
-            className="btn-secondary !px-6 !py-4 flex items-center gap-2 text-[10px] font-bold tracking-wider"
+            className="btn-secondary !px-6 !py-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase btn-press"
           >
             <FileSpreadsheet className="w-4 h-4" /> Export logs
           </button>
@@ -97,13 +98,13 @@ const AuditLogsPage: React.FC = () => {
       </div>
 
       <div className="px-0 md:px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex flex-col md:flex-row gap-4 mb-8 stagger-children">
            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-text/40 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input 
                 type="text" 
                 placeholder="Search by action, user, or details..."
-                className="input-field w-full pl-12 text-xs font-medium py-4"
+                className="input-field w-full pl-12 text-xs font-black py-4 uppercase"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -114,10 +115,10 @@ const AuditLogsPage: React.FC = () => {
                   key={t}
                   onClick={() => setTypeFilter(t)}
                   className={clsx(
-                    "px-6 py-2 rounded-xl text-[9px] font-bold tracking-wider transition-all border",
+                    "px-6 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all border uppercase btn-press",
                     typeFilter === t 
-                      ? "bg-primary-500 text-white border-primary-500 shadow-lg shadow-primary-500/20" 
-                      : "bg-surface-card border-surface-border text-surface-text/40 hover:bg-surface-border/50"
+                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20" 
+                      : "bg-card/50 border-border/50 text-muted-foreground hover:bg-muted/50"
                   )}
                 >
                   {t}
@@ -126,32 +127,32 @@ const AuditLogsPage: React.FC = () => {
            </div>
         </div>
 
-        <div className="bg-surface-card border border-surface-border rounded-[2rem] shadow-sm overflow-hidden">
+        <div className="glass-panel border border-border/50 rounded-[2rem] shadow-sm overflow-hidden stagger-children">
            <div className="overflow-x-auto scrollbar-hide">
               <table className="w-full text-left border-collapse min-w-[800px]">
                  <thead>
-                    <tr className="bg-surface-bg/50 border-b border-surface-border text-[9px] font-black tracking-[0.2em] text-surface-text/30 uppercase">
+                    <tr className="bg-muted/10 border-b border-border/50 text-[9px] font-black tracking-[0.2em] text-muted-foreground uppercase">
                        <th className="px-8 py-6">Timestamp</th>
                        <th className="px-8 py-6">User</th>
                        <th className="px-8 py-6">Action</th>
                        <th className="px-8 py-6">Details</th>
                     </tr>
                  </thead>
-                 <tbody className="divide-y divide-surface-border">
+                 <tbody className="divide-y divide-border/30">
                     {filteredLogs.map(log => (
-                      <tr key={log.id} className="group hover:bg-primary-500/[0.02] transition-colors">
+                      <tr key={log.id} className="group hover:bg-primary/5 transition-colors btn-press">
                          <td className="px-8 py-6 whitespace-nowrap">
-                            <div className="flex items-center gap-3 text-surface-text/40">
+                            <div className="flex items-center gap-3 text-muted-foreground">
                                <Clock className="w-3.5 h-3.5" />
                                <span className="text-[10px] font-black">{format(new Date(log.createdAt), 'MMM dd, HH:mm:ss')}</span>
                             </div>
                          </td>
                          <td className="px-8 py-6 whitespace-nowrap">
                             <div className="flex items-center gap-3">
-                               <div className="w-8 h-8 rounded-full bg-surface-bg border border-surface-border flex items-center justify-center text-surface-text/20 group-hover:text-primary-500 transition-colors">
+                               <div className="w-8 h-8 rounded-full bg-muted/10 border border-border/50 flex items-center justify-center text-muted-foreground/40 group-hover:text-primary transition-colors">
                                   <User className="w-4 h-4" />
                                </div>
-                               <span className="text-sm font-black tracking-tight">{log.username}</span>
+                               <span className="text-sm font-black tracking-tight text-foreground uppercase">{log.username}</span>
                             </div>
                          </td>
                          <td className="px-8 py-6 whitespace-nowrap">
@@ -159,9 +160,9 @@ const AuditLogsPage: React.FC = () => {
                                {getLogIcon(log.type)}
                                <span className={clsx(
                                  "text-[10px] font-black tracking-widest px-3 py-1 rounded-lg uppercase border",
-                                 log.type === 'ERROR' ? "text-red-500 border-red-500/10 bg-red-500/5" :
+                                 log.type === 'ERROR' ? "text-destructive border-destructive/10 bg-destructive/5" :
                                  log.type === 'WARNING' ? "text-amber-500 border-amber-500/10 bg-amber-500/5" :
-                                 "text-primary-500 border-primary-500/10 bg-primary-500/5"
+                                 "text-primary border-primary/10 bg-primary/5"
                                )}>
                                   {log.action}
                                </span>

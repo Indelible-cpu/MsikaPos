@@ -266,23 +266,18 @@ const App: React.FC = () => {
         position="top-center" 
         toastOptions={{
           style: {
-            background: '#111',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '12px',
-            padding: '10px 20px',
-            color: '#fff',
-            fontWeight: '400',
-            fontSize: '11px',
-            letterSpacing: '0.02em',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+            background: 'hsl(var(--card) / 0.8)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '16px',
+            padding: '12px 24px',
+            color: 'hsl(var(--foreground))',
+            fontWeight: '600',
+            fontSize: '12px',
+            letterSpacing: '-0.01em',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
           },
-          duration: 2500,
-          success: {
-            icon: null,
-          },
-          error: {
-            icon: null,
-          }
+          duration: 3000,
         }} 
       />
       <div className="min-h-screen selection:bg-primary-500/30">
