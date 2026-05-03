@@ -15,7 +15,8 @@ import {
   Calendar,
   Trash2,
   Save,
-  RotateCcw
+  RotateCcw,
+  ArrowLeft
 } from 'lucide-react';
 
 import toast from 'react-hot-toast';
@@ -352,8 +353,11 @@ const DebtPage: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-full md:w-80 lg:w-96 border-r border-surface-border bg-surface-card flex flex-col shrink-0">
+      <div className="flex flex-1 flex-col md:flex-row overflow-hidden relative">
+        <aside className={clsx(
+          "w-full md:w-80 lg:w-96 border-r border-surface-border bg-surface-card flex flex-col shrink-0 transition-transform duration-300",
+          selectedCustomer && "hidden md:flex"
+        )}>
           <div className="p-4 border-b border-surface-border">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-text/40 w-3.5 h-3.5" />
@@ -376,29 +380,41 @@ const DebtPage: React.FC = () => {
           </div>
         </aside>
 
-        <main className="flex-1 bg-surface-bg overflow-y-auto custom-scrollbar">
+        <main className={clsx(
+          "flex-1 bg-surface-bg overflow-y-auto custom-scrollbar transition-all duration-300",
+          !selectedCustomer && "hidden md:block"
+        )}>
           {selectedCustomer ? (
-            <div className="p-6 md:p-10 space-y-10 animate-slide-in">
-              <div className="bg-surface-card p-10 rounded-[3rem] border border-surface-border shadow-xl flex flex-col md:flex-row justify-between items-center gap-8">
-                <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 bg-primary-500/10 rounded-3xl flex items-center justify-center text-primary-500"><HistoryIcon className="w-10 h-10" /></div>
+            <div className="p-4 md:p-10 space-y-6 md:space-y-10 animate-slide-in">
+              {/* Mobile Back Button */}
+              <button 
+                type="button" 
+                onClick={() => setSelectedCustomer(null)}
+                className="md:hidden flex items-center gap-2 mb-4 text-primary-500 font-black text-[10px] uppercase tracking-widest"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to list
+              </button>
+
+              <div className="bg-surface-card p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-surface-border shadow-xl flex flex-col xl:flex-row justify-between items-center gap-8">
+                <div className="flex items-center gap-6 w-full xl:w-auto">
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-primary-500/10 rounded-3xl flex items-center justify-center text-primary-500 shrink-0"><HistoryIcon className="w-8 h-8 md:w-10 md:h-10" /></div>
                   <div>
-                    <h2 className="text-3xl font-black tracking-tighter uppercase">{selectedCustomer.name}</h2>
-                    <p className="text-[10px] font-black opacity-30 tracking-[0.2em] uppercase mt-1">Outstanding Ledger Account</p>
+                    <h2 className="text-xl md:text-3xl font-black tracking-tighter uppercase truncate max-w-[200px] md:max-w-none">{selectedCustomer.name}</h2>
+                    <p className="text-[8px] md:text-[10px] font-black opacity-30 tracking-[0.2em] uppercase mt-1">Outstanding Ledger Account</p>
                   </div>
                 </div>
-                <div className="flex gap-12 text-right">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12 text-right w-full xl:w-auto border-t xl:border-t-0 border-surface-border pt-6 xl:pt-0">
                   <div>
-                    <div className="text-[9px] font-black opacity-30 uppercase mb-1 tracking-widest">Total Credit</div>
-                    <div className="text-xl font-black tracking-tighter">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
+                    <div className="text-[8px] md:text-[9px] font-black opacity-30 uppercase mb-1 tracking-widest">Total Credit</div>
+                    <div className="text-sm md:text-xl font-black tracking-tighter">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="text-[9px] font-black opacity-30 uppercase mb-1 tracking-widest">Total Paid</div>
-                    <div className="text-xl font-black text-emerald-500 tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
+                    <div className="text-[8px] md:text-[9px] font-black opacity-30 uppercase mb-1 tracking-widest">Total Paid</div>
+                    <div className="text-sm md:text-xl font-black text-emerald-500 tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
                   </div>
-                  <div>
-                    <div className="text-[9px] font-black text-rose-500/40 uppercase mb-1 tracking-widest">Balance Due</div>
-                    <div className="text-5xl font-black text-rose-500 tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
+                  <div className="col-span-2 lg:col-span-1 border-t lg:border-t-0 border-surface-border pt-4 lg:pt-0">
+                    <div className="text-[8px] md:text-[9px] font-black text-rose-500/40 uppercase mb-1 tracking-widest">Balance Due</div>
+                    <div className="text-3xl md:text-5xl font-black text-rose-500 tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
                   </div>
                 </div>
               </div>

@@ -20,7 +20,8 @@ import {
   Send,
   CheckCircle2,
   X,
-  RotateCcw
+  RotateCcw,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -332,19 +333,19 @@ const POSPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 flex flex-col bg-surface-bg overflow-y-auto custom-scrollbar">
+      <main className="flex-1 flex flex-col bg-surface-bg overflow-hidden">
         <header className="px-4 md:px-8 py-6 border-b border-surface-border bg-surface-card sticky top-0 z-40">
           <div className="flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 opacity-20 w-5 h-5" />
               <input title="Search Inventory" aria-label="Search Inventory" placeholder="Search Products..." className="input-field w-full pl-14 h-16 font-black uppercase" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <button type="button" title="Scan Barcode" aria-label="Scan Barcode" onClick={() => setShowScanner(true)} className="w-16 h-16 bg-primary-500 text-white rounded-2xl flex items-center justify-center"><Scan className="w-6 h-6" /></button>
-            <button type="button" title="Sync Offline Data" aria-label="Sync Offline Data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('Synced'); }} className={clsx("w-16 h-16 bg-surface-card border border-surface-border rounded-2xl text-primary-500 flex items-center justify-center", isSyncing && "animate-spin")}><RefreshCw className="w-6 h-6" /></button>
+            <button type="button" title="Scan Barcode" aria-label="Scan Barcode" onClick={() => setShowScanner(true)} className="w-16 h-16 bg-primary-500 text-white rounded-2xl flex items-center justify-center shrink-0"><Scan className="w-6 h-6" /></button>
+            <button type="button" title="Sync Offline Data" aria-label="Sync Offline Data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('Synced'); }} className={clsx("w-16 h-16 bg-surface-card border border-surface-border rounded-2xl text-primary-500 flex items-center justify-center shrink-0", isSyncing && "animate-spin")}><RefreshCw className="w-6 h-6" /></button>
           </div>
         </header>
 
-        <main className="p-4 md:p-8 space-y-8 overflow-x-hidden">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar">
           {searchTerm.length >= 2 && (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <AnimatePresence>
@@ -363,137 +364,141 @@ const POSPage: React.FC = () => {
               </AnimatePresence>
             </div>
           )}
+        </div>
+      </main>
 
-          <div className="pb-40">
-            <h2 className="text-xl font-black uppercase flex items-center gap-3 mb-8"><ShoppingCart className="w-6 h-6 text-primary-500" /> Cart</h2>
-            {cart.length === 0 ? (
-              <div className="py-32 flex flex-col items-center border-2 border-dashed border-surface-border rounded-[3rem] opacity-20 uppercase font-black text-[10px]">Cart is empty</div>
-            ) : (
+      {/* Cart Sidebar / Bottom Area */}
+      <aside className="w-full lg:w-[450px] bg-surface-card border-l border-surface-border flex flex-col h-[50vh] lg:h-full shrink-0 shadow-2xl relative z-50">
+        <header className="p-8 border-b border-surface-border flex justify-between items-center bg-surface-card">
+          <h2 className="text-xl font-black uppercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary-500" /> Cart <span className="bg-primary-500 text-white text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
+          {cart.length > 0 && <button onClick={() => setCart([])} className="text-[10px] font-black uppercase text-rose-500 opacity-40 hover:opacity-100 transition-opacity">Clear All</button>}
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+          {cart.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center opacity-10 uppercase font-black text-[10px] tracking-[0.3em] gap-6">
+              <ShoppingCart className="w-20 h-20" />
+              Cart is empty
+            </div>
+          ) : (
+            <>
               <div className="space-y-4">
                 <AnimatePresence>
                   {cart.map(item => (
-                    <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} key={item.product.id} className="p-4 md:p-6 bg-surface-card border border-surface-border rounded-[2rem] flex items-center justify-between">
-                      <div className="flex items-center gap-6">
-                         <div className="w-16 h-16 bg-surface-bg rounded-2xl flex items-center justify-center">{item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover rounded-2xl" /> : <PackageSearch className="opacity-10" />}</div>
-                         <div className="font-black uppercase">{toSentenceCase(item.product.name)}</div>
-                      </div>
-                      <div className="flex items-center gap-8">
-                         <div className="flex items-center gap-4">
-                           <button type="button" title="Decrease Quantity" aria-label="Decrease Quantity" onClick={() => setCart(prev => prev.map(i => i.product.id === item.product.id ? {...i, quantity: Math.max(1, i.quantity - 1)} : i))} className="w-10 h-10 border border-surface-border rounded-xl flex items-center justify-center"><Minus className="w-4 h-4" /></button>
-                           <span className="font-black text-xl">{item.quantity}</span>
-                           <button type="button" title="Increase Quantity" aria-label="Increase Quantity" onClick={() => addToCart(item.product)} className="w-10 h-10 border border-surface-border rounded-xl flex items-center justify-center"><Plus className="w-4 h-4" /></button>
+                    <motion.div layout initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} key={item.product.id} className="p-4 bg-surface-bg border border-surface-border rounded-2xl flex items-center justify-between group">
+                      <div className="flex items-center gap-4">
+                         <div className="w-12 h-12 bg-surface-card rounded-xl flex items-center justify-center overflow-hidden shrink-0">{item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover" /> : <PackageSearch className="opacity-10 w-6 h-6" />}</div>
+                         <div>
+                           <div className="font-black uppercase text-[11px] truncate w-32">{toSentenceCase(item.product.name)}</div>
+                           <div className="text-[10px] font-black text-primary-500">MK {item.product.sellPrice.toLocaleString()}</div>
                          </div>
-                         <div className="text-right w-32 font-black text-xl text-primary-500">MK {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
-                         <button type="button" title="Remove Item" aria-label="Remove Item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-red-500"><X className="w-6 h-6" /></button>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center bg-surface-card rounded-lg border border-surface-border">
+                          <button type="button" onClick={() => setCart(prev => prev.map(i => i.product.id === item.product.id ? {...i, quantity: Math.max(1, i.quantity - 1)} : i))} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Minus className="w-3 h-3" /></button>
+                          <span className="font-black text-xs w-6 text-center">{item.quantity}</span>
+                          <button type="button" onClick={() => addToCart(item.product)} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Plus className="w-3 h-3" /></button>
+                        </div>
+                        <button type="button" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-5 h-5" /></button>
                       </div>
                     </motion.div>
                   ))}
                 </AnimatePresence>
+              </div>
 
-                <div className="mt-8 p-6 md:p-10 bg-surface-card border border-surface-border rounded-[3rem] space-y-8 shadow-xl">
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-black uppercase opacity-40">Payment Method</label>
-                    <div className="flex flex-wrap gap-2">
-                      {(['Cash', 'Card', 'Momo', 'Credit'] as const).map(id => {
-                        const m = {
-                          Cash: { icon: Wallet, label: 'Cash' },
-                          Card: { icon: CreditCard, label: 'Bank' },
-                          Momo: { icon: Smartphone, label: 'MoMo' },
-                          Credit: { icon: Users, label: 'Credit' }
-                        }[id];
-                        return (
-                          <button key={id} type="button" title={`Pay via ${m.label}`} aria-label={`Pay via ${m.label}`} onClick={() => setPaymentMode(id)} className={clsx("px-6 py-3 rounded-xl border flex items-center gap-3 transition-all", paymentMode === id ? "bg-primary-500 text-white border-transparent" : "bg-surface-bg border-surface-border opacity-40")}>
-                            <m.icon className="w-4 h-4" /> <span className="text-[9px] font-black uppercase">{m.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+              <div className="pt-8 space-y-4 border-t border-surface-border/50">
+                <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
+                  <span>Subtotal</span>
+                  <span>MK {cartSubtotal.toLocaleString()}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-rose-500">
+                    <span>Discount</span>
+                    <span>- MK {discount.toLocaleString()}</span>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-surface-border/30">
-                    {paymentMode === 'Cash' ? (
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase opacity-40">Cash Received (MK)</label>
-                        <input title="Amount Received" aria-label="Amount Received" type="number" className="input-field w-full text-2xl h-16 px-6 font-black" value={amountReceived} onChange={e => setAmountReceived(e.target.value)} />
-                      </div>
-                    ) : (paymentMode === 'Card' || paymentMode === 'Momo') ? (
-                      <>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase opacity-40">{paymentMode === 'Card' ? 'Select Bank' : 'Select Provider'}</label>
-                          <select title="Payment Provider" aria-label="Payment Provider" className="input-field w-full h-16 px-6 font-black uppercase" value={bankName} onChange={e => setBankName(e.target.value)}>
-                            <option value="">Choose...</option>
-                            {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).split(',').map(p => (
-                              <option key={p.trim()} value={p.trim()}>{p.trim()}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase opacity-40">Ref #</label>
-                          <input title="Reference Number" aria-label="Reference Number" className="input-field w-full h-16 px-6 font-black uppercase" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
-                        </div>
-                      </>
-                    ) : null}
+                )}
+                {taxConfig.rate > 0 && (
+                  <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
+                    <span>Tax ({taxConfig.rate}%)</span>
+                    <span>MK {taxAmount.toLocaleString()}</span>
                   </div>
-
-                  <div className="pt-8 border-t border-surface-border/30">
-                    <div className="flex justify-between items-center mb-4">
-                      <label className="text-[10px] font-black uppercase opacity-40">Authorization Signature</label>
-                      <button type="button" title="Reset Signature" aria-label="Reset Signature" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-red-500"><RotateCcw className="w-4 h-4" /></button>
-                    </div>
-                    <div className="bg-white border-2 border-surface-border rounded-2xl h-32 relative">
-                      <canvas ref={sigCanvasRef} width={800} height={200} onMouseDown={startSignature} onTouchStart={startSignature} className="w-full h-full cursor-crosshair touch-none" />
-                      {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none uppercase font-black text-xs">Sign here</div>}
-                    </div>
-                  </div>
-
-                    <div className="pt-8 space-y-4 border-t border-surface-border/30">
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
-                        <span>Subtotal</span>
-                        <span>MK {cartSubtotal.toLocaleString()}</span>
-                      </div>
-                      {discount > 0 && (
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-rose-500">
-                          <span>Discount</span>
-                          <span>- MK {discount.toLocaleString()}</span>
-                        </div>
-                      )}
-                      {taxConfig.rate > 0 && (
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
-                          <span>Tax ({taxConfig.rate}% {taxConfig.inclusive ? 'Incl.' : 'Excl.'})</span>
-                          <span>MK {taxAmount.toLocaleString()}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-8 border-t border-surface-border/30">
-                      <div className="flex items-center gap-8">
-                         <div className="flex flex-col"><span className="text-[10px] font-black opacity-30 uppercase">Total Payable</span><span className="text-4xl font-black text-primary-500">MK {finalTotal.toLocaleString()}</span></div>
-                       <div className="flex items-center gap-3 bg-surface-bg/50 px-4 py-2 rounded-xl border border-surface-border/50">
-                        <input type="checkbox" id="printReceipt" checked={printReceipt} onChange={e => setPrintReceipt(e.target.checked)} className="w-5 h-5 text-primary-500" />
-                        <label htmlFor="printReceipt" className="text-[10px] font-black uppercase cursor-pointer">Print Receipt</label>
-                      </div>
-                    </div>
-                     <button 
-                       type="button" 
-                       title="Finalize Sale" 
-                       aria-label="Finalize Sale" 
-                       onClick={handleCheckout} 
-                       className={clsx(
-                         "w-full md:w-80 h-16 rounded-2xl font-black text-lg uppercase shadow-xl transition-all active:scale-95",
-                         paymentMode === 'Credit' 
-                           ? "bg-amber-500 text-white shadow-amber-500/20" 
-                           : "bg-primary-500 text-white shadow-primary-500/20"
-                       )}
-                     >
-                       {paymentMode === 'Credit' ? 'Add To Customer' : 'Complete Sale'}
-                     </button>
-                  </div>
+                )}
+                <div className="flex justify-between items-center pt-4 border-t border-surface-border">
+                  <span className="text-[10px] font-black uppercase opacity-40">Total</span>
+                  <span className="text-3xl font-black text-primary-500 tracking-tighter">MK {finalTotal.toLocaleString()}</span>
                 </div>
               </div>
+              
+              <div className="space-y-6 pt-8 border-t border-surface-border/50">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black uppercase opacity-40">Payment Mode</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['Cash', 'Card', 'Momo', 'Credit'] as const).map(id => {
+                      const m = { Cash: { icon: Wallet, label: 'Cash' }, Card: { icon: CreditCard, label: 'Bank' }, Momo: { icon: Smartphone, label: 'MoMo' }, Credit: { icon: Users, label: 'Credit' } }[id];
+                      return (
+                        <button key={id} onClick={() => setPaymentMode(id)} className={clsx("p-4 rounded-xl border flex items-center gap-3 transition-all", paymentMode === id ? "bg-primary-500 text-white border-transparent shadow-lg shadow-primary-500/20" : "bg-surface-bg border-surface-border opacity-40 hover:opacity-100")}>
+                          <m.icon className="w-4 h-4" /> <span className="text-[9px] font-black uppercase">{m.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {paymentMode === 'Cash' ? (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase opacity-40">Cash Received (MK)</label>
+                    <input title="Cash Received" className="input-field w-full text-xl font-black" value={amountReceived} onChange={e => setAmountReceived(e.target.value)} />
+                  </div>
+                ) : (paymentMode === 'Card' || paymentMode === 'Momo') ? (
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase opacity-40">{paymentMode === 'Card' ? 'Bank' : 'Provider'}</label>
+                      <select className="input-field w-full font-black uppercase" value={bankName} onChange={e => setBankName(e.target.value)}>
+                        <option value="">Choose...</option>
+                        {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).split(',').map(p => <option key={p.trim()} value={p.trim()}>{p.trim()}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase opacity-40">Ref #</label>
+                      <input className="input-field w-full font-black uppercase" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase opacity-40">Signature</label>
+                    <button onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 hover:rotate-180 transition-transform duration-500"><RotateCcw className="w-4 h-4" /></button>
+                  </div>
+                  <div className="bg-white border border-surface-border rounded-2xl h-24 relative overflow-hidden">
+                    <canvas ref={sigCanvasRef} width={800} height={200} onMouseDown={startSignature} onTouchStart={startSignature} className="w-full h-full cursor-crosshair touch-none" />
+                    {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none uppercase font-black text-[8px] tracking-[0.3em]">Sign to confirm</div>}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 py-4 px-6 bg-surface-bg border border-surface-border rounded-2xl">
+                  <input type="checkbox" id="printReceipt" checked={printReceipt} onChange={e => setPrintReceipt(e.target.checked)} className="w-5 h-5 rounded-lg border-surface-border text-primary-500 focus:ring-primary-500" />
+                  <label htmlFor="printReceipt" className="text-[10px] font-black uppercase cursor-pointer opacity-60">Print Receipt Automatically</label>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="p-8 border-t border-surface-border bg-surface-card">
+          <button 
+            disabled={cart.length === 0}
+            onClick={handleCheckout} 
+            className={clsx(
+              "w-full h-16 rounded-2xl font-black text-sm uppercase shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3",
+              paymentMode === 'Credit' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-primary-500 text-white shadow-primary-500/20",
+              cart.length === 0 && "opacity-50 grayscale cursor-not-allowed"
             )}
-          </div>
-        </main>
-      </div>
+          >
+            {paymentMode === 'Credit' ? 'Add To Customer' : 'Complete Sale'} <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </aside>
     </div>
   );
 };
