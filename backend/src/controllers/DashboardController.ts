@@ -11,6 +11,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
   console.log('📊 Fetching Dashboard Stats for user:', { id: user.id, role: user.role, branchId: user.branchId });
 
   try {
+    const totalCountInDb = await prisma.sale.count();
+    console.log('📈 Total sales records in database (unfiltered):', totalCountInDb);
+
     const where: any = { status: { not: 'DELETED' } };
     const productWhere: any = { deleted: false };
 
@@ -19,10 +22,14 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       if (user.branchId) {
         where.branchId = user.branchId;
         productWhere.branchId = user.branchId;
+        console.log(`📍 Super Admin context: Branch ${user.branchId}`);
+      } else {
+        console.log(`🌐 Super Admin context: Global (All Branches)`);
       }
     } else {
       where.branchId = user.branchId;
       productWhere.branchId = user.branchId;
+      console.log(`📍 Staff context: Branch ${user.branchId}`);
     }
 
     const bId = where.branchId || null;
@@ -79,13 +86,14 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     let creditCount = 0;
     try {
+      const branchFilter = bId ? parseInt(bId as string) : null;
       const unpaidCredits = await prisma.$queryRaw`
         SELECT COUNT(*)::int as count FROM "Sale" 
         WHERE "isCredit" = true 
         AND "paid" < "total" 
         AND "status" != 'DELETED'
         AND "dueDate" <= ${endOfDay(threeDaysLater)}
-        AND (${bId}::int IS NULL OR "branchId" = ${bId}::int)
+        AND (${branchFilter}::int IS NULL OR "branchId" = ${branchFilter}::int)
       ` as { count: number }[];
       creditCount = unpaidCredits[0]?.count || 0;
     } catch (e) {

@@ -193,18 +193,18 @@ export const saveProduct = async (req: Request, res: Response) => {
         updatedAt: new Date()
     };
 
-    if (data.id) {
-      await prisma.product.update({
-        where: { id: parseInt(data.id) },
-        data: payload,
-      });
-      return res.status(200).json({ success: true, message: "Product updated" });
-    } else {
-      await prisma.product.create({
-        data: payload,
-      });
-      return res.status(201).json({ success: true, message: "Product created" });
-    }
+      if (data.id && parseInt(data.id) < 1000000000) {
+        await prisma.product.update({
+          where: { id: parseInt(data.id) },
+          data: payload,
+        });
+        return res.status(200).json({ success: true, message: "Product updated" });
+      } else {
+        const product = await prisma.product.create({
+          data: payload,
+        });
+        return res.status(201).json({ success: true, message: "Product created", data: { id: product.id } });
+      }
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Failed to save product', error: error.message });
   }

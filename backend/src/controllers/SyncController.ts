@@ -57,7 +57,9 @@ export const syncData = async (req: Request, res: Response) => {
                 invoiceNo: saleData.invoiceNo,
                 receiptNo: saleData.receiptNo,
                 userId: userId,
-                branchId: (req as any).user.role === 'SUPER_ADMIN' ? saleData.branchId : (req as any).user.branchId,
+                branchId: (req as any).user.role === 'SUPER_ADMIN' 
+                  ? (saleData.branchId ? parseInt(saleData.branchId) : null) 
+                  : (req as any).user.branchId,
                 customerId: finalCustomerId,
                 subtotal: saleData.subtotal,
                 discount: saleData.discount,
@@ -183,8 +185,11 @@ export const syncData = async (req: Request, res: Response) => {
         updatedAt: {
           gt: lastSyncTimestamp ? new Date(lastSyncTimestamp) : new Date(0),
         },
-        // Strict Branch Isolation
-        branchId: user.branchId || undefined,
+        // Pull products for the current branch OR global products (branchId: null)
+        OR: [
+          { branchId: user.branchId || undefined },
+          { branchId: null }
+        ]
       },
       include: { category: true },
     });

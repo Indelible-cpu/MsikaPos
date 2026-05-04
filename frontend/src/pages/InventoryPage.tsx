@@ -31,7 +31,9 @@ import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { useAuthStore } from '../hooks/useAuth';
 
 const generateNumericId = () => {
-  return Date.now() + Math.floor(Math.random() * 1000);
+  // Use a range that is safe for Postgres Int (32-bit signed, max ~2.1B)
+  // We use 1B+ to avoid collision with normal autoincrement IDs (1, 2, 3...)
+  return 1000000000 + Math.floor(Math.random() * 1000000000);
 };
 
 const InventoryPage: React.FC = () => {
@@ -321,6 +323,7 @@ const InventoryPage: React.FC = () => {
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const newId = generateNumericId();
       const productData = {
         ...formData,
         discountType: formData.discountType as 'PERCENTAGE' | 'FIXED' | undefined,
@@ -331,24 +334,24 @@ const InventoryPage: React.FC = () => {
       if (editingProduct) {
         await db.products.update(editingProduct.id, productData);
         await AuditService.log('PRODUCT_UPDATE', `Updated product: ${productData.name} (SKU: ${productData.sku})`);
+        
+        // Sync to cloud
+        await SyncService.pushProduct({ ...productData, id: editingProduct.id } as Parameters<typeof SyncService.pushProduct>[0]);
         toast.success('Product updated');
       } else {
-        await db.products.add({
+        const fullNewProduct = {
           ...productData,
-          id: generateNumericId(),
-          status: 'ACTIVE',
+          id: newId,
+          status: 'ACTIVE' as const,
           createdAt: new Date().toISOString(),
-        });
+        };
+        await db.products.add(fullNewProduct);
         await AuditService.log('PRODUCT_ADD', `Added product: ${productData.name} (SKU: ${productData.sku})`);
+        
+        // Sync to cloud
+        await SyncService.pushProduct(fullNewProduct as Parameters<typeof SyncService.pushProduct>[0]);
         toast.success('Product added to inventory');
       }
-      
-      // Sync to cloud storefront
-      const productToSync = editingProduct 
-        ? { ...productData, id: editingProduct.id }
-        : { ...productData, id: generateNumericId() };
-      
-      await SyncService.pushProduct(productToSync as Parameters<typeof SyncService.pushProduct>[0]);
       
       setIsAddModalOpen(false);
       setEditingProduct(null);

@@ -126,7 +126,7 @@ export const SyncService = {
     deleted?: boolean;
   }) {
     try {
-      await api.post('/products', {
+      const response = await api.post('/products', {
         id: product.id,
         name: product.name,
         sku: product.sku,
@@ -145,9 +145,11 @@ export const SyncService = {
         discount_end_date: product.discount_end_date ?? product.discountEndDate,
       });
 
-      // Update local database immediately
+      const serverId = response.data?.data?.id || product.id;
+
+      // Update local database immediately with the correct server ID
       await db.products.put({
-        id: product.id,
+        id: serverId,
         name: product.name,
         sku: product.sku,
         costPrice: product.cost_price ?? product.costPrice ?? 0,
@@ -161,6 +163,11 @@ export const SyncService = {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
+
+      // If the server assigned a different ID (creation), remove the temporary one
+      if (serverId !== product.id) {
+        await db.products.delete(product.id);
+      }
 
       return true;
     } catch (error: unknown) {
