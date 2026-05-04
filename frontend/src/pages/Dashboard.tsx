@@ -114,20 +114,20 @@ export default function Dashboard() {
   };
 
   const navItems = [
-    { id: 'pos', icon: Monitor, label: 'Pos', roles: ['superadmin', 'admin', 'cashier'] },
-    { id: 'inventory', icon: Package, label: 'Inventory', roles: ['superadmin', 'admin'] },
-    { id: 'transactions', icon: History, label: 'Sales history', roles: ['superadmin', 'admin'] },
-    { id: 'expenses', icon: Receipt, label: 'Expenses', roles: ['superadmin', 'admin'] },
-    { id: 'users', icon: Users, label: 'Staff management', roles: ['superadmin', 'admin'] },
-    { id: 'branches', icon: Store, label: 'Branches', roles: ['superadmin'] },
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Overview', roles: ['superadmin', 'admin', 'cashier'] },
+    { id: 'pos', icon: Monitor, label: 'Pos', roles: ['SUPER_ADMIN', 'ADMIN', 'CASHIER'] },
+    { id: 'inventory', icon: Package, label: 'Inventory', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { id: 'transactions', icon: History, label: 'Sales history', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { id: 'expenses', icon: Receipt, label: 'Expenses', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { id: 'users', icon: Users, label: 'Staff management', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { id: 'branches', icon: Store, label: 'Branches', roles: ['SUPER_ADMIN'] },
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Overview', roles: ['SUPER_ADMIN', 'ADMIN', 'CASHIER'] },
   ];
 
   if (!user) return null;
 
-  const userRole = user.role?.toLowerCase() || '';
+  const userRole = user.role?.toUpperCase() || '';
   const filteredNav = navItems.filter(item => {
-    return item.roles.map(r => r.toLowerCase()).includes(userRole);
+    return item.roles.map(r => r.toUpperCase()).includes(userRole);
   });
 
   return (

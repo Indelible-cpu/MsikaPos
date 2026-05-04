@@ -37,13 +37,14 @@ export const SyncService = {
       const unsyncedCustomers = await db.customers.where('synced').equals(0).toArray();
       const unsyncedPayments = await db.debtPayments.where('synced').equals(0).toArray();
 
-      if (unsyncedSales.length === 0 && unsyncedExpenses.length === 0 && 
-          unsyncedCustomers.length === 0 && unsyncedPayments.length === 0) {
-        this.isSyncing = false;
-        return true;
-      }
+      const hasLocalChanges = unsyncedSales.length > 0 || unsyncedExpenses.length > 0 || 
+                             unsyncedCustomers.length > 0 || unsyncedPayments.length > 0;
 
-      console.log(`🔄 Syncing: ${unsyncedSales.length} sales, ${unsyncedExpenses.length} expenses, ${unsyncedCustomers.length} customers...`);
+      if (hasLocalChanges) {
+        console.log(`🔄 Syncing: ${unsyncedSales.length} sales, ${unsyncedExpenses.length} expenses, ${unsyncedCustomers.length} customers...`);
+      } else {
+        console.log('🔄 Checking for remote updates...');
+      }
 
       const deviceId = localStorage.getItem('deviceId') || 'unknown';
       const lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp');
@@ -143,6 +144,24 @@ export const SyncService = {
         discount_start_date: product.discount_start_date ?? product.discountStartDate,
         discount_end_date: product.discount_end_date ?? product.discountEndDate,
       });
+
+      // Update local database immediately
+      await db.products.put({
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        costPrice: product.cost_price ?? product.costPrice ?? 0,
+        sellPrice: product.sell_price ?? product.sellPrice ?? 0,
+        quantity: product.quantity,
+        deleted: product.deleted ?? false,
+        categoryId: (product.category_id ?? product.categoryId) || 0,
+        isService: product.is_service ?? product.isService ?? false,
+        imageUrl: product.imageUrl || undefined,
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
       return true;
     } catch (error: unknown) {
       console.error('Product sync error:', error);
