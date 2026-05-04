@@ -272,22 +272,45 @@ const InventoryPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file size (limit to 10MB for processing)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image is too large. Please use a file under 10MB.');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const size = Math.min(img.width, img.height);
-        // Target size 500x500 for good quality vs size ratio
-        canvas.width = 500;
-        canvas.height = 500;
+        
+        // Target resolution: 800x800 for high-quality Retina/Mobile displays
+        // while maintaining a small footprint.
+        canvas.width = 800;
+        canvas.height = 800;
         const ctx = canvas.getContext('2d');
         if (ctx) {
+          // Enable high-quality image smoothing
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          
           const offsetX = (img.width - size) / 2;
           const offsetY = (img.height - size) / 2;
-          ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, 500, 500);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8); // Compress
+          
+          // Draw and crop to center square
+          ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, 800, 800);
+          
+          // Try WebP first for superior compression/quality ratio
+          let dataUrl = canvas.toDataURL('image/webp', 0.8);
+          
+          // Fallback to JPEG if WebP is not supported or results in larger size (rare)
+          if (dataUrl.length > 500000) { // If still > 500KB, increase compression
+             dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          }
+          
           setFormData(prev => ({ ...prev, imageUrl: dataUrl }));
+          toast.success('Image optimized for storefront');
         }
       };
       img.src = event.target?.result as string;
