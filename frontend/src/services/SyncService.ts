@@ -1,6 +1,36 @@
 import { apiFetch } from '../api/apiFetch';
 import { db } from '../db/posDB';
 
+interface ProductPayload {
+  id: number;
+  name: string;
+  sku?: string;
+  cost_price?: number;
+  costPrice?: number;
+  sell_price?: number;
+  sellPrice?: number;
+  quantity: number;
+  deleted?: boolean;
+  category_id?: number;
+  categoryId?: number;
+  is_service?: boolean;
+  isService?: boolean;
+  imageUrl?: string | null;
+  discount?: number;
+  discount_rate?: number;
+  discount_type?: 'PERCENTAGE' | 'FIXED';
+  discountType?: 'PERCENTAGE' | 'FIXED';
+  discount_value?: number;
+  discountValue?: number;
+  discount_start_date?: string;
+  discountStartDate?: string;
+  discount_end_date?: string;
+  discountEndDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  status?: string;
+}
+
 export const SyncService = {
   isSyncing: false,
 
@@ -109,8 +139,9 @@ export const SyncService = {
       }
       
       throw new Error(data.message || 'Server rejected sync');
-    } catch (error: any) {
-      console.error('📡 Sync Error:', error.data || error.message);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error('📡 Sync Error:', msg);
       return false;
     } finally {
       this.isSyncing = false;
@@ -121,7 +152,7 @@ export const SyncService = {
     return navigator.onLine;
   },
 
-  async pushProduct(product: any) {
+  async pushProduct(product: ProductPayload) {
     try {
       const data = await apiFetch('/products', {
         method: 'POST',
@@ -152,12 +183,14 @@ export const SyncService = {
         ...product,
         id: serverId,
         name: product.name,
-        sku: product.sku,
+        sku: product.sku ?? '',
         quantity: product.quantity,
         costPrice: product.cost_price ?? product.costPrice ?? 0,
         sellPrice: product.sell_price ?? product.sellPrice ?? 0,
         categoryId: (product.category_id ?? product.categoryId) || 0,
         isService: product.is_service ?? product.isService ?? false,
+        imageUrl: product.imageUrl ?? undefined,
+        discountType: (product.discount_type ?? product.discountType) as 'PERCENTAGE' | 'FIXED' | undefined,
         status: 'ACTIVE',
         createdAt: product.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -170,7 +203,8 @@ export const SyncService = {
 
       return true;
     } catch (error: unknown) {
-      console.error('Product sync error:', error);
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error('Product sync error:', msg);
       return false;
     }
   }
