@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2, RefreshCw } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, Minus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2, RefreshCw } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
@@ -50,7 +50,7 @@ export const PublicStorefront: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [cartItems, setCartItems] = useState<StoreProduct[]>([]);
+  const [cartItems, setCartItems] = useState<{ product: StoreProduct; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
     return (localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null) || 'system';
@@ -179,12 +179,23 @@ export const PublicStorefront: React.FC = () => {
   const addToCart = (product: StoreProduct, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setCartItems(prev => {
-      const exists = prev.find(item => item.id === product.id);
-      if (exists) return prev;
+      const exists = prev.find(item => item.product.id === product.id);
+      if (exists) {
+        return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+      }
       toast.success(`${product.name} added to cart`);
-      return [...prev, product];
+      return [...prev, { product, quantity: 1 }];
     });
     logCustomerAction('ADD_TO_CART', product);
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setCartItems(prev => prev.map(item => {
+      if (item.product.id === id) {
+        return { ...item, quantity: Math.max(1, item.quantity + delta) };
+      }
+      return item;
+    }));
   };
 
   const toggleSave = (id: number) => {
@@ -204,7 +215,7 @@ export const PublicStorefront: React.FC = () => {
 
   const removeFromCart = (id: number, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    setCartItems(prev => prev.filter(item => item.id !== id));
+    setCartItems(prev => prev.filter(item => item.product.id !== id));
     toast.success('Removed from cart');
   };
 
@@ -821,28 +832,45 @@ export const PublicStorefront: React.FC = () => {
               ) : (
                 cartItems.map(item => (
                   <div 
-                    key={item.id} 
+                    key={item.product.id} 
                     className="group glass-card border border-border/50 p-4 rounded-2xl flex items-center gap-4 hover:border-primary/30 transition-all cursor-pointer"
-                    onClick={() => scrollToProduct(item.id)}
+                    onClick={() => scrollToProduct(item.product.id)}
                   >
                     <div className="w-16 h-16 glass-card border border-border/30 rounded-xl overflow-hidden shrink-0">
-                      <img src={item.imageUrl || '/premium-item.png'} className="w-full h-full object-cover" alt="" />
+                      <img src={item.product.imageUrl || '/premium-item.png'} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-black text-primary tracking-widest mb-0.5">{item.category?.name ? item.category.name.charAt(0).toUpperCase() + item.category.name.slice(1).toLowerCase() : 'Item'}</p>
-                      <h4 className="font-black text-sm truncate">{item.name.charAt(0).toUpperCase() + item.name.slice(1).toLowerCase()}</h4>
-                      <p className="text-xs font-black text-muted-foreground/60">{formatCurrency(Number(item.sellPrice ?? 0))}</p>
+                      <p className="text-[10px] font-black text-primary tracking-widest mb-0.5">{item.product.category?.name ? item.product.category.name.charAt(0).toUpperCase() + item.product.category.name.slice(1).toLowerCase() : 'Item'}</p>
+                      <h4 className="font-black text-sm truncate">{item.product.name.charAt(0).toUpperCase() + item.product.name.slice(1).toLowerCase()}</h4>
+                      <div className="flex items-center gap-4 mt-2">
+                        <p className="text-xs font-black text-muted-foreground/60">{formatCurrency(Number(item.product.sellPrice ?? 0))}</p>
+                        <div className="flex items-center bg-muted/10 rounded-lg border border-border/30 p-1" onClick={e => e.stopPropagation()}>
+                          <button 
+                            onClick={() => updateQuantity(item.product.id, -1)}
+                            className="w-6 h-6 flex items-center justify-center hover:bg-primary/10 rounded-md transition-colors"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-8 text-center text-[10px] font-black">{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(item.product.id, 1)}
+                            className="w-6 h-6 flex items-center justify-center hover:bg-primary/10 rounded-md transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <button 
-                        onClick={(e) => { e.stopPropagation(); scrollToProduct(item.id); }}
+                        onClick={(e) => { e.stopPropagation(); scrollToProduct(item.product.id); }}
                         title="View product"
                         className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                       >
                         <ArrowRight className="w-4 h-4" />
                       </button>
                       <button 
-                        onClick={(e) => removeFromCart(item.id, e)}
+                        onClick={(e) => removeFromCart(item.product.id, e)}
                         title="Remove from cart"
                         className="w-8 h-8 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all"
                       >
@@ -857,8 +885,8 @@ export const PublicStorefront: React.FC = () => {
             <div className="p-8 bg-muted/5 border-t border-border/50 flex flex-col gap-4">
               {(() => {
                 const subtotal = cartItems.reduce((acc, item) => {
-                  const { finalPrice } = calculateEffectiveDiscount(item as unknown as Parameters<typeof calculateEffectiveDiscount>[0]);
-                  return acc + finalPrice;
+                  const { finalPrice } = calculateEffectiveDiscount(item.product as unknown as Parameters<typeof calculateEffectiveDiscount>[0]);
+                  return acc + (finalPrice * item.quantity);
                 }, 0);
                 
                 let taxAmount = 0;
@@ -898,7 +926,7 @@ export const PublicStorefront: React.FC = () => {
                     if (cartItems.length === 0) return;
                     let message = '*NEW ORDER INQUIRY*\n\nHello! I would like to order:\n\n';
                     cartItems.forEach((item, index) => {
-                      message += `${index + 1}. *${item.name}*\n`;
+                      message += `${index + 1}. *${item.product.name}* (Qty: ${item.quantity})\n`;
                     });
                     const encodedMessage = encodeURIComponent(message);
                     window.open(`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodedMessage}`, '_blank');
