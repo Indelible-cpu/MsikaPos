@@ -80,10 +80,10 @@ export default function MobileHeader() {
       case '/transactions': return 'Sales history';
       case '/users': return 'Staff management';
       case '/onboarding': return 'Account setup';
-      case '/about': return 'Msikapos info';
+      case '/about': return 'MsikaPos Info';
       case '/inquiries': return 'Inquiry';
       case '/audit-logs': return 'Security logs';
-      default: return 'Msikapos';
+      default: return 'MsikaPos';
     }
   };
 

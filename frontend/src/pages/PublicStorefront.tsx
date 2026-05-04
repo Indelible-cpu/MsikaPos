@@ -1012,7 +1012,7 @@ export const PublicStorefront: React.FC = () => {
 
       <footer className="glass-panel border-t border-border/50 py-6 px-6 flex flex-col items-center gap-3">
         <div className="flex items-center gap-2 opacity-30">
-          <span className="text-[8px] font-black tracking-[0.3em] uppercase">Powered by Msikapos</span>
+          <span className="text-[8px] font-black tracking-[0.3em]">Powered By MsikaPos</span>
         </div>
         <div className="text-center space-y-1">
           <p className="text-[10px] font-black text-muted-foreground/40 capitalize">© {new Date().getFullYear()} {shopName}. All Rights Reserved.</p>
