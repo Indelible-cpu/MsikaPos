@@ -54,6 +54,7 @@ const POSPage: React.FC = () => {
   const [printReceipt, setPrintReceipt] = useState(false);
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const currentInvoiceNo = React.useMemo(() => generateInvoiceNo(), [cart.length === 0]);
 
   const [showReceipt, setShowReceipt] = useState<{
     items: { product: LocalProduct; quantity: number }[];
@@ -173,7 +174,7 @@ const POSPage: React.FC = () => {
     const paid = paymentMode === 'Cash' ? (parseFloat(amountReceived) || finalTotal) : finalTotal;
     
     try {
-      const invoiceNo = generateInvoiceNo();
+      const invoiceNo = currentInvoiceNo;
       const itemsCount = cart.reduce((s, i) => s + i.quantity, 0);
       const saleItems: LocalSaleItem[] = cart.map(item => {
         const { finalPrice } = calculateEffectiveDiscount(item.product);
@@ -377,7 +378,9 @@ const POSPage: React.FC = () => {
               <input title="search inventory" aria-label="search inventory" placeholder="search products..." className="input-field w-full pl-12 h-12 text-sm font-black lowercase" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
             <button type="button" title="scan barcode" aria-label="scan barcode" onClick={() => setShowScanner(true)} className="w-12 h-12 flex items-center justify-center shrink-0 btn-press text-primary hover:bg-primary/10 rounded-xl transition-colors"><Scan className="w-6 h-6" /></button>
-            <button type="button" title="sync offline data" aria-label="sync offline data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('synced'); }} className={clsx("w-12 h-12 bg-card/50 border border-border/50 rounded-xl text-primary flex items-center justify-center shrink-0 btn-press transition-colors hover:bg-card/80", isSyncing && "animate-spin")}><RefreshCw className="w-5 h-5" /></button>
+            <button type="button" title="sync offline data" aria-label="sync offline data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('synced'); }} className="w-12 h-12 bg-card/50 border border-border/50 rounded-xl text-primary flex items-center justify-center shrink-0 btn-press transition-colors hover:bg-card/80">
+              <RefreshCw className={clsx("w-5 h-5", isSyncing && "animate-spin")} />
+            </button>
           </div>
         </header>
 
@@ -418,7 +421,7 @@ const POSPage: React.FC = () => {
         <header className="p-8 border-b border-border/50 flex justify-between items-center bg-transparent">
           <div className="flex flex-col gap-1">
             <h2 className="text-xl font-black lowercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
-            <p className="text-[8px] font-black opacity-30 lowercase tracking-widest">transaction # {generateInvoiceNo()}</p>
+            <p className="text-[8px] font-black opacity-30 lowercase tracking-widest">transaction # {currentInvoiceNo}</p>
           </div>
           <div className="flex items-center gap-4">
             <button 
