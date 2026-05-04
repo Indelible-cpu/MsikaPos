@@ -178,6 +178,10 @@ export const PublicStorefront: React.FC = () => {
 
   const addToCart = (product: StoreProduct, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (!product.isService && (product.quantity === 0 || product.quantity === undefined)) {
+      toast.error('This item is currently out of stock');
+      return;
+    }
     setCartItems(prev => {
       const exists = prev.find(item => item.product.id === product.id);
       if (exists) {
@@ -717,8 +721,8 @@ export const PublicStorefront: React.FC = () => {
                         )}
                       </h3>
                       {!p.isService && p.quantity !== undefined && (
-                        <div className={`text-[9px] font-black tracking-widest ${p.quantity > 2 ? 'text-green-500' : 'text-yellow-500'}`}>
-                          {p.quantity > 2 ? '(In Stock)' : '(Low Stock)'}
+                        <div className={`text-[9px] font-black tracking-widest ${p.quantity > 5 ? 'text-emerald-500' : p.quantity > 0 ? 'text-amber-500' : 'text-rose-500'}`}>
+                          {p.quantity > 5 ? 'In Stock' : p.quantity > 0 ? 'Low Stock' : 'Out of Stock'}
                         </div>
                       )}
                     </div>
@@ -1011,8 +1015,8 @@ export const PublicStorefront: React.FC = () => {
           <span className="text-[8px] font-black tracking-[0.3em] uppercase">Powered by Msikapos</span>
         </div>
         <div className="text-center space-y-1">
-          <p className="text-[10px] font-black text-muted-foreground/40 tracking-widest uppercase">© {new Date().getFullYear()} {shopName}. All rights reserved.</p>
-          <p className="text-[8px] font-black text-muted-foreground/30 tracking-widest uppercase">Developed by Indelible</p>
+          <p className="text-[10px] font-black text-muted-foreground/40 capitalize">© {new Date().getFullYear()} {shopName}. All Rights Reserved.</p>
+          <p className="text-[8px] font-black text-muted-foreground/30 capitalize">Developed By Indelible</p>
         </div>
       </footer>
     </div>

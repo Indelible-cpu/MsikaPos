@@ -102,9 +102,8 @@ app.get('/api/public/products', async (req, res) => {
       include: { category: true },
       orderBy: { name: 'asc' },
     });
-    // Only return products with stock OR services
-    const visible = products.filter((p: any) => p.isService || (p.quantity !== null && p.quantity > 0));
-    res.json({ success: true, data: visible });
+    // Return all non-deleted products
+    res.json({ success: true, data: products });
   } catch (e: any) {
     res.status(500).json({ success: false, message: e.message });
   }
