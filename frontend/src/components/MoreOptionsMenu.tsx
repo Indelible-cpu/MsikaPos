@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
+import ThemeToggle from './ThemeToggle';
 
 interface MoreOptionsMenuProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
     { id: 'inventory', label: 'Inventory', icon: Package, path: '/staff/inventory', color: 'bg-emerald-500' },
     { id: 'debt', label: 'Credit Center', icon: Users, path: '/staff/debt', color: 'bg-orange-500' },
     { id: 'expenses', label: 'Expenses', icon: Wallet, path: '/staff/expenses', color: 'bg-rose-500' },
-    { id: 'team', label: 'Staff', icon: Users, path: '/staff/users', color: 'bg-primary-500' },
+    { id: 'team', label: 'Staff', icon: Users, path: '/staff/users', color: 'bg-primary' },
     { id: 'branches', label: 'Branches', icon: Building2, path: '/staff/branches', color: 'bg-blue-500' },
     { id: 'reports', label: 'Reports', icon: BarChart3, path: '/staff/reports', color: 'bg-violet-500' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/staff/settings', color: 'bg-slate-500' },
@@ -97,6 +98,13 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
                 </div>
                 <span className="text-[10px] font-black tracking-widest text-surface-text/40">Close</span>
               </button>
+            </div>
+
+            <div className="mt-8 px-6 flex justify-center">
+              <div className="flex flex-col items-center gap-3 bg-surface-bg border border-surface-border py-4 px-8 rounded-3xl">
+                <span className="text-[8px] font-black text-surface-text/40 uppercase tracking-widest">Appearance</span>
+                <ThemeToggle />
+              </div>
             </div>
 
             <div className="mt-8 text-center">

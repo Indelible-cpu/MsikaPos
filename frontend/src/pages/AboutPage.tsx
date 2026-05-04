@@ -113,8 +113,8 @@ const AboutPage: React.FC = () => {
               </a>
 
               {/* Direct Call */}
-              <a href="tel:+265885892269" title="Direct Call" aria-label="Direct Call" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-primary-500/30 transition-all group">
-                <div className="w-10 h-10 bg-primary-500 rounded-none flex items-center justify-center shadow-lg shadow-primary-500/20 group-hover:scale-110 transition-transform">
+              <a href="tel:+265885892269" title="Direct Call" aria-label="Direct Call" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-primary/30 transition-all group">
+                <div className="w-10 h-10 bg-primary rounded-none flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
                   <Phone className="w-5 h-5 text-white" />
                 </div>
               </a>
@@ -130,7 +130,7 @@ const AboutPage: React.FC = () => {
           
           <div className="space-y-1">
             <p className="text-[10px] font-black text-muted-foreground/60 tracking-[0.3em] uppercase">System Developer</p>
-            <p className="text-sm font-black tracking-tight text-primary">James Dickson Petro</p>
+            <p className="text-sm font-black tracking-tight text-primary">Indelible</p>
           </div>
           
           <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.4em] pb-10 uppercase">© 2026 MsikaPos • Indelible-cpu</p>

@@ -335,14 +335,14 @@ const POSPage: React.FC = () => {
       </AnimatePresence>
 
       <main className="flex-1 flex flex-col bg-background overflow-hidden">
-        <header className="px-4 md:px-8 py-6 border-b border-border/50 glass-panel sticky top-0 z-40">
-          <div className="flex gap-4">
+        <header className="px-4 md:px-8 py-4 border-b border-border/50 glass-panel sticky top-0 z-40">
+          <div className="flex gap-3 items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-              <input title="Search Inventory" aria-label="Search Inventory" placeholder="Search Products..." className="input-field w-full pl-14 h-16 font-black" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <input title="Search Inventory" aria-label="Search Inventory" placeholder="Search Products..." className="input-field w-full pl-12 h-12 text-sm font-black" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <button type="button" title="Scan Barcode" aria-label="Scan Barcode" onClick={() => setShowScanner(true)} className="w-16 h-16 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center shrink-0 btn-press shadow-lg shadow-primary/20"><Scan className="w-6 h-6" /></button>
-            <button type="button" title="Sync Offline Data" aria-label="Sync Offline Data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('Synced'); }} className={clsx("w-16 h-16 bg-card/50 border border-border/50 rounded-2xl text-primary flex items-center justify-center shrink-0 btn-press", isSyncing && "animate-spin")}><RefreshCw className="w-6 h-6" /></button>
+            <button type="button" title="Scan Barcode" aria-label="Scan Barcode" onClick={() => setShowScanner(true)} className="w-12 h-12 flex items-center justify-center shrink-0 btn-press text-primary hover:bg-primary/10 rounded-xl transition-colors"><Scan className="w-6 h-6" /></button>
+            <button type="button" title="Sync Offline Data" aria-label="Sync Offline Data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('Synced'); }} className={clsx("w-12 h-12 bg-card/50 border border-border/50 rounded-xl text-primary flex items-center justify-center shrink-0 btn-press transition-colors hover:bg-card/80", isSyncing && "animate-spin")}><RefreshCw className="w-5 h-5" /></button>
           </div>
         </header>
 
@@ -351,19 +351,19 @@ const POSPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               <AnimatePresence>
                 {products?.map(p => (
-                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-4 cursor-pointer glass-card border border-border/50 rounded-3xl flex flex-col gap-4 hover:border-primary/20 shadow-sm transition-all group hover-lift active:scale-95">
-                    <div className="w-full aspect-square bg-muted/20 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-border/50">
+                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-4 cursor-pointer glass-card border border-border/50 rounded-3xl flex flex-row md:flex-col items-center md:items-stretch gap-4 hover:border-primary/20 shadow-sm transition-all group hover-lift active:scale-95">
+                    <div className="w-20 h-20 md:w-full md:h-auto md:aspect-square bg-muted/20 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-border/50">
                       {p.imageUrl ? (
                         <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       ) : (
-                        <PackageSearch className="text-muted-foreground/20 w-10 h-10" />
+                        <PackageSearch className="text-muted-foreground/20 w-8 h-8 md:w-10 md:h-10" />
                       )}
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1 md:space-y-2 flex-1">
                       <div className="font-black uppercase text-[11px] leading-tight line-clamp-2 min-h-[2.4em]">{toSentenceCase(p.name)}</div>
                       <div className="flex flex-col">
                         <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Retail Price</span>
-                        <span className="font-black text-primary text-lg leading-none">MK {p.sellPrice.toLocaleString()}</span>
+                        <span className="font-black text-primary text-base md:text-lg leading-none">MK {p.sellPrice.toLocaleString()}</span>
                       </div>
                     </div>
                   </motion.div>

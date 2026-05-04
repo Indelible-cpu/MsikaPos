@@ -1,7 +1,6 @@
 import React from 'react';
-import { User, Store, Smartphone, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet, Video, X, Lock } from 'lucide-react';
+import { User, Store, Building2, ShieldAlert, History, TrendingUp, Plus, Wallet, Video, X, Lock } from 'lucide-react';
 import { clsx } from 'clsx';
-import ThemeToggle from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
 import { AuditService } from '../services/AuditService';
@@ -363,19 +362,6 @@ const SettingsPage: React.FC = () => {
                 </label>
               </div>
             )}
-
-            <div className="px-6 md:px-12 py-6 flex items-center justify-between group hover:bg-primary/5 transition-colors border-b border-border/50">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-background rounded-2xl flex items-center justify-center border border-border group-hover:border-primary/20 transition-all">
-                  <Smartphone className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="font-black text-sm tracking-tight">Appearance</div>
-                  <div className="text-xs text-muted-foreground font-bold">Switch between light and dark themes</div>
-                </div>
-              </div>
-              <ThemeToggle />
-            </div>
 
             <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary/5 transition-colors border-b border-border/50">
               <div className="flex items-center gap-4">
