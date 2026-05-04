@@ -847,6 +847,8 @@ export const PublicStorefront: React.FC = () => {
                         <div className="flex items-center bg-muted/10 rounded-lg border border-border/30 p-1" onClick={e => e.stopPropagation()}>
                           <button 
                             onClick={() => updateQuantity(item.product.id, -1)}
+                            title="Decrease quantity"
+                            aria-label="Decrease quantity"
                             className="w-6 h-6 flex items-center justify-center hover:bg-primary/10 rounded-md transition-colors"
                           >
                             <Minus className="w-3 h-3" />
@@ -854,6 +856,8 @@ export const PublicStorefront: React.FC = () => {
                           <span className="w-8 text-center text-[10px] font-black">{item.quantity}</span>
                           <button 
                             onClick={() => updateQuantity(item.product.id, 1)}
+                            title="Increase quantity"
+                            aria-label="Increase quantity"
                             className="w-6 h-6 flex items-center justify-center hover:bg-primary/10 rounded-md transition-colors"
                           >
                             <Plus className="w-3 h-3" />
