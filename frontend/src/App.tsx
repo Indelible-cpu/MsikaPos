@@ -61,14 +61,14 @@ const App: React.FC = () => {
               if (updateSWRef.current) updateSWRef.current(true);
               toast.dismiss(t.id);
             }}
-            className="px-4 py-2 bg-primary-500 text-white rounded-lg text-[9px] font-black tracking-[0.2em]"
+            className="px-4 py-2 bg-primary text-white rounded-lg text-[9px] font-black tracking-[0.2em]"
           >
             REFRESH NOW
           </button>
         </div>
       ), { 
         duration: Infinity,
-        position: 'bottom-center'
+        position: 'top-center'
       });
     }
   }), []);

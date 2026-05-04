@@ -1012,7 +1012,7 @@ export const PublicStorefront: React.FC = () => {
         </div>
         <div className="text-center space-y-1">
           <p className="text-[10px] font-black text-muted-foreground/40 tracking-widest uppercase">© {new Date().getFullYear()} {shopName}. All rights reserved.</p>
-          <p className="text-[8px] font-black text-muted-foreground/30 tracking-widest uppercase">Developed by J Dickson Petro</p>
+          <p className="text-[8px] font-black text-muted-foreground/30 tracking-widest uppercase">Developed by Indelible</p>
         </div>
       </footer>
     </div>
