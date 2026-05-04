@@ -426,6 +426,9 @@ const POSPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             <button 
+              type="button"
+              title="Expand Cart"
+              aria-label="Expand Cart"
               onClick={() => {
                 const aside = document.querySelector('aside');
                 if (aside) {

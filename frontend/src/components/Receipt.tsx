@@ -46,9 +46,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
   return (
     <div className="receipt p-0 bg-white text-black font-mono w-full text-[11px] leading-tight shadow-sm flex flex-col items-center">
       <div className="text-center w-full border-b-2 border-black pb-4 mb-4">
-        <div className="w-14 h-14 mx-auto mb-2 rounded-full border border-black/10 flex items-center justify-center overflow-hidden">
-           <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="w-full h-full object-contain" />
-        </div>
+        <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="h-14 w-auto mx-auto mb-2 object-contain" />
         <h1 className="text-xl font-bold tracking-tight  uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
         {shopSlogan && <p className="text-[8px]  font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
         <p className="text-[9px] tracking-widest">{shopAddress}</p>
