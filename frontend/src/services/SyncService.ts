@@ -111,27 +111,40 @@ export const SyncService = {
       });
 
       if (data.success) {
-        // Mark all as synced
-        if (unsyncedSales.length > 0) {
-          const ids = unsyncedSales.map(s => s.id);
-          await db.salesQueue.where('id').anyOf(ids).modify({ synced: 1 });
-        }
-        if (unsyncedExpenses.length > 0) {
-          const ids = unsyncedExpenses.map(e => e.id);
-          await db.expenses.where('id').anyOf(ids).modify({ synced: 1 });
-        }
-        if (unsyncedCustomers.length > 0) {
-          const ids = unsyncedCustomers.map(c => c.id);
-          await db.customers.where('id').anyOf(ids).modify({ synced: 1 });
-        }
-        if (unsyncedPayments.length > 0) {
-          const ids = unsyncedPayments.map(p => p.id);
-          await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
-        }
-        
-        const { products, categories } = data.updates;
-        if (products && products.length > 0) await db.products.bulkPut(products);
-        if (categories && categories.length > 0) await db.categories.bulkPut(categories);
+        await db.transaction('rw', 
+          db.salesQueue, db.expenses, db.customers, db.debtPayments, db.products, db.categories,
+          async () => {
+            // Mark all as synced
+            if (unsyncedSales.length > 0) {
+              const ids = unsyncedSales.map(s => s.id);
+              await db.salesQueue.where('id').anyOf(ids).modify({ synced: 1 });
+            }
+            if (unsyncedExpenses.length > 0) {
+              const ids = unsyncedExpenses.map(e => e.id);
+              await db.expenses.where('id').anyOf(ids).modify({ synced: 1 });
+            }
+            if (unsyncedCustomers.length > 0) {
+              const ids = unsyncedCustomers.map(c => c.id);
+              await db.customers.where('id').anyOf(ids).modify({ synced: 1 });
+            }
+            if (unsyncedPayments.length > 0) {
+              const ids = unsyncedPayments.map(p => p.id);
+              await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
+            }
+            
+            const { products, categories } = data.updates;
+            
+            if (products && products.length > 0) {
+              await db.products.bulkPut(products);
+            }
+            
+            if (categories && categories.length > 0) {
+              const currentCats = await db.categories.toArray();
+              if (JSON.stringify(currentCats) !== JSON.stringify(categories)) {
+                await db.categories.bulkPut(categories);
+              }
+            }
+        });
 
         localStorage.setItem('lastSyncTimestamp', data.serverTime);
         console.log('✅ Power Sync Completed');
