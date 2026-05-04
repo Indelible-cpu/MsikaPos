@@ -86,10 +86,10 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
               <tr key={idx}>
                 <td className="py-1 pr-2">
                   <div className="font-bold ">{toSentenceCase(item.product.name)}</div>
-                  <div className="text-[9px]">MK {finalPrice.toLocaleString()}</div>
+                  <div className="text-[9px]">Mk {finalPrice.toLocaleString()}</div>
                 </td>
                 <td className="text-center py-1 font-bold">{item.quantity}</td>
-                <td className="text-right py-1 font-bold">MK {(finalPrice * item.quantity).toLocaleString()}</td>
+                <td className="text-right py-1 font-bold">Mk {(finalPrice * item.quantity).toLocaleString()}</td>
               </tr>
             );
           })}
@@ -99,35 +99,35 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
       <div className="space-y-1 font-bold  text-[10px]">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span>MK {subtotal.toLocaleString()}</span>
+          <span>Mk {subtotal.toLocaleString()}</span>
         </div>
         {tax > 0 && (
           <div className="flex justify-between">
             <span>Tax (VAT)</span>
-            <span>MK {tax.toLocaleString()}</span>
+            <span>Mk {tax.toLocaleString()}</span>
           </div>
         )}
         {discount > 0 && (
           <div className="flex justify-between">
             <span>Discount</span>
-            <span>- MK {discount.toLocaleString()}</span>
+            <span>- Mk {discount.toLocaleString()}</span>
           </div>
         )}
         <div className="flex justify-between text-base font-black border-t border-black pt-1 mt-1">
           <span>Total</span>
-          <span>MK {total.toLocaleString()}</span>
+          <span>Mk {total.toLocaleString()}</span>
         </div>
       </div>
 
       <div className="mt-4 pt-2 border-t border-black border-dotted space-y-1 text-[10px]">
         <div className="flex justify-between font-bold">
           <span>Paid ({mode})</span>
-          <span>MK {paid.toLocaleString()}</span>
+          <span>Mk {paid.toLocaleString()}</span>
         </div>
         {mode === 'Cash' ? (
           <div className="flex justify-between font-bold">
             <span>Change</span>
-            <span>MK {change.toLocaleString()}</span>
+            <span>Mk {change.toLocaleString()}</span>
           </div>
         ) : (
           (bankName || accountNumber) && (
@@ -166,15 +166,15 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
             <div className="w-full px-4 space-y-1 text-[9px] border-t border-black/10 pt-2">
               <div className="flex justify-between font-bold">
                 <span>Total Credit Limit</span>
-                <span>MK {(customer.totalCreditAmount || customer.balance).toLocaleString()}</span>
+                <span>Mk {(customer.totalCreditAmount || customer.balance).toLocaleString()}</span>
               </div>
               <div className="flex justify-between font-bold text-emerald-700">
                 <span>Total Paid to Date</span>
-                <span>MK {(customer.totalPaidAmount || 0).toLocaleString()}</span>
+                <span>Mk {(customer.totalPaidAmount || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between font-black text-[11px] border-t border-black/20 pt-1 mt-1">
                 <span>REMAINING BALANCE</span>
-                <span>MK {customer.balance.toLocaleString()}</span>
+                <span>Mk {customer.balance.toLocaleString()}</span>
               </div>
             </div>
           </div>

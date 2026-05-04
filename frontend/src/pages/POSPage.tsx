@@ -48,12 +48,37 @@ const POSPage: React.FC = () => {
   const [signature, setSignature] = useState<string | null>(null);
   const [showSigPad, setShowSigPad] = useState(false);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+
+  // Persistence
+  useEffect(() => {
+    const saved = localStorage.getItem('pos_active_transaction');
+    if (saved) {
+      const data = JSON.parse(saved);
+      setCart(data.cart || []);
+      setPaymentMode(data.paymentMode || 'Cash');
+      setAmountReceived(data.amountReceived || '');
+      setDiscount(data.discount || 0);
+      setSignature(data.signature || null);
+      setBankName(data.bankName || '');
+      setAccountNumber(data.accountNumber || '');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cart.length > 0) {
+      localStorage.setItem('pos_active_transaction', JSON.stringify({
+        cart, paymentMode, amountReceived, discount, signature, bankName, accountNumber
+      }));
+    } else {
+      localStorage.removeItem('pos_active_transaction');
+    }
+  }, [cart, paymentMode, amountReceived, discount, signature, bankName, accountNumber]);
   
   const [taxConfig, setTaxConfig] = useState<TaxConfig>({ rate: 0, inclusive: true });
   const [paymentConfig, setPaymentConfig] = useState({ momo: 'TNM Mpamba, Airtel Money', bank: 'National Bank, NBS Bank, Standard Bank' });
   const [printReceipt, setPrintReceipt] = useState(false);
-  const [bankName, setBankName] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
   const currentInvoiceNo = React.useMemo(() => generateInvoiceNo(), [cart.length === 0]);
 
   const [showReceipt, setShowReceipt] = useState<{
@@ -130,6 +155,27 @@ const POSPage: React.FC = () => {
     setSearchTerm('');
     toast.success(`${product.name} added`, { id: 'scan-success', duration: 1000 });
   }, []);
+
+  useEffect(() => {
+    if (cart.length > 0) {
+      const timer = setInterval(() => {
+        toast('Finish this transaction before starting another!', { id: 'reminder', icon: '⚠️', duration: 3000 });
+      }, 30000); // remind every 30 seconds
+      return () => clearInterval(timer);
+    }
+  }, [cart.length]);
+
+  useEffect(() => {
+    if (showSigPad && signature && sigCanvasRef.current) {
+      const canvas = sigCanvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0);
+        img.src = signature;
+      }
+    }
+  }, [showSigPad]);
 
   const cartSubtotal = cart.reduce((sum, item) => {
     const { finalPrice } = calculateEffectiveDiscount(item.product);
@@ -401,7 +447,7 @@ const POSPage: React.FC = () => {
                       <div className="font-black capitalize text-[11px] leading-tight line-clamp-2 min-h-[2.4em]">{toSentenceCase(p.name)}</div>
                       <div className="flex flex-col">
                         <span className="text-[8px] font-black text-muted-foreground capitalize tracking-widest">retail price</span>
-                        <span className="font-black text-primary text-base md:text-lg leading-none">mk {p.sellPrice.toLocaleString()}</span>
+                        <span className="font-black text-primary text-base md:text-lg leading-none">Mk {p.sellPrice.toLocaleString()}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -422,6 +468,7 @@ const POSPage: React.FC = () => {
           <div className="flex flex-col gap-1">
             <h2 className="text-xl font-black capitalize flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
             <p className="text-[8px] font-black opacity-30 capitalize tracking-widest">transaction # {currentInvoiceNo}</p>
+            {cart.length > 0 && <span className="text-[7px] font-black text-amber-500 animate-pulse">(!) uncompleted transaction</span>}
           </div>
           <div className="flex items-center gap-4">
             <button 
@@ -447,7 +494,7 @@ const POSPage: React.FC = () => {
             >
               <RotateCcw className="w-4 h-4 rotate-90" />
             </button>
-            {cart.length > 0 && <button onClick={() => setCart([])} className="text-[10px] font-black capitalize text-destructive opacity-40 hover:opacity-100 transition-opacity">Clear All</button>}
+            {cart.length > 0 && <button onClick={() => { toast.error('Complete or clear the current sale first!'); }} className="text-[10px] font-black capitalize text-destructive opacity-40 hover:opacity-100 transition-opacity">Clear All</button>}
           </div>
         </header>
 
@@ -468,12 +515,12 @@ const POSPage: React.FC = () => {
                            <div className="w-10 h-10 bg-surface-card rounded-xl flex items-center justify-center overflow-hidden shrink-0">{item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover" /> : <PackageSearch className="opacity-10 w-5 h-5" />}</div>
                             <div>
                              <div className="font-black capitalize text-[10px] truncate w-32">{toSentenceCase(item.product.name)}</div>
-                             <div className="text-[9px] font-black opacity-40">mk {item.product.sellPrice.toLocaleString()} × {item.quantity}</div>
+                             <div className="text-[9px] font-black opacity-40">Mk {item.product.sellPrice.toLocaleString()} × {item.quantity}</div>
                            </div>
                         </div>
                         <div className="text-right">
                           <div className="text-[8px] font-black opacity-30 capitalize">subtotal</div>
-                          <div className="text-sm font-black text-primary-500 leading-none">mk {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
+                          <div className="text-sm font-black text-primary-500 leading-none">Mk {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
                         </div>
                       </div>
 
@@ -495,7 +542,7 @@ const POSPage: React.FC = () => {
               <div className="pt-8 space-y-4 border-t border-surface-border/50">
                 <div className="flex justify-between items-center text-[10px] font-black capitalize opacity-40">
                   <span>subtotal</span>
-                  <span>mk {cartSubtotal.toLocaleString()}</span>
+                  <span>Mk {cartSubtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px] font-black capitalize text-rose-500">
                   <div className="flex items-center gap-2">
@@ -506,34 +553,36 @@ const POSPage: React.FC = () => {
                       className="w-20 bg-rose-500/10 border-none outline-none px-2 py-1 rounded text-rose-500 font-black text-[9px]"
                       value={discount || ''}
                       onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                      onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
                     />
                   </div>
-                  <span>- mk {discount.toLocaleString()}</span>
+                  <span>- Mk {discount.toLocaleString()}</span>
                 </div>
                 {taxConfig.rate > 0 && (
                   <div className="flex justify-between items-center text-[10px] font-black capitalize opacity-40">
                     <span>tax ({taxConfig.rate}%)</span>
-                    <span>mk {taxAmount.toLocaleString()}</span>
+                    <span>Mk {taxAmount.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-4 border-t border-border/50">
                   <span className="text-[10px] font-black capitalize opacity-40">total</span>
-                  <span className="text-3xl font-black text-primary tracking-tighter">mk {finalTotal.toLocaleString()}</span>
+                  <span className="text-3xl font-black text-primary tracking-tighter">Mk {finalTotal.toLocaleString()}</span>
                 </div>
                 {paymentMode === 'Cash' && amountReceived && parseFloat(amountReceived) > finalTotal && (
                   <div className="flex justify-between items-center text-[10px] font-black capitalize text-success animate-in fade-in slide-in-from-top-1">
                     <span>change due</span>
-                    <span className="font-black">mk {changeDue.toLocaleString()}</span>
+                    <span className="font-black">Mk {changeDue.toLocaleString()}</span>
                   </div>
                 )}
               </div>
               
               <div className="space-y-6 pt-8 border-t border-surface-border/50">
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black capitalize opacity-40">payment mode</label>
-                  <div className="flex flex-wrap gap-5 px-2">
+                <div className="flex items-center gap-4">
+                  <label className="text-[10px] font-black capitalize opacity-40 shrink-0">payment mode</label>
+                  <div className="flex flex-wrap gap-4">
                     {(['Cash', 'Card', 'Momo', 'Credit'] as const).map(id => {
                       const m = { Cash: 'cash', Card: 'bank', Momo: 'momo', Credit: 'credit' }[id];
+                      const colorClass = { Cash: 'text-emerald-500 border-emerald-500', Card: 'text-blue-500 border-blue-500', Momo: 'text-amber-500 border-amber-500', Credit: 'text-rose-500 border-rose-500' }[id];
                       return (
                         <button 
                           key={id} 
@@ -541,7 +590,7 @@ const POSPage: React.FC = () => {
                           onClick={() => setPaymentMode(id)} 
                           className={clsx(
                             "text-[10px] font-black capitalize transition-all pb-1 border-b-2", 
-                            paymentMode === id ? "text-primary border-primary" : "text-muted-foreground border-transparent opacity-40 hover:opacity-100"
+                            paymentMode === id ? colorClass : "text-muted-foreground border-transparent opacity-40 hover:opacity-100"
                           )}
                         >
                           {m}
@@ -553,13 +602,15 @@ const POSPage: React.FC = () => {
 
                 {paymentMode === 'Cash' && (
                   <div className="flex items-center justify-between gap-4 p-4 bg-muted/5 rounded-2xl border border-border/50">
-                    <label className="text-[10px] font-black capitalize opacity-40 shrink-0">cashier received (mk)</label>
+                    <label className="text-[10px] font-black capitalize opacity-40 shrink-0">cashier received (Mk)</label>
                     <input 
+                      type="number"
                       title="cash received" 
                       className="bg-transparent border-none outline-none text-right text-xl font-black w-full" 
                       placeholder="0.00"
                       value={amountReceived} 
                       onChange={e => setAmountReceived(e.target.value)} 
+                      onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
                     />
                   </div>
                 )}
@@ -606,10 +657,16 @@ const POSPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex items-center gap-4 py-4 px-6 bg-surface-bg border border-surface-border rounded-2xl">
-                  <input type="checkbox" id="printReceipt" checked={printReceipt} onChange={e => setPrintReceipt(e.target.checked)} className="w-5 h-5 rounded-lg border-surface-border text-primary-500 focus:ring-primary-500" />
-                  <label htmlFor="printReceipt" className="text-[10px] font-black capitalize cursor-pointer opacity-60">print receipt automatically</label>
-                </div>
+                <button 
+                  type="button"
+                  onClick={() => setPrintReceipt(!printReceipt)}
+                  className="flex items-center gap-4 py-4 px-6 bg-surface-bg border border-surface-border rounded-2xl w-full hover:bg-primary/5 transition-all text-left"
+                >
+                  <div className={clsx("w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all", printReceipt ? "bg-primary border-primary text-white" : "border-surface-border")}>
+                    {printReceipt && <CheckCircle2 className="w-3 h-3" />}
+                  </div>
+                  <span className="text-[10px] font-black capitalize opacity-60">print receipt automatically</span>
+                </button>
               </div>
             </>
           )}
@@ -621,7 +678,12 @@ const POSPage: React.FC = () => {
             onClick={handleCheckout} 
             className={clsx(
               "w-full h-16 rounded-2xl font-black text-sm capitalize shadow-xl transition-all btn-press flex items-center justify-center gap-3",
-              paymentMode === 'Credit' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
+              {
+                Cash: 'bg-emerald-500 text-white shadow-emerald-500/20',
+                Card: 'bg-blue-500 text-white shadow-blue-500/20',
+                Momo: 'bg-amber-500 text-white shadow-amber-500/20',
+                Credit: 'bg-rose-500 text-white shadow-rose-500/20'
+              }[paymentMode],
               cart.length === 0 && "opacity-50 grayscale cursor-not-allowed"
             )}
           >
