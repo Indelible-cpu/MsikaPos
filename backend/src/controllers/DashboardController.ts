@@ -17,22 +17,22 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const where: any = { status: { not: 'DELETED' } };
     const productWhere: any = { deleted: false };
 
-    // Strict Branch Isolation
+    // Strict Branch Isolation (Including Global records)
     if (user.role === 'SUPER_ADMIN') {
       if (user.branchId) {
-        where.branchId = user.branchId;
-        productWhere.branchId = user.branchId;
-        console.log(`📍 Super Admin context: Branch ${user.branchId}`);
+        where.OR = [{ branchId: user.branchId }, { branchId: null }];
+        productWhere.OR = [{ branchId: user.branchId }, { branchId: null }];
+        console.log(`📍 Super Admin context: Branch ${user.branchId} + Global`);
       } else {
         console.log(`🌐 Super Admin context: Global (All Branches)`);
       }
     } else {
-      where.branchId = user.branchId;
-      productWhere.branchId = user.branchId;
-      console.log(`📍 Staff context: Branch ${user.branchId}`);
+      where.OR = [{ branchId: user.branchId }, { branchId: null }];
+      productWhere.OR = [{ branchId: user.branchId }, { branchId: null }];
+      console.log(`📍 Staff context: Branch ${user.branchId} + Global`);
     }
 
-    const bId = where.branchId || null;
+    const bId = user.branchId || null;
 
     // 1. Today's Sales & Profit
     const todayStats = await prisma.sale.aggregate({

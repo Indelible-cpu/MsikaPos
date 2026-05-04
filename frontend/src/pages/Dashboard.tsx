@@ -26,7 +26,8 @@ import {
   AlertTriangle,
   CreditCard as CreditCardIcon,
   ShoppingCart as ShoppingCartIcon,
-  PlusCircle
+  PlusCircle,
+  RefreshCw
 } from 'lucide-react';
 
 // Sub-pages
@@ -214,6 +215,31 @@ export default function Dashboard() {
                 type="text"
               />
             </div>
+            <button 
+              onClick={async () => {
+                const toast = (await import('react-hot-toast')).default;
+                toast.loading('Forcing full system sync...', { id: 'sync' });
+                try {
+                  const { SyncService } = await import('../services/SyncService');
+                  // Temporarily clear timestamp for full pull
+                  const oldTs = localStorage.getItem('lastSyncTimestamp');
+                  localStorage.removeItem('lastSyncTimestamp');
+                  const success = await SyncService.pushSales();
+                  if (success) {
+                    toast.success('Sync complete! Refreshing data...', { id: 'sync' });
+                    window.location.reload();
+                  } else {
+                    localStorage.setItem('lastSyncTimestamp', oldTs || '');
+                    toast.error('Sync failed. Please check connection.', { id: 'sync' });
+                  }
+                } catch {
+                  toast.error('Critical sync error', { id: 'sync' });
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-xl text-[10px] font-black tracking-widest hover:bg-zinc-800 transition-all active:scale-95 shadow-lg shadow-zinc-900/10"
+            >
+              <RefreshCw className="w-3 h-3" /> FORCE SYNC
+            </button>
           </div>
           <div className="flex items-center gap-2 lg:gap-4">
             <button aria-label="Notifications" title="Notifications" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-800 transition-all relative">

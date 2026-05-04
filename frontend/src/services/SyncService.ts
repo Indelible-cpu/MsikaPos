@@ -47,7 +47,15 @@ export const SyncService = {
       }
 
       const deviceId = localStorage.getItem('deviceId') || 'unknown';
-      const lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp');
+      const rawTimestamp = localStorage.getItem('lastSyncTimestamp');
+      let lastSyncTimestamp = rawTimestamp;
+      
+      if (rawTimestamp) {
+        // Subtract 5 minutes buffer to account for server/client clock skew
+        const date = new Date(rawTimestamp);
+        date.setMinutes(date.getMinutes() - 5);
+        lastSyncTimestamp = date.toISOString();
+      }
 
       const response = await api.post('/sync', {
         sales: unsyncedSales,
