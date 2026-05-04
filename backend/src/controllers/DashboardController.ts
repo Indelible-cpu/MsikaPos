@@ -15,21 +15,26 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const totalCountInDb = await prisma.sale.count();
     console.log('📈 Total sales records in database (unfiltered):', totalCountInDb);
 
-    const where: any = { status: { not: SaleStatus.DELETED } };
+    const saleWhere: any = { status: { not: SaleStatus.DELETED } };
+    const expenseWhere: any = {};
     const productWhere: any = { deleted: false };
 
     // Strict Branch Isolation (Including Global records)
     if (user.role === 'SUPER_ADMIN') {
       if (user.branchId) {
-        where.OR = [{ branchId: user.branchId }, { branchId: null }];
-        productWhere.OR = [{ branchId: user.branchId }, { branchId: null }];
+        const branchFilter = [{ branchId: user.branchId }, { branchId: null }];
+        saleWhere.OR = branchFilter;
+        expenseWhere.OR = branchFilter;
+        productWhere.OR = branchFilter;
         console.log(`📍 Super Admin context: Branch ${user.branchId} + Global`);
       } else {
         console.log(`🌐 Super Admin context: Global (All Branches)`);
       }
     } else {
-      where.OR = [{ branchId: user.branchId }, { branchId: null }];
-      productWhere.OR = [{ branchId: user.branchId }, { branchId: null }];
+      const branchFilter = [{ branchId: user.branchId }, { branchId: null }];
+      saleWhere.OR = branchFilter;
+      expenseWhere.OR = branchFilter;
+      productWhere.OR = branchFilter;
       console.log(`📍 Staff context: Branch ${user.branchId} + Global`);
     }
 
@@ -38,7 +43,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // 1. Today's Sales & Profit
     const todayStats = await prisma.sale.aggregate({
       where: {
-        ...where,
+        ...saleWhere,
         createdAt: {
           gte: startOfDay(today),
           lte: endOfDay(today),
@@ -50,7 +55,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // 2. Today's Expenses
     const todayExpenses = await prisma.expense.aggregate({
       where: {
-        ...where,
+        ...expenseWhere,
         expenseDate: {
           gte: startOfDay(today),
           lte: endOfDay(today),
@@ -61,7 +66,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     // 3. Overall Totals (For performance, we usually show this month or all-time)
     const overallStats = await prisma.sale.aggregate({
-      where,
+      where: saleWhere,
       _sum: { total: true, profit: true },
     });
 
@@ -71,7 +76,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const totalCost = totalSales - totalProfit;
 
     // 5. Total Transactions
-    const totalTransactions = await prisma.sale.count({ where });
+    const totalTransactions = await prisma.sale.count({ where: saleWhere });
 
     // 6. Active Products
     const activeProducts = await prisma.product.count({ where: productWhere });
@@ -117,7 +122,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     // 9. Recent Activity
     const recentActivity = await prisma.sale.findMany({
-      where,
+      where: saleWhere,
       include: { user: { select: { username: true } } },
       orderBy: { createdAt: 'desc' },
       take: 5
@@ -127,7 +132,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const lastWeek = subDays(startOfDay(today), 6);
     const salesLastWeek = await prisma.sale.findMany({
       where: {
-        ...where,
+        ...saleWhere,
         createdAt: { gte: lastWeek }
       },
       select: {
