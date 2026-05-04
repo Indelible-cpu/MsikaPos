@@ -1,4 +1,4 @@
-import api from '../api/client';
+import { apiFetch } from '../api/apiFetch';
 import { db } from '../db/posDB';
 
 export const SyncService = {
@@ -12,6 +12,15 @@ export const SyncService = {
 
     window.addEventListener('offline', () => {
       console.log('📡 System Offline: Entering local-only mode.');
+    });
+
+    // Handle session invalidation event from apiFetch
+    window.addEventListener('auth:session-invalid', () => {
+      console.warn('🔓 Session expired or invalid. Redirecting to login.');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('activeBranchId');
+      window.location.href = '/staff/login';
     });
 
     // Initial sync
@@ -28,6 +37,7 @@ export const SyncService = {
       return false;
     }
     
+    if (this.isSyncing) return false;
     this.isSyncing = true;
 
     try {
@@ -57,16 +67,20 @@ export const SyncService = {
         lastSyncTimestamp = date.toISOString();
       }
 
-      const response = await api.post('/sync', {
-        sales: unsyncedSales,
-        expenses: unsyncedExpenses,
-        customers: unsyncedCustomers,
-        debtPayments: unsyncedPayments,
-        deviceId,
-        lastSyncTimestamp
-      }, { timeout: 45000 });
+      const data = await apiFetch('/sync', {
+        method: 'POST',
+        body: JSON.stringify({
+          sales: unsyncedSales,
+          expenses: unsyncedExpenses,
+          customers: unsyncedCustomers,
+          debtPayments: unsyncedPayments,
+          deviceId,
+          lastSyncTimestamp
+        }),
+        timeout: 45000 
+      });
 
-      if (response.data.success) {
+      if (data.success) {
         // Mark all as synced
         if (unsyncedSales.length > 0) {
           const ids = unsyncedSales.map(s => s.id);
@@ -85,18 +99,18 @@ export const SyncService = {
           await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
         }
         
-        const { products, categories } = response.data.updates;
+        const { products, categories } = data.updates;
         if (products && products.length > 0) await db.products.bulkPut(products);
         if (categories && categories.length > 0) await db.categories.bulkPut(categories);
 
-        localStorage.setItem('lastSyncTimestamp', response.data.serverTime);
+        localStorage.setItem('lastSyncTimestamp', data.serverTime);
         console.log('✅ Power Sync Completed');
         return true;
       }
       
-      throw new Error(response.data.message || 'Server rejected sync');
+      throw new Error(data.message || 'Server rejected sync');
     } catch (error: any) {
-      console.error('📡 Sync Error:', error.response?.data || error.message);
+      console.error('📡 Sync Error:', error.data || error.message);
       return false;
     } finally {
       this.isSyncing = false;
@@ -107,68 +121,45 @@ export const SyncService = {
     return navigator.onLine;
   },
 
-  async pushProduct(product: { 
-    id: number; 
-    name: string; 
-    sku: string; 
-    quantity: number;
-    imageUrl?: string | null;
-    cost_price?: number;
-    costPrice?: number;
-    sell_price?: number;
-    sellPrice?: number;
-    category_id?: number;
-    categoryId?: number;
-    is_service?: boolean;
-    isService?: boolean;
-    discount?: number;
-    discount_rate?: number;
-    discount_type?: string;
-    discountType?: string;
-    discount_value?: number;
-    discountValue?: number;
-    discount_start_date?: string;
-    discountStartDate?: string;
-    discount_end_date?: string;
-    discountEndDate?: string;
-    deleted?: boolean;
-  }) {
+  async pushProduct(product: any) {
     try {
-      const response = await api.post('/products', {
-        id: product.id,
-        name: product.name,
-        sku: product.sku,
-        cost_price: product.cost_price ?? product.costPrice,
-        sell_price: product.sell_price ?? product.sellPrice,
-        quantity: product.quantity,
-        deleted: product.deleted ?? false,
-        category_id: product.category_id ?? product.categoryId,
-        is_service: product.is_service ?? product.isService ?? false,
-        imageUrl: product.imageUrl || null,
-        discount: product.discount || 0,
-        discount_rate: product.discount_rate ?? product.discount ?? 0,
-        discount_type: product.discount_type ?? product.discountType,
-        discount_value: product.discount_value ?? product.discountValue,
-        discount_start_date: product.discount_start_date ?? product.discountStartDate,
-        discount_end_date: product.discount_end_date ?? product.discountEndDate,
+      const data = await apiFetch('/products', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: product.id,
+          name: product.name,
+          sku: product.sku,
+          cost_price: product.cost_price ?? product.costPrice,
+          sell_price: product.sell_price ?? product.sellPrice,
+          quantity: product.quantity,
+          deleted: product.deleted ?? false,
+          category_id: product.category_id ?? product.categoryId,
+          is_service: product.is_service ?? product.isService ?? false,
+          imageUrl: product.imageUrl || null,
+          discount: product.discount || 0,
+          discount_rate: product.discount_rate ?? product.discount ?? 0,
+          discount_type: product.discount_type ?? product.discountType,
+          discount_value: product.discount_value ?? product.discountValue,
+          discount_start_date: product.discount_start_date ?? product.discountStartDate,
+          discount_end_date: product.discount_end_date ?? product.discountEndDate,
+        })
       });
 
-      const serverId = response.data?.data?.id || product.id;
+      const serverId = data?.data?.id || product.id;
 
       // Update local database immediately with the correct server ID
       await db.products.put({
+        ...product,
         id: serverId,
         name: product.name,
         sku: product.sku,
+        quantity: product.quantity,
         costPrice: product.cost_price ?? product.costPrice ?? 0,
         sellPrice: product.sell_price ?? product.sellPrice ?? 0,
-        quantity: product.quantity,
-        deleted: product.deleted ?? false,
         categoryId: (product.category_id ?? product.categoryId) || 0,
         isService: product.is_service ?? product.isService ?? false,
-        imageUrl: product.imageUrl || undefined,
         status: 'ACTIVE',
-        createdAt: new Date().toISOString(),
+        createdAt: product.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
 
@@ -184,3 +175,4 @@ export const SyncService = {
     }
   }
 };
+

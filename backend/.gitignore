@@ -14,6 +14,13 @@ build
 # Logs
 *.log
 
+# Generated files
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+!.env.example
+
 # IDE files
 .vscode/
 .idea/

@@ -1,47 +1,20 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { ProductService } from '../services/ProductService';
 
 export const listProducts = async (req: Request, res: Response) => {
   const { q, categoryId, deleted } = req.query;
   const user = (req as any).user;
 
   try {
-    const where: any = {
+    const products = await ProductService.listProducts({
+      q: q as string,
+      categoryId: categoryId as string,
       deleted: deleted === '1',
-    };
-
-    if (q) {
-      where.OR = [
-        { name: { contains: q as string, mode: 'insensitive' } },
-        { sku: { contains: q as string, mode: 'insensitive' } },
-      ];
-    }
-
-    if (categoryId) {
-      where.categoryId = parseInt(categoryId as string);
-    }
-
-    // Strict Branch Isolation
-    if (user.role === 'SUPER_ADMIN') {
-      if (user.branchId) where.branchId = user.branchId;
-    } else {
-      where.branchId = user.branchId;
-    }
-
-    const products = await prisma.product.findMany({
-      where,
-      include: { category: true },
-      orderBy: { name: 'asc' },
+      user
     });
 
-    const mapped = products.map((p: any) => ({
-      ...p,
-      costPrice: Number(p.costPrice),
-      sellPrice: Number(p.sellPrice),
-      discountValue: p.discountValue ? Number(p.discountValue) : 0,
-    }));
-
-    return res.status(200).json({ success: true, data: mapped });
+    return res.status(200).json({ success: true, data: products });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Failed to fetch products', error: error.message });
   }
@@ -145,66 +118,26 @@ export const generateSku = async (req: Request, res: Response) => {
     }
 
     try {
-        const category = await prisma.category.findUnique({ where: { id: parseInt(categoryId) } });
-        const catShort = (category?.title || 'XX').replace(/\s+/g, '').substring(0, 2).toUpperCase();
-        const nameShort = name.replace(/\s+/g, '').substring(0, 3).toUpperCase();
-        const prefix = `${catShort}-${nameShort}-`;
-
-        const lastProduct = await prisma.product.findFirst({
-            where: { sku: { startsWith: prefix } },
-            orderBy: { sku: 'desc' }
-        });
-
-        let next = "001";
-        if (lastProduct?.sku) {
-            const matches = lastProduct.sku.match(/(\d{3})$/);
-            if (matches) {
-                next = (parseInt(matches[1] as string) + 1).toString().padStart(3, '0');
-            }
-        }
-
-        return res.status(200).json({ success: true, data: { sku: prefix + next } });
+        const sku = await ProductService.generateSku(categoryId, name);
+        return res.status(200).json({ success: true, data: { sku } });
     } catch (error: any) {
         return res.status(500).json({ success: false, error: error.message });
     }
 };
 
 export const saveProduct = async (req: Request, res: Response) => {
-
   const data = req.body;
   const user = (req as any).user;
 
   try {
-    const payload: any = {
-        name: data.name,
-        sku: data.sku,
-        costPrice: Number(data.cost_price),
-        sellPrice: Number(data.sell_price),
-        quantity: Number(data.quantity),
-        isService: !!data.is_service,
-        imageUrl: data.image_url || data.imageUrl || null,
-        categoryId: parseInt(data.category_id),
-        branchId: user.role === 'SUPER_ADMIN' ? (data.branch_id ? parseInt(data.branch_id) : null) : user.branchId,
-        discountType: data.discount_type || null,
-        discountValue: data.discount_value ? Number(data.discount_value) : 0,
-        discountStartDate: data.discount_start_date ? new Date(data.discount_start_date) : null,
-        discountEndDate: data.discount_end_date ? new Date(data.discount_end_date) : null,
-        deleted: data.deleted !== undefined ? !!data.deleted : false,
-        updatedAt: new Date()
-    };
-
-      if (data.id && parseInt(data.id) < 1000000000) {
-        await prisma.product.update({
-          where: { id: parseInt(data.id) },
-          data: payload,
-        });
-        return res.status(200).json({ success: true, message: "Product updated" });
-      } else {
-        const product = await prisma.product.create({
-          data: payload,
-        });
-        return res.status(201).json({ success: true, message: "Product created", data: { id: product.id } });
-      }
+    const product = await ProductService.saveProduct(data, user);
+    const isUpdate = data.id && parseInt(data.id) < 1000000000;
+    
+    return res.status(isUpdate ? 200 : 201).json({ 
+      success: true, 
+      message: isUpdate ? "Product updated" : "Product created", 
+      data: { id: product.id } 
+    });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Failed to save product', error: error.message });
   }
@@ -251,13 +184,14 @@ export const getProductRatings = async (req: Request, res: Response) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
     const { id } = req.params;
+    const user = (req as any).user;
     
     if (!id) return res.status(400).json({ success: false, message: "Missing product ID" });
 
     try {
-        await prisma.product.delete({
-            where: { id: parseInt(id as string) }
-        });
+        const productId = parseInt(id as string);
+        if (isNaN(productId)) return res.status(400).json({ success: false, message: "Invalid product ID" });
+        await ProductService.deleteProduct(productId, user);
         return res.status(200).json({ success: true, message: "Product deleted permanently" });
     } catch (error: any) {
         return res.status(500).json({ success: false, message: 'Failed to delete product', error: error.message });

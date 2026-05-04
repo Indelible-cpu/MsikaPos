@@ -42,11 +42,9 @@ api.interceptors.response.use(
         const isPublic = publicPaths.some(p => window.location.pathname === p || window.location.pathname.startsWith('/store'));
         
         if (!isPublic) {
-          console.warn('🔓 Session expired or invalid. Redirecting to login.');
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('activeBranchId');
-          window.location.href = '/staff/login';
+          window.dispatchEvent(new CustomEvent('auth:session-invalid', { 
+            detail: { status: response.status, message: response.data?.message } 
+          }));
         }
       } else if (response.status === 403) {
         console.warn('🚫 Permission Denied: You do not have access to this resource.');
