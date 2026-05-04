@@ -8,14 +8,10 @@ import {
   Search, 
   ShoppingCart, 
   RefreshCw, 
-  Users, 
   Plus, 
   Minus, 
   PackageSearch, 
   Scan, 
-  CreditCard, 
-  Smartphone, 
-  Wallet,
   Printer,
   CheckCircle2,
   X,
@@ -378,10 +374,10 @@ const POSPage: React.FC = () => {
           <div className="flex gap-3 items-center">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-              <input title="Search Inventory" aria-label="Search Inventory" placeholder="Search Products..." className="input-field w-full pl-12 h-12 text-sm font-black" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              <input title="search inventory" aria-label="search inventory" placeholder="search products..." className="input-field w-full pl-12 h-12 text-sm font-black lowercase" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
-            <button type="button" title="Scan Barcode" aria-label="Scan Barcode" onClick={() => setShowScanner(true)} className="w-12 h-12 flex items-center justify-center shrink-0 btn-press text-primary hover:bg-primary/10 rounded-xl transition-colors"><Scan className="w-6 h-6" /></button>
-            <button type="button" title="Sync Offline Data" aria-label="Sync Offline Data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('Synced'); }} className={clsx("w-12 h-12 bg-card/50 border border-border/50 rounded-xl text-primary flex items-center justify-center shrink-0 btn-press transition-colors hover:bg-card/80", isSyncing && "animate-spin")}><RefreshCw className="w-5 h-5" /></button>
+            <button type="button" title="scan barcode" aria-label="scan barcode" onClick={() => setShowScanner(true)} className="w-12 h-12 flex items-center justify-center shrink-0 btn-press text-primary hover:bg-primary/10 rounded-xl transition-colors"><Scan className="w-6 h-6" /></button>
+            <button type="button" title="sync offline data" aria-label="sync offline data" onClick={async () => { setIsSyncing(true); await SyncService.pushSales(); setIsSyncing(false); toast.success('synced'); }} className={clsx("w-12 h-12 bg-card/50 border border-border/50 rounded-xl text-primary flex items-center justify-center shrink-0 btn-press transition-colors hover:bg-card/80", isSyncing && "animate-spin")}><RefreshCw className="w-5 h-5" /></button>
           </div>
         </header>
 
@@ -399,10 +395,10 @@ const POSPage: React.FC = () => {
                       )}
                     </div>
                     <div className="space-y-1 md:space-y-2 flex-1">
-                      <div className="font-black uppercase text-[11px] leading-tight line-clamp-2 min-h-[2.4em]">{toSentenceCase(p.name)}</div>
+                      <div className="font-black lowercase text-[11px] leading-tight line-clamp-2 min-h-[2.4em]">{toSentenceCase(p.name)}</div>
                       <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Retail Price</span>
-                        <span className="font-black text-primary text-base md:text-lg leading-none">MK {p.sellPrice.toLocaleString()}</span>
+                        <span className="text-[8px] font-black text-muted-foreground lowercase tracking-widest">retail price</span>
+                        <span className="font-black text-primary text-base md:text-lg leading-none">mk {p.sellPrice.toLocaleString()}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -421,8 +417,8 @@ const POSPage: React.FC = () => {
       )}>
         <header className="p-8 border-b border-border/50 flex justify-between items-center bg-transparent">
           <div className="flex flex-col gap-1">
-            <h2 className="text-xl font-black uppercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> Cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
-            <p className="text-[8px] font-black opacity-30 uppercase tracking-widest">Transaction # {generateInvoiceNo()}</p>
+            <h2 className="text-xl font-black lowercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
+            <p className="text-[8px] font-black opacity-30 lowercase tracking-widest">transaction # {generateInvoiceNo()}</p>
           </div>
           <div className="flex items-center gap-4">
             <button 
@@ -454,9 +450,9 @@ const POSPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center opacity-10 uppercase font-black text-[10px] tracking-[0.3em] gap-6">
+            <div className="h-full flex flex-col items-center justify-center opacity-10 lowercase font-black text-[10px] tracking-[0.3em] gap-6">
               <ShoppingCart className="w-20 h-20" />
-              Cart is empty
+              cart is empty
             </div>
           ) : (
             <>
@@ -467,25 +463,25 @@ const POSPage: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                            <div className="w-10 h-10 bg-surface-card rounded-xl flex items-center justify-center overflow-hidden shrink-0">{item.product.imageUrl ? <img src={item.product.imageUrl} alt="" className="w-full h-full object-cover" /> : <PackageSearch className="opacity-10 w-5 h-5" />}</div>
-                           <div>
-                             <div className="font-black uppercase text-[10px] truncate w-32">{toSentenceCase(item.product.name)}</div>
-                             <div className="text-[9px] font-black opacity-40">MK {item.product.sellPrice.toLocaleString()} × {item.quantity}</div>
+                            <div>
+                             <div className="font-black lowercase text-[10px] truncate w-32">{toSentenceCase(item.product.name)}</div>
+                             <div className="text-[9px] font-black opacity-40">mk {item.product.sellPrice.toLocaleString()} × {item.quantity}</div>
                            </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[8px] font-black opacity-30 uppercase">Subtotal</div>
-                          <div className="text-sm font-black text-primary-500 leading-none">MK {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
+                          <div className="text-[8px] font-black opacity-30 lowercase">subtotal</div>
+                          <div className="text-sm font-black text-primary-500 leading-none">mk {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-3 border-t border-surface-border/30">
                         <div className="flex items-center bg-surface-card rounded-lg border border-surface-border">
-                          <button type="button" title="Decrease Quantity" aria-label="Decrease Quantity" onClick={() => setCart(prev => prev.map(i => i.product.id === item.product.id ? {...i, quantity: Math.max(1, i.quantity - 1)} : i))} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Minus className="w-3 h-3" /></button>
+                          <button type="button" title="decrease quantity" aria-label="decrease quantity" onClick={() => setCart(prev => prev.map(i => i.product.id === item.product.id ? {...i, quantity: Math.max(1, i.quantity - 1)} : i))} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Minus className="w-3 h-3" /></button>
                           <span className="font-black text-xs w-6 text-center">{item.quantity}</span>
-                          <button type="button" title="Increase Quantity" aria-label="Increase Quantity" onClick={() => addToCart(item.product)} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Plus className="w-3 h-3" /></button>
+                          <button type="button" title="increase quantity" aria-label="increase quantity" onClick={() => addToCart(item.product)} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Plus className="w-3 h-3" /></button>
                         </div>
-                        <button type="button" title="Remove Item" aria-label="Remove Item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-rose-500 opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 text-[8px] font-black uppercase">
-                          <X className="w-4 h-4" /> Remove
+                        <button type="button" title="remove item" aria-label="remove item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-rose-500 opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 text-[8px] font-black lowercase">
+                          <X className="w-4 h-4" /> remove
                         </button>
                       </div>
                     </motion.div>
@@ -494,13 +490,13 @@ const POSPage: React.FC = () => {
               </div>
 
               <div className="pt-8 space-y-4 border-t border-surface-border/50">
-                <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
-                  <span>Subtotal</span>
-                  <span>MK {cartSubtotal.toLocaleString()}</span>
+                <div className="flex justify-between items-center text-[10px] font-black lowercase opacity-40">
+                  <span>subtotal</span>
+                  <span>mk {cartSubtotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center text-[10px] font-black uppercase text-rose-500">
+                <div className="flex justify-between items-center text-[10px] font-black lowercase text-rose-500">
                   <div className="flex items-center gap-2">
-                    <span>Discount</span>
+                    <span>discount</span>
                     <input 
                       type="number" 
                       placeholder="0.00"
@@ -509,63 +505,84 @@ const POSPage: React.FC = () => {
                       onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
                     />
                   </div>
-                  <span>- MK {discount.toLocaleString()}</span>
+                  <span>- mk {discount.toLocaleString()}</span>
                 </div>
                 {taxConfig.rate > 0 && (
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
-                    <span>Tax ({taxConfig.rate}%)</span>
-                    <span>MK {taxAmount.toLocaleString()}</span>
+                  <div className="flex justify-between items-center text-[10px] font-black lowercase opacity-40">
+                    <span>tax ({taxConfig.rate}%)</span>
+                    <span>mk {taxAmount.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-4 border-t border-border/50">
-                  <span className="text-[10px] font-black uppercase opacity-40">Total</span>
-                  <span className="text-3xl font-black text-primary tracking-tighter">MK {finalTotal.toLocaleString()}</span>
+                  <span className="text-[10px] font-black lowercase opacity-40">total</span>
+                  <span className="text-3xl font-black text-primary tracking-tighter">mk {finalTotal.toLocaleString()}</span>
                 </div>
+                {paymentMode === 'Cash' && amountReceived && parseFloat(amountReceived) > finalTotal && (
+                  <div className="flex justify-between items-center text-[10px] font-black lowercase text-success animate-in fade-in slide-in-from-top-1">
+                    <span>change due</span>
+                    <span className="font-black">mk {changeDue.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-6 pt-8 border-t border-surface-border/50">
                 <div className="space-y-4">
-                  <label className="text-[10px] font-black uppercase opacity-40">Payment Mode</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <label className="text-[10px] font-black lowercase opacity-40">payment mode</label>
+                  <div className="flex flex-wrap gap-5 px-2">
                     {(['Cash', 'Card', 'Momo', 'Credit'] as const).map(id => {
-                      const m = { Cash: { icon: Wallet, label: 'Cash' }, Card: { icon: CreditCard, label: 'Bank' }, Momo: { icon: Smartphone, label: 'MoMo' }, Credit: { icon: Users, label: 'Credit' } }[id];
+                      const m = { Cash: 'cash', Card: 'bank', Momo: 'momo', Credit: 'credit' }[id];
                       return (
-                        <button key={id} onClick={() => setPaymentMode(id)} className={clsx("p-4 rounded-xl border flex items-center gap-3 transition-all btn-press", paymentMode === id ? "bg-primary text-primary-foreground border-transparent shadow-lg shadow-primary/20" : "bg-muted/10 border-border/50 opacity-40 hover:opacity-100")}>
-                          <m.icon className="w-4 h-4" /> <span className="text-[9px] font-black uppercase">{m.label}</span>
+                        <button 
+                          key={id} 
+                          type="button"
+                          onClick={() => setPaymentMode(id)} 
+                          className={clsx(
+                            "text-[10px] font-black lowercase transition-all pb-1 border-b-2", 
+                            paymentMode === id ? "text-primary border-primary" : "text-muted-foreground border-transparent opacity-40 hover:opacity-100"
+                          )}
+                        >
+                          {m}
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {paymentMode === 'Cash' ? (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase opacity-40">Cash Received (MK)</label>
-                    <input title="Cash Received" className="input-field w-full text-xl font-black" value={amountReceived} onChange={e => setAmountReceived(e.target.value)} />
+                {paymentMode === 'Cash' && (
+                  <div className="flex items-center justify-between gap-4 p-4 bg-muted/5 rounded-2xl border border-border/50">
+                    <label className="text-[10px] font-black lowercase opacity-40 shrink-0">cashier received (mk)</label>
+                    <input 
+                      title="cash received" 
+                      className="bg-transparent border-none outline-none text-right text-xl font-black w-full" 
+                      placeholder="0.00"
+                      value={amountReceived} 
+                      onChange={e => setAmountReceived(e.target.value)} 
+                    />
                   </div>
-                ) : (paymentMode === 'Card' || paymentMode === 'Momo') ? (
+                )}
+                {(paymentMode === 'Card' || paymentMode === 'Momo') && (
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase opacity-40">{paymentMode === 'Card' ? 'Bank' : 'Provider'}</label>
-                      <select title={paymentMode === 'Card' ? 'Select Bank' : 'Select Provider'} className="input-field w-full font-black uppercase" value={bankName} onChange={e => setBankName(e.target.value)}>
-                        <option value="">Choose...</option>
+                      <label className="text-[10px] font-black lowercase opacity-40">{paymentMode === 'Card' ? 'bank' : 'provider'}</label>
+                      <select title={paymentMode === 'Card' ? 'select bank' : 'select provider'} className="input-field w-full font-black lowercase" value={bankName} onChange={e => setBankName(e.target.value)}>
+                        <option value="">choose...</option>
                         {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).split(',').map(p => <option key={p.trim()} value={p.trim()}>{p.trim()}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase opacity-40">Ref #</label>
-                      <input title="Reference Number" placeholder="Enter Ref #" className="input-field w-full font-black uppercase" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
+                      <label className="text-[10px] font-black lowercase opacity-40">ref #</label>
+                      <input title="reference number" placeholder="enter ref #" className="input-field w-full font-black lowercase" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
                     </div>
                   </div>
-                ) : null}
+                )}
 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black uppercase opacity-40">Signature</label>
+                    <label className="text-[10px] font-black lowercase opacity-40">signature</label>
                     {showSigPad && (
                       <div className="flex items-center gap-4">
-                        <button type="button" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 flex items-center gap-1 text-[8px] font-black uppercase"><RotateCcw className="w-3 h-3" /> Clear</button>
-                        <button type="button" onClick={() => setShowSigPad(false)} className="text-muted-foreground flex items-center gap-1 text-[8px] font-black uppercase"><X className="w-3 h-3" /> Close</button>
+                        <button type="button" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 flex items-center gap-1 text-[8px] font-black lowercase"><RotateCcw className="w-3 h-3" /> clear</button>
+                        <button type="button" onClick={() => setShowSigPad(false)} className="text-muted-foreground flex items-center gap-1 text-[8px] font-black lowercase"><X className="w-3 h-3" /> close</button>
                       </div>
                     )}
                   </div>
@@ -576,19 +593,19 @@ const POSPage: React.FC = () => {
                       className="w-full py-6 border-2 border-dashed border-border/50 rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-primary/5 transition-all group btn-press"
                     >
                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><CheckCircle2 className="w-6 h-6" /></div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Tap here to sign</span>
+                      <span className="text-[10px] font-black lowercase tracking-[0.2em] text-primary">tap here to sign</span>
                     </button>
                   ) : (
                     <div className="bg-white border border-surface-border rounded-2xl h-32 relative overflow-hidden">
                       <canvas ref={sigCanvasRef} width={800} height={320} onMouseDown={startSignature} onTouchStart={startSignature} className="w-full h-full cursor-crosshair touch-none" />
-                      {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none uppercase font-black text-[8px] tracking-[0.3em]">Sign anywhere in this box</div>}
+                      {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none lowercase font-black text-[8px] tracking-[0.3em]">sign anywhere in this box</div>}
                     </div>
                   )}
                 </div>
 
                 <div className="flex items-center gap-4 py-4 px-6 bg-surface-bg border border-surface-border rounded-2xl">
                   <input type="checkbox" id="printReceipt" checked={printReceipt} onChange={e => setPrintReceipt(e.target.checked)} className="w-5 h-5 rounded-lg border-surface-border text-primary-500 focus:ring-primary-500" />
-                  <label htmlFor="printReceipt" className="text-[10px] font-black uppercase cursor-pointer opacity-60">Print Receipt Automatically</label>
+                  <label htmlFor="printReceipt" className="text-[10px] font-black lowercase cursor-pointer opacity-60">print receipt automatically</label>
                 </div>
               </div>
             </>
@@ -600,12 +617,12 @@ const POSPage: React.FC = () => {
             disabled={cart.length === 0}
             onClick={handleCheckout} 
             className={clsx(
-              "w-full h-16 rounded-2xl font-black text-sm uppercase shadow-xl transition-all btn-press flex items-center justify-center gap-3",
+              "w-full h-16 rounded-2xl font-black text-sm lowercase shadow-xl transition-all btn-press flex items-center justify-center gap-3",
               paymentMode === 'Credit' ? "bg-amber-500 text-white shadow-amber-500/20" : "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
               cart.length === 0 && "opacity-50 grayscale cursor-not-allowed"
             )}
           >
-            {paymentMode === 'Credit' ? 'Add To Customer' : 'Complete Sale'} <ChevronRight className="w-4 h-4" />
+            {paymentMode === 'Credit' ? 'add to customer' : 'complete sale'} <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </aside>
