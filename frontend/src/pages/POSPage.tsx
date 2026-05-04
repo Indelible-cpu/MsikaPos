@@ -340,7 +340,14 @@ const POSPage: React.FC = () => {
                     const el = document.getElementById('receipt-content');
                     if (el) {
                       try {
-                        const dataUrl = await h2i.toPng(el, { backgroundColor: '#fff', pixelRatio: 2 });
+                        const dataUrl = await h2i.toPng(el, { 
+                          backgroundColor: '#fff', 
+                          pixelRatio: 3,
+                          style: {
+                            padding: '20px',
+                            margin: '0'
+                          }
+                        });
                         const blob = await (await fetch(dataUrl)).blob();
                         const file = new File([blob], `Receipt.png`, { type: 'image/png' });
                         if (navigator.share && navigator.canShare({ files: [file] })) {
@@ -408,8 +415,33 @@ const POSPage: React.FC = () => {
         "lg:h-full"
       )}>
         <header className="p-8 border-b border-border/50 flex justify-between items-center bg-transparent">
-          <h2 className="text-xl font-black uppercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> Cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
-          {cart.length > 0 && <button onClick={() => setCart([])} className="text-[10px] font-black uppercase text-destructive opacity-40 hover:opacity-100 transition-opacity">Clear All</button>}
+          <div className="flex flex-col gap-1">
+            <h2 className="text-xl font-black uppercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> Cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
+            <p className="text-[8px] font-black opacity-30 uppercase tracking-widest">Transaction # {generateInvoiceNo()}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => {
+                const aside = document.querySelector('aside');
+                if (aside) {
+                  if (aside.classList.contains('h-[85vh]')) {
+                    aside.classList.remove('h-[85vh]');
+                    aside.classList.add('h-[100vh]');
+                  } else if (aside.classList.contains('h-[100vh]')) {
+                    aside.classList.remove('h-[100vh]');
+                    aside.classList.add('h-[50vh]');
+                  } else {
+                    aside.classList.remove('h-[50vh]');
+                    aside.classList.add('h-[85vh]');
+                  }
+                }
+              }} 
+              className="lg:hidden p-2 bg-primary/10 text-primary rounded-lg btn-press"
+            >
+              <RotateCcw className="w-4 h-4 rotate-90" />
+            </button>
+            {cart.length > 0 && <button onClick={() => setCart([])} className="text-[10px] font-black uppercase text-destructive opacity-40 hover:opacity-100 transition-opacity">Clear All</button>}
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
@@ -458,12 +490,19 @@ const POSPage: React.FC = () => {
                   <span>Subtotal</span>
                   <span>MK {cartSubtotal.toLocaleString()}</span>
                 </div>
-                {discount > 0 && (
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-rose-500">
+                <div className="flex justify-between items-center text-[10px] font-black uppercase text-rose-500">
+                  <div className="flex items-center gap-2">
                     <span>Discount</span>
-                    <span>- MK {discount.toLocaleString()}</span>
+                    <input 
+                      type="number" 
+                      placeholder="0.00"
+                      className="w-20 bg-rose-500/10 border-none outline-none px-2 py-1 rounded text-rose-500 font-black text-[9px]"
+                      value={discount || ''}
+                      onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                    />
                   </div>
-                )}
+                  <span>- MK {discount.toLocaleString()}</span>
+                </div>
                 {taxConfig.rate > 0 && (
                   <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-40">
                     <span>Tax ({taxConfig.rate}%)</span>
@@ -516,7 +555,10 @@ const POSPage: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <label className="text-[10px] font-black uppercase opacity-40">Signature</label>
                     {showSigPad && (
-                      <button type="button" title="Reset Signature" aria-label="Reset Signature" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 hover:rotate-180 transition-transform duration-500"><RotateCcw className="w-4 h-4" /></button>
+                      <div className="flex items-center gap-4">
+                        <button type="button" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 flex items-center gap-1 text-[8px] font-black uppercase"><RotateCcw className="w-3 h-3" /> Clear</button>
+                        <button type="button" onClick={() => setShowSigPad(false)} className="text-muted-foreground flex items-center gap-1 text-[8px] font-black uppercase"><X className="w-3 h-3" /> Close</button>
+                      </div>
                     )}
                   </div>
                   {!showSigPad ? (

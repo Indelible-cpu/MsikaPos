@@ -47,7 +47,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
     <div className="receipt p-0 bg-white text-black font-mono w-full text-[11px] leading-tight shadow-sm flex flex-col items-center">
       <div className="text-center w-full border-b-2 border-black pb-4 mb-4">
         <div className="w-14 h-14 mx-auto mb-2 rounded-full border border-black/10 flex items-center justify-center overflow-hidden">
-           <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="w-full h-full object-contain grayscale" />
+           <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="w-full h-full object-contain" />
         </div>
         <h1 className="text-xl font-bold tracking-tight  uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
         {shopSlogan && <p className="text-[8px]  font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
@@ -154,7 +154,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
             
             <div className="flex items-center gap-4 w-full px-4 mb-2">
               {customer.livePhoto && (
-                <img src={customer.livePhoto} alt="cust" className="w-10 h-10 rounded-lg object-cover border border-black/10 grayscale" />
+                <img src={customer.livePhoto} alt="cust" className="w-10 h-10 rounded-lg object-cover border border-black/10" />
               )}
               <div className="text-left flex-1">
                 <div className="font-bold text-[10px]">{customer.name}</div>
@@ -185,7 +185,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
         {signature && (
           <div className="w-full flex flex-col items-center mb-4 mt-2">
             <div className="text-[7px] font-black tracking-widest opacity-30 uppercase mb-1 text-center">Digital Signature</div>
-            <img src={signature} alt="sign" className="h-10 w-auto grayscale contrast-200" />
+            <img src={signature} alt="sign" className="h-10 w-auto contrast-200" />
             <div className="w-24 border-t border-black/30 mt-1"></div>
             <div className="text-[8px] font-black mt-1 uppercase">{cashierName}</div>
           </div>
