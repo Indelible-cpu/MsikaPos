@@ -51,6 +51,7 @@ const POSPage: React.FC = () => {
   const [amountReceived, setAmountReceived] = useState<string>('');
   const [discount, setDiscount] = useState<number>(0);
   const [signature, setSignature] = useState<string | null>(null);
+  const [showSigPad, setShowSigPad] = useState(false);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const [taxConfig, setTaxConfig] = useState<TaxConfig>({ rate: 0, inclusive: true });
@@ -241,6 +242,7 @@ const POSPage: React.FC = () => {
       setAccountNumber('');
       setDiscount(0);
       setSignature(null);
+      setShowSigPad(false);
       toast.success('Sale Completed!');
       
       if (printReceipt) setTimeout(() => window.print(), 800);
@@ -255,23 +257,48 @@ const POSPage: React.FC = () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#000';
+    
+    ctx.lineWidth = 3; 
+    ctx.lineCap = 'round'; 
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#000';
+    
     const rect = canvas.getBoundingClientRect();
-    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : (e as React.MouseEvent).clientX - rect.left;
-    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : (e as React.MouseEvent).clientY - rect.top;
-    ctx.beginPath(); ctx.moveTo(x, y);
-    const draw = (me: MouseEvent | TouchEvent) => {
-      const mx = ('touches' in me) ? me.touches[0].clientX - rect.left : (me as MouseEvent).clientX - rect.left;
-      const my = ('touches' in me) ? me.touches[0].clientY - rect.top : (me as MouseEvent).clientY - rect.top;
-      ctx.lineTo(mx, my); ctx.stroke();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const getPos = (ev: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent) => {
+      const clientX = 'touches' in ev ? ev.touches[0].clientX : (ev as MouseEvent).clientX;
+      const clientY = 'touches' in ev ? ev.touches[0].clientY : (ev as MouseEvent).clientY;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
     };
+
+    const pos = getPos(e);
+    ctx.beginPath(); 
+    ctx.moveTo(pos.x, pos.y);
+
+    const draw = (me: MouseEvent | TouchEvent) => {
+      if ('touches' in me) me.preventDefault();
+      const mPos = getPos(me);
+      ctx.lineTo(mPos.x, mPos.y); 
+      ctx.stroke();
+    };
+
     const stop = () => {
-      window.removeEventListener('mousemove', draw as EventListener); window.removeEventListener('mouseup', stop);
-      window.removeEventListener('touchmove', draw as EventListener); window.removeEventListener('touchend', stop);
+      window.removeEventListener('mousemove', draw as EventListener); 
+      window.removeEventListener('mouseup', stop);
+      window.removeEventListener('touchmove', draw as EventListener); 
+      window.removeEventListener('touchend', stop);
       setSignature(canvas.toDataURL());
     };
-    window.addEventListener('mousemove', draw as EventListener); window.addEventListener('mouseup', stop);
-    window.addEventListener('touchmove', draw as EventListener, { passive: false }); window.addEventListener('touchend', stop);
+
+    window.addEventListener('mousemove', draw as EventListener); 
+    window.addEventListener('mouseup', stop);
+    window.addEventListener('touchmove', draw as EventListener, { passive: false }); 
+    window.addEventListener('touchend', stop);
   };
 
 
@@ -375,7 +402,11 @@ const POSPage: React.FC = () => {
       </main>
 
       {/* Cart Sidebar / Bottom Area */}
-      <aside className="w-full lg:w-[450px] bg-card/80 backdrop-blur-2xl border-l border-border/50 flex flex-col h-[50vh] lg:h-full shrink-0 shadow-2xl relative z-50">
+      <aside className={clsx(
+        "w-full lg:w-[450px] bg-card/80 backdrop-blur-2xl border-l border-border/50 flex flex-col shrink-0 shadow-2xl relative z-50 transition-all duration-500 ease-in-out",
+        cart.length > 0 ? "h-[85vh]" : "h-[50vh]",
+        "lg:h-full"
+      )}>
         <header className="p-8 border-b border-border/50 flex justify-between items-center bg-transparent">
           <h2 className="text-xl font-black uppercase flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> Cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
           {cart.length > 0 && <button onClick={() => setCart([])} className="text-[10px] font-black uppercase text-destructive opacity-40 hover:opacity-100 transition-opacity">Clear All</button>}
@@ -484,12 +515,25 @@ const POSPage: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <label className="text-[10px] font-black uppercase opacity-40">Signature</label>
-                    <button type="button" title="Reset Signature" aria-label="Reset Signature" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 hover:rotate-180 transition-transform duration-500"><RotateCcw className="w-4 h-4" /></button>
+                    {showSigPad && (
+                      <button type="button" title="Reset Signature" aria-label="Reset Signature" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 hover:rotate-180 transition-transform duration-500"><RotateCcw className="w-4 h-4" /></button>
+                    )}
                   </div>
-                  <div className="bg-white border border-surface-border rounded-2xl h-24 relative overflow-hidden">
-                    <canvas ref={sigCanvasRef} width={800} height={200} onMouseDown={startSignature} onTouchStart={startSignature} className="w-full h-full cursor-crosshair touch-none" />
-                    {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none uppercase font-black text-[8px] tracking-[0.3em]">Sign to confirm</div>}
-                  </div>
+                  {!showSigPad ? (
+                    <button 
+                      type="button" 
+                      onClick={() => setShowSigPad(true)}
+                      className="w-full py-6 border-2 border-dashed border-border/50 rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-primary/5 transition-all group btn-press"
+                    >
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><CheckCircle2 className="w-6 h-6" /></div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Tap here to sign</span>
+                    </button>
+                  ) : (
+                    <div className="bg-white border border-surface-border rounded-2xl h-32 relative overflow-hidden">
+                      <canvas ref={sigCanvasRef} width={800} height={320} onMouseDown={startSignature} onTouchStart={startSignature} className="w-full h-full cursor-crosshair touch-none" />
+                      {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none uppercase font-black text-[8px] tracking-[0.3em]">Sign anywhere in this box</div>}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-4 py-4 px-6 bg-surface-bg border border-surface-border rounded-2xl">
