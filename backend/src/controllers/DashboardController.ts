@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { SaleStatus } from '@prisma/client';
 import { startOfDay, endOfDay, subDays, format } from 'date-fns';
 
 export const getDashboardStats = async (req: Request, res: Response) => {
@@ -14,7 +15,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const totalCountInDb = await prisma.sale.count();
     console.log('📈 Total sales records in database (unfiltered):', totalCountInDb);
 
-    const where: any = { status: { not: 'DELETED' } };
+    const where: any = { status: { not: SaleStatus.DELETED } };
     const productWhere: any = { deleted: false };
 
     // Strict Branch Isolation (Including Global records)
@@ -86,16 +87,30 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     let creditCount = 0;
     try {
-      const branchFilter = bId ? parseInt(bId as string) : null;
-      const unpaidCredits = await prisma.$queryRaw`
-        SELECT COUNT(*)::int as count FROM "Sale" 
-        WHERE "isCredit" = true 
-        AND "paid" < "total" 
-        AND "status" != 'DELETED'
-        AND "dueDate" <= ${endOfDay(threeDaysLater)}
-        AND (${branchFilter}::int IS NULL OR "branchId" = ${branchFilter}::int)
-      ` as { count: number }[];
-      creditCount = unpaidCredits[0]?.count || 0;
+      const branchFilterRaw = bId ? parseInt(String(bId), 10) : null;
+      const branchFilter = branchFilterRaw !== null && !isNaN(branchFilterRaw) ? branchFilterRaw : null;
+      
+      if (branchFilter !== null) {
+        const unpaidCredits = await prisma.$queryRaw`
+          SELECT COUNT(*)::int as count FROM "Sale" 
+          WHERE "isCredit" = true 
+          AND "paid" < "total" 
+          AND "status" != 'DELETED'
+          AND "dueDate" <= ${endOfDay(threeDaysLater)}
+          AND "branchId" = ${branchFilter}
+        ` as { count: number }[];
+        creditCount = unpaidCredits[0]?.count || 0;
+      } else {
+        // Super Admin with no branch filter — count all
+        const unpaidCredits = await prisma.$queryRaw`
+          SELECT COUNT(*)::int as count FROM "Sale" 
+          WHERE "isCredit" = true 
+          AND "paid" < "total" 
+          AND "status" != 'DELETED'
+          AND "dueDate" <= ${endOfDay(threeDaysLater)}
+        ` as { count: number }[];
+        creditCount = unpaidCredits[0]?.count || 0;
+      }
     } catch (e) {
       console.warn('⚠️ Credit count query failed (schema mismatch?), defaulting to 0:', e);
     }
@@ -164,7 +179,13 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     console.log('✅ Dashboard Stats success:', { transactions: totalTransactions, products: activeProducts });
     return res.status(200).json({ success: true, data: stats });
   } catch (error: any) {
-    console.error('❌ Dashboard Stats Error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch dashboard stats', error: error.message });
+    console.error('❌ Dashboard Stats Error:', error?.message || error);
+    console.error('❌ Dashboard Stats Stack:', error?.stack);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch dashboard stats', 
+      error: error?.message,
+      detail: process.env.NODE_ENV !== 'production' ? error?.stack : undefined
+    });
   }
 };
