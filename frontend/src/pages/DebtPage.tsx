@@ -273,6 +273,10 @@ const DebtPage: React.FC = () => {
     if (!custForm.name || !custForm.village || !custForm.idNumber) return toast.error('Please fill all mandatory fields');
     
     try {
+      // Duplicate check
+      const existing = await db.customers.where('phone').equals(custForm.phone).first();
+      if (existing) return toast.error(`Customer with phone ${custForm.phone} already exists (${existing.name})`);
+
       const customerId = crypto.randomUUID();
       const creditSale = location.state?.creditSale;
       
@@ -297,15 +301,18 @@ const DebtPage: React.FC = () => {
           id: crypto.randomUUID(),
           customerId,
           paymentMode: 'Credit',
-          synced: 0
+          itemsCount: creditSale.items.reduce((s: number, i: any) => s + i.quantity, 0),
+          createdAt: creditSale.date || new Date().toISOString(),
+          synced: 0,
+          status: 'PENDING'
         };
         await db.salesQueue.add(saleData);
         
         // Update product quantities
         for (const item of creditSale.items) {
-          const product = await db.products.get(item.product.id);
+          const product = await db.products.get(item.productId);
           if (product && !product.isService) {
-            await db.products.update(item.product.id, {
+            await db.products.update(item.productId, {
               quantity: Math.max(0, product.quantity - item.quantity),
               updatedAt: new Date().toISOString()
             });

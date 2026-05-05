@@ -136,7 +136,7 @@ export const SyncService = {
               await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
             }
             
-            const { products, categories } = data.updates;
+            const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
             
             if (products && products.length > 0) {
               await db.products.bulkPut(products);
@@ -150,6 +150,49 @@ export const SyncService = {
               if (JSON.stringify(sortedIncoming) !== JSON.stringify(sortedCurrent)) {
                 await db.categories.bulkPut(sortedIncoming);
               }
+            }
+
+            if (customers && customers.length > 0) {
+              const mapped = customers.map((c: any) => ({
+                id: String(c.id),
+                name: c.fullname,
+                phone: c.phone,
+                idNumber: c.idNumber,
+                village: c.village,
+                livePhoto: c.livePhoto,
+                balance: Number(c.balance || 0),
+                totalCreditAmount: Number(c.totalCreditAmount || 0),
+                totalPaidAmount: Number(c.totalPaidAmount || 0),
+                createdAt: c.createdAt,
+                updatedAt: c.updatedAt,
+                synced: 1
+              }));
+              await db.customers.bulkPut(mapped);
+            }
+
+            if (expenses && expenses.length > 0) {
+              const mapped = expenses.map((e: any) => ({
+                ...e,
+                date: e.expenseDate,
+                synced: 1
+              }));
+              await db.expenses.bulkPut(mapped);
+            }
+
+            if (debtPayments && debtPayments.length > 0) {
+              const mapped = debtPayments.map((p: any) => ({
+                ...p,
+                synced: 1
+              }));
+              await db.debtPayments.bulkPut(mapped);
+            }
+
+            if (sales && sales.length > 0) {
+              const mapped = sales.map((s: any) => ({
+                ...s,
+                synced: 1
+              }));
+              await db.salesQueue.bulkPut(mapped);
             }
         });
 

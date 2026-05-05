@@ -220,6 +220,26 @@ export class SyncService {
 
     const updatedCategories = await prisma.category.findMany({});
 
+    // Fetch Other Updates since last sync
+    const syncCutoff = lastSyncTimestamp ? new Date(lastSyncTimestamp) : new Date(0);
+    
+    const updatedCustomers = await prisma.customer.findMany({
+      where: { updatedAt: { gt: syncCutoff } }
+    });
+
+    const updatedExpenses = await prisma.expense.findMany({
+      where: { createdAt: { gt: syncCutoff } }
+    });
+
+    const updatedDebtPayments = await (prisma as any).debtPayment.findMany({
+      where: { createdAt: { gt: syncCutoff } }
+    });
+
+    const updatedSales = await prisma.sale.findMany({
+      where: { updatedAt: { gt: syncCutoff } },
+      include: { items: true }
+    });
+
     // Log Sync
     await prisma.syncLog.create({
       data: {
@@ -237,6 +257,10 @@ export class SyncService {
       updates: {
         products: mappedProducts,
         categories: updatedCategories,
+        customers: updatedCustomers,
+        expenses: updatedExpenses,
+        debtPayments: updatedDebtPayments,
+        sales: updatedSales
       },
     };
   }

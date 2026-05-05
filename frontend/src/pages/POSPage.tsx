@@ -204,11 +204,26 @@ const POSPage: React.FC = () => {
       navigate('/staff/debt', { 
         state: { 
           creditSale: {
-            items: cart,
+            items: cart.map(item => {
+               const { finalPrice } = calculateEffectiveDiscount(item.product);
+               return {
+                 productId: item.product.id,
+                 productName: item.product.name,
+                 quantity: item.quantity,
+                 unitPrice: item.product.sellPrice,
+                 discount: 0,
+                 lineTotal: finalPrice * item.quantity,
+                 profit: (finalPrice - (item.product.costPrice || 0)) * item.quantity
+               };
+            }),
             subtotal: cartSubtotal,
             discount,
             tax: taxAmount,
             total: finalTotal,
+            profit: cart.reduce((s, item) => {
+              const { finalPrice } = calculateEffectiveDiscount(item.product);
+              return s + ((finalPrice - (item.product.costPrice || 0)) * item.quantity);
+            }, 0) - discount,
             invoiceNo: generateInvoiceNo(),
             date: new Date().toISOString()
           } 
@@ -235,6 +250,9 @@ const POSPage: React.FC = () => {
         };
       });
 
+      const totalItemProfit = saleItems.reduce((s, i) => s + i.profit, 0);
+      const finalProfit = totalItemProfit - discount;
+
       const saleData: LocalSale = {
         id: crypto.randomUUID(),
         invoiceNo,
@@ -247,8 +265,10 @@ const POSPage: React.FC = () => {
         changeDue,
         paymentMode,
         itemsCount,
+        profit: finalProfit,
         createdAt: new Date().toISOString(),
         synced: 0,
+        status: 'COMPLETED',
         bankName,
         accountNumber,
         amountReceived: parseFloat(amountReceived) || paid,
@@ -256,6 +276,19 @@ const POSPage: React.FC = () => {
       };
 
       await db.salesQueue.add(saleData);
+
+      // Decrement local inventory
+      for (const item of cart) {
+        if (!item.product.isService) {
+          const product = await db.products.get(item.product.id);
+          if (product) {
+            await db.products.update(item.product.id, {
+              quantity: Math.max(0, product.quantity - item.quantity),
+              updatedAt: new Date().toISOString()
+            });
+          }
+        }
+      }
 
 
       soundService.playSaleComplete();
