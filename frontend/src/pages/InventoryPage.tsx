@@ -85,46 +85,45 @@ const InventoryPage: React.FC = () => {
 
   // Inventory Analytics
   const analytics = useMemo(() => {
-    if (!products) return { totalCost: 0, totalProfit: 0, totalLoss: 0, lowStock: 0, totalItems: 0, totalProducts: 0, totalServices: 0 };
+    if (!products) return { totalCost: 0, totalProfit: 0, totalLoss: 0, lowStock: 0, categoryCounts: {} as Record<number, number> };
     
-    let cost = 0, profit = 0, loss = 0, low = 0;
-    let productsCount = 0, servicesCount = 0;
+    let cost = 0;
+    let profit = 0;
+    let loss = 0;
+    let low = 0;
+    const catCounts: Record<number, number> = {};
+
     const now = new Date();
 
     products.forEach(p => {
-      const pCost = Number(p.costPrice || 0) * Number(p.quantity || 0);
-      const pProfit = (Number(p.sellPrice || 0) - Number(p.costPrice || 0)) * Number(p.quantity || 0);
-      
-      if (p.isService) {
-        servicesCount++;
-      } else {
-        productsCount++;
-        cost += pCost;
-        profit += pProfit;
-
-        // Loss evaluation based on ageing
-        const created = new Date(p.createdAt || now);
-        const ageInDays = Math.floor((now.getTime() - created.getTime()) / (1000 * 3600 * 24));
-        
-        let depreciationRate = 0;
-        if (ageInDays > 180) depreciationRate = 0.3; // 30% loss for items > 6 months
-        else if (ageInDays > 90) depreciationRate = 0.1; // 10% loss for items > 3 months
-        else if (ageInDays > 60) depreciationRate = 0.05; // 5% loss for items > 2 months
-
-        loss += pCost * depreciationRate;
-        if (p.quantity <= 5) low++;
+      // Category count
+      if (p.categoryId) {
+        catCounts[p.categoryId] = (catCounts[p.categoryId] || 0) + 1;
       }
+
+      if (p.isService) return;
+
+      const pCost = p.costPrice * p.quantity;
+      const pProfit = (p.sellPrice - p.costPrice) * p.quantity;
+      
+      cost += pCost;
+      profit += pProfit;
+
+      // Loss evaluation based on ageing
+      const created = new Date(p.createdAt || now);
+      const ageInDays = Math.floor((now.getTime() - created.getTime()) / (1000 * 3600 * 24));
+      
+      let depreciationRate = 0;
+      if (ageInDays > 180) depreciationRate = 0.3; // 30% loss for items > 6 months
+      else if (ageInDays > 90) depreciationRate = 0.1; // 10% loss for items > 3 months
+      else if (ageInDays > 60) depreciationRate = 0.05; // 5% loss for items > 2 months
+
+      loss += pCost * depreciationRate;
+
+      if (p.quantity <= 5) low++;
     });
 
-    return { 
-      totalCost: cost, 
-      totalProfit: profit, 
-      totalLoss: loss, 
-      lowStock: low,
-      totalItems: products.length,
-      totalProducts: productsCount,
-      totalServices: servicesCount
-    };
+    return { totalCost: cost, totalProfit: profit, totalLoss: loss, lowStock: low, categoryCounts: catCounts };
   }, [products]);
 
   const resetForm = useCallback(async (scannedSku?: string) => {
@@ -326,16 +325,10 @@ const InventoryPage: React.FC = () => {
     };
     reader.readAsDataURL(file);
   };
+
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Duplicate check (by name and price)
-      const existing = await db.products.where('name').equals(formData.name).first();
-      if (existing && !editingProduct && Number(existing.sellPrice) === Number(formData.sellPrice)) {
-        toast.error(`A product named "${formData.name}" with price MK${formData.sellPrice} already exists.`);
-        return;
-      }
-
       const newId = generateNumericId();
       const productData = {
         ...formData,
@@ -484,24 +477,22 @@ const InventoryPage: React.FC = () => {
       </div>
         
       <div className="px-6 md:px-12 py-8 stagger-children">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-0 glass-panel border border-border/50 rounded-3xl overflow-hidden mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-0 glass-panel border border-border/50 rounded-3xl overflow-hidden mb-8">
           <div className="p-8 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
             <div className="card-label">Total stock cost</div>
             <div className="text-xl md:text-2xl font-black tracking-tighter">MK{analytics.totalCost.toLocaleString()}</div>
+          </div>
+          <div className="p-8 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
+            <div className="card-label !text-indigo-400">Est. Stock Value</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-indigo-400">MK{(analytics.totalCost + analytics.totalProfit).toLocaleString()}</div>
           </div>
           <div className="p-8 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
             <div className="card-label !text-success">Expected profit</div>
             <div className="text-xl md:text-2xl font-black tracking-tighter text-success">MK{analytics.totalProfit.toLocaleString()}</div>
           </div>
           <div className="p-8 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
-            <div className="card-label !text-primary">Inventory Items</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter text-primary">
-              {analytics.totalItems} <span className="text-[10px] text-muted-foreground uppercase">Items</span>
-            </div>
-            <div className="flex gap-2 mt-1 opacity-50">
-               <span className="text-[8px] font-black">{analytics.totalProducts} PROD</span>
-               <span className="text-[8px] font-black">{analytics.totalServices} SERV</span>
-            </div>
+            <div className="card-label !text-destructive">Est. ageing loss</div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-destructive">MK{analytics.totalLoss.toLocaleString()}</div>
           </div>
           <div className="p-8 bg-card/50">
             <div className="card-label !text-primary">Low stock alert</div>
@@ -541,7 +532,7 @@ const InventoryPage: React.FC = () => {
               title="Show all categories"
               aria-label="Show all categories"
             >
-              All items
+              All items ({products?.length || 0})
             </button>
             {categories?.map(cat => (
               <button 
@@ -554,7 +545,7 @@ const InventoryPage: React.FC = () => {
                 title={`Filter by ${cat.title}`}
                 aria-label={`Filter by ${cat.title}`}
               >
-                {cat.title}
+                {cat.title} ({analytics.categoryCounts[cat.id] || 0})
               </button>
             ))}
           </div>

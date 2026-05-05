@@ -168,16 +168,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       });
     }
 
-    // 11. Total Credit Balances
-    const totalCreditResult = await prisma.customer.aggregate({
-      where: {
-        ...productWhere, // Re-use branch isolation
-        balance: { gt: 0 }
-      },
-      _sum: { balance: true }
-    });
-    const totalCreditBalances = Number(totalCreditResult._sum.balance || 0);
-
     const stats = {
       today_sales: Number(todayStats._sum.total || 0),
       today_profit: Number(todayStats._sum.profit || 0),
@@ -187,7 +177,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       total_profit: totalProfit,
       total_expenses: totalExpenses,
       net_profit: netProfit,
-      total_credit_balances: totalCreditBalances,
       total_transactions: totalTransactions,
       active_products: activeProducts,
       low_stock: lowStock,
