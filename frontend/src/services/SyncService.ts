@@ -29,6 +29,8 @@ interface ProductPayload {
   createdAt?: string;
   updatedAt?: string;
   status?: string;
+  branchId?: number | null;
+  branch_id?: number | null;
 }
 
 export const SyncService = {
@@ -276,6 +278,7 @@ export const SyncService = {
         updatedAt: new Date().toISOString(),
         branchId: product.branchId ?? (parseInt(localStorage.getItem('activeBranchId') || '0') || null)
       });
+
 
       // If the server assigned a different ID (creation), remove the temporary one
       if (serverId !== product.id) {

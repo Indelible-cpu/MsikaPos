@@ -9,171 +9,114 @@ export const getDashboardStats = async (req: Request, res: Response) => {
   const threeDaysLater = new Date();
   threeDaysLater.setDate(today.getDate() + 3);
 
-  console.log('📊 Fetching Dashboard Stats for user:', { id: user.id, role: user.role, branchId: user.branchId });
-
   try {
-    const totalCountInDb = await prisma.sale.count();
-    const totalExpensesInDb = await prisma.expense.count();
-    const totalProductsInDb = await prisma.product.count();
-    console.log(`📈 DB Totals: Sales=${totalCountInDb}, Expenses=${totalExpensesInDb}, Products=${totalProductsInDb}`);
+    // 1. Build Query Filters (Branch Isolation)
+    const branchId = user.branchId && user.branchId !== 0 ? user.branchId : null;
+    const branchFilter = branchId ? [{ branchId }, { branchId: null }, { branchId: 0 }] : null;
 
-    const saleWhere: any = { status: { not: SaleStatus.DELETED } };
-    const expenseWhere: any = {};
-    const productWhere: any = { deleted: false };
+    const baseWhere = (filter: any) => branchFilter ? { ...filter, OR: branchFilter } : filter;
 
-    // Strict Branch Isolation (Including Global records)
-    if (user.role === 'SUPER_ADMIN') {
-      if (user.branchId && user.branchId !== 0) {
-        const branchFilter = [{ branchId: user.branchId }, { branchId: null }, { branchId: 0 }];
-        saleWhere.OR = branchFilter;
-        expenseWhere.OR = branchFilter;
-        productWhere.OR = branchFilter;
-        console.log(`📍 Super Admin context: Branch ${user.branchId} + Global (including legacy 0)`);
-      } else {
-        console.log(`🌐 Super Admin context: Global (All Branches)`);
-      }
-    } else {
-      const branchFilter = [{ branchId: user.branchId }, { branchId: null }, { branchId: 0 }];
-      saleWhere.OR = branchFilter;
-      expenseWhere.OR = branchFilter;
-      productWhere.OR = branchFilter;
-      console.log(`📍 Staff context: Branch ${user.branchId} + Global (including legacy 0)`);
-    }
+    const saleWhere = baseWhere({ status: { not: SaleStatus.DELETED } });
+    const expenseWhere = baseWhere({});
+    const productWhere = baseWhere({ deleted: false });
 
-    console.log('🔍 Final saleWhere filter:', JSON.stringify(saleWhere));
-    const bId = user.branchId || null;
+    // 2. Execute Queries in Parallel
+    const [
+      todaySales,
+      todayExpenses,
+      overallSales,
+      overallExpenses,
+      totalTransactions,
+      activeProducts,
+      lowStockCount,
+      recentActivity
+    ] = await Promise.all([
+      // Today Stats
+      prisma.sale.aggregate({
+        where: { ...saleWhere, createdAt: { gte: startOfDay(today), lte: endOfDay(today) } },
+        _sum: { total: true, profit: true }
+      }),
+      prisma.expense.aggregate({
+        where: { ...expenseWhere, expenseDate: { gte: startOfDay(today), lte: endOfDay(today) } },
+        _sum: { amount: true }
+      }),
+      // Overall Stats
+      prisma.sale.aggregate({
+        where: saleWhere,
+        _sum: { total: true, profit: true }
+      }),
+      prisma.expense.aggregate({
+        where: expenseWhere,
+        _sum: { amount: true }
+      }),
+      // Counts
+      prisma.sale.count({ where: saleWhere }),
+      prisma.product.count({ where: productWhere }),
+      prisma.product.count({
+        where: { ...productWhere, isService: false, quantity: { lte: 5 } }
+      }),
+      // Recent feed
+      prisma.sale.findMany({
+        where: saleWhere,
+        include: { user: { select: { username: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 5
+      })
+    ]);
 
-    // 1. Today's Sales & Profit
-    const todayStats = await prisma.sale.aggregate({
-      where: {
-        ...saleWhere,
-        createdAt: {
-          gte: startOfDay(today),
-          lte: endOfDay(today),
-        },
-      },
-      _sum: { total: true, profit: true },
-    });
-
-    // 2. Today's Expenses
-    const todayExpenses = await prisma.expense.aggregate({
-      where: {
-        ...expenseWhere,
-        expenseDate: {
-          gte: startOfDay(today),
-          lte: endOfDay(today),
-        },
-      },
-      _sum: { amount: true },
-    });
-
-    // 3. Overall Totals
-    const overallStats = await prisma.sale.aggregate({
-      where: saleWhere,
-      _sum: { total: true, profit: true },
-    });
-
-    // 4. Overall Expenses
-    const overallExpenses = await prisma.expense.aggregate({
-      where: expenseWhere,
-      _sum: { amount: true },
-    });
-
-    const totalSales = Number(overallStats._sum.total || 0);
-    const totalProfit = Number(overallStats._sum.profit || 0);
-    const totalExpenses = Number(overallExpenses._sum.amount || 0);
-    const netProfit = totalProfit - totalExpenses;
-
-    // 5. Total Transactions
-    const totalTransactions = await prisma.sale.count({ where: saleWhere });
-
-    // 6. Active Products
-    const activeProducts = await prisma.product.count({ where: productWhere });
-
-    // 7. Low Stock Alerts
-    const lowStock = await prisma.product.count({
-      where: {
-        ...productWhere,
-        isService: false,
-        quantity: { lte: 5 },
-      }
-    });
-
-    // 8. Credit Reminders
-    let creditCount = 0;
-    try {
-      const branchFilterRaw = bId ? parseInt(String(bId), 10) : null;
-      const branchFilter = branchFilterRaw !== null && !isNaN(branchFilterRaw) ? branchFilterRaw : null;
-      
-      if (branchFilter !== null) {
-        const unpaidCredits = await prisma.$queryRaw`
-          SELECT COUNT(*)::int as count FROM "Sale" 
-          WHERE "isCredit" = true 
-          AND "paid" < "total" 
-          AND "status" != 'DELETED'
-          AND "dueDate" <= ${endOfDay(threeDaysLater)}
-          AND "branchId" = ${branchFilter}
-        ` as { count: number }[];
-        creditCount = unpaidCredits[0]?.count || 0;
-      } else {
-        const unpaidCredits = await prisma.$queryRaw`
-          SELECT COUNT(*)::int as count FROM "Sale" 
-          WHERE "isCredit" = true 
-          AND "paid" < "total" 
-          AND "status" != 'DELETED'
-          AND "dueDate" <= ${endOfDay(threeDaysLater)}
-        ` as { count: number }[];
-        creditCount = unpaidCredits[0]?.count || 0;
-      }
-    } catch (e) {
-      console.warn('⚠️ Credit count query failed:', e);
-    }
-
-    // 9. Recent Activity
-    const recentActivity = await prisma.sale.findMany({
-      where: saleWhere,
-      include: { user: { select: { username: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 5
-    });
-
-    // 10. Chart Data (Last 7 Days)
+    // 3. Process Chart Data (Last 7 Days)
     const lastWeek = subDays(startOfDay(today), 6);
     const salesLastWeek = await prisma.sale.findMany({
-      where: {
-        ...saleWhere,
-        createdAt: { gte: lastWeek }
-      },
-      select: {
-        total: true,
-        createdAt: true
-      }
+      where: { ...saleWhere, createdAt: { gte: lastWeek } },
+      select: { total: true, createdAt: true }
     });
 
-    const chartData = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = subDays(today, i);
+    const chartData = Array.from({ length: 7 }, (_, i) => {
+      const d = subDays(today, 6 - i);
       const dayStart = startOfDay(d);
       const dayEnd = endOfDay(d);
       
-      const total = salesLastWeek
-        .filter(s => s.createdAt >= dayStart && s.createdAt <= dayEnd)
-        .reduce((sum, s) => sum + Number(s.total), 0);
-
-      const count = salesLastWeek
-        .filter(s => s.createdAt >= dayStart && s.createdAt <= dayEnd)
-        .length;
-
-      chartData.push({
+      const daySales = salesLastWeek.filter(s => s.createdAt >= dayStart && s.createdAt <= dayEnd);
+      return {
         name: format(d, 'EEE'),
-        revenue: total,
-        customers: count
+        revenue: daySales.reduce((sum, s) => sum + Number(s.total), 0),
+        customers: daySales.length
+      };
+    });
+
+    // 4. Credit Count (Raw Query for performance)
+    let creditCount = 0;
+    try {
+      const credits = await prisma.sale.count({
+        where: {
+          ...saleWhere,
+          isCredit: true,
+          status: { not: SaleStatus.DELETED },
+          dueDate: { lte: endOfDay(threeDaysLater) },
+          paid: { lt: prisma.sale.fields.total }
+        }
       });
+      creditCount = credits;
+    } catch {
+       // Fallback for complex comparison if Prisma version doesn't support field comparison in where
+       const results: any[] = await prisma.$queryRaw`
+         SELECT COUNT(*)::int as count FROM "Sale" 
+         WHERE "isCredit" = true 
+         AND "paid" < "total" 
+         AND "status" != 'DELETED'
+         AND "dueDate" <= ${endOfDay(threeDaysLater)}
+         ${branchId ? prisma.sql`AND ("branchId" = ${branchId} OR "branchId" IS NULL OR "branchId" = 0)` : prisma.sql``}
+       `;
+       creditCount = results[0]?.count || 0;
     }
 
+    const totalSales = Number(overallSales._sum.total || 0);
+    const totalProfit = Number(overallSales._sum.profit || 0);
+    const totalExpenses = Number(overallExpenses._sum.amount || 0);
+
     const stats = {
-      today_sales: Number(todayStats._sum.total || 0),
-      today_profit: Number(todayStats._sum.profit || 0),
+      today_sales: Number(todaySales._sum.total || 0),
+      today_profit: Number(todaySales._sum.profit || 0),
       today_expenses: Number(todayExpenses._sum.amount || 0),
       total_sales: totalSales,
       total_cost: totalSales - totalProfit,
@@ -182,26 +125,20 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       net_profit: totalProfit - totalExpenses,
       total_transactions: totalTransactions,
       active_products: activeProducts,
-      low_stock: lowStock,
+      low_stock: lowStockCount,
       credit_reminders: creditCount,
       recent_activity: recentActivity.map((r: any) => ({
         invoice_no: r.invoiceNo,
         total: Number(r.total),
-        username: r.user?.username ?? 'Unknown'
+        username: r.user?.username ?? 'Unknown',
+        createdAt: r.createdAt
       })),
       chart_data: chartData
     };
 
-    console.log('✅ Dashboard Stats success:', { transactions: totalTransactions, products: activeProducts });
     return res.status(200).json({ success: true, data: stats });
   } catch (error: any) {
-    console.error('❌ Dashboard Stats Error:', error?.message || error);
-    console.error('❌ Dashboard Stats Stack:', error?.stack);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch dashboard stats', 
-      error: error?.message,
-      detail: process.env.NODE_ENV !== 'production' ? error?.stack : undefined
-    });
+    console.error('❌ Dashboard Error:', error.message);
+    return res.status(500).json({ success: false, message: 'Dashboard failed', error: error.message });
   }
 };
