@@ -160,8 +160,8 @@ export class SyncService {
               idNumber: cust.idNumber,
               village: cust.village,
               livePhoto: cust.livePhoto,
-              // fingerprintData: cust.fingerprintData, // Not in schema
-              // balance: cust.balance || 0, // Not in schema
+              balance: cust.balance || 0,
+              totalDebt: cust.totalCreditAmount || 0,
               branchId: branchId,
               createdAt: new Date(cust.createdAt)
             }
@@ -227,6 +227,12 @@ export class SyncService {
       where: { updatedAt: { gt: syncCutoff } }
     });
 
+    const mappedCustomers = updatedCustomers.map((c: any) => ({
+      ...c,
+      balance: Number(c.balance),
+      totalCreditAmount: Number(c.totalDebt)
+    }));
+
     const updatedExpenses = await prisma.expense.findMany({
       where: { createdAt: { gt: syncCutoff } }
     });
@@ -257,7 +263,7 @@ export class SyncService {
       updates: {
         products: mappedProducts,
         categories: updatedCategories,
-        customers: updatedCustomers,
+        customers: mappedCustomers,
         expenses: updatedExpenses,
         debtPayments: updatedDebtPayments,
         sales: updatedSales

@@ -64,16 +64,22 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       _sum: { amount: true },
     });
 
-    // 3. Overall Totals (For performance, we usually show this month or all-time)
+    // 3. Overall Totals
     const overallStats = await prisma.sale.aggregate({
       where: saleWhere,
       _sum: { total: true, profit: true },
     });
 
-    // 4. Total Cost Calculation
+    // 4. Overall Expenses
+    const overallExpenses = await prisma.expense.aggregate({
+      where: expenseWhere,
+      _sum: { amount: true },
+    });
+
     const totalSales = Number(overallStats._sum.total || 0);
     const totalProfit = Number(overallStats._sum.profit || 0);
-    const totalCost = totalSales - totalProfit;
+    const totalExpenses = Number(overallExpenses._sum.amount || 0);
+    const netProfit = totalProfit - totalExpenses;
 
     // 5. Total Transactions
     const totalTransactions = await prisma.sale.count({ where: saleWhere });
@@ -90,6 +96,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       }
     });
 
+    // 8. Credit Reminders
     let creditCount = 0;
     try {
       const branchFilterRaw = bId ? parseInt(String(bId), 10) : null;
@@ -106,7 +113,6 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         ` as { count: number }[];
         creditCount = unpaidCredits[0]?.count || 0;
       } else {
-        // Super Admin with no branch filter — count all
         const unpaidCredits = await prisma.$queryRaw`
           SELECT COUNT(*)::int as count FROM "Sale" 
           WHERE "isCredit" = true 
@@ -117,7 +123,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         creditCount = unpaidCredits[0]?.count || 0;
       }
     } catch (e) {
-      console.warn('⚠️ Credit count query failed (schema mismatch?), defaulting to 0:', e);
+      console.warn('⚠️ Credit count query failed:', e);
     }
 
     // 9. Recent Activity
@@ -167,8 +173,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       today_profit: Number(todayStats._sum.profit || 0),
       today_expenses: Number(todayExpenses._sum.amount || 0),
       total_sales: totalSales,
-      total_cost: totalCost,
+      total_cost: totalSales - totalProfit,
       total_profit: totalProfit,
+      total_expenses: totalExpenses,
+      net_profit: netProfit,
       total_transactions: totalTransactions,
       active_products: activeProducts,
       low_stock: lowStock,

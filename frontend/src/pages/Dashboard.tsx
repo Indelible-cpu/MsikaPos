@@ -47,6 +47,13 @@ interface RecentActivity {
 
 interface DashboardStats {
   today_sales: number;
+  today_profit: number;
+  today_expenses: number;
+  total_sales: number;
+  total_cost: number;
+  total_profit: number;
+  total_expenses: number;
+  net_profit: number;
   total_transactions: number;
   active_products: number;
   low_stock: number;
@@ -269,25 +276,41 @@ export default function Dashboard() {
                       <div className="p-2 bg-emerald-50 rounded-lg group-hover:bg-emerald-500 group-hover:text-white transition-colors text-emerald-500">
                         <CreditCardIcon className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">+12.5%</span>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Revenue</span>
                     </div>
-                    <p className="text-zinc-700 text-xs font-bold mb-1">Daily revenue</p>
-                    <h2 className="text-3xl font-black text-zinc-900 tracking-tight">MK {statsData?.today_sales?.toLocaleString() || '0'}</h2>
-                    <div className="mt-4 h-1 w-full bg-zinc-100 rounded-full overflow-hidden">
-                      <div className="bg-emerald-500 h-full w-[75%]"></div>
+                    <p className="text-zinc-700 text-xs font-bold mb-1">Total Sales</p>
+                    <h2 className="text-3xl font-black text-zinc-900 tracking-tight">MK {statsData?.total_sales?.toLocaleString() || '0'}</h2>
+                    <div className="flex justify-between mt-2">
+                       <span className="text-[10px] text-zinc-400">Today: MK {statsData?.today_sales?.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="p-2 bg-rose-50 rounded-lg group-hover:bg-rose-500 group-hover:text-white transition-colors text-rose-500">
+                        <Receipt className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-full">Expenses</span>
+                    </div>
+                    <p className="text-zinc-700 text-xs font-bold mb-1">Total Expenses</p>
+                    <h2 className="text-3xl font-black text-zinc-900 tracking-tight">MK {statsData?.total_expenses?.toLocaleString() || '0'}</h2>
+                    <div className="flex justify-between mt-2">
+                       <span className="text-[10px] text-zinc-400">Today: MK {statsData?.today_expenses?.toLocaleString()}</span>
                     </div>
                   </div>
 
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md group">
                     <div className="flex justify-between items-start mb-4">
                       <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-500 group-hover:text-white transition-colors text-blue-500">
-                        <ShoppingCartIcon className="w-5 h-5" />
+                        <TrendingUp className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">+8.2%</span>
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Efficiency</span>
                     </div>
-                    <p className="text-zinc-700 text-xs font-bold mb-1">Order count</p>
-                    <h2 className="text-3xl font-black text-zinc-900 tracking-tight">{statsData?.total_transactions || '0'}</h2>
-                    <p className="text-[10px] text-zinc-700 mt-2  font-medium">Across all branches</p>
+                    <p className="text-zinc-700 text-xs font-bold mb-1">Net Profit</p>
+                    <h2 className="text-3xl font-black text-emerald-600 tracking-tight">MK {statsData?.net_profit?.toLocaleString() || '0'}</h2>
+                    <div className="flex justify-between mt-2">
+                       <span className="text-[10px] text-zinc-400">Gross: MK {statsData?.total_profit?.toLocaleString()}</span>
+                    </div>
                   </div>
 
                   <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 transition-all hover:shadow-md group">
@@ -295,25 +318,11 @@ export default function Dashboard() {
                       <div className="p-2 bg-amber-50 rounded-lg group-hover:bg-amber-500 group-hover:text-white transition-colors text-amber-500">
                         <Users className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">Active</span>
+                      <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">Balances</span>
                     </div>
                     <p className="text-zinc-700 text-xs font-bold mb-1">Total credit</p>
                     <h2 className="text-3xl font-black text-zinc-900 tracking-tight">MK {totalCredit.toLocaleString()}</h2>
                     <p className="text-[10px] text-zinc-700 mt-2 font-medium">Outstanding local balances</p>
-                  </div>
-
-                  <div className={`p-6 rounded-2xl shadow-sm border transition-all hover:shadow-md group ${statsData?.low_stock && statsData.low_stock > 0 ? 'bg-red-50 border-red-100' : 'bg-white border-zinc-100'}`}>
-                    <div className="flex justify-between items-start mb-4">
-                      <div className={`p-2 rounded-lg transition-colors ${statsData?.low_stock && statsData.low_stock > 0 ? 'bg-red-500 text-white' : 'bg-zinc-50 text-zinc-700'}`}>
-                        <AlertTriangle className="w-5 h-5" />
-                      </div>
-                      {statsData?.low_stock && statsData.low_stock > 0 && (
-                        <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-1 rounded-full animate-pulse">Critical</span>
-                      )}
-                    </div>
-                    <p className={`${statsData?.low_stock && statsData.low_stock > 0 ? 'text-red-600' : 'text-zinc-700'} text-xs font-bold mb-1`}>Low stock alerts</p>
-                    <h2 className={`text-3xl font-black tracking-tight ${statsData?.low_stock && statsData.low_stock > 0 ? 'text-red-700' : 'text-zinc-900'}`}>{statsData?.low_stock || '0'}</h2>
-                    <p className={`text-[10px] mt-2 font-medium ${statsData?.low_stock && statsData.low_stock > 0 ? 'text-red-500' : 'text-zinc-700'}`}>Requires immediate restock</p>
                   </div>
                 </section>
 
