@@ -326,7 +326,7 @@ const InventoryPage: React.FC = () => {
     };
     reader.readAsDataURL(file);
   };
-
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       // Duplicate check (by name and price)
