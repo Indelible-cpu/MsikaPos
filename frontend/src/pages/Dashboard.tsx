@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/posDB';
 import { useAuthStore } from '../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
