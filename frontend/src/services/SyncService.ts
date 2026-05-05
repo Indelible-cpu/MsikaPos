@@ -118,7 +118,7 @@ export const SyncService = {
 
       if (data.success) {
         // Perform all writes in a single atomic transaction to minimize broadcast noise
-        await db.transaction('rw', 
+        await (db as any).transaction('rw', 
           [db.salesQueue, db.expenses, db.customers, db.debtPayments, db.products, db.categories],
           async () => {
             const { products, categories, customers, expenses, debtPayments, sales } = data.updates;

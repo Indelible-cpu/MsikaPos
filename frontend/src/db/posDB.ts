@@ -52,6 +52,8 @@ export interface LocalSale {
   bankName?: string;
   accountNumber?: string;
   amountReceived?: number;
+  profit: number;
+  status: string;
 }
 
 export interface LocalCustomer {

@@ -20,7 +20,6 @@ import {
   History,
   Receipt,
   Users,
-  Store,
   LayoutDashboard,
   User as UserIcon,
   AlertTriangle,
