@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
@@ -7,10 +7,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
 import { useSettingsStore } from '../hooks/useSettings';
 import { 
-  Bell, Search, Settings as SettingsIcon, LogOut, Menu, 
-  ChevronRight, MoreVertical, TrendingUp, Monitor, Package, 
-  History, Receipt, Users, LayoutDashboard, User as UserIcon, 
-  CreditCard as CreditCardIcon, PlusCircle, RefreshCw, AlertCircle
+  Bell, LogOut, Menu, 
+  ChevronRight, TrendingUp, Monitor, Package, 
+  History, Receipt, Users, LayoutDashboard, 
+  CreditCard as CreditCardIcon, PlusCircle, AlertCircle
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
