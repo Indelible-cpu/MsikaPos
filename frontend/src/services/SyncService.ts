@@ -117,88 +117,65 @@ export const SyncService = {
       await new Promise(resolve => setTimeout(resolve, 0));
 
       if (data.success) {
-        // Perform all writes in a single atomic transaction to minimize broadcast noise
-        await (db as any).transaction('rw', 
-          [db.salesQueue, db.expenses, db.customers, db.debtPayments, db.products, db.categories],
-          async () => {
-            const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
-            
-            // 1. Mark local changes as synced
-            if (unsyncedSales.length > 0) {
-              const ids = unsyncedSales.map(s => s.id);
-              await db.salesQueue.where('id').anyOf(ids).modify({ synced: 1 });
-            }
-            if (unsyncedExpenses.length > 0) {
-              const ids = unsyncedExpenses.map(e => e.id);
-              await db.expenses.where('id').anyOf(ids).modify({ synced: 1 });
-            }
-            if (unsyncedCustomers.length > 0) {
-              const ids = unsyncedCustomers.map(c => c.id);
-              await db.customers.where('id').anyOf(ids).modify({ synced: 1 });
-            }
-            if (unsyncedPayments.length > 0) {
-              const ids = unsyncedPayments.map(p => p.id);
-              await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
-            }
-            
-            // 2. Apply remote updates
-            if (products && products.length > 0) {
-              await db.products.bulkPut(products);
-            }
-            
-            if (categories && categories.length > 0) {
-              const currentCats = await db.categories.toArray();
-              const sortedIncoming = [...categories].sort((a, b) => a.id - b.id);
-              const sortedCurrent = [...currentCats].sort((a, b) => a.id - b.id);
-              
-              if (JSON.stringify(sortedIncoming) !== JSON.stringify(sortedCurrent)) {
-                await db.categories.bulkPut(sortedIncoming);
-              }
-            }
+        const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
 
-            if (customers && customers.length > 0) {
-              const mapped = customers.map((c: any) => ({
-                id: String(c.id),
-                name: c.fullname,
-                phone: c.phone,
-                idNumber: c.idNumber,
-                village: c.village,
-                livePhoto: c.livePhoto,
-                balance: Number(c.balance || 0),
-                totalCreditAmount: Number(c.totalCreditAmount || 0),
-                totalPaidAmount: Number(c.totalPaidAmount || 0),
-                createdAt: c.createdAt,
-                updatedAt: c.updatedAt,
-                synced: 1
-              }));
-              await db.customers.bulkPut(mapped);
-            }
-
-            if (expenses && expenses.length > 0) {
-              const mapped = expenses.map((e: any) => ({
-                ...e,
-                date: e.expenseDate,
-                synced: 1
-              }));
-              await db.expenses.bulkPut(mapped);
-            }
-
-            if (debtPayments && debtPayments.length > 0) {
-              const mapped = debtPayments.map((p: any) => ({
-                ...p,
-                synced: 1
-              }));
-              await db.debtPayments.bulkPut(mapped);
-            }
-
-            if (sales && sales.length > 0) {
-              const mapped = sales.map((s: any) => ({
-                ...s,
-                synced: 1
-              }));
-              await db.salesQueue.bulkPut(mapped);
-            }
+        // 1. Mark local changes as synced (Atomic for local state consistency)
+        await db.transaction('rw', [db.salesQueue, db.expenses, db.customers, db.debtPayments], async () => {
+          if (unsyncedSales.length > 0) await db.salesQueue.where('id').anyOf(unsyncedSales.map(s => s.id)).modify({ synced: 1 });
+          if (unsyncedExpenses.length > 0) await db.expenses.where('id').anyOf(unsyncedExpenses.map(e => e.id)).modify({ synced: 1 });
+          if (unsyncedCustomers.length > 0) await db.customers.where('id').anyOf(unsyncedCustomers.map(c => c.id)).modify({ synced: 1 });
+          if (unsyncedPayments.length > 0) await db.debtPayments.where('id').anyOf(unsyncedPayments.map(p => p.id)).modify({ synced: 1 });
         });
+
+        // YIELD to browser
+        await new Promise(resolve => setTimeout(resolve, 10));
+
+        // 2. Apply remote updates per table to avoid locking the UI for too long
+        if (products?.length > 0) {
+          await db.products.bulkPut(products);
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+
+        if (categories?.length > 0) {
+          const currentCats = await db.categories.toArray();
+          if (JSON.stringify(categories) !== JSON.stringify(currentCats)) {
+            await db.categories.bulkPut(categories);
+          }
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+
+        if (customers?.length > 0) {
+          const mapped = customers.map((c: any) => ({
+            id: String(c.id),
+            name: c.fullname,
+            phone: c.phone,
+            idNumber: c.idNumber,
+            village: c.village,
+            livePhoto: c.livePhoto,
+            balance: Number(c.balance || 0),
+            totalCreditAmount: Number(c.totalCreditAmount || 0),
+            totalPaidAmount: Number(c.totalPaidAmount || 0),
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+            synced: 1
+          }));
+          await db.customers.bulkPut(mapped);
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+
+        if (expenses?.length > 0) {
+          await db.expenses.bulkPut(expenses.map((e: any) => ({ ...e, date: e.expenseDate, synced: 1 })));
+          await new Promise(resolve => setTimeout(resolve, 5));
+        }
+
+        if (debtPayments?.length > 0) {
+          await db.debtPayments.bulkPut(debtPayments.map((p: any) => ({ ...p, synced: 1 })));
+          await new Promise(resolve => setTimeout(resolve, 5));
+        }
+
+        if (sales?.length > 0) {
+          await db.salesQueue.bulkPut(sales.map((s: any) => ({ ...s, synced: 1 })));
+        }
 
         localStorage.setItem('lastSyncTimestamp', data.serverTime);
         console.log('✅ Power Sync Completed');

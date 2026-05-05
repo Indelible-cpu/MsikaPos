@@ -52,6 +52,7 @@ interface DashboardStats {
   total_profit: number;
   total_expenses: number;
   net_profit: number;
+  total_credit_balances: number;
   total_transactions: number;
   active_products: number;
   low_stock: number;
@@ -108,10 +109,7 @@ export default function Dashboard() {
     staleTime: 30000
   });
   
-  const totalCredit = useLiveQuery(
-    () => db.customers.where('balance').above(0).toArray().then(arr => arr.reduce((s, c) => s + (c.balance || 0), 0)),
-    []
-  ) ?? 0;
+  const totalCredit = statsData?.total_credit_balances ?? 0;
 
   const handleLogout = () => {
     logout();
