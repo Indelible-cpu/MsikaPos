@@ -13,7 +13,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
-type ReportTab = 'Financial' | 'Staff' | 'Branches' | 'Payment';
+type ReportTab = 'Financial' | 'Staff' | 'Payment';
 
 // Helper for Bar Charts moved outside render
 const BarChart = ({ data, label, valuePrefix = '' }: { data: { label: string, value: number }[], label: string, valuePrefix?: string }) => {
@@ -104,7 +104,7 @@ const ReportsPage: React.FC = () => {
   // Process actual data for graphs
   const analyticsData = useMemo(() => {
     if (!localSales && !serverStats?.chart_data) {
-      return { financial: [], staff: [], branches: [], payment: [] };
+      return { financial: [], staff: [], payment: [] };
     }
 
     let financialData: { label: string; value: number }[] = [];
@@ -186,15 +186,7 @@ const ReportsPage: React.FC = () => {
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
 
-    // 3. Branch Performance (Super Admin View)
-    const branchMap: Record<string, number> = {};
-    salesToUse.forEach(s => {
-      const branchName = s.branchId || 'Main HQ'; // Should ideally be name-resolved
-      branchMap[branchName] = (branchMap[branchName] || 0) + s.total;
-    });
-    const branches = Object.entries(branchMap)
-      .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value);
+
 
     // 4. Payment Distribution (Customer Choice)
     const payMap: Record<string, number> = {};
@@ -204,7 +196,7 @@ const ReportsPage: React.FC = () => {
     });
     const payment = Object.entries(payMap).map(([label, value]) => ({ label, value }));
 
-    return { financial: financialData, staff, branches, payment };
+    return { financial: financialData, staff, payment };
   }, [localSales, serverStats, timeFilter]);
 
   const stats = [
@@ -224,7 +216,7 @@ const ReportsPage: React.FC = () => {
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-6">
           <div className="flex gap-2 p-1 bg-muted/20 border border-border/50 rounded-2xl overflow-x-auto no-scrollbar w-full md:w-auto">
-            {(['Financial', 'Staff', 'Branches', 'Payment'] as ReportTab[]).map((tab) => (
+            {(['Financial', 'Staff', 'Payment'] as ReportTab[]).map((tab) => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -235,7 +227,6 @@ const ReportsPage: React.FC = () => {
               >
                 {tab === 'Financial' ? 'Financial reports' : 
                  tab === 'Staff' ? 'Staff reports' : 
-                 tab === 'Branches' ? 'Branch reports' : 
                  'Payment reports'}
               </button>
             ))}
@@ -262,7 +253,6 @@ const ReportsPage: React.FC = () => {
                 const { downloadCSV } = await import('../utils/exportUtils');
                 const data = activeTab === 'Financial' ? analyticsData.financial : 
                              activeTab === 'Staff' ? analyticsData.staff : 
-                             activeTab === 'Branches' ? analyticsData.branches : 
                              analyticsData.payment;
                 
                 downloadCSV(
@@ -318,7 +308,6 @@ const ReportsPage: React.FC = () => {
             >
               {activeTab === 'Financial' && <BarChart data={analyticsData.financial} label={`${timeFilter} Revenue Breakdown`} valuePrefix="MK" />}
               {activeTab === 'Staff' && <BarChart data={analyticsData.staff} label="Top Performing Cashiers" valuePrefix="MK" />}
-              {activeTab === 'Branches' && <BarChart data={analyticsData.branches} label="Top Performing Branches" valuePrefix="MK" />}
               {activeTab === 'Payment' && <BarChart data={analyticsData.payment} label="Payment Mode Flow" />}
             </motion.div>
           </AnimatePresence>
@@ -329,8 +318,7 @@ const ReportsPage: React.FC = () => {
           <p className="text-sm font-black leading-relaxed text-muted-foreground tracking-tight">
             Revenue is primarily driven by <span className="text-primary">{analyticsData.payment[0]?.label || 'Cash'}</span>. 
             {analyticsData.staff[0] && <span> The top cashier is <span className="text-success font-black">{analyticsData.staff[0].label}</span>. </span>}
-            {analyticsData.branches[0] && <span> The leading location is <span className="text-amber-500 font-black">{analyticsData.branches[0].label}</span>. </span>}
-            This data assists Super Admins in performance-based promotions and multi-branch resource allocation.
+            This data assists Super Admins in performance-based promotions and resource allocation.
           </p>
         </div>
       </div>

@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { db } from '../db/posDB';
 import { AuditService } from '../services/AuditService';
 import api from '../api/client';
-import { normalizePhone, isValidMalawianPhone, restrictPhone } from '../utils/phoneUtils';
+import { restrictPhone } from '../utils/phoneUtils';
 
 const SettingsPage: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
