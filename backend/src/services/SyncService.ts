@@ -14,9 +14,7 @@ export class SyncService {
     lastSyncTimestamp?: string;
     user: any;
   }) {
-    const { sales, expenses, customers, debtPayments, deviceId, lastSyncTimestamp, user } = params;
     const userId = user.id;
-    const branchId = user.branchId;
 
     // 1. Process Incoming Sales (Reconciliation Logic)
     if (sales && sales.length > 0) {
@@ -52,8 +50,7 @@ export class SyncService {
                     data: {
                       fullname: saleData.customerName || 'Offline Customer',
                       phone: '000000000',
-                      offlineId: saleData.customerId,
-                      branchId: user.role === 'SUPER_ADMIN' ? (saleData.branchId || branchId) : branchId
+                      offlineId: saleData.customerId
                     }
                   });
                 }
@@ -68,9 +65,6 @@ export class SyncService {
                 invoiceNo: saleData.invoiceNo,
                 receiptNo: saleData.receiptNo,
                 userId: userId,
-                branchId: user.role === 'SUPER_ADMIN' 
-                  ? (saleData.branchId ? parseInt(saleData.branchId) : branchId) 
-                  : branchId,
                 customerId: finalCustomerId,
                 subtotal: saleData.subtotal,
                 discount: saleData.discount,
@@ -162,7 +156,6 @@ export class SyncService {
               livePhoto: cust.livePhoto,
               balance: cust.balance || 0,
               totalDebt: cust.totalCreditAmount || 0,
-              branchId: branchId,
               createdAt: new Date(cust.createdAt)
             }
           });
@@ -202,11 +195,7 @@ export class SyncService {
       where: {
         updatedAt: {
           gt: lastSyncTimestamp ? new Date(lastSyncTimestamp) : new Date(0),
-        },
-        OR: [
-          { branchId: branchId || undefined },
-          { branchId: null }
-        ]
+        }
       },
       include: { category: true },
     });
@@ -251,7 +240,6 @@ export class SyncService {
       data: {
         deviceId: deviceId || 'unknown',
         userId: userId,
-        branchId: branchId,
         action: 'BATCH_SYNC',
         status: 'SUCCESS',
         details: `Processed ${sales?.length || 0} sales. Downloaded ${updatedProducts.length} product updates.`,

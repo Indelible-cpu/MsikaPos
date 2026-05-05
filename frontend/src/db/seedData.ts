@@ -83,8 +83,7 @@ export const initDB = async (db: POSDatabase) => {
       ...p,
       status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      branchId: null
+      updatedAt: new Date().toISOString()
     }));
     await db.products.bulkAdd(productsToInsert);
   }

@@ -35,7 +35,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role.name, branchId: user.branchId },
+      { id: user.id, username: user.username, role: user.role.name },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '24h' }
     );
@@ -49,7 +49,6 @@ export const loginUser = async (req: Request, res: Response) => {
         username: user.username,
         fullname: user.fullname,
         role: user.role.name,
-        branch_id: user.branchId,
         mustChangePassword: user.mustChangePassword,
         isVerified: user.isVerified,
         profilePic: user.profilePic
@@ -69,16 +68,11 @@ export const fetchUsers = async (req: Request, res: Response) => {
       deleted: false,
       role: { name: { not: 'CUSTOMER' } }
     };
-    // Strict Branch Isolation / Context Switch
-    if (authUser.branchId) {
-      where.branchId = authUser.branchId;
-    }
 
     const users = await prisma.user.findMany({
       where,
       include: {
-        role: { select: { name: true } },
-        branch: { select: { name: true } },
+        role: { select: { name: true } }
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -92,8 +86,6 @@ export const fetchUsers = async (req: Request, res: Response) => {
         email: u.email,
         phone: u.phone,
         role: u.role.name,
-        branch_id: u.branchId,
-        branch_name: u.branch?.name || 'N/A',
         isVerified: u.isVerified,
         status: u.status,
         createdAt: u.createdAt,
@@ -105,7 +97,7 @@ export const fetchUsers = async (req: Request, res: Response) => {
 };
 
 export const saveUser = async (req: Request, res: Response) => {
-  const { id, username, password, roleId, branchId, fullname, email, phone } = req.body;
+  const { id, username, password, roleId, fullname, email, phone } = req.body;
 
   try {
     if (phone && !isValidMalawianPhone(phone)) {
@@ -113,7 +105,6 @@ export const saveUser = async (req: Request, res: Response) => {
     }
 
     const rId = parseInt(roleId as any);
-    const bId = branchId ? parseInt(branchId as any) : null;
 
     if (id) {
       const data: any = {
@@ -122,7 +113,6 @@ export const saveUser = async (req: Request, res: Response) => {
         email,
         phone: normalizePhone(phone),
         roleId: rId,
-        branchId: bId,
       };
 
       if (password) {
@@ -155,7 +145,6 @@ export const saveUser = async (req: Request, res: Response) => {
             phone: normalizePhone(phone),
             password: hashedPassword,
             roleId: rId,
-            branchId: bId,
             mustChangePassword: true,
             isVerified: false,
             magicToken,

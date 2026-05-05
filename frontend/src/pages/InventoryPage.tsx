@@ -349,8 +349,7 @@ const InventoryPage: React.FC = () => {
           ...productData,
           id: newId,
           status: 'ACTIVE' as const,
-          createdAt: new Date().toISOString(),
-          branchId: parseInt(localStorage.getItem('activeBranchId') || '0') || null
+          createdAt: new Date().toISOString()
         };
         await db.products.add(fullNewProduct);
         await AuditService.log('PRODUCT_ADD', `Added product: ${productData.name} (SKU: ${productData.sku})`);

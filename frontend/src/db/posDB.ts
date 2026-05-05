@@ -20,7 +20,6 @@ export interface LocalProduct {
   createdAt: string;
   updatedAt: string;
   deleted?: boolean;
-  branchId: number | null;
 }
 
 export interface LocalSaleItem {
@@ -49,7 +48,6 @@ export interface LocalSale {
   items: LocalSaleItem[];
   sellerName?: string;
   userId: number;
-  branchId: number | null;
   tax?: number;
   bankName?: string;
   accountNumber?: string;
@@ -108,20 +106,6 @@ export interface LocalUser {
   createdAt: string;
 }
 
-export interface LocalBranch {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  email?: string;
-  facebook?: string;
-  whatsapp?: string;
-  logo?: string;
-  slogan?: string;
-  status: 'ACTIVE' | 'INACTIVE';
-  createdAt: string;
-}
-
 export interface LocalAuditLog {
   id: string;
   userId: string;
@@ -142,12 +126,11 @@ export class POSDatabase extends Dexie {
   expenses!: Table<LocalExpense>;
   users!: Table<LocalUser>;
   auditLogs!: Table<LocalAuditLog>;
-  branches!: Table<LocalBranch>;
 
   constructor() {
     super('JEF_POS_DB');
-    this.version(11).stores({
-      products: 'id, categoryId, sku, name, updatedAt, branchId',
+    this.version(12).stores({
+      products: 'id, categoryId, sku, name, updatedAt',
       categories: 'id, slug',
       salesQueue: 'id, status, synced, createdAt',
       settings: 'key',
@@ -155,8 +138,7 @@ export class POSDatabase extends Dexie {
       debtPayments: 'id, customerId, createdAt, synced',
       expenses: 'id, category, date, synced',
       users: 'id, username, role',
-      auditLogs: 'id, userId, action, createdAt',
-      branches: 'id, name, status'
+      auditLogs: 'id, userId, action, createdAt'
     });
   }
 }

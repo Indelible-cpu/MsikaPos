@@ -4,26 +4,17 @@ import { SaleStatus } from '@prisma/client';
 import { startOfDay, endOfDay, subDays, format } from 'date-fns';
 
 export const getDashboardStats = async (req: Request, res: Response) => {
-  const user = (req as any).user;
   const today = new Date();
   const threeDaysLater = new Date();
   threeDaysLater.setDate(today.getDate() + 3);
 
   try {
-    // 1. Build Query Filters (Branch Isolation)
-    const branchId = user.branchId && user.branchId !== 0 ? user.branchId : null;
-    
-    // Super Admins see EVERYTHING if they haven't explicitly filtered.
-    // If they have filtered, we include Global (null) and Legacy (0) records.
-    const branchFilter = branchId ? [{ branchId }, { branchId: null }, { branchId: 0 }] : null;
+    // Single-store architecture: No branch filtering needed
+    const saleWhere = { status: { not: SaleStatus.DELETED } };
+    const expenseWhere = {};
+    const productWhere = { deleted: false };
 
-    const baseWhere = (filter: any) => branchFilter ? { ...filter, OR: branchFilter } : filter;
-
-    const saleWhere = baseWhere({ status: { not: SaleStatus.DELETED } });
-    const expenseWhere = baseWhere({});
-    const productWhere = baseWhere({ deleted: false });
-
-    // 2. Execute Queries in Parallel
+    // 1. Execute Queries in Parallel
     const [
       todayStats,
       todayExpenses,
@@ -67,7 +58,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       })
     ]);
 
-    // 3. Process Chart Data (Last 7 Days)
+    // 2. Process Chart Data (Last 7 Days)
     const lastWeek = subDays(startOfDay(today), 6);
     const salesLastWeek = await prisma.sale.findMany({
       where: { ...saleWhere, createdAt: { gte: lastWeek } },
@@ -87,39 +78,27 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       };
     });
 
-    // 4. Credit Count
+    // 3. Credit Count
     const results: any[] = await prisma.$queryRaw`
       SELECT COUNT(*)::int as count FROM "Sale" 
       WHERE "isCredit" = true 
       AND "paid" < "total" 
       AND "status" != 'DELETED'
       AND "dueDate" <= ${endOfDay(threeDaysLater)}
-      ${branchFilter ? prisma.sql`AND ("branchId" IN (${branchId}, 0) OR "branchId" IS NULL)` : prisma.sql``}
     `;
     const creditCount = results[0]?.count || 0;
 
-    // 5. "Healer" Logic: Profit Recovery
-    // If profit is 0 but sales exist, we estimate profit at 25% (typical retail) 
-    // OR try to sum from sale items if feasible. For now, we show what's in DB 
-    // but we ensure calculations don't break.
-    
     const totalSalesValue = Number(overallSalesStats._sum.total || 0);
     let totalProfitValue = Number(overallSalesStats._sum.profit || 0);
 
-    // If profit is missing or zero but we have sales, we trigger a "Smart Estimate" 
-    // to prevent the "Total Sales = Total Cost" confusion for the user.
+    // Profit Recovery Logic
     if (totalSalesValue > 0 && totalProfitValue <= 0) {
-       console.log('⚠️ Profit data missing in summary. Attempting recovery from SaleItems...');
        const itemProfitSum = await prisma.saleItem.aggregate({
          where: { sale: saleWhere },
          _sum: { profit: true }
        });
        totalProfitValue = Number(itemProfitSum._sum.profit || 0);
-       
-       // If still 0, we fallback to a conservative 15% estimate to avoid showing 0 profit
-       if (totalProfitValue <= 0) {
-         totalProfitValue = totalSalesValue * 0.15; 
-       }
+       if (totalProfitValue <= 0) totalProfitValue = totalSalesValue * 0.15; 
     }
 
     const totalExpensesValue = Number(overallExpenses._sum.amount || 0);
@@ -143,11 +122,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         username: r.user?.username ?? 'Unknown',
         createdAt: r.createdAt
       })),
-      chart_data: chartData,
-      _diagnostics: {
-        branchIdUsed: branchId,
-        unfilteredSales: await prisma.sale.count()
-      }
+      chart_data: chartData
     };
 
     return res.status(200).json({ success: true, data: stats });

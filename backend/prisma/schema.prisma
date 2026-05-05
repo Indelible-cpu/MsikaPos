@@ -19,7 +19,6 @@ model User {
   username           String     @unique
   password           String
   roleId             Int
-  branchId           Int?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   deleted            Boolean    @default(false)
@@ -42,36 +41,11 @@ model User {
   customer           Customer?
   expenses           Expense[]
   sales              Sale[]
-  branch             Branch?    @relation(fields: [branchId], references: [id])
   role               Role       @relation(fields: [roleId], references: [id])
 
   @@index([roleId])
-  @@index([branchId])
   @@index([deleted])
   @@index([username])
-}
-
-model Branch {
-  id           Int           @id @default(autoincrement())
-  name         String
-  location     String?
-  phone        String?
-  status       BranchStatus  @default(ACTIVE)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  email        String?
-  facebook     String?
-  logo         String?
-  slogan       String?
-  customers    Customer[]
-  expenses     Expense[]
-  inquiries    Inquiry[]
-  products     Product[]
-  sales        Sale[]
-  securityLogs SecurityLog[]
-  syncLogs     SyncLog[]
-  users        User[]
-  featureConfigs FeatureConfig[]
 }
 
 model Category {
@@ -92,7 +66,6 @@ model Product {
   taxRate           Decimal    @default(0.00) @db.Decimal(5, 2)
   quantity          Int        @default(0)
   isService         Boolean    @default(false)
-  branchId          Int?
   deleted           Boolean    @default(false)
   synced            Boolean    @default(true)
   deviceId          String?
@@ -103,13 +76,11 @@ model Product {
   discountStartDate DateTime?
   discountType      String?
   discountValue     Decimal?   @default(0.00) @db.Decimal(10, 2)
-  branch            Branch?    @relation(fields: [branchId], references: [id])
   category          Category   @relation(fields: [categoryId], references: [id])
   saleItems         SaleItem[]
   ratings           ProductRating[]
 
   @@index([categoryId])
-  @@index([branchId])
   @@index([deleted])
   @@index([sku])
   @@index([name])
@@ -133,15 +104,12 @@ model Customer {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   userId        Int?          @unique
-  branchId      Int?
-  branch        Branch?       @relation(fields: [branchId], references: [id])
   user          User?         @relation(fields: [userId], references: [id])
   inquiries     Inquiry[]
   sales         Sale[]
   ratings       ProductRating[]
   debtPayments  DebtPayment[]
 
-  @@index([branchId])
   @@index([phone])
   @@index([fullname])
   @@index([updatedAt])
@@ -154,11 +122,7 @@ model Inquiry {
   status     String   @default("PENDING")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  branchId   Int?
-  branch     Branch?  @relation(fields: [branchId], references: [id])
   customer   Customer @relation(fields: [customerId], references: [id])
-
-  @@index([branchId])
 }
 
 model Sale {
@@ -166,7 +130,6 @@ model Sale {
   invoiceNo   String      @unique
   receiptNo   String?
   userId      Int
-  branchId    Int?
   customerId  Int?
   subtotal    Decimal     @db.Decimal(10, 2)
   discount    Decimal     @default(0.00) @db.Decimal(10, 2)
@@ -185,13 +148,11 @@ model Sale {
   deviceId    String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  branch      Branch?     @relation(fields: [branchId], references: [id])
   customer    Customer?   @relation(fields: [customerId], references: [id])
   user        User        @relation(fields: [userId], references: [id])
   items       SaleItem[]
 
   @@index([userId])
-  @@index([branchId])
   @@index([customerId])
   @@index([paymentMode])
   @@index([status])
@@ -238,13 +199,10 @@ model Expense {
   paymentMethod String   @default("Cash")
   expenseDate   DateTime
   userId        Int
-  branchId      Int?
   createdAt     DateTime @default(now())
-  branch        Branch?  @relation(fields: [branchId], references: [id])
   user          User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
-  @@index([branchId])
   @@index([expenseDate])
 }
 
@@ -256,10 +214,6 @@ model SyncLog {
   status    String
   details   String?
   createdAt DateTime @default(now())
-  branchId  Int?
-  branch    Branch?  @relation(fields: [branchId], references: [id])
-
-  @@index([branchId])
 }
 
 model CompanySettings {
@@ -283,10 +237,6 @@ model SecurityLog {
   event     String
   details   String?
   createdAt DateTime @default(now())
-  branchId  Int?
-  branch    Branch?  @relation(fields: [branchId], references: [id])
-
-  @@index([branchId])
 }
 
 model BlockedIP {
@@ -310,11 +260,6 @@ enum RoleName {
   CUSTOMER
 }
 
-enum BranchStatus {
-  ACTIVE
-  INACTIVE
-}
-
 enum PaymentMode {
   CASH
   CARD
@@ -327,6 +272,7 @@ enum SaleStatus {
   PENDING
   DELETED
 }
+
 model ProductRating {
   id         Int      @id @default(autoincrement())
   productId  Int
@@ -345,8 +291,6 @@ model FeatureConfig {
   featureKey  String
   roleName    RoleName
   accessLevel String   // "HIDDEN", "READ_ONLY", "FULL"
-  branchId    Int?
-  branch      Branch?  @relation(fields: [branchId], references: [id])
 
-  @@unique([featureKey, roleName, branchId])
+  @@unique([featureKey, roleName])
 }

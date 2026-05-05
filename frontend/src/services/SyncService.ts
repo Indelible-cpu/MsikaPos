@@ -29,8 +29,6 @@ interface ProductPayload {
   createdAt?: string;
   updatedAt?: string;
   status?: string;
-  branchId?: number | null;
-  branch_id?: number | null;
 }
 
 export const SyncService = {
@@ -55,7 +53,6 @@ export const SyncService = {
       console.warn('🔓 Session expired or invalid. Redirecting to login.');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('activeBranchId');
       window.location.href = '/staff/login';
     });
 
@@ -275,8 +272,7 @@ export const SyncService = {
         discountType: (product.discount_type ?? product.discountType) as 'PERCENTAGE' | 'FIXED' | undefined,
         status: 'ACTIVE',
         createdAt: product.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        branchId: product.branchId ?? (parseInt(localStorage.getItem('activeBranchId') || '0') || null)
+        updatedAt: new Date().toISOString()
       });
 
 

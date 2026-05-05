@@ -25,8 +25,6 @@ const SettingsPage: React.FC = () => {
   const [currency, setCurrency] = React.useState('MK');
   const [momoProvider, setMomoProvider] = React.useState('TNM Mpamba, Airtel Money');
   const [bankNameSetting, setBankNameSetting] = React.useState('National Bank, NBS Bank, Standard Bank');
-  const [branchName, setBranchName] = React.useState('Jeff Investment');
-  const [branchWhatsApp, setBranchWhatsApp] = React.useState('');
   const [fontSize, setFontSize] = React.useState('medium');
   const [isCameraOpen, setIsCameraOpen] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -61,7 +59,6 @@ const SettingsPage: React.FC = () => {
 
           if (s.primaryColor) {
             document.documentElement.style.setProperty('--color-primary-500', s.primaryColor);
-            // Simple way to set others, though in a real app we'd generate a palette
             document.documentElement.style.setProperty('--color-primary-400', s.primaryColor + 'cc');
             document.documentElement.style.setProperty('--color-primary-600', s.primaryColor + 'ee');
           }
@@ -77,13 +74,6 @@ const SettingsPage: React.FC = () => {
         setBankNameSetting(val.bank || 'National Bank, NBS Bank, Standard Bank');
       }
 
-      const currentBranchStr = localStorage.getItem('currentBranch');
-      if (currentBranchStr) {
-        const branch = JSON.parse(currentBranchStr);
-        setBranchName(branch.name || 'Jeff Investment');
-        setBranchWhatsApp(branch.whatsapp || '');
-      }
-
       const storedFontSize = localStorage.getItem('fontSize') || 'medium';
       setFontSize(storedFontSize);
     };
@@ -91,7 +81,7 @@ const SettingsPage: React.FC = () => {
   }, []);
 
   const saveBrandingConfig = async () => {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) {
+    if (companyEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyEmail)) {
       return toast.error("Please enter a valid working company email address");
     }
     try {
@@ -126,43 +116,6 @@ const SettingsPage: React.FC = () => {
       toast.success('Payment methods updated');
     } catch {
       toast.error('Failed to save payment config');
-    }
-  };
-
-  const saveBranchDetails = async () => {
-    try {
-      if (!isValidMalawianPhone(branchWhatsApp)) {
-        toast.error('Invalid Malawian phone format. Please enter 9, 10, or 12 digits starting with +265 or 0');
-        return;
-      }
-      const currentBranchStr = localStorage.getItem('currentBranch');
-      if (currentBranchStr) {
-        const branch = JSON.parse(currentBranchStr);
-        const normalized = normalizePhone(branchWhatsApp);
-        const updatedBranch = { ...branch, name: branchName, whatsapp: normalized };
-        
-        await db.branches.put(updatedBranch);
-        localStorage.setItem('currentBranch', JSON.stringify(updatedBranch));
-        
-        const token = localStorage.getItem('token');
-        if (token) {
-          await api.post('/branches', { 
-            id: updatedBranch.id, 
-            name: branchName, 
-            phone: normalized,
-            location: updatedBranch.location || updatedBranch.address || 'Unknown'
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-        }
-
-        setBranchName(updatedBranch.name);
-        setBranchWhatsApp(normalized);
-        toast.success('Branch details updated globally');
-      }
-    } catch (error: any) {
-      const msg = error.response?.data?.message || 'Failed to save branch details';
-      toast.error(msg);
     }
   };
 
@@ -229,15 +182,15 @@ const SettingsPage: React.FC = () => {
 
   const updateProfilePic = async (base64Pic: string) => {
     try {
-      const updatedUser = { ...user, profile_pic: base64Pic };
+      const updatedUser = { ...user, profilePic: base64Pic };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       const token = localStorage.getItem('token');
       if (token) {
-        await api.put(`/users/\${user.id}`, { profile_pic: base64Pic });
+        await api.put(`/users/${user.id}`, { profilePic: base64Pic });
       }
       toast.success('Profile picture updated');
       window.dispatchEvent(new Event('storage'));
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1000);
     } catch {
       toast.error('Failed to update profile picture');
     }
@@ -246,8 +199,8 @@ const SettingsPage: React.FC = () => {
   const toggleSystemLock = async (isLocked: boolean) => {
     try {
       await db.settings.put({ key: 'system_lock', value: isLocked });
-      await AuditService.log(isLocked ? 'SYSTEM_LOCKED' : 'SYSTEM_UNLOCKED', `System manually \${isLocked ? 'locked' : 'unlocked'} by \${user.username}`);
-      toast.success(`System \${isLocked ? 'Locked' : 'Unlocked'}`);
+      await AuditService.log(isLocked ? 'SYSTEM_LOCKED' : 'SYSTEM_UNLOCKED', `System manually ${isLocked ? 'locked' : 'unlocked'} by ${user.username}`);
+      toast.success(`System ${isLocked ? 'Locked' : 'Unlocked'}`);
       window.location.reload();
     } catch {
       toast.error('Failed to update system lock');
@@ -256,14 +209,12 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-surface-bg transition-all pb-24 md:pb-0 px-0">
-
-
       <div className="p-0 space-y-6 md:space-y-0 stagger-children">
         <div className="px-6 md:px-12 py-10 glass-panel border-b border-border/50 flex flex-col md:flex-row items-center md:items-start gap-8 group transition-all duration-500">
           <div className="relative w-32 h-32 shrink-0">
             <div className="w-32 h-32 bg-primary/10 text-primary rounded-full flex items-center justify-center overflow-hidden border-2 border-primary/20 group-hover:border-primary transition-all shadow-2xl p-1">
-              {user.profile_pic ? (
-                <img src={user.profile_pic} alt="Profile" className="w-full h-full object-cover rounded-full" />
+              {user.profilePic ? (
+                <img src={user.profilePic} alt="Profile" className="w-full h-full object-cover rounded-full" />
               ) : (
                 <User className="w-12 h-12" />
               )}
@@ -297,7 +248,6 @@ const SettingsPage: React.FC = () => {
           </div>
           <div className="text-center md:text-left flex-1">
             <h2 className="text-3xl font-black tracking-tighter uppercase">{user.fullname || user.username || 'Employee'}</h2>
-            <div className="card-label !mt-1 uppercase">Branch: {user.branch_name || 'Domasi Main'}</div>
             <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-3">
               <span className="px-4 py-1.5 bg-primary/10 text-primary rounded-none text-[10px] font-black tracking-widest border border-primary/20 uppercase">Role: {user.role || 'Staff'}</span>
               <span className="px-4 py-1.5 bg-success/10 text-success rounded-none text-[10px] font-black tracking-widest border border-success/20 uppercase">Online Status</span>
@@ -346,12 +296,12 @@ const SettingsPage: React.FC = () => {
                             const token = localStorage.getItem('token');
                             if (token) {
                               await api.post('/settings', { logo: base64Logo }, {
-                                headers: { Authorization: `Bearer \${token}` }
+                                headers: { Authorization: `Bearer ${token}` }
                               });
                             }
                             toast.success('Logo updated');
                             window.dispatchEvent(new Event('storage'));
-                            window.location.reload();
+                            setTimeout(() => window.location.reload(), 500);
                           } catch {
                             toast.error('Failed to save logo to database');
                           }
@@ -412,7 +362,6 @@ const SettingsPage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Basic Info */}
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest">Shop name</label>
@@ -445,7 +394,6 @@ const SettingsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Contact & Style */}
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -492,7 +440,6 @@ const SettingsPage: React.FC = () => {
                                 primaryColor === color.hex ? "border-white scale-110 shadow-lg" : "border-transparent"
                               )}
                               title={`Set color to ${color.hex}`}
-                              aria-label={`Set system theme color to ${color.hex}`}
                             />
                           ))}
                         </div>
@@ -502,7 +449,6 @@ const SettingsPage: React.FC = () => {
                             value={primaryColor}
                             onChange={(e) => setPrimaryColor(e.target.value)}
                             className="w-12 h-12 rounded-xl border border-surface-border bg-surface-bg cursor-pointer p-1"
-                            title="Custom color picker"
                           />
                           <input
                             type="text"
@@ -519,7 +465,6 @@ const SettingsPage: React.FC = () => {
                           value={currency}
                           onChange={(e) => setCurrency(e.target.value)}
                           className="input-field w-full py-3 px-4 text-sm font-black shadow-inner appearance-none bg-surface-bg"
-                          title="Select system currency"
                         >
                           <option value="MK">MK - Malawi Kwacha</option>
                           <option value="$">USD - Dollar ($)</option>
@@ -541,7 +486,7 @@ const SettingsPage: React.FC = () => {
             )}
 
             {isSuperAdmin && (
-              <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors">
+              <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors border-b border-surface-border">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 bg-surface-bg rounded-2xl flex items-center justify-center border border-surface-border group-hover:border-primary-500/20 transition-all">
                     <Wallet className="w-5 h-5 text-primary-400" />
@@ -601,7 +546,6 @@ const SettingsPage: React.FC = () => {
                 <button
                   onClick={() => toggleSystemLock(true)}
                   className="btn-primary !bg-red-500 hover:!bg-red-600 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-red-900/20"
-                  title="Lock system access"
                 >
                   Lock access
                 </button>
@@ -620,7 +564,6 @@ const SettingsPage: React.FC = () => {
                 <button
                   onClick={() => window.location.href = '/staff/feature-access'}
                   className="btn-primary !bg-primary-600 hover:!bg-primary-700 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-900/20"
-                  title="Manage Module Access"
                 >
                   Manage access
                 </button>
@@ -644,8 +587,6 @@ const SettingsPage: React.FC = () => {
                       value={lockTime}
                       onChange={(e) => setLockTime(e.target.value)}
                       className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
-                      title="Set lock time"
-                      aria-label="Set lock time"
                     />
                   </div>
                   <div className="flex-1">
@@ -655,12 +596,10 @@ const SettingsPage: React.FC = () => {
                       value={unlockTime}
                       onChange={(e) => setUnlockTime(e.target.value)}
                       className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
-                      title="Set unlock time"
-                      aria-label="Set unlock time"
                     />
                   </div>
                   <div className="w-full md:w-auto">
-                    <button onClick={saveHours} className="btn-primary !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20" title="Save auto-lock hours">
+                    <button onClick={saveHours} className="btn-primary !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20">
                       Save
                     </button>
                   </div>
@@ -734,54 +673,6 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           )}
-
-          {isSuperAdmin && (
-            <div className="bg-surface-card border-b border-surface-border overflow-hidden">
-              <div className="px-6 md:px-12 py-5 bg-surface-bg border-b border-surface-border">
-                <div className="card-label !mb-0">Branch & location</div>
-              </div>
-              <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-surface-bg rounded-2xl flex items-center justify-center border border-surface-border group-hover:border-primary-500/20 transition-all">
-                    <Store className="w-5 h-5 text-primary-400" />
-                  </div>
-                  <div>
-                    <div className="font-black text-sm tracking-tight">Branch details</div>
-                    <div className="text-xs text-surface-text/40 font-bold">Configure contact details for this branch</div>
-                  </div>
-                </div>
-                <div className="flex flex-col md:flex-row items-end gap-4 mt-2">
-                  <div className="flex-1 w-full">
-                    <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest">Branch name</label>
-                    <input
-                      type="text"
-                      value={branchName}
-                      onChange={(e) => setBranchName(e.target.value)}
-                      className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
-                      placeholder="e.g. Jeff Investment"
-                    />
-                  </div>
-                  <div className="flex-1 w-full">
-                    <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest">Whatsapp number</label>
-                    <input
-                      type="tel"
-                      value={branchWhatsApp}
-                      onChange={(e) => setBranchWhatsApp(restrictPhone(e.target.value))}
-                      className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
-                      placeholder="+265..."
-                    />
-                  </div>
-                  <div className="w-full md:w-auto">
-                    <button onClick={saveBranchDetails} className="btn-primary !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20">
-                      Save branch info
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-
         </div>
       </div>
 
@@ -791,33 +682,23 @@ const SettingsPage: React.FC = () => {
           <div className="w-full max-w-lg bg-surface-card rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl relative">
             <button
               onClick={stopCamera}
-              title="Close Camera"
               className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="relative aspect-square bg-black">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className="w-full h-full object-cover"
-              />
+              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
               <canvas ref={canvasRef} className="hidden" />
             </div>
 
-            <div className="p-8 text-center space-y-6">
-              <div>
-                <h3 className="text-xl font-black tracking-tighter">Capture profile</h3>
-                <p className="text-surface-text/40 text-[10px] font-black tracking-widest">Position yourself clearly in the frame</p>
-              </div>
-
-              <button
-                onClick={capturePhoto}
-                className="w-20 h-20 bg-white rounded-full border-8 border-primary-500 shadow-2xl active:scale-90 transition-all mx-auto"
-                title="Capture"
-              />
+            <div className="p-8 flex flex-col gap-4">
+              <button onClick={capturePhoto} className="btn-primary w-full !py-5 text-xs font-black tracking-widest shadow-xl shadow-primary-500/20">
+                Capture & set profile photo
+              </button>
+              <button onClick={stopCamera} className="w-full py-4 text-surface-text/40 text-[10px] font-black tracking-widest hover:text-surface-text transition-colors">
+                Cancel
+              </button>
             </div>
           </div>
         </div>

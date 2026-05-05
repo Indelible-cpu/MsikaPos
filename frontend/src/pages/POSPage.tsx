@@ -136,7 +136,6 @@ const POSPage: React.FC = () => {
     loadSettings();
   }, []);
 
-  const activeBranchId = parseInt(localStorage.getItem('activeBranchId') || '0') || null;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const products = useLiveQuery(
@@ -146,14 +145,14 @@ const POSPage: React.FC = () => {
         const byName = await db.products
           .where('name')
           .startsWithIgnoreCase(searchTerm)
-          .filter(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
+          .filter(p => !p.deleted)
           .toArray();
 
         // Search by SKU
         const bySku = await db.products
           .where('sku')
           .equals(searchTerm)
-          .filter(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
+          .filter(p => !p.deleted)
           .toArray();
 
         // Merge and deduplicate
@@ -165,12 +164,12 @@ const POSPage: React.FC = () => {
         return await db.products
           .orderBy('updatedAt')
           .reverse()
-          .filter(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
+          .filter(p => !p.deleted)
           .limit(24)
           .toArray();
       }
     },
-    [searchTerm, activeBranchId]
+    [searchTerm]
   );
 
   const addToCart = useCallback((product: LocalProduct) => {
@@ -287,7 +286,6 @@ const POSPage: React.FC = () => {
         id: crypto.randomUUID(),
         invoiceNo,
         userId: Number(user.id),
-        branchId: activeBranchId,
         items: saleItems,
         subtotal: cartSubtotal,
         discount,

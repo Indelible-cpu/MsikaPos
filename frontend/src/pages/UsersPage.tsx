@@ -9,7 +9,6 @@ import {
   Trash2, 
   User as UserIcon,
   ShieldCheck,
-  Store,
   Copy,
   Check,
   Loader2,
@@ -33,8 +32,6 @@ interface User {
   email: string;
   phone: string;
   role: string;
-  branch_id: number | null;
-  branch_name: string;
   isVerified: boolean;
   status: 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
   createdAt: string;
@@ -48,7 +45,6 @@ const UsersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [branches, setBranches] = useState<{id: number, name: string}[]>([]);
   const [loading, setLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [magicToken, setMagicToken] = useState<string | null>(null);
@@ -71,8 +67,7 @@ const UsersPage: React.FC = () => {
     fullname: '',
     email: '',
     phone: '',
-    roleId: 3,
-    branchId: ''
+    roleId: 3
   });
 
   const resetForm = () => {
@@ -81,8 +76,7 @@ const UsersPage: React.FC = () => {
       fullname: '',
       email: '',
       phone: '',
-      roleId: 3,
-      branchId: ''
+      roleId: 3
     });
     setTempPassword(null);
     setMagicToken(null);
@@ -97,26 +91,17 @@ const UsersPage: React.FC = () => {
     }
   }, []);
 
-  const fetchBranches = useCallback(async () => {
-    try {
-      const res = await api.get('/branches');
-      setBranches(res.data.data);
-    } catch {
-      toast.error('Failed to fetch branches');
-    }
-  }, []);
-
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       try {
-        await Promise.all([fetchUsers(), fetchBranches()]);
+        await fetchUsers();
       } finally {
         setLoading(false);
       }
     };
     init();
-  }, [fetchUsers, fetchBranches]);
+  }, [fetchUsers]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,7 +151,6 @@ const UsersPage: React.FC = () => {
       "End of employment contract",
       "Staff on long-term leave",
       "Account no longer required",
-      "Branch closure",
       "Other (Type manually)"
     ],
     DELETE: [
@@ -233,8 +217,7 @@ const UsersPage: React.FC = () => {
       fullname: user.fullname || '',
       email: user.email || '',
       phone: user.phone || '',
-      roleId: user.role === 'SUPER_ADMIN' ? 1 : user.role === 'ADMIN' ? 2 : 3,
-      branchId: user.branch_id?.toString() || ''
+      roleId: user.role === 'SUPER_ADMIN' ? 1 : user.role === 'ADMIN' ? 2 : 3
     });
     setTempPassword(null);
     setMagicToken(null);
@@ -318,12 +301,6 @@ const UsersPage: React.FC = () => {
                    </div>
 
                    <div className="w-full pt-6 border-t border-border/50 space-y-3">
-                      <div className="flex items-center gap-3 text-muted-foreground">
-                         <div className="w-8 h-8 bg-muted/30 border border-border/50 rounded-lg flex items-center justify-center">
-                            <Store className="w-3.5 h-3.5" />
-                         </div>
-                         <span className="text-[10px] font-bold truncate">{u.branch_name}</span>
-                      </div>
                       <div className="flex items-center gap-3 text-surface-text/40">
                          <div className="w-8 h-8 bg-surface-bg border border-surface-border rounded-lg flex items-center justify-center">
                             <Mail className="w-3.5 h-3.5" />
@@ -393,7 +370,7 @@ const UsersPage: React.FC = () => {
                 )}
 
              </div>
-           ))
+            ))
          )}
       </div>
 
@@ -415,20 +392,13 @@ const UsersPage: React.FC = () => {
                 <input id="fullname" required type="text" className="input-field w-full" placeholder="John Doe" value={formData.fullname} onChange={(e) => setFormData({...formData, fullname: e.target.value})} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                <div className="space-y-1">
                   <label htmlFor="role" className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Role</label>
                   <select id="role" title="Select User Role" className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.roleId} onChange={(e) => setFormData({...formData, roleId: Number(e.target.value)})}>
                      <option value={1}>Super Admin</option>
                      <option value={2}>Admin</option>
                      <option value={3}>Cashier</option>
-                  </select>
-               </div>
-               <div className="space-y-1">
-                  <label htmlFor="branch" className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Branch</label>
-                  <select id="branch" title="Select Branch" className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.branchId} onChange={(e) => setFormData({...formData, branchId: e.target.value})}>
-                     <option value="">Select Branch</option>
-                     {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </select>
                </div>
             </div>
