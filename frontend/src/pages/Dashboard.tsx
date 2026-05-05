@@ -37,7 +37,7 @@ import TransactionsPage from './TransactionsPage';
 import UsersPage from './UsersPage';
 import SettingsPage from './SettingsPage';
 import ExpensesPage from './ExpensesPage';
-import BranchesPage from './BranchesPage';
+
 
 
 interface RecentActivity {
@@ -78,7 +78,6 @@ export default function Dashboard() {
       else if (path === 'credits') setActiveTab('credits');
       else if (path === 'expenses') setActiveTab('expenses');
       else if (path === 'staff') setActiveTab('users');
-      else if (path === 'branches') setActiveTab('branches');
       else if (path === 'settings') setActiveTab('settings');
     }, 0);
   }, [location]);
@@ -93,7 +92,6 @@ export default function Dashboard() {
     else if (id === 'credits') navigate('/credits');
     else if (id === 'expenses') navigate('/expenses');
     else if (id === 'users') navigate('/staff');
-    else if (id === 'branches') navigate('/branches');
     else if (id === 'settings') navigate('/settings');
     else navigate('/dashboard');
   };
@@ -120,8 +118,7 @@ export default function Dashboard() {
     { id: 'transactions', icon: History, label: 'Sales history', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { id: 'expenses', icon: Receipt, label: 'Expenses', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { id: 'users', icon: Users, label: 'Staff management', roles: ['SUPER_ADMIN', 'ADMIN'] },
-    { id: 'branches', icon: Store, label: 'Branches', roles: ['SUPER_ADMIN'] },
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Overview', roles: ['SUPER_ADMIN', 'ADMIN', 'CASHIER'] },
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Overview', roles: ['SUPER_ADMIN', 'ADMIN', 'CASHIER'] }
   ];
 
   if (!user) return null;
@@ -460,9 +457,7 @@ export default function Dashboard() {
                 {activeTab === 'users' && <UsersPage />}
                 {activeTab === 'transactions' && <TransactionsPage />}
                 {activeTab === 'settings' && <SettingsPage />}
-
                 {activeTab === 'expenses' && <ExpensesPage />}
-                {activeTab === 'branches' && <BranchesPage />}
               </div>
             )}
           </div>
