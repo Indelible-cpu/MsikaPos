@@ -154,3 +154,26 @@
 }
 
 
+
+@media print {
+  body * { visibility: hidden !important; }
+  #print-container, #print-container *, #printable-receipt, #printable-receipt * { 
+    visibility: visible !important; 
+  }
+  #print-container, #printable-receipt {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    margin: 0;
+    padding: 0;
+    display: flex !important;
+    justify-content: center !important;
+    background: white;
+    z-index: 9999;
+  }
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}

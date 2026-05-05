@@ -8,7 +8,7 @@
     "reset-users": "tsx src/reset-users.ts",
     "build": "npx prisma generate",
     "seed": "tsx prisma/seed.ts",
-    "start": "echo '🚀 Syncing schema...' && npx prisma db push --skip-generate && echo '✅ Schema ready, starting server...' && tsx src/index.ts",
+    "start": "echo '🚀 Syncing schema...' && npx prisma db push --skip-generate --accept-data-loss && echo '✅ Schema ready, starting server...' && tsx src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

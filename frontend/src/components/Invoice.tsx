@@ -38,23 +38,23 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
   return (
     <div className="invoice relative p-0 bg-white text-black font-mono w-full text-[11px] leading-tight shadow-sm flex flex-col items-center">
       <div className="absolute top-2 right-2 border border-black px-2 py-0.5 font-black text-[8px] tracking-tighter bg-black text-white">
-        Credit Note
+        Invoice
       </div>
       
       <div className="text-center w-full border-b-2 border-black pb-4 mb-4">
         <div className="w-14 h-14 mx-auto mb-2 rounded-full border border-black/10 flex items-center justify-center overflow-hidden">
            <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="w-full h-full object-contain grayscale" />
         </div>
-        <h1 className="text-xl font-bold tracking-tight  uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
-        {shopSlogan && <p className="text-[8px]  font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
+        <h1 className="text-xl font-bold tracking-tight uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
+        {shopSlogan && <p className="text-[8px] font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
         <p className="text-[9px] tracking-widest">{shopAddress}</p>
         <p className="text-[9px] font-bold mt-1">Tel: {shopTel}</p>
         {shopEmail && <p className="text-[8px] font-bold opacity-60">{shopEmail}</p>}
       </div>
 
-      <div className="mb-4 text-[9px] space-y-1">
+      <div className="mb-4 text-[9px] space-y-1 w-full px-2">
         <div className="font-bold flex justify-between">
-           <span>Inv: {invoiceNo}</span>
+           <span>Invoice: {invoiceNo}</span>
            <span>{(() => {
              if (!date) return new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
              const d = new Date(date);
@@ -67,14 +67,14 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
         </div>
       </div>
 
-      <div className="mb-4 space-y-1 p-2 bg-zinc-50 border border-black border-dotted">
+      <div className="mb-4 space-y-1 p-2 bg-zinc-50 border border-black border-dotted w-full mx-2">
         <div className="flex gap-2 items-center">
             <span className="font-black text-[9px] min-w-[60px]">Client:</span>
             <span className="font-bold">{customerName || 'N/A'}</span>
         </div>
       </div>
 
-      <table className="w-full mb-4 border-b border-black border-dashed">
+      <table className="w-full mb-4 border-b border-black border-dashed px-2">
         <thead className="border-b border-black text-[9px]">
           <tr>
             <th className="text-left pb-1">Item</th>
@@ -87,59 +87,59 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
             <tr key={idx}>
               <td className="py-1">
                 <div className="font-bold">{toSentenceCase(item.product.name)}</div>
-                <div className="text-[9px]">MK {item.product.sellPrice.toLocaleString()}</div>
+                <div className="text-[9px]">Mk {item.product.sellPrice.toLocaleString()}</div>
               </td>
               <td className="text-center py-1 font-bold">{item.quantity}</td>
-              <td className="text-right py-1 font-bold">MK {(item.product.sellPrice * item.quantity).toLocaleString()}</td>
+              <td className="text-right py-1 font-bold">Mk {(item.product.sellPrice * item.quantity).toLocaleString()}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      <div className="space-y-1 font-bold text-[10px] mb-6">
+      <div className="space-y-1 font-bold text-[10px] mb-6 w-full px-2">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span>MK {subtotal.toLocaleString()}</span>
+          <span>Mk {subtotal.toLocaleString()}</span>
         </div>
         {tax > 0 && (
           <div className="flex justify-between">
-            <span>Tax (VAT)</span>
-            <span>MK {tax.toLocaleString()}</span>
+            <span>Tax (vat)</span>
+            <span>Mk {tax.toLocaleString()}</span>
           </div>
         )}
         {discount > 0 && (
           <div className="flex justify-between">
             <span>Discount</span>
-            <span>- MK {discount.toLocaleString()}</span>
+            <span>- Mk {discount.toLocaleString()}</span>
           </div>
         )}
-        <div className="flex justify-between text-base font-black border-t-2 border-black pt-1 mt-1">
-          <span>Balance due</span>
-          <span>MK {total.toLocaleString()}</span>
+        <div className="flex justify-between items-center text-base font-black border-t-2 border-black pt-1 mt-1">
+          <span>Total amount due</span>
+          <span>Mk {total.toLocaleString()}</span>
         </div>
       </div>
 
-      <div className="text-center mb-6 flex flex-col items-center w-full">
+      <div className="text-center mb-6 flex flex-col items-center w-full px-2">
         {customer && (
           <div className="w-full py-3 mb-6 border border-black border-dotted flex flex-col items-center gap-2">
-            <div className="text-[8px] font-black tracking-widest opacity-40 uppercase">Credit Customer Verification</div>
-            <div className="flex items-center gap-4">
+            <div className="text-[8px] font-black tracking-widest opacity-40 uppercase">Credit customer verification</div>
+            <div className="flex items-center gap-4 px-4 w-full">
               {customer.livePhoto && (
                 <img src={customer.livePhoto} alt="cust" className="w-10 h-10 rounded-lg object-cover border border-black/10 grayscale" />
               )}
-              <div className="text-left">
+              <div className="text-left flex-1">
                 <div className="font-bold text-[9px]">{customer.name}</div>
                 <div className="text-[7px] font-bold opacity-60">ID: {customer.idNumber || 'N/A'}</div>
                 {customer.fingerprintData && (
-                  <div className="text-[7px] font-black text-emerald-600 mt-0.5">✓ BIOMETRIC SECURED</div>
+                  <div className="text-[7px] font-black text-emerald-600 mt-0.5 uppercase tracking-tighter">✓ Biometric identity secured</div>
                 )}
               </div>
             </div>
           </div>
         )}
 
-        <div className="w-32 mx-auto border-t border-black mb-1"></div>
-        <p className="text-[9px] font-black tracking-widest">Authorized Signature</p>
+        <div className="w-32 mx-auto border-t border-black mb-1 mt-4"></div>
+        <p className="text-[9px] font-black tracking-widest uppercase">Authorized signature</p>
         
         {/* Barcode Section */}
         <div className="mt-6 flex flex-col items-center">
@@ -148,10 +148,10 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
         </div>
       </div>
 
-      <div className="text-center pt-4 mt-4 border-t border-black border-dashed">
-        <p className="text-[9px] font-bold uppercase leading-tight px-2">Warning: Failure to settle the balance by the due date will attract a 2% daily interest rate (MK {(total * 0.02).toLocaleString()} daily).</p>
+      <div className="text-center pt-4 mt-4 border-t border-black border-dashed w-full px-2">
+        <p className="text-[9px] font-bold leading-tight">Warning: Failure to settle the balance by the due date will attract a 2% daily interest rate (Mk {(total * 0.02).toLocaleString()} daily).</p>
         <p className="text-[11px] font-black mt-2">Thank you for your business!</p>
-        <div className="mt-4 opacity-30 text-[7px] font-bold tracking-widest">Powered by MsikaPos Cloud POS</div>
+        <div className="mt-4 opacity-30 text-[7px] font-bold tracking-widest uppercase">Powered by MsikaPos Cloud POS</div>
       </div>
       
     </div>

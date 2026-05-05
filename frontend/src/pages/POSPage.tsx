@@ -50,6 +50,8 @@ const POSPage: React.FC = () => {
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
 
   // Persistence
   useEffect(() => {
@@ -99,32 +101,7 @@ const POSPage: React.FC = () => {
     signature?: string;
   } | null>(null);
 
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media print {
-        body * { visibility: hidden !important; }
-        #print-container, #print-container * { visibility: visible !important; }
-        #print-container {
-          position: fixed;
-          left: 0;
-          top: 0;
-          width: 80mm;
-          margin: 0;
-          padding: 0;
-          display: flex !important;
-          justify-content: center !important;
-          background: white;
-        }
-        @page {
-          size: 80mm auto;
-          margin: 0;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
-  }, []);
+
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -166,12 +143,22 @@ const POSPage: React.FC = () => {
   );
 
   const addToCart = useCallback((product: LocalProduct) => {
-    soundService.playBeep();
+    if (!product.isService && product.quantity <= 0) {
+      toast.error('Product is out of stock');
+      return;
+    }
+
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
+        if (!product.isService && existing.quantity >= product.quantity) {
+          toast.error('No more stock available');
+          return prev;
+        }
+        soundService.playBeep();
         return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
       }
+      soundService.playBeep();
       return [...prev, { product, quantity: 1 }];
     });
     setSearchTerm('');
@@ -219,44 +206,45 @@ const POSPage: React.FC = () => {
   const changeDue = Math.max(0, (parseFloat(amountReceived) || 0) - finalTotal);
 
   const handleCheckout = async () => {
-    if (cart.length === 0) return;
-    
-    if (paymentMode === 'Credit') {
-      // Navigate to Credit Center with transaction data
-      navigate('/staff/debt', { 
-        state: { 
-          creditSale: {
-            items: cart.map(item => {
-               const { finalPrice } = calculateEffectiveDiscount(item.product);
-               return {
-                 productId: item.product.id,
-                 productName: item.product.name,
-                 quantity: item.quantity,
-                 unitPrice: item.product.sellPrice,
-                 discount: 0,
-                 lineTotal: finalPrice * item.quantity,
-                 profit: (finalPrice - (item.product.costPrice || 0)) * item.quantity
-               };
-            }),
-            subtotal: cartSubtotal,
-            discount,
-            tax: taxAmount,
-            total: finalTotal,
-            profit: cart.reduce((s, item) => {
-              const { finalPrice } = calculateEffectiveDiscount(item.product);
-              return s + ((finalPrice - (item.product.costPrice || 0)) * item.quantity);
-            }, 0) - discount,
-            invoiceNo: generateInvoiceNo(),
-            date: new Date().toISOString()
-          } 
-        } 
-      });
-      return;
-    }
-
-    const paid = paymentMode === 'Cash' ? (parseFloat(amountReceived) || finalTotal) : finalTotal;
+    if (cart.length === 0 || isCheckingOut) return;
+    setIsCheckingOut(true);
     
     try {
+      if (paymentMode === 'Credit') {
+        // Navigate to Credit Center with transaction data
+        navigate('/staff/debt', { 
+          state: { 
+            creditSale: {
+              items: cart.map(item => {
+                 const { finalPrice } = calculateEffectiveDiscount(item.product);
+                 return {
+                   productId: item.product.id,
+                   productName: item.product.name,
+                   quantity: item.quantity,
+                   unitPrice: item.product.sellPrice,
+                   discount: 0,
+                   lineTotal: finalPrice * item.quantity,
+                   profit: (finalPrice - (item.product.costPrice || 0)) * item.quantity
+                 };
+              }),
+              subtotal: cartSubtotal,
+              discount,
+              tax: taxAmount,
+              total: finalTotal,
+              profit: cart.reduce((s, item) => {
+                const { finalPrice } = calculateEffectiveDiscount(item.product);
+                return s + ((finalPrice - (item.product.costPrice || 0)) * item.quantity);
+              }, 0) - discount,
+              invoiceNo: generateInvoiceNo(),
+              date: new Date().toISOString()
+            } 
+          } 
+        });
+        return;
+      }
+
+      const paid = paymentMode === 'Cash' ? (parseFloat(amountReceived) || finalTotal) : finalTotal;
+      
       const invoiceNo = currentInvoiceNo;
       const itemsCount = cart.reduce((s, i) => s + i.quantity, 0);
       const saleItems: LocalSaleItem[] = cart.map(item => {
@@ -313,7 +301,6 @@ const POSPage: React.FC = () => {
         }
       }
 
-
       soundService.playSaleComplete();
       
       setShowReceipt({
@@ -344,9 +331,11 @@ const POSPage: React.FC = () => {
       toast.success('Sale Completed!');
       
       if (printReceipt) setTimeout(() => window.print(), 800);
-    } catch (err) {
-      console.error(err);
-      toast.error('Checkout failed');
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Checkout failed. Please try again.');
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -401,7 +390,7 @@ const POSPage: React.FC = () => {
 
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden relative">
+    <div className="flex flex-col lg:flex-row h-full bg-background overflow-hidden relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <AnimatePresence>
         {showScanner && (
@@ -475,6 +464,15 @@ const POSPage: React.FC = () => {
       <main className="flex-1 flex flex-col bg-background overflow-hidden">
         <header className="px-4 md:px-8 py-4 border-b border-border/50 glass-panel sticky top-0 z-40">
           <div className="flex gap-3 items-center">
+            <button 
+              type="button" 
+              title="Go back" 
+              aria-label="Go back" 
+              onClick={() => navigate('/staff/dashboard')} 
+              className="lg:hidden w-12 h-12 flex items-center justify-center shrink-0 btn-press text-muted-foreground hover:bg-muted/20 rounded-xl transition-colors border border-border/50"
+            >
+              <ChevronRight className="w-6 h-6 rotate-180" />
+            </button>
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <input title="search inventory" aria-label="search inventory" placeholder="search products..." className="input-field w-full pl-12 h-12 text-sm font-black capitalize" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
@@ -488,10 +486,10 @@ const POSPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar stagger-children">
           <div className="flex justify-between items-center px-2">
-             <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-               {searchTerm.length >= 2 ? `Search Results for "${searchTerm}"` : 'Product Search'}
+             <h3 className="text-[10px] font-black tracking-widest text-muted-foreground/60">
+               {searchTerm.length >= 2 ? `Search results for "${searchTerm}"` : 'Product search'}
              </h3>
-             <span className="text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full">
+             <span className="text-[8px] font-black tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full">
                {products?.length || 0} Items
              </span>
           </div>
@@ -533,7 +531,7 @@ const POSPage: React.FC = () => {
             {products?.length === 0 && (
               <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-20 gap-4">
                  <PackageSearch className="w-16 h-16" />
-                 <span className="text-[10px] font-black uppercase tracking-widest">
+                 <span className="text-[10px] font-black tracking-widest">
                    {searchTerm.length >= 2 ? 'No products found' : 'Search for products to begin'}
                  </span>
               </div>
@@ -545,14 +543,14 @@ const POSPage: React.FC = () => {
       {/* Cart Sidebar / Bottom Area */}
       <aside className={clsx(
         "w-full lg:w-[450px] bg-card/80 backdrop-blur-2xl border-l border-border/50 flex flex-col shrink-0 shadow-2xl relative z-50 transition-all duration-500 ease-in-out",
-        cart.length > 0 ? "h-[85vh]" : "h-[50vh]",
+        cart.length > 0 ? "h-[70vh]" : "h-[40vh]",
         "lg:h-full"
       )}>
         <header className="p-8 border-b border-border/50 flex justify-between items-center bg-transparent">
           <div className="flex flex-col gap-1">
-            <h2 className="text-xl font-black capitalize flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
-            <p className="text-[8px] font-black opacity-30 capitalize tracking-widest">transaction # {currentInvoiceNo}</p>
-            {cart.length > 0 && <span className="text-[7px] font-black text-amber-500 animate-pulse">(!) uncompleted transaction</span>}
+            <h2 className="text-xl font-black flex items-center gap-3"><ShoppingCart className="w-6 h-6 text-primary" /> Cart <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 rounded-lg ml-2">{cart.reduce((a, b) => a + b.quantity, 0)}</span></h2>
+            <p className="text-[8px] font-black opacity-30 tracking-widest">Transaction # {currentInvoiceNo}</p>
+            {cart.length > 0 && <span className="text-[7px] font-black text-amber-500 animate-pulse">(!) Uncompleted transaction</span>}
           </div>
           <div className="flex items-center gap-4">
             <button 
@@ -584,9 +582,9 @@ const POSPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center opacity-10 capitalize font-black text-[10px] tracking-[0.3em] gap-6">
+            <div className="h-full flex flex-col items-center justify-center opacity-10 font-black text-[10px] tracking-[0.3em] gap-6">
               <ShoppingCart className="w-20 h-20" />
-              cart is empty
+              Cart is empty
             </div>
           ) : (
             <>
@@ -603,7 +601,7 @@ const POSPage: React.FC = () => {
                            </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[8px] font-black opacity-30 capitalize">subtotal</div>
+                          <div className="text-[8px] font-black opacity-30">Subtotal</div>
                           <div className="text-sm font-black text-primary-500 leading-none">Mk {(item.product.sellPrice * item.quantity).toLocaleString()}</div>
                         </div>
                       </div>
@@ -614,8 +612,8 @@ const POSPage: React.FC = () => {
                           <span className="font-black text-xs w-6 text-center">{item.quantity}</span>
                           <button type="button" title="increase quantity" aria-label="increase quantity" onClick={() => addToCart(item.product)} className="w-8 h-8 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"><Plus className="w-3 h-3" /></button>
                         </div>
-                        <button type="button" title="remove item" aria-label="remove item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-rose-500 opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 text-[8px] font-black capitalize">
-                          <X className="w-4 h-4" /> remove
+                        <button type="button" title="remove item" aria-label="remove item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-rose-500 opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 text-[8px] font-black">
+                          <X className="w-4 h-4" /> Remove
                         </button>
                       </div>
                     </motion.div>
@@ -624,13 +622,13 @@ const POSPage: React.FC = () => {
               </div>
 
               <div className="pt-8 space-y-4 border-t border-surface-border/50">
-                <div className="flex justify-between items-center text-[10px] font-black capitalize opacity-40">
-                  <span>subtotal</span>
+                <div className="flex justify-between items-center text-[10px] font-black opacity-40">
+                  <span>Subtotal</span>
                   <span>Mk {cartSubtotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center text-[10px] font-black capitalize text-rose-500">
+                <div className="flex justify-between items-center text-[10px] font-black text-rose-500">
                   <div className="flex items-center gap-2">
-                    <span>discount</span>
+                    <span>Discount</span>
                     <input 
                       type="number" 
                       placeholder="0.00"
@@ -643,18 +641,18 @@ const POSPage: React.FC = () => {
                   <span>- Mk {discount.toLocaleString()}</span>
                 </div>
                 {taxConfig.rate > 0 && (
-                  <div className="flex justify-between items-center text-[10px] font-black capitalize opacity-40">
-                    <span>tax ({taxConfig.rate}%)</span>
+                  <div className="flex justify-between items-center text-[10px] font-black opacity-40">
+                    <span>Tax ({taxConfig.rate}%)</span>
                     <span>Mk {taxAmount.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center pt-4 border-t border-border/50">
-                  <span className="text-[10px] font-black capitalize opacity-40">total</span>
+                  <span className="text-[10px] font-black opacity-40">Total</span>
                   <span className="text-3xl font-black text-primary tracking-tighter">Mk {finalTotal.toLocaleString()}</span>
                 </div>
                 {paymentMode === 'Cash' && amountReceived && parseFloat(amountReceived) > finalTotal && (
-                  <div className="flex justify-between items-center text-[10px] font-black capitalize text-success animate-in fade-in slide-in-from-top-1">
-                    <span>change due</span>
+                  <div className="flex justify-between items-center text-[10px] font-black text-success animate-in fade-in slide-in-from-top-1">
+                    <span>Change due</span>
                     <span className="font-black">Mk {changeDue.toLocaleString()}</span>
                   </div>
                 )}
@@ -662,7 +660,7 @@ const POSPage: React.FC = () => {
               
               <div className="space-y-6 pt-8 border-t border-surface-border/50">
                 <div className="flex items-center gap-4">
-                  <label className="text-[10px] font-black capitalize opacity-40 shrink-0">payment mode</label>
+                  <label className="text-[10px] font-black opacity-40 shrink-0">Payment mode</label>
                   <div className="flex flex-wrap gap-4">
                     {(['Cash', 'Card', 'Momo', 'Credit'] as const).map(id => {
                       const m = { Cash: 'cash', Card: 'bank', Momo: 'momo', Credit: 'credit' }[id];
@@ -673,11 +671,11 @@ const POSPage: React.FC = () => {
                           type="button"
                           onClick={() => setPaymentMode(id)} 
                           className={clsx(
-                            "text-[10px] font-black capitalize transition-all pb-1 border-b-2", 
+                            "text-[10px] font-black transition-all pb-1 border-b-2", 
                             paymentMode === id ? colorClass : "text-muted-foreground border-transparent opacity-40 hover:opacity-100"
                           )}
                         >
-                          {m}
+                          {id === 'Cash' ? 'Cash' : id === 'Card' ? 'Bank' : id === 'Momo' ? 'Momo' : 'Credit'}
                         </button>
                       );
                     })}
@@ -686,7 +684,7 @@ const POSPage: React.FC = () => {
 
                 {paymentMode === 'Cash' && (
                   <div className="flex items-center justify-between gap-4 p-4 bg-muted/5 rounded-2xl border border-border/50">
-                    <label className="text-[10px] font-black capitalize opacity-40 shrink-0">cashier received (Mk)</label>
+                    <label className="text-[10px] font-black opacity-40 shrink-0">Cashier received (Mk)</label>
                     <input 
                       type="number"
                       title="cash received" 
@@ -701,15 +699,15 @@ const POSPage: React.FC = () => {
                 {(paymentMode === 'Card' || paymentMode === 'Momo') && (
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black capitalize opacity-40">{paymentMode === 'Card' ? 'bank' : 'provider'}</label>
-                      <select title={paymentMode === 'Card' ? 'select bank' : 'select provider'} className="input-field w-full font-black capitalize" value={bankName} onChange={e => setBankName(e.target.value)}>
-                        <option value="">choose...</option>
+                      <label className="text-[10px] font-black opacity-40">{paymentMode === 'Card' ? 'Bank' : 'Provider'}</label>
+                      <select title={paymentMode === 'Card' ? 'Select bank' : 'Select provider'} className="input-field w-full font-black" value={bankName} onChange={e => setBankName(e.target.value)}>
+                        <option value="">Choose...</option>
                         {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).split(',').map(p => <option key={p.trim()} value={p.trim()}>{p.trim()}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black capitalize opacity-40">ref #</label>
-                      <input title="reference number" placeholder="enter ref #" className="input-field w-full font-black capitalize" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
+                      <label className="text-[10px] font-black opacity-40">Ref #</label>
+                      <input title="Reference number" placeholder="Enter ref #" className="input-field w-full font-black" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} />
                     </div>
                   </div>
                 )}
@@ -719,8 +717,8 @@ const POSPage: React.FC = () => {
                     <label className="text-[10px] font-black capitalize opacity-40">signature</label>
                     {showSigPad && (
                       <div className="flex items-center gap-4">
-                        <button type="button" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 flex items-center gap-1 text-[8px] font-black capitalize"><RotateCcw className="w-3 h-3" /> clear</button>
-                        <button type="button" onClick={() => setShowSigPad(false)} className="text-muted-foreground flex items-center gap-1 text-[8px] font-black capitalize"><X className="w-3 h-3" /> close</button>
+                        <button type="button" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 flex items-center gap-1 text-[8px] font-black"><RotateCcw className="w-3 h-3" /> Clear</button>
+                        <button type="button" onClick={() => setShowSigPad(false)} className="text-muted-foreground flex items-center gap-1 text-[8px] font-black"><X className="w-3 h-3" /> Close</button>
                       </div>
                     )}
                   </div>
@@ -731,12 +729,12 @@ const POSPage: React.FC = () => {
                       className="w-full py-6 border-2 border-dashed border-border/50 rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-primary/5 transition-all group btn-press"
                     >
                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><CheckCircle2 className="w-6 h-6" /></div>
-                      <span className="text-[10px] font-black capitalize tracking-[0.2em] text-primary">tap here to sign</span>
+                      <span className="text-[10px] font-black tracking-[0.2em] text-primary">Tap here to sign</span>
                     </button>
                   ) : (
                     <div className="bg-white border border-surface-border rounded-2xl h-32 relative overflow-hidden">
                       <canvas ref={sigCanvasRef} width={800} height={320} onMouseDown={startSignature} onTouchStart={startSignature} className="w-full h-full cursor-crosshair touch-none" />
-                      {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none capitalize font-black text-[8px] tracking-[0.3em]">sign anywhere in this box</div>}
+                      {!signature && <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none font-black text-[8px] tracking-[0.3em]">Sign anywhere in this box</div>}
                     </div>
                   )}
                 </div>
@@ -749,7 +747,7 @@ const POSPage: React.FC = () => {
                   <div className={clsx("w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all", printReceipt ? "bg-primary border-primary text-white" : "border-surface-border")}>
                     {printReceipt && <CheckCircle2 className="w-3 h-3" />}
                   </div>
-                  <span className="text-[10px] font-black capitalize opacity-60">print receipt automatically</span>
+                  <span className="text-[10px] font-black opacity-60">Print receipt automatically</span>
                 </button>
               </div>
             </>
@@ -758,7 +756,7 @@ const POSPage: React.FC = () => {
 
         <div className="p-8 border-t border-border/50 bg-card/50">
           <button 
-            disabled={cart.length === 0}
+            disabled={cart.length === 0 || isCheckingOut}
             onClick={handleCheckout} 
             className={clsx(
               "w-full h-16 rounded-2xl font-black text-sm capitalize shadow-xl transition-all btn-press flex items-center justify-center gap-3",
@@ -768,11 +766,18 @@ const POSPage: React.FC = () => {
                 Momo: 'bg-amber-500 text-white shadow-amber-500/20',
                 Credit: 'bg-rose-500 text-white shadow-rose-500/20'
               }[paymentMode],
-              cart.length === 0 && "opacity-50 grayscale cursor-not-allowed"
+              (cart.length === 0 || isCheckingOut) && "opacity-50 grayscale cursor-not-allowed"
             )}
           >
-            {paymentMode === 'Credit' ? 'add to customer' : 'complete sale'} <ChevronRight className="w-4 h-4" />
+            {isCheckingOut ? (
+              <RefreshCw className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                {paymentMode === 'Credit' ? 'Add to customer' : 'Complete sale'} <ChevronRight className="w-4 h-4" />
+              </>
+            )}
           </button>
+
         </div>
       </aside>
     </div>

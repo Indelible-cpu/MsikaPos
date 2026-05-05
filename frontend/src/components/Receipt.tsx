@@ -57,7 +57,8 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
 
       <div className="flex flex-col gap-1 mb-4 font-bold text-[9px] w-full">
         <div className="flex justify-between">
-          <span>{mode === 'Cash' ? 'Rec:' : 'Inv:'} {invoiceNo}</span>
+          <span>{mode === 'Cash' ? 'Receipt:' : 'Invoice:'} {invoiceNo}</span>
+
           <span>{(() => {
             if (!date) return new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
             const d = new Date(date);
@@ -137,9 +138,10 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
                 <span>{bankName}</span>
               </div>
               <div className="flex justify-between ">
-                <span>Account/Ref</span>
+                <span>Account or Reference</span>
                 <span>{accountNumber}</span>
               </div>
+
             </div>
           )
         )}
@@ -165,17 +167,18 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
 
             <div className="w-full px-4 space-y-1 text-[9px] border-t border-black/10 pt-2">
               <div className="flex justify-between font-bold">
-                <span>Total Credit Limit</span>
+                <span>Total credit limit</span>
                 <span>Mk {(customer.totalCreditAmount || customer.balance).toLocaleString()}</span>
               </div>
               <div className="flex justify-between font-bold text-emerald-700">
-                <span>Total Paid to Date</span>
+                <span>Total paid to date</span>
                 <span>Mk {(customer.totalPaidAmount || 0).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between font-black text-[11px] border-t border-black/20 pt-1 mt-1">
-                <span>REMAINING BALANCE</span>
+               <div className="flex justify-between font-black text-[11px] border-t border-black/20 pt-1 mt-1">
+                <span>Remaining balance</span>
                 <span>Mk {customer.balance.toLocaleString()}</span>
               </div>
+
             </div>
           </div>
         )}
