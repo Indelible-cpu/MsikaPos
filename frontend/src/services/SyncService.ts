@@ -33,8 +33,12 @@ interface ProductPayload {
 
 export const SyncService = {
   isSyncing: false,
+  hasInitialized: false,
 
   async init() {
+    if (this.hasInitialized) return;
+    this.hasInitialized = true;
+
     window.addEventListener('online', () => {
       console.log('🌐 System Online: Triggering Power Sync...');
       this.pushSales().catch(console.error);
@@ -140,8 +144,11 @@ export const SyncService = {
             
             if (categories && categories.length > 0) {
               const currentCats = await db.categories.toArray();
-              if (JSON.stringify(currentCats) !== JSON.stringify(categories)) {
-                await db.categories.bulkPut(categories);
+              const sortedIncoming = [...categories].sort((a, b) => a.id - b.id);
+              const sortedCurrent = [...currentCats].sort((a, b) => a.id - b.id);
+              
+              if (JSON.stringify(sortedIncoming) !== JSON.stringify(sortedCurrent)) {
+                await db.categories.bulkPut(sortedIncoming);
               }
             }
         });

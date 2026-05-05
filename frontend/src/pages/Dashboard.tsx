@@ -105,7 +105,13 @@ export default function Dashboard() {
     refetchInterval: 30000,
   });
   
-  const totalCredit = useLiveQuery(() => db.customers.toArray().then(docs => docs.reduce((sum, c) => sum + (c.balance || 0), 0)), []) || 0;
+  const totalCredit = useLiveQuery(async () => {
+    let total = 0;
+    await db.customers.each(c => {
+      total += (c.balance || 0);
+    });
+    return total;
+  }, []) || 0;
 
   const handleLogout = () => {
     logout();

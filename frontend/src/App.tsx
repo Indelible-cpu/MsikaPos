@@ -186,11 +186,15 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleActivity);
     window.addEventListener('touchstart', handleActivity);
 
+    let lastFocusCheck = 0;
     const handleFocus = () => {
-      // Check for updates whenever user returns to the app
+      const now = Date.now();
+      if (now - lastFocusCheck < 60000) return; // Only check once per minute
+      lastFocusCheck = now;
+
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then(registration => {
-          if (registration) registration.update();
+          if (registration) registration.update().catch(() => {});
         });
       }
     };
