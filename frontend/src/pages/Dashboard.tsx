@@ -69,17 +69,15 @@ export default function Dashboard() {
 
   // Sync tab with URL
   useEffect(() => {
-    setTimeout(() => {
-      const path = location.pathname.split('/')[1];
-      if (path === 'dashboard') setActiveTab('dashboard');
-      else if (path === 'pos') setActiveTab('pos');
-      else if (path === 'inventory') setActiveTab('inventory');
-      else if (path === 'history') setActiveTab('transactions');
-      else if (path === 'credits') setActiveTab('credits');
-      else if (path === 'expenses') setActiveTab('expenses');
-      else if (path === 'staff') setActiveTab('users');
-      else if (path === 'settings') setActiveTab('settings');
-    }, 0);
+    const path = location.pathname.split('/')[1];
+    if (path === 'dashboard') setActiveTab('dashboard');
+    else if (path === 'pos') setActiveTab('pos');
+    else if (path === 'inventory') setActiveTab('inventory');
+    else if (path === 'history') setActiveTab('transactions');
+    else if (path === 'credits') setActiveTab('credits');
+    else if (path === 'expenses') setActiveTab('expenses');
+    else if (path === 'staff') setActiveTab('users');
+    else if (path === 'settings') setActiveTab('settings');
   }, [location]);
 
   const handleTabChange = (id: string) => {
@@ -102,16 +100,14 @@ export default function Dashboard() {
       const res = await api.get('/dashboard/stats');
       return res.data.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: 60000, // Reduced frequency to 1 minute
+    staleTime: 30000
   });
   
-  const totalCredit = useLiveQuery(async () => {
-    let total = 0;
-    await db.customers.each(c => {
-      total += (c.balance || 0);
-    });
-    return total;
-  }, []) || 0;
+  const totalCredit = useLiveQuery(
+    () => db.customers.where('balance').above(0).toArray().then(arr => arr.reduce((s, c) => s + (c.balance || 0), 0)),
+    []
+  ) ?? 0;
 
   const handleLogout = () => {
     logout();

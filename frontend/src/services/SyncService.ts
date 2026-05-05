@@ -95,7 +95,6 @@ export const SyncService = {
       let lastSyncTimestamp = rawTimestamp;
       
       if (rawTimestamp) {
-        // Subtract 5 minutes buffer to account for server/client clock skew
         const date = new Date(rawTimestamp);
         date.setMinutes(date.getMinutes() - 5);
         lastSyncTimestamp = date.toISOString();
@@ -114,11 +113,17 @@ export const SyncService = {
         timeout: 45000 
       });
 
+      // YIELD to the browser to prevent long-task violations
+      await new Promise(resolve => setTimeout(resolve, 0));
+
       if (data.success) {
+        // Perform all writes in a single atomic transaction to minimize broadcast noise
         await db.transaction('rw', 
-          db.salesQueue, db.expenses, db.customers, db.debtPayments, db.products, db.categories,
+          [db.salesQueue, db.expenses, db.customers, db.debtPayments, db.products, db.categories],
           async () => {
-            // Mark all as synced
+            const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
+            
+            // 1. Mark local changes as synced
             if (unsyncedSales.length > 0) {
               const ids = unsyncedSales.map(s => s.id);
               await db.salesQueue.where('id').anyOf(ids).modify({ synced: 1 });
@@ -136,8 +141,7 @@ export const SyncService = {
               await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
             }
             
-            const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
-            
+            // 2. Apply remote updates
             if (products && products.length > 0) {
               await db.products.bulkPut(products);
             }
