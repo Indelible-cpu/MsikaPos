@@ -61,11 +61,11 @@ export const saveBranch = async (req: Request, res: Response) => {
   const { id, name, location, address, phone, email, facebook, slogan, logo, is_active, status } = req.body;
 
   const branchName = name;
-  const branchLocation = location || address;
+  const branchLocation = location || address || 'General';
 
-  if (!branchName || !branchLocation) {
-    console.error('❌ Branch Save Validation Failed:', { branchName, branchLocation });
-    return res.status(400).json({ success: false, message: "Name and location are required" });
+  if (!branchName) {
+    console.error('❌ Branch Save Validation Failed: Name is required');
+    return res.status(400).json({ success: false, message: "Branch name is required" });
   }
 
   try {

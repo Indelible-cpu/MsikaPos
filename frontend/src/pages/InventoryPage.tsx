@@ -403,8 +403,9 @@ const InventoryPage: React.FC = () => {
           await AuditService.log('PRODUCT_DELETE', `Deleted product: ${product.name} (SKU: ${product.sku})`, 'WARNING');
         }
         toast.success('Product permanently removed');
-      } catch {
-        toast.error('Failed to permanently delete product');
+      } catch (error: any) {
+        const msg = error.response?.data?.message || 'Failed to permanently delete product';
+        toast.error(msg);
       }
       setDeleteConfirmation(null);
     }

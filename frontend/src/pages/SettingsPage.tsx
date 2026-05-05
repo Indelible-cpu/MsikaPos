@@ -160,8 +160,9 @@ const SettingsPage: React.FC = () => {
         setBranchWhatsApp(normalized);
         toast.success('Branch details updated globally');
       }
-    } catch {
-      toast.error('Failed to save branch details');
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'Failed to save branch details';
+      toast.error(msg);
     }
   };
 

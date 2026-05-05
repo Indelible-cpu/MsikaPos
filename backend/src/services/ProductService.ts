@@ -100,8 +100,24 @@ export class ProductService {
   }
 
   static async deleteProduct(id: string | number, user: any) {
+    const productId = parseInt(id as string);
+
+    // Check for sales history first
+    const saleCount = await prisma.saleItem.count({
+      where: { productId }
+    });
+
+    if (saleCount > 0) {
+      throw new Error("Cannot permanently delete product with sales history. Please keep it in 'Trash' (Soft Delete) to preserve transaction records.");
+    }
+
+    // Clean up ratings first (non-critical)
+    await prisma.productRating.deleteMany({
+      where: { productId }
+    });
+
     await prisma.product.delete({
-      where: { id: parseInt(id as string) }
+      where: { id: productId }
     });
 
     await AuditService.log({
