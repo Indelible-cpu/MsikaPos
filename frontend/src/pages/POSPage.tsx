@@ -159,14 +159,7 @@ const POSPage: React.FC = () => {
         const merged = [...byName, ...bySku];
         return Array.from(new Map(merged.map(p => [p.id, p])).values());
       } else {
-        // Show recent/default products for this branch
-        // Use orderBy on an indexed field (updatedAt) and reverse it
-        return await db.products
-          .orderBy('updatedAt')
-          .reverse()
-          .filter(p => !p.deleted)
-          .limit(24)
-          .toArray();
+        return [];
       }
     },
     [searchTerm]
@@ -496,7 +489,7 @@ const POSPage: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar stagger-children">
           <div className="flex justify-between items-center px-2">
              <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-               {searchTerm.length >= 2 ? `Search Results for "${searchTerm}"` : 'Recent Products'}
+               {searchTerm.length >= 2 ? `Search Results for "${searchTerm}"` : 'Product Search'}
              </h3>
              <span className="text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full">
                {products?.length || 0} Items
@@ -540,7 +533,9 @@ const POSPage: React.FC = () => {
             {products?.length === 0 && (
               <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-20 gap-4">
                  <PackageSearch className="w-16 h-16" />
-                 <span className="text-[10px] font-black uppercase tracking-widest">No products found</span>
+                 <span className="text-[10px] font-black uppercase tracking-widest">
+                   {searchTerm.length >= 2 ? 'No products found' : 'Search for products to begin'}
+                 </span>
               </div>
             )}
           </div>
