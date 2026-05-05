@@ -113,6 +113,7 @@ model Product {
   @@index([deleted])
   @@index([sku])
   @@index([name])
+  @@index([updatedAt])
 }
 
 model Customer {
@@ -139,6 +140,9 @@ model Customer {
   debtPayments  DebtPayment[]
 
   @@index([branchId])
+  @@index([phone])
+  @@index([fullname])
+  @@index([updatedAt])
 }
 
 model Inquiry {
