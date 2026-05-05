@@ -38,8 +38,8 @@ const generateNumericId = () => {
 
 const InventoryPage: React.FC = () => {
   const currentUser = useAuthStore(state => state.user);
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
-  const isAdmin = currentUser?.role === 'ADMIN' || isSuperAdmin;
+  const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPER_ADMIN';
+  const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN' || isSuperAdmin;
   const { isReadOnly } = useFeatureAccess();
   const readOnly = isReadOnly('INVENTORY');
 
@@ -394,7 +394,7 @@ const InventoryPage: React.FC = () => {
     if (deleteConfirmation) {
       const product = await db.products.get(deleteConfirmation);
       try {
-        if (navigator.onLine) {
+        if (navigator.onLine && deleteConfirmation < 1000000000) {
           const res = await api.delete(`/products/${deleteConfirmation}`);
           if (!res.data.success) throw new Error("Failed remote delete");
         }

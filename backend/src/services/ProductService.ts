@@ -26,7 +26,9 @@ export class ProductService {
 
     // Strict Branch Isolation
     if (user.role === 'SUPER_ADMIN') {
-      if (user.branchId) where.branchId = user.branchId;
+      if (user.branchId) {
+        where.OR = [{ branchId: user.branchId }, { branchId: null }];
+      }
     } else {
       where.branchId = user.branchId;
     }
@@ -55,7 +57,9 @@ export class ProductService {
       isService: !!(data.is_service ?? data.isService),
       imageUrl: data.image_url || data.imageUrl || null,
       categoryId: parseInt(data.category_id ?? data.categoryId),
-      branchId: user.role === 'SUPER_ADMIN' ? (data.branch_id || data.branchId ? parseInt(data.branch_id || data.branchId) : null) : user.branchId,
+      branchId: user.role === 'SUPER_ADMIN' 
+        ? (data.branchId || data.branch_id ? parseInt(data.branchId || data.branch_id) : user.branchId) 
+        : user.branchId,
       discountType: data.discount_type || data.discountType || null,
       discountValue: data.discount_value || data.discountValue ? Number(data.discount_value || data.discountValue) : 0,
       discountStartDate: data.discount_start_date || data.discountStartDate ? new Date(data.discount_start_date || data.discountStartDate) : null,
@@ -102,13 +106,27 @@ export class ProductService {
   static async deleteProduct(id: string | number, user: any) {
     const productId = parseInt(id as string);
 
+    if (isNaN(productId)) {
+      throw new Error("Invalid product ID format");
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { saleItems: { take: 1 } }
+    });
+
+    if (!product) {
+      // If it doesn't exist on server, we consider it "deleted" (maybe it was local only)
+      return;
+    }
+
     // Check for sales history first
     const saleCount = await prisma.saleItem.count({
       where: { productId }
     });
 
     if (saleCount > 0) {
-      throw new Error("Cannot permanently delete product with sales history. Please keep it in 'Trash' (Soft Delete) to preserve transaction records.");
+      throw new Error(`Cannot permanently delete '${product.name}' because it has ${saleCount} recorded sales. Please keep it in 'Trash' to preserve financial history.`);
     }
 
     // Clean up ratings first (non-critical)
@@ -116,17 +134,22 @@ export class ProductService {
       where: { productId }
     });
 
-    await prisma.product.delete({
-      where: { id: productId }
-    });
+    try {
+      await prisma.product.delete({
+        where: { id: productId }
+      });
 
-    await AuditService.log({
-      userId: user.id,
-      action: 'DELETE_PRODUCT_PERMANENT',
-      entityType: 'PRODUCT',
-      entityId: id,
-      branchId: user.branchId
-    });
+      await AuditService.log({
+        userId: user.id,
+        action: 'DELETE_PRODUCT_PERMANENT',
+        entityType: 'PRODUCT',
+        entityId: productId,
+        branchId: product.branchId || user.branchId
+      });
+    } catch (error: any) {
+      console.error('❌ Database Delete Error:', error);
+      throw new Error("Database restriction: Failed to remove product record. It might be referenced by other system logs.");
+    }
   }
 
   static async generateSku(categoryId: string, name: string) {
