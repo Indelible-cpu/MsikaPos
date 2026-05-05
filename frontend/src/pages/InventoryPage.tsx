@@ -421,15 +421,29 @@ const InventoryPage: React.FC = () => {
     if (!newCategoryTitle) return;
     try {
       const slug = newCategoryTitle.toLowerCase().replace(/ /g, '-');
-      await db.categories.add({
+      const newCat = {
         id: generateNumericId(),
         title: newCategoryTitle,
         slug: slug,
-      });
+      };
+      await db.categories.add(newCat);
+      await SyncService.pushCategory(newCat);
       setNewCategoryTitle('');
       toast.success('Category created');
     } catch {
       toast.error('Failed to create category');
+    }
+  };
+
+  const handleDeleteCategory = async (id: number) => {
+    try {
+      if (navigator.onLine) {
+        await api.delete(`/categories/${id}`);
+      }
+      await db.categories.delete(id);
+      toast.success('Category removed');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete category');
     }
   };
 
@@ -789,7 +803,7 @@ const InventoryPage: React.FC = () => {
                     <span className="font-bold text-sm uppercase">{cat.title}</span>
                     {isSuperAdmin && (
                       <button 
-                        onClick={() => db.categories.delete(cat.id)} 
+                        onClick={() => handleDeleteCategory(cat.id)} 
                         className="p-2 text-surface-text/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
                         title={`Delete ${cat.title} category`}
                         aria-label={`Delete ${cat.title} category`}

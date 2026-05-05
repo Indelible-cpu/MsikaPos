@@ -141,21 +141,19 @@ const POSPage: React.FC = () => {
 
   const products = useLiveQuery(
     async () => {
-      let query: any;
-      
       if (searchTerm.length >= 2) {
         // Search by name
         const byName = await db.products
           .where('name')
           .startsWithIgnoreCase(searchTerm)
-          .and(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
+          .filter(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
           .toArray();
 
         // Search by SKU
         const bySku = await db.products
           .where('sku')
           .equals(searchTerm)
-          .and(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
+          .filter(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
           .toArray();
 
         // Merge and deduplicate
@@ -163,8 +161,9 @@ const POSPage: React.FC = () => {
         return Array.from(new Map(merged.map(p => [p.id, p])).values());
       } else {
         // Show recent/default products for this branch
+        // Use orderBy on an indexed field (updatedAt) and reverse it
         return await db.products
-          .where('updatedAt')
+          .orderBy('updatedAt')
           .reverse()
           .filter(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
           .limit(24)
@@ -287,7 +286,7 @@ const POSPage: React.FC = () => {
       const saleData: LocalSale = {
         id: crypto.randomUUID(),
         invoiceNo,
-        userId: user.id,
+        userId: Number(user.id),
         branchId: activeBranchId,
         items: saleItems,
         subtotal: cartSubtotal,
@@ -508,7 +507,7 @@ const POSPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             <AnimatePresence mode="popLayout">
-              {products?.map(p => (
+              {products?.map((p: LocalProduct) => (
                 <motion.div 
                   layout 
                   initial={{ opacity: 0, scale: 0.9 }} 

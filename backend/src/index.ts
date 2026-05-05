@@ -13,6 +13,7 @@ if (dns.setDefaultResultOrder) {
 import * as UserCtrl from './controllers/UserController';
 import * as ProductCtrl from './controllers/ProductController';
 import * as BranchCtrl from './controllers/BranchController';
+import * as CategoryCtrl from './controllers/CategoryController';
 import * as SyncCtrl from './controllers/SyncController';
 import * as ReportCtrl from './controllers/ReportController';
 import * as SettingsCtrl from './controllers/SettingsController';
@@ -143,6 +144,11 @@ app.post('/api/users/verify', UserCtrl.verifyEmail); // Self-service
 app.get('/api/branches', adminOnly, BranchCtrl.fetchBranches);
 app.post('/api/branches', adminOnly, BranchCtrl.saveBranch);
 app.delete('/api/branches/:id', adminOnly, BranchCtrl.deleteBranch);
+
+// Categories
+app.get('/api/categories', staffOnly, CategoryCtrl.listCategories);
+app.post('/api/categories', adminOnly, CategoryCtrl.saveCategory);
+app.delete('/api/categories/:id', adminOnly, CategoryCtrl.deleteCategory);
 
 // Products
 app.get('/api/products', staffOnly, ProductCtrl.listProducts);

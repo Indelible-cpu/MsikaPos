@@ -219,6 +219,19 @@ export const SyncService = {
     return navigator.onLine;
   },
 
+  async pushCategory(category: { id: number; title: string; slug: string }) {
+    try {
+      await apiFetch('/categories', {
+        method: 'POST',
+        body: JSON.stringify(category)
+      });
+      return true;
+    } catch (error: unknown) {
+      console.error('Category sync error:', error);
+      return false;
+    }
+  },
+
   async pushProduct(product: ProductPayload) {
     try {
       const data = await apiFetch('/products', {

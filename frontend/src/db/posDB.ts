@@ -20,6 +20,7 @@ export interface LocalProduct {
   createdAt: string;
   updatedAt: string;
   deleted?: boolean;
+  branchId: number | null;
 }
 
 export interface LocalSaleItem {
@@ -47,7 +48,8 @@ export interface LocalSale {
   customerId?: string;
   items: LocalSaleItem[];
   sellerName?: string;
-  branchId?: string;
+  userId: number;
+  branchId: number | null;
   tax?: number;
   bankName?: string;
   accountNumber?: string;
