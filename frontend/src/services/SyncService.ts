@@ -128,12 +128,12 @@ export const SyncService = {
         });
 
         // YIELD to browser
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         // 2. Apply remote updates per table to avoid locking the UI for too long
         if (products?.length > 0) {
           await db.products.bulkPut(products);
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
 
         if (categories?.length > 0) {
@@ -141,7 +141,7 @@ export const SyncService = {
           if (JSON.stringify(categories) !== JSON.stringify(currentCats)) {
             await db.categories.bulkPut(categories);
           }
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise(resolve => setTimeout(resolve, 30));
         }
 
         if (customers?.length > 0) {
@@ -160,17 +160,17 @@ export const SyncService = {
             synced: 1
           }));
           await db.customers.bulkPut(mapped);
-          await new Promise(resolve => setTimeout(resolve, 10));
+          await new Promise(resolve => setTimeout(resolve, 50));
         }
 
         if (expenses?.length > 0) {
           await db.expenses.bulkPut(expenses.map((e: any) => ({ ...e, date: e.expenseDate, synced: 1 })));
-          await new Promise(resolve => setTimeout(resolve, 5));
+          await new Promise(resolve => setTimeout(resolve, 20));
         }
 
         if (debtPayments?.length > 0) {
           await db.debtPayments.bulkPut(debtPayments.map((p: any) => ({ ...p, synced: 1 })));
-          await new Promise(resolve => setTimeout(resolve, 5));
+          await new Promise(resolve => setTimeout(resolve, 20));
         }
 
         if (sales?.length > 0) {
