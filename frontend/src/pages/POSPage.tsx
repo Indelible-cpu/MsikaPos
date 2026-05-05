@@ -136,11 +136,42 @@ const POSPage: React.FC = () => {
     loadSettings();
   }, []);
 
+  const activeBranchId = parseInt(localStorage.getItem('activeBranchId') || '0') || null;
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
   const products = useLiveQuery(
-    () => searchTerm.length >= 2 
-      ? db.products.where('name').startsWithIgnoreCase(searchTerm).toArray()
-      : Promise.resolve([] as LocalProduct[]),
-    [searchTerm]
+    async () => {
+      let query: any;
+      
+      if (searchTerm.length >= 2) {
+        // Search by name
+        const byName = await db.products
+          .where('name')
+          .startsWithIgnoreCase(searchTerm)
+          .and(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
+          .toArray();
+
+        // Search by SKU
+        const bySku = await db.products
+          .where('sku')
+          .equals(searchTerm)
+          .and(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
+          .toArray();
+
+        // Merge and deduplicate
+        const merged = [...byName, ...bySku];
+        return Array.from(new Map(merged.map(p => [p.id, p])).values());
+      } else {
+        // Show recent/default products for this branch
+        return await db.products
+          .where('updatedAt')
+          .reverse()
+          .filter(p => !p.deleted && (p.branchId === activeBranchId || p.branchId === null))
+          .limit(24)
+          .toArray();
+      }
+    },
+    [searchTerm, activeBranchId]
   );
 
   const addToCart = useCallback((product: LocalProduct) => {
@@ -256,6 +287,8 @@ const POSPage: React.FC = () => {
       const saleData: LocalSale = {
         id: crypto.randomUUID(),
         invoiceNo,
+        userId: user.id,
+        branchId: activeBranchId,
         items: saleItems,
         subtotal: cartSubtotal,
         discount,
@@ -464,30 +497,56 @@ const POSPage: React.FC = () => {
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 custom-scrollbar stagger-children">
-          {searchTerm.length >= 2 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              <AnimatePresence>
-                {products?.map(p => (
-                  <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} key={p.id} onClick={() => addToCart(p)} className="p-4 cursor-pointer glass-card border border-border/50 rounded-3xl flex flex-row md:flex-col items-center md:items-stretch gap-4 hover:border-primary/20 shadow-sm transition-all group hover-lift active:scale-95">
-                    <div className="w-20 h-20 md:w-full md:h-auto md:aspect-square bg-muted/20 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-border/50">
-                      {p.imageUrl ? (
-                        <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                      ) : (
-                        <PackageSearch className="text-muted-foreground/20 w-8 h-8 md:w-10 md:h-10" />
-                      )}
-                    </div>
-                    <div className="space-y-1 md:space-y-2 flex-1">
-                      <div className="font-black capitalize text-[11px] leading-tight line-clamp-2 min-h-[2.4em]">{toSentenceCase(p.name)}</div>
+          <div className="flex justify-between items-center px-2">
+             <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+               {searchTerm.length >= 2 ? `Search Results for "${searchTerm}"` : 'Recent Products'}
+             </h3>
+             <span className="text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary px-3 py-1 rounded-full">
+               {products?.length || 0} Items
+             </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+              {products?.map(p => (
+                <motion.div 
+                  layout 
+                  initial={{ opacity: 0, scale: 0.9 }} 
+                  animate={{ opacity: 1, scale: 1 }} 
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  key={p.id} 
+                  onClick={() => addToCart(p)} 
+                  className="p-4 cursor-pointer glass-card border border-border/50 rounded-3xl flex flex-row md:flex-col items-center md:items-stretch gap-4 hover:border-primary/20 shadow-sm transition-all group hover-lift active:scale-95"
+                >
+                  <div className="w-20 h-20 md:w-full md:h-auto md:aspect-square bg-muted/20 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-border/50">
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    ) : (
+                      <PackageSearch className="text-muted-foreground/20 w-8 h-8 md:w-10 md:h-10" />
+                    )}
+                  </div>
+                  <div className="space-y-1 md:space-y-2 flex-1">
+                    <div className="font-black capitalize text-[11px] leading-tight line-clamp-2 min-h-[2.4em]">{toSentenceCase(p.name)}</div>
+                    <div className="flex justify-between items-end">
                       <div className="flex flex-col">
                         <span className="text-[8px] font-black text-muted-foreground capitalize tracking-widest">retail price</span>
                         <span className="font-black text-primary text-base md:text-lg leading-none">Mk {p.sellPrice.toLocaleString()}</span>
                       </div>
+                      {p.quantity <= 5 && !p.isService && (
+                        <span className="text-[7px] font-black text-rose-500 bg-rose-500/10 px-2 py-1 rounded-lg">Low Stock</span>
+                      )}
                     </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {products?.length === 0 && (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-20 gap-4">
+                 <PackageSearch className="w-16 h-16" />
+                 <span className="text-[10px] font-black uppercase tracking-widest">No products found</span>
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
