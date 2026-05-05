@@ -22,9 +22,7 @@ import {
   Users,
   LayoutDashboard,
   User as UserIcon,
-  AlertTriangle,
   CreditCard as CreditCardIcon,
-  ShoppingCart as ShoppingCartIcon,
   PlusCircle,
   RefreshCw
 } from 'lucide-react';
