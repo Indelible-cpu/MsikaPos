@@ -77,7 +77,7 @@ export class SyncService {
                 total: saleData.total,
                 paid: saleData.paid,
                 changeDue: saleData.changeDue,
-                profit: saleData.profit || 0,
+                profit: saleData.profit || saleData.items.reduce((acc: number, item: any) => acc + (item.profit || 0), 0),
                 paymentMode: saleData.paymentMode === 'Momo' ? 'MOBILE_MONEY' : 
                              saleData.paymentMode === 'Card' ? 'CARD' : 
                              saleData.paymentMode === 'Credit' ? 'CREDIT' : 'CASH',

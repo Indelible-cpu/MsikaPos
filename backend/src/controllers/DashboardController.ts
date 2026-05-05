@@ -13,7 +13,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
   try {
     const totalCountInDb = await prisma.sale.count();
-    console.log('📈 Total sales records in database (unfiltered):', totalCountInDb);
+    const totalExpensesInDb = await prisma.expense.count();
+    const totalProductsInDb = await prisma.product.count();
+    console.log(`📈 DB Totals: Sales=${totalCountInDb}, Expenses=${totalExpensesInDb}, Products=${totalProductsInDb}`);
 
     const saleWhere: any = { status: { not: SaleStatus.DELETED } };
     const expenseWhere: any = {};
@@ -21,23 +23,24 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     // Strict Branch Isolation (Including Global records)
     if (user.role === 'SUPER_ADMIN') {
-      if (user.branchId) {
-        const branchFilter = [{ branchId: user.branchId }, { branchId: null }];
+      if (user.branchId && user.branchId !== 0) {
+        const branchFilter = [{ branchId: user.branchId }, { branchId: null }, { branchId: 0 }];
         saleWhere.OR = branchFilter;
         expenseWhere.OR = branchFilter;
         productWhere.OR = branchFilter;
-        console.log(`📍 Super Admin context: Branch ${user.branchId} + Global`);
+        console.log(`📍 Super Admin context: Branch ${user.branchId} + Global (including legacy 0)`);
       } else {
         console.log(`🌐 Super Admin context: Global (All Branches)`);
       }
     } else {
-      const branchFilter = [{ branchId: user.branchId }, { branchId: null }];
+      const branchFilter = [{ branchId: user.branchId }, { branchId: null }, { branchId: 0 }];
       saleWhere.OR = branchFilter;
       expenseWhere.OR = branchFilter;
       productWhere.OR = branchFilter;
-      console.log(`📍 Staff context: Branch ${user.branchId} + Global`);
+      console.log(`📍 Staff context: Branch ${user.branchId} + Global (including legacy 0)`);
     }
 
+    console.log('🔍 Final saleWhere filter:', JSON.stringify(saleWhere));
     const bId = user.branchId || null;
 
     // 1. Today's Sales & Profit
@@ -176,7 +179,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       total_cost: totalSales - totalProfit,
       total_profit: totalProfit,
       total_expenses: totalExpenses,
-      net_profit: netProfit,
+      net_profit: totalProfit - totalExpenses,
       total_transactions: totalTransactions,
       active_products: activeProducts,
       low_stock: lowStock,

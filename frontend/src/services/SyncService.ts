@@ -273,7 +273,8 @@ export const SyncService = {
         discountType: (product.discount_type ?? product.discountType) as 'PERCENTAGE' | 'FIXED' | undefined,
         status: 'ACTIVE',
         createdAt: product.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        branchId: product.branchId ?? (parseInt(localStorage.getItem('activeBranchId') || '0') || null)
       });
 
       // If the server assigned a different ID (creation), remove the temporary one

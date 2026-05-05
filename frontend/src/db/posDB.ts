@@ -147,7 +147,7 @@ export class POSDatabase extends Dexie {
   constructor() {
     super('JEF_POS_DB');
     this.version(11).stores({
-      products: 'id, categoryId, sku, name, updatedAt',
+      products: 'id, categoryId, sku, name, updatedAt, branchId',
       categories: 'id, slug',
       salesQueue: 'id, status, synced, createdAt',
       settings: 'key',

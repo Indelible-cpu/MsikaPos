@@ -58,22 +58,6 @@ export const seedProducts = [
   { id: 88, categoryId: 1, sku: 'PH-A20-001', name: 'A20/30/50 privacy protector', costPrice: 2500.00, sellPrice: 6500.00, quantity: 10, isService: false },
   { id: 89, categoryId: 1, sku: 'PH-POP-001', name: 'pop2 privacy protector', costPrice: 2500.00, sellPrice: 6500.00, quantity: 1, isService: false },
   { id: 90, categoryId: 1, sku: 'PH-P20-001', name: 'P20 privacy protector', costPrice: 2500.00, sellPrice: 6500.00, quantity: 1, isService: false },
-  { id: 91, categoryId: 1, sku: 'PH-A16-001', name: 'A16 Privacy protector', costPrice: 2500.00, sellPrice: 6500.00, quantity: 2, isService: false },
-  { id: 92, categoryId: 1, sku: 'PH-SPA-002', name: 'Spark 5/Hot9 privacy protector', costPrice: 2500.00, sellPrice: 6500.00, quantity: 2, isService: false },
-  { id: 93, categoryId: 1, sku: 'PH-A05-001', name: 'A05/05s/06/Redmi13c privacy protector', costPrice: 2500.00, sellPrice: 6500.00, quantity: 20, isService: false },
-  { id: 94, categoryId: 1, sku: 'PH-POP-002', name: 'Pop8/Spark Go/20/20c privacy protector', costPrice: 2500.00, sellPrice: 6500.00, quantity: 2, isService: false },
-  { id: 95, categoryId: 1, sku: 'PH-SAM-001', name: 'Samsung A06 phone case', costPrice: 3500.00, sellPrice: 7500.00, quantity: 10, isService: false },
-  { id: 96, categoryId: 1, sku: 'PH-SPA-003', name: 'Spark 5 phone case', costPrice: 3500.00, sellPrice: 7500.00, quantity: 7, isService: false },
-  { id: 98, categoryId: 1, sku: 'PH-A9P-001', name: 'A9 phone case', costPrice: 3250.00, sellPrice: 7500.00, quantity: 6, isService: false },
-  { id: 101, categoryId: 1, sku: 'PH-STA-001', name: 'staples', costPrice: 450.00, sellPrice: 2500.00, quantity: 75, isService: false },
-  { id: 102, categoryId: 1, sku: 'PH-TEC-003', name: 'TECNO A04 CASES', costPrice: 3000.00, sellPrice: 7500.00, quantity: 11, isService: false },
-  { id: 103, categoryId: 1, sku: 'PH-SAM-002', name: 'Samsung A05 phone case', costPrice: 3000.00, sellPrice: 7500.00, quantity: 4, isService: false },
-  { id: 104, categoryId: 1, sku: 'PH-NOV-001', name: 'Nova 3i protector(full glue)', costPrice: 2000.00, sellPrice: 5500.00, quantity: 15, isService: false },
-  { id: 105, categoryId: 1, sku: 'PH-CAR-002', name: 'car charge', costPrice: 1500.00, sellPrice: 5500.00, quantity: 6, isService: false },
-  { id: 106, categoryId: 1, sku: 'PH-CTT-001', name: 'Cotton cases', costPrice: 2500.00, sellPrice: 5500.00, quantity: 9, isService: false },
-  { id: 107, categoryId: 1, sku: 'PH-CHA-001', name: 'CHARGE ADAPTER', costPrice: 2000.00, sellPrice: 6500.00, quantity: 10, isService: false },
-  { id: 108, categoryId: 3, sku: 'SE-FAC-001', name: 'factory reset', costPrice: 1500.00, sellPrice: 8500.00, quantity: 1, isService: true },
-  { id: 123, categoryId: 2, sku: 'ST-MES-001', name: 'Mesh', costPrice: 1500.00, sellPrice: 2500.00, quantity: 8, isService: false },
   { id: 110, categoryId: 1, sku: 'PH-A 3-001', name: 'A 32 SILICON CASE', costPrice: 2500.00, sellPrice: 7500.00, quantity: 6, isService: false },
   { id: 111, categoryId: 1, sku: 'PH-P 1-001', name: 'P 10 SILICON CASE', costPrice: 2500.00, sellPrice: 7500.00, quantity: 4, isService: false },
   { id: 112, categoryId: 1, sku: 'PH-PRO-002', name: 'Protea type C Cable', costPrice: 2500.00, sellPrice: 5200.00, quantity: 4, isService: false },
@@ -99,7 +83,8 @@ export const initDB = async (db: POSDatabase) => {
       ...p,
       status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      branchId: null
     }));
     await db.products.bulkAdd(productsToInsert);
   }

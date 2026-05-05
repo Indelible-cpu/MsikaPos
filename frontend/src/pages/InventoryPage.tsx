@@ -345,11 +345,12 @@ const InventoryPage: React.FC = () => {
         await SyncService.pushProduct({ ...productData, id: editingProduct.id } as Parameters<typeof SyncService.pushProduct>[0]);
         toast.success('Product updated');
       } else {
-        const fullNewProduct = {
+        const fullNewProduct: LocalProduct = {
           ...productData,
           id: newId,
           status: 'ACTIVE' as const,
           createdAt: new Date().toISOString(),
+          branchId: parseInt(localStorage.getItem('activeBranchId') || '0') || null
         };
         await db.products.add(fullNewProduct);
         await AuditService.log('PRODUCT_ADD', `Added product: ${productData.name} (SKU: ${productData.sku})`);
