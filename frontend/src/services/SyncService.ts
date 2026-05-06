@@ -118,6 +118,8 @@ export const SyncService = {
       await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
 
       if (data.success) {
+        const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
+        
         // 2. CHUNKED MAPPING: Map data in small batches to avoid blocking
         const MAP_CHUNK_SIZE = 50;
         const yieldToMain = () => new Promise(resolve => {
