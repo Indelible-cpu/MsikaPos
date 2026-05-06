@@ -74,11 +74,13 @@ export const SyncService = {
     this.isSyncing = true;
 
     try {
-      // Fetch all unsynced records
-      const unsyncedSales = await db.salesQueue.where('synced').equals(0).toArray();
-      const unsyncedExpenses = await db.expenses.where('synced').equals(0).toArray();
-      const unsyncedCustomers = await db.customers.where('synced').equals(0).toArray();
-      const unsyncedPayments = await db.debtPayments.where('synced').equals(0).toArray();
+      // Fetch all unsynced records in parallel to minimize wait time
+      const [unsyncedSales, unsyncedExpenses, unsyncedCustomers, unsyncedPayments] = await Promise.all([
+        db.salesQueue.where('synced').equals(0).toArray(),
+        db.expenses.where('synced').equals(0).toArray(),
+        db.customers.where('synced').equals(0).toArray(),
+        db.debtPayments.where('synced').equals(0).toArray()
+      ]);
 
       const hasLocalChanges = unsyncedSales.length > 0 || unsyncedExpenses.length > 0 || 
                              unsyncedCustomers.length > 0 || unsyncedPayments.length > 0;
@@ -112,8 +114,8 @@ export const SyncService = {
         timeout: 45000 
       });
 
-      // YIELD to the browser to prevent long-task violations
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // YIELD to the browser to prevent long-task violations before processing response
+      await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
 
       if (data.success) {
         // Perform all writes in a single atomic transaction to minimize broadcast noise
@@ -141,18 +143,13 @@ export const SyncService = {
             }
             
             // 2. Apply remote updates
+            // Use bulkPut directly; Dexie handles the underlying logic efficiently
             if (products && products.length > 0) {
               await db.products.bulkPut(products);
             }
             
             if (categories && categories.length > 0) {
-              const currentCats = await db.categories.toArray();
-              const sortedIncoming = [...categories].sort((a, b) => a.id - b.id);
-              const sortedCurrent = [...currentCats].sort((a, b) => a.id - b.id);
-              
-              if (JSON.stringify(sortedIncoming) !== JSON.stringify(sortedCurrent)) {
-                await db.categories.bulkPut(sortedIncoming);
-              }
+              await db.categories.bulkPut(categories);
             }
 
             if (customers && customers.length > 0) {

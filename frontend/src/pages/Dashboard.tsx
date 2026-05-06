@@ -183,7 +183,7 @@ export default function Dashboard() {
       <main className="flex-1 flex flex-col min-w-0 h-[100dvh]">
         <header className="h-16 border-b border-zinc-100 bg-white px-4 lg:px-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-zinc-100 rounded-xl"><Menu className="w-5 h-5" /></button>
+            <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-zinc-100 rounded-xl" title="Open menu" aria-label="Open menu"><Menu className="w-5 h-5" /></button>
             <h2 className="text-sm font-black uppercase tracking-widest text-zinc-400">{activeTab}</h2>
           </div>
           
@@ -269,7 +269,7 @@ export default function Dashboard() {
                            <div className="w-full bg-zinc-50 rounded-2xl relative h-60 flex items-end overflow-hidden">
                               <div 
                                 className="w-full bg-zinc-900 rounded-xl transition-all duration-1000 ease-out group-hover:bg-emerald-500" 
-                                style={{ height: `${Math.max(height, 5)}%` }} 
+                                style={{ height: `${Math.max(height, 5)}%` } as React.CSSProperties} 
                               />
                               <div className="absolute inset-x-0 bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-all pointer-events-none bg-zinc-900 text-white text-[10px] font-black px-2 py-1 rounded-lg text-center">
                                 MK {day.revenue.toLocaleString()}

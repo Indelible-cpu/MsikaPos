@@ -403,7 +403,7 @@ const LoginPage: React.FC = () => {
           </Link>
 
           <div className="pt-4 text-center">
-            <p className="text-[8px] font-black tracking-[0.3em] text-surface-text/10 ">Developed by James Dickson Petro</p>
+            <p className="text-[8px] font-black tracking-[0.3em] text-surface-text/10 ">Developed by Indelible</p>
           </div>
         </div>
 

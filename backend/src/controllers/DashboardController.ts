@@ -78,15 +78,25 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       };
     });
 
-    // 3. Credit Count
-    const results: any[] = await prisma.$queryRaw`
-      SELECT COUNT(*)::int as count FROM "Sale" 
-      WHERE "isCredit" = true 
-      AND "paid" < "total" 
-      AND "status" != 'DELETED'
-      AND "dueDate" <= ${endOfDay(threeDaysLater)}
-    `;
-    const creditCount = results[0]?.count || 0;
+    // 3. Credit Metrics (Customers with non-zero balance)
+    const [customerCreditStats, creditReminders] = await Promise.all([
+      prisma.customer.aggregate({
+        where: { balance: { gt: 0 } },
+        _sum: { balance: true },
+        _count: { id: true }
+      }),
+      prisma.$queryRaw`
+        SELECT COUNT(*)::int as count FROM "Sale" 
+        WHERE "isCredit" = true 
+        AND "paid" < "total" 
+        AND "status" != 'DELETED'
+        AND "dueDate" <= ${endOfDay(threeDaysLater)}
+      ` as Promise<any[]>
+    ]);
+
+    const creditCount = (creditReminders as any)[0]?.count || 0;
+    const totalCustomerDebt = Number(customerCreditStats._sum.balance || 0);
+    const activeCreditCustomers = customerCreditStats._count.id || 0;
 
     const totalSalesValue = Number(overallSalesStats._sum.total || 0);
     let totalProfitValue = Number(overallSalesStats._sum.profit || 0);
@@ -116,6 +126,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       active_products: activeProducts,
       low_stock: lowStockCount,
       credit_reminders: creditCount,
+      total_credit_balance: totalCustomerDebt,
+      credit_customer_count: activeCreditCustomers,
       recent_activity: recentActivity.map((r: any) => ({
         invoice_no: r.invoiceNo,
         total: Number(r.total),

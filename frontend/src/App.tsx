@@ -189,12 +189,20 @@ const App: React.FC = () => {
     let lastFocusCheck = 0;
     const handleFocus = () => {
       const now = Date.now();
-      if (now - lastFocusCheck < 60000) return; // Only check once per minute
+      if (now - lastFocusCheck < 300000) return; // Only check once every 5 minutes
       lastFocusCheck = now;
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then(registration => {
-          if (registration) registration.update().catch(() => {});
+          if (registration) {
+            // Use requestIdleCallback if available to avoid blocking interaction
+            const update = () => registration.update().catch(() => {});
+            if ('requestIdleCallback' in window) {
+              (window as any).requestIdleCallback(update);
+            } else {
+              setTimeout(update, 1000);
+            }
+          }
         });
       }
     };
@@ -236,10 +244,20 @@ const App: React.FC = () => {
     init();
 
     setTimeout(() => {
-      checkSystemLock();
-    }, 100);
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => checkSystemLock());
+      } else {
+        checkSystemLock();
+      }
+    }, 500);
 
-    const lockInterval = setInterval(checkSystemLock, 60000); // Check lock every min
+    const lockInterval = setInterval(() => {
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => checkSystemLock());
+      } else {
+        checkSystemLock();
+      }
+    }, 60000); // Check lock every min
 
     return () => {
       window.removeEventListener('mousemove', handleActivity);

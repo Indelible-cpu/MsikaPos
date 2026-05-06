@@ -7,7 +7,15 @@ import { ThemeProvider } from './context/ThemeProvider'
 
 
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, // Prevent massive refetch spikes on focus
+      staleTime: 60000, // 1 minute stale time
+      retry: 2
+    }
+  }
+})
 
 // Initialize font size
 const savedFontSize = localStorage.getItem('fontSize') || 'medium';
