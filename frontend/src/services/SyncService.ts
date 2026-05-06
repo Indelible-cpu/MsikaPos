@@ -118,10 +118,27 @@ export const SyncService = {
       await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
 
       if (data.success) {
-        const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
-        
-        // PRE-PROCESS/MAP data outside the transaction to keep the transaction as short as possible
-        const mappedCustomers = (customers || []).map((c: any) => ({
+        // 2. CHUNKED MAPPING: Map data in small batches to avoid blocking
+        const MAP_CHUNK_SIZE = 50;
+        const yieldToMain = () => new Promise(resolve => {
+          if ('requestIdleCallback' in window) {
+            (window as any).requestIdleCallback(() => resolve(null));
+          } else {
+            setTimeout(resolve, 0);
+          }
+        });
+
+        const mapInChunks = async <T, R>(items: T[], mapper: (item: T) => R): Promise<R[]> => {
+          const results: R[] = [];
+          for (let i = 0; i < items.length; i += MAP_CHUNK_SIZE) {
+            const chunk = items.slice(i, i + MAP_CHUNK_SIZE);
+            results.push(...chunk.map(mapper));
+            await yieldToMain();
+          }
+          return results;
+        };
+
+        const mappedCustomers = await mapInChunks(customers || [], (c: any) => ({
           id: String(c.id),
           name: c.fullname,
           phone: c.phone,
@@ -136,74 +153,81 @@ export const SyncService = {
           synced: 1
         }));
 
-        const mappedExpenses = (expenses || []).map((e: any) => ({
+        const mappedExpenses = await mapInChunks(expenses || [], (e: any) => ({
           ...e,
           date: e.expenseDate,
           synced: 1
         }));
 
-        const mappedPayments = (debtPayments || []).map((p: any) => ({
+        const mappedPayments = await mapInChunks(debtPayments || [], (p: any) => ({
           ...p,
           synced: 1
         }));
 
-        const mappedSales = (sales || []).map((s: any) => ({
+        const mappedSales = await mapInChunks(sales || [], (s: any) => ({
           ...s,
           synced: 1
         }));
 
-        // Yield again if we had a lot of data to map
-        if (mappedCustomers.length + mappedSales.length > 100) {
-          await new Promise(resolve => setTimeout(resolve, 0));
+        // 3. CHUNKED SYNC: Process each table separately with small chunks
+        const WRITE_CHUNK_SIZE = 20;
+
+        const processInChunks = async (table: any, items: any[]) => {
+          for (let i = 0; i < items.length; i += WRITE_CHUNK_SIZE) {
+            const chunk = items.slice(i, i + WRITE_CHUNK_SIZE);
+            await table.bulkPut(chunk);
+            await yieldToMain();
+          }
+        };
+
+        // 1. Mark local changes as synced
+        if (unsyncedSales.length > 0) {
+          const ids = unsyncedSales.map(s => s.id);
+          await db.salesQueue.where('id').anyOf(ids).modify({ synced: 1 });
+          await yieldToMain();
+        }
+        if (unsyncedExpenses.length > 0) {
+          const ids = unsyncedExpenses.map(e => e.id);
+          await db.expenses.where('id').anyOf(ids).modify({ synced: 1 });
+          await yieldToMain();
+        }
+        if (unsyncedCustomers.length > 0) {
+          const ids = unsyncedCustomers.map(c => c.id);
+          await db.customers.where('id').anyOf(ids).modify({ synced: 1 });
+          await yieldToMain();
+        }
+        if (unsyncedPayments.length > 0) {
+          const ids = unsyncedPayments.map(p => p.id);
+          await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
+          await yieldToMain();
         }
 
-        // Perform all writes in a single atomic transaction to minimize broadcast noise
-        await (db as any).transaction('rw', 
-          [db.salesQueue, db.expenses, db.customers, db.debtPayments, db.products, db.categories],
-          async () => {
-            // 1. Mark local changes as synced
-            if (unsyncedSales.length > 0) {
-              const ids = unsyncedSales.map(s => s.id);
-              await db.salesQueue.where('id').anyOf(ids).modify({ synced: 1 });
-            }
-            if (unsyncedExpenses.length > 0) {
-              const ids = unsyncedExpenses.map(e => e.id);
-              await db.expenses.where('id').anyOf(ids).modify({ synced: 1 });
-            }
-            if (unsyncedCustomers.length > 0) {
-              const ids = unsyncedCustomers.map(c => c.id);
-              await db.customers.where('id').anyOf(ids).modify({ synced: 1 });
-            }
-            if (unsyncedPayments.length > 0) {
-              const ids = unsyncedPayments.map(p => p.id);
-              await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
-            }
-            
-            // 2. Apply remote updates using pre-mapped data
-            if (products && products.length > 0) {
-              await db.products.bulkPut(products);
-            }
-            
-            if (categories && categories.length > 0) {
-              await db.categories.bulkPut(categories);
-            }
+        // 2. Apply remote updates in tiny chunks
+        if (products && products.length > 0) {
+          await processInChunks(db.products, products);
+        }
+        
+        if (categories && categories.length > 0) {
+          await db.categories.bulkPut(categories);
+          await yieldToMain();
+        }
 
-            if (mappedCustomers.length > 0) {
-              await db.customers.bulkPut(mappedCustomers);
-            }
+        if (mappedCustomers.length > 0) {
+          await processInChunks(db.customers, mappedCustomers);
+        }
 
-            if (mappedExpenses.length > 0) {
-              await db.expenses.bulkPut(mappedExpenses);
-            }
+        if (mappedExpenses.length > 0) {
+          await processInChunks(db.expenses, mappedExpenses);
+        }
 
-            if (mappedPayments.length > 0) {
-              await db.debtPayments.bulkPut(mappedPayments);
-            }
+        if (mappedPayments.length > 0) {
+          await processInChunks(db.debtPayments, mappedPayments);
+        }
 
-            if (mappedSales.length > 0) {
-              await db.salesQueue.bulkPut(mappedSales);
-            }
-        });
+        if (mappedSales.length > 0) {
+          await processInChunks(db.salesQueue, mappedSales);
+        }
+
 
         localStorage.setItem('lastSyncTimestamp', data.serverTime);
         console.log('✅ Power Sync Completed');
