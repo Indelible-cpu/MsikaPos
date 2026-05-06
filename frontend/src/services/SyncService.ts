@@ -74,12 +74,26 @@ export const SyncService = {
     this.isSyncing = true;
 
     try {
-      // Fetch all unsynced records in parallel to minimize wait time
+      // Chunked retrieval of local unsynced records to avoid blocking during initialization
+      const getUnsynced = async (table: any) => {
+        const results: any[] = [];
+        let count = 0;
+        await table.where('synced').equals(0).each((item: any) => {
+          results.push(item);
+          count++;
+          // Yield every 100 items to keep UI responsive
+          if (count % 100 === 0) {
+             return new Promise(resolve => setTimeout(resolve, 0));
+          }
+        });
+        return results;
+      };
+
       const [unsyncedSales, unsyncedExpenses, unsyncedCustomers, unsyncedPayments] = await Promise.all([
-        db.salesQueue.where('synced').equals(0).toArray(),
-        db.expenses.where('synced').equals(0).toArray(),
-        db.customers.where('synced').equals(0).toArray(),
-        db.debtPayments.where('synced').equals(0).toArray()
+        getUnsynced(db.salesQueue),
+        getUnsynced(db.expenses),
+        getUnsynced(db.customers),
+        getUnsynced(db.debtPayments)
       ]);
 
       const hasLocalChanges = unsyncedSales.length > 0 || unsyncedExpenses.length > 0 || 
@@ -90,6 +104,9 @@ export const SyncService = {
       } else {
         console.log('🔄 Checking for remote updates...');
       }
+
+      // Small yield to allow UI to breathe after local fetch
+      await new Promise(resolve => setTimeout(resolve, 0));
 
       const deviceId = localStorage.getItem('deviceId') || 'unknown';
       const rawTimestamp = localStorage.getItem('lastSyncTimestamp');
