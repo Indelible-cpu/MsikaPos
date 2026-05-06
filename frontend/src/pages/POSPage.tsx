@@ -663,7 +663,6 @@ const POSPage: React.FC = () => {
                   <label className="text-[10px] font-black opacity-40 shrink-0">Payment mode</label>
                   <div className="flex flex-wrap gap-4">
                     {(['Cash', 'Card', 'Momo', 'Credit'] as const).map(id => {
-                      const m = { Cash: 'cash', Card: 'bank', Momo: 'momo', Credit: 'credit' }[id];
                       const colorClass = { Cash: 'text-emerald-500 border-emerald-500', Card: 'text-blue-500 border-blue-500', Momo: 'text-amber-500 border-amber-500', Credit: 'text-rose-500 border-rose-500' }[id];
                       return (
                         <button 
