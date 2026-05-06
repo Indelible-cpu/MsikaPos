@@ -118,12 +118,49 @@ export const SyncService = {
       await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
 
       if (data.success) {
+        const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
+        
+        // PRE-PROCESS/MAP data outside the transaction to keep the transaction as short as possible
+        const mappedCustomers = (customers || []).map((c: any) => ({
+          id: String(c.id),
+          name: c.fullname,
+          phone: c.phone,
+          idNumber: c.idNumber,
+          village: c.village,
+          livePhoto: c.livePhoto,
+          balance: Number(c.balance || 0),
+          totalCreditAmount: Number(c.totalCreditAmount || 0),
+          totalPaidAmount: Number(c.totalPaidAmount || 0),
+          createdAt: c.createdAt,
+          updatedAt: c.updatedAt,
+          synced: 1
+        }));
+
+        const mappedExpenses = (expenses || []).map((e: any) => ({
+          ...e,
+          date: e.expenseDate,
+          synced: 1
+        }));
+
+        const mappedPayments = (debtPayments || []).map((p: any) => ({
+          ...p,
+          synced: 1
+        }));
+
+        const mappedSales = (sales || []).map((s: any) => ({
+          ...s,
+          synced: 1
+        }));
+
+        // Yield again if we had a lot of data to map
+        if (mappedCustomers.length + mappedSales.length > 100) {
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+
         // Perform all writes in a single atomic transaction to minimize broadcast noise
         await (db as any).transaction('rw', 
           [db.salesQueue, db.expenses, db.customers, db.debtPayments, db.products, db.categories],
           async () => {
-            const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
-            
             // 1. Mark local changes as synced
             if (unsyncedSales.length > 0) {
               const ids = unsyncedSales.map(s => s.id);
@@ -142,8 +179,7 @@ export const SyncService = {
               await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
             }
             
-            // 2. Apply remote updates
-            // Use bulkPut directly; Dexie handles the underlying logic efficiently
+            // 2. Apply remote updates using pre-mapped data
             if (products && products.length > 0) {
               await db.products.bulkPut(products);
             }
@@ -152,47 +188,20 @@ export const SyncService = {
               await db.categories.bulkPut(categories);
             }
 
-            if (customers && customers.length > 0) {
-              const mapped = customers.map((c: any) => ({
-                id: String(c.id),
-                name: c.fullname,
-                phone: c.phone,
-                idNumber: c.idNumber,
-                village: c.village,
-                livePhoto: c.livePhoto,
-                balance: Number(c.balance || 0),
-                totalCreditAmount: Number(c.totalCreditAmount || 0),
-                totalPaidAmount: Number(c.totalPaidAmount || 0),
-                createdAt: c.createdAt,
-                updatedAt: c.updatedAt,
-                synced: 1
-              }));
-              await db.customers.bulkPut(mapped);
+            if (mappedCustomers.length > 0) {
+              await db.customers.bulkPut(mappedCustomers);
             }
 
-            if (expenses && expenses.length > 0) {
-              const mapped = expenses.map((e: any) => ({
-                ...e,
-                date: e.expenseDate,
-                synced: 1
-              }));
-              await db.expenses.bulkPut(mapped);
+            if (mappedExpenses.length > 0) {
+              await db.expenses.bulkPut(mappedExpenses);
             }
 
-            if (debtPayments && debtPayments.length > 0) {
-              const mapped = debtPayments.map((p: any) => ({
-                ...p,
-                synced: 1
-              }));
-              await db.debtPayments.bulkPut(mapped);
+            if (mappedPayments.length > 0) {
+              await db.debtPayments.bulkPut(mappedPayments);
             }
 
-            if (sales && sales.length > 0) {
-              const mapped = sales.map((s: any) => ({
-                ...s,
-                synced: 1
-              }));
-              await db.salesQueue.bulkPut(mapped);
+            if (mappedSales.length > 0) {
+              await db.salesQueue.bulkPut(mappedSales);
             }
         });
 
