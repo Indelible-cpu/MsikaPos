@@ -12,7 +12,6 @@ if (dns.setDefaultResultOrder) {
 // Controllers
 import * as UserCtrl from './controllers/UserController';
 import * as ProductCtrl from './controllers/ProductController';
-import * as BranchCtrl from './controllers/BranchController';
 import * as CategoryCtrl from './controllers/CategoryController';
 import * as SyncCtrl from './controllers/SyncController';
 import * as ReportCtrl from './controllers/ReportController';
@@ -139,11 +138,6 @@ app.post('/api/users/status', adminOnly, UserCtrl.updateUserStatus);
 app.delete('/api/users/:id', adminOnly, UserCtrl.deleteUser);
 app.post('/api/users/onboarding', UserCtrl.updateOnboarding); // Self-service
 app.post('/api/users/verify', UserCtrl.verifyEmail); // Self-service
-
-// Branches
-app.get('/api/branches', adminOnly, BranchCtrl.fetchBranches);
-app.post('/api/branches', adminOnly, BranchCtrl.saveBranch);
-app.delete('/api/branches/:id', adminOnly, BranchCtrl.deleteBranch);
 
 // Categories
 app.get('/api/categories', staffOnly, CategoryCtrl.listCategories);
