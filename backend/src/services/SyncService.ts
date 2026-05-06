@@ -14,6 +14,7 @@ export class SyncService {
     lastSyncTimestamp?: string;
     user: any;
   }) {
+    const { sales, expenses, customers, debtPayments, deviceId, lastSyncTimestamp, user } = params;
     const userId = user.id;
 
     // 1. Process Incoming Sales (Reconciliation Logic)
@@ -113,8 +114,7 @@ export class SyncService {
             userId,
             action: 'SYNC_SALE',
             entityType: 'SALE',
-            entityId: saleData.invoiceNo,
-            branchId
+            entityId: saleData.invoiceNo
           });
         }
       }
@@ -133,8 +133,7 @@ export class SyncService {
               description: exp.description,
               paymentMethod: exp.paymentMethod,
               expenseDate: new Date(exp.date),
-              userId: userId,
-              branchId: branchId
+              userId: userId
             }
           });
         }

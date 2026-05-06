@@ -299,7 +299,7 @@ const DashboardPage: React.FC = () => {
                  </div>
               </div>
               <div className="space-y-4">
-                 {expenses?.slice(0, 5).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((expense, i) => (
+                 {expenses?.slice(0, 5).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).map((expense, i) => (
                    <div key={i} className="flex justify-between items-center p-4 bg-muted/5 border-b border-border/50 group hover:bg-muted/10 transition-all rounded-xl">
                       <div className="flex items-center gap-3">
                          <div className="w-10 h-10 bg-destructive/10 text-destructive rounded-xl flex items-center justify-center">
