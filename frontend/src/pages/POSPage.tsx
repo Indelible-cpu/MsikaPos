@@ -165,7 +165,7 @@ const POSPage: React.FC = () => {
     async () => {
       const allActive = await db.products
         .where('status')
-        .equals('ACTIVE')
+        .equals('Active')
         .filter(p => !p.deleted)
         .toArray();
 

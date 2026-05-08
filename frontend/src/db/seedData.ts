@@ -81,7 +81,7 @@ export const initDB = async (db: POSDatabase) => {
     await db.categories.bulkAdd(seedCategories);
     const productsToInsert = seedProducts.map(p => ({
       ...p,
-      status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE',
+      status: 'Active' as 'Active' | 'Inactive',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }));

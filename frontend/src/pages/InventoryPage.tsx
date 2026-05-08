@@ -548,8 +548,9 @@ const InventoryPage: React.FC = () => {
           await AuditService.log('PRODUCT_DELETE', `Deleted product: ${product.name} (SKU: ${product.sku})`, 'Warning');
         }
         toast.success('Product permanently removed');
-      } catch (error: any) {
-        const msg = error.response?.data?.message || 'Failed to permanently delete product';
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
+        const msg = err.response?.data?.message || 'Failed to permanently delete product';
         toast.error(msg);
       }
       setDeleteConfirmation(null);
@@ -581,8 +582,9 @@ const InventoryPage: React.FC = () => {
       }
       await db.categories.delete(id);
       toast.success('Category removed');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete category');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to delete category');
     }
   };
 
