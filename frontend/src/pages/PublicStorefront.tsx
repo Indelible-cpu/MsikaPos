@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, Minus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2, RefreshCw } from 'lucide-react';
+import { Package, Search, MessageSquare, ShoppingBag, User as UserIcon, Heart, Plus, Minus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2, RefreshCw, Check } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
@@ -587,7 +587,7 @@ export const PublicStorefront: React.FC = () => {
                   : 'glass-card border border-border/50 text-muted-foreground hover:text-foreground'
               }`}
             >
-              {cat.toUpperCase()}
+              {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
             </button>
           ))}
           {categories.filter(c => !CUSTOM_CATEGORIES.includes(c)).map(cat => (
@@ -600,7 +600,7 @@ export const PublicStorefront: React.FC = () => {
                   : 'glass-card border border-border/50 text-muted-foreground hover:text-foreground'
               }`}
             >
-              {cat.toUpperCase()}
+              {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
             </button>
           ))}
         </div>
@@ -662,7 +662,8 @@ export const PublicStorefront: React.FC = () => {
                 <div key={p.id} className="px-1.5 pb-1.5 mb-1.5 border-b border-surface-border/30">
                   <div 
                     id={`product-${p.id}`}
-                    className="group relative glass-card border border-border/50 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-1 flex flex-col h-full"
+                    onClick={() => setSelectedProduct(p as StoreProduct)}
+                    className="group relative glass-card border border-border/50 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-1 flex flex-col h-full cursor-pointer"
                   >
                     <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
                     <div className={`px-3 md:px-5 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] font-black tracking-widest backdrop-blur-md shadow-xl pointer-events-auto border-2 ${
@@ -949,6 +950,124 @@ export const PublicStorefront: React.FC = () => {
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {selectedProduct && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-6">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setSelectedProduct(null)}></div>
+            <div className="relative w-full max-w-4xl bg-surface-card border border-border/50 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row max-h-[90vh]">
+              <button 
+                onClick={() => setSelectedProduct(null)}
+                className="absolute top-4 right-4 z-20 w-10 h-10 bg-background/50 backdrop-blur-md border border-border/50 rounded-full flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-all btn-press"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="w-full md:w-1/2 bg-gradient-to-br from-muted/10 to-muted/30 flex items-center justify-center p-12 relative shrink-0 min-h-[300px]">
+                 {(() => {
+                   const { hasDiscount, badgeText } = calculateEffectiveDiscount(selectedProduct as unknown as Parameters<typeof calculateEffectiveDiscount>[0]);
+                   return (
+                     <div className="absolute top-6 left-6 flex flex-col gap-2 pointer-events-none z-10">
+                       <span className={`text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest border border-white/20 backdrop-blur-md w-fit ${selectedProduct.isService ? 'bg-primary text-primary-foreground' : 'bg-emerald-600 text-white'}`}>
+                         {selectedProduct.isService ? 'Service' : 'Product'}
+                       </span>
+                       {hasDiscount && (
+                         <span className="bg-red-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest border border-white/20 backdrop-blur-md w-fit animate-pulse">
+                           {badgeText}
+                         </span>
+                       )}
+                       {selectedProduct.discountEndDate && new Date(selectedProduct.discountEndDate) > new Date() && (
+                         <span className="bg-amber-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest border border-white/20 backdrop-blur-md w-fit">
+                           ⏳ Limited Time Offer
+                         </span>
+                       )}
+                     </div>
+                   );
+                 })()}
+                <img src={selectedProduct.imageUrl || '/premium-item.png'} className="w-full max-w-sm h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" alt={selectedProduct.name} />
+              </div>
+
+              <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-[10px] font-black text-primary tracking-[0.2em] uppercase bg-primary/10 px-3 py-1 rounded-full">{selectedProduct.category?.name || 'FEATURED'}</p>
+                  <div className="flex items-center gap-1.5 text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full">
+                    <Heart className="w-3.5 h-3.5 fill-current" />
+                    <span className="text-[11px] font-black mt-0.5">{selectedProduct.soldCount ? (selectedProduct.soldCount * 4.8).toFixed(1) : '4.9'}</span>
+                  </div>
+                </div>
+                
+                <h2 className="text-2xl md:text-3xl font-black tracking-tighter leading-tight mb-6">{toSentenceCase(selectedProduct.name)}</h2>
+                
+                {(() => {
+                   const { hasDiscount, finalPrice } = calculateEffectiveDiscount(selectedProduct as unknown as Parameters<typeof calculateEffectiveDiscount>[0]);
+                   return (
+                     <div className="flex items-end gap-3 mb-8 p-5 bg-gradient-to-r from-primary/5 to-transparent rounded-2xl border-l-4 border-primary">
+                       {hasDiscount ? (
+                         <>
+                           <p className="text-4xl font-black text-red-500 tracking-tighter">{formatCurrency(finalPrice)}</p>
+                           <p className="text-sm font-black text-muted-foreground/40 line-through mb-1.5">{formatCurrency(Number(selectedProduct.sellPrice ?? 0))}</p>
+                         </>
+                       ) : (
+                         <p className="text-4xl font-black text-primary tracking-tighter">{formatCurrency(Number(selectedProduct.sellPrice ?? 0))}</p>
+                       )}
+                     </div>
+                   );
+                })()}
+
+                <div className="mb-8 flex-1">
+                  <h4 className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest mb-4 flex items-center gap-2">
+                     <span className="w-6 h-px bg-muted-foreground/30"></span> Description
+                  </h4>
+                  <p className="text-sm text-foreground/80 leading-relaxed font-medium">
+                    {selectedProduct.description || `Experience the best of ${toSentenceCase(selectedProduct.name)}. This premium ${selectedProduct.isService ? 'service' : 'item'} is designed to deliver exceptional value and quality. Enjoy top-tier craftsmanship and reliable performance that meets all your expectations.`}
+                  </p>
+                  
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 bg-muted/10 p-3 rounded-xl border border-border/50">
+                       <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 text-emerald-500" />
+                       </div>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-foreground/70">Premium Quality</span>
+                    </div>
+                    <div className="flex items-center gap-3 bg-muted/10 p-3 rounded-xl border border-border/50">
+                       <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                          <Check className="w-4 h-4 text-emerald-500" />
+                       </div>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-foreground/70">Verified & Trusted</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-6 border-t border-border/50 flex gap-4 bg-surface-card sticky bottom-0">
+                  <button 
+                    onClick={() => {
+                       toggleLike(selectedProduct.id);
+                    }}
+                    className={`h-14 w-14 rounded-2xl border-2 flex items-center justify-center transition-all btn-press shrink-0 ${
+                      likedItems.has(selectedProduct.id) 
+                        ? 'bg-rose-50 text-rose-500 border-rose-200' 
+                        : 'bg-background text-muted-foreground border-border/50 hover:bg-muted/10 hover:border-border'
+                    }`}
+                  >
+                    <Heart className={`w-6 h-6 ${likedItems.has(selectedProduct.id) ? 'fill-current' : ''}`} />
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                       addToCart(selectedProduct, e);
+                       setSelectedProduct(null);
+                    }}
+                    className="flex-1 h-14 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center gap-3 text-[11px] font-black tracking-[0.2em] uppercase shadow-xl shadow-primary/20 hover:-translate-y-1 transition-all btn-press"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <CustomerAuthModal 
         isOpen={isAuthOpen} 
         onClose={() => setIsAuthOpen(false)} 
