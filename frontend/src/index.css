@@ -35,6 +35,22 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
+  --color-primary-50: hsl(var(--primary) / 0.05);
+  --color-primary-100: hsl(var(--primary) / 0.1);
+  --color-primary-200: hsl(var(--primary) / 0.2);
+  --color-primary-300: hsl(var(--primary) / 0.3);
+  --color-primary-400: hsl(var(--primary) / 0.4);
+  --color-primary-500: hsl(var(--primary));
+  --color-primary-600: hsl(var(--primary) / 0.8);
+  --color-primary-700: hsl(var(--primary) / 0.9);
+  --color-primary-800: hsl(var(--primary) / 0.95);
+  --color-primary-900: hsl(var(--primary));
+
+  --color-surface-bg: hsl(var(--background));
+  --color-surface-text: hsl(var(--foreground));
+  --color-surface-border: hsl(var(--border));
+  --color-surface-card: hsl(var(--card));
 }
 
 @layer base {
@@ -139,6 +155,14 @@
   }
   .stagger-children > * {
     @apply opacity-0 animate-fade-in;
+  }
+
+  .input-field {
+    @apply px-4 py-3 rounded-2xl bg-surface-card border border-surface-border focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-sm font-medium placeholder:text-surface-text/20;
+  }
+
+  .loading-spinner {
+    @apply animate-spin rounded-full border-2 border-current border-t-transparent;
   }
 }
 

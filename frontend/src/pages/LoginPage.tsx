@@ -210,7 +210,9 @@ const LoginPage: React.FC = () => {
         await AuditService.log('LOGIN', `User ${username} signed in`);
         
         const isMobile = window.innerWidth < 768;
-        const canRegister = isMobile && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        const canRegister = isMobile && 
+          window.PublicKeyCredential && 
+          await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         const alreadyRegistered = localStorage.getItem('biometricRegistered') === 'true';
         
         if (canRegister && !alreadyRegistered) {
