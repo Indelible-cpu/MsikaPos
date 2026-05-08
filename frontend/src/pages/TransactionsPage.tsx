@@ -23,7 +23,7 @@ import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import toast from 'react-hot-toast';
-import html2canvas from 'html2canvas';
+
 import { clsx } from 'clsx';
 
 type TimeFilter = 'Today' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
@@ -183,25 +183,16 @@ const TransactionsPage: React.FC = () => {
     }
   };
 
-  const handleShareWhatsApp = async (sale: LocalSale) => {
+  const handleShareWhatsApp = (sale: LocalSale) => {
     try {
-      const receiptElement = document.getElementById('print-container');
-      if (!receiptElement) return;
-      
-      toast.loading('Generating shareable receipt...', { id: 'share' });
-      
-      // Temporarily make it visible for capture
-      receiptElement.classList.remove('hidden');
-      await html2canvas(receiptElement, { scale: 2 });
-      receiptElement.classList.add('hidden');
-      
       const itemsText = sale.items.map(i => `▫️ ${i.productName}\n   ${i.quantity} x MK ${i.unitPrice.toLocaleString()} = *MK ${i.lineTotal.toLocaleString()}*`).join('\n\n');
-      const text = `*Support Receipt*\n🧾 *Order #${sale.invoiceNo}*\n\n*ITEMS:*\n${itemsText}\n\n*TOTAL: MK ${sale.total.toLocaleString()}*\n\n_Thank you for your business!_`;
+      const companyName = localStorage.getItem('companyName') || 'MsikaPos';
+      const text = `*Receipt from ${companyName}*\n🧾 *Order #${sale.invoiceNo}*\n\n*Items:*\n${itemsText}\n\n*Total: MK ${sale.total.toLocaleString()}*\n\n_Thank you for your business!_`;
       
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
-      toast.success('WhatsApp opened', { id: 'share' });
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      toast.success('WhatsApp opened');
     } catch {
-      toast.error('Failed to share', { id: 'share' });
+      toast.error('Failed to share');
     }
   };
 
@@ -337,16 +328,16 @@ const TransactionsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
              <div className="glass-card border border-border/50 p-5 rounded-2xl flex items-center gap-8 shadow-sm">
                 <div>
-                   <div className="text-[9px] font-black tracking-widest text-muted-foreground uppercase mb-1">Volume</div>
-                   <div className="text-2xl font-black text-foreground">{totalSalesCount}</div>
+                   <div className="text-[9px] font-bold tracking-widest text-muted-foreground capitalize mb-1">Volume</div>
+                   <div className="text-2xl font-bold text-foreground">{totalSalesCount}</div>
                 </div>
                 <div className="h-10 w-px bg-border/50"></div>
                 <div>
-                   <div className="text-[9px] font-black tracking-widest text-muted-foreground uppercase mb-1">Net revenue</div>
-                   <div className="text-2xl font-black text-primary">MK {totalRevenue.toLocaleString()}</div>
+                   <div className="text-[9px] font-bold tracking-widest text-muted-foreground capitalize mb-1">Net revenue</div>
+                   <div className="text-2xl font-bold text-primary">MK {totalRevenue.toLocaleString()}</div>
                 </div>
              </div>
-             <div className="hidden md:flex items-center justify-end px-4 text-[9px] font-black text-muted-foreground/20 tracking-widest uppercase">
+             <div className="hidden md:flex items-center justify-end px-4 text-[9px] font-bold text-muted-foreground/20 tracking-widest capitalize">
                 Filter: {timeFilter} {dateFilter ? `| ${dateFilter}` : ''} {skuFilter ? `| SKU: ${skuFilter}` : ''}
              </div>
         </div>
@@ -355,7 +346,7 @@ const TransactionsPage: React.FC = () => {
       <div className="p-0 stagger-children">
         <div className="glass-panel border-b border-border/50 overflow-hidden divide-y divide-border/30">
           {sales?.length === 0 ? (
-            <div className="p-20 text-center text-muted-foreground/20 font-black text-[10px] tracking-widest uppercase">No transactions found matching your filters</div>
+             <div className="p-20 text-center text-muted-foreground/20 font-bold text-[10px] tracking-widest capitalize">No transactions found matching your filters</div>
           ) : (
             sales?.map(sale => (
               <div key={sale.id} className="px-6 md:px-12 py-6 flex justify-between items-center group hover:bg-primary/5 transition-all relative btn-press">
@@ -364,13 +355,13 @@ const TransactionsPage: React.FC = () => {
                        <ArrowLeftRight className="w-6 h-6" />
                     </div>
                     <div>
-                       <div className="font-black text-base tracking-tight group-hover:text-primary transition-colors uppercase">{sale.invoiceNo}</div>
+                       <div className="font-bold text-base tracking-tight group-hover:text-primary transition-colors capitalize">{sale.invoiceNo}</div>
                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] text-muted-foreground font-black tracking-widest uppercase">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')}</span>
+                          <span className="text-[10px] text-muted-foreground font-bold tracking-widest capitalize">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')}</span>
                           <span className="text-[10px] text-muted-foreground/10">•</span>
-                          <span className="text-[10px] text-muted-foreground font-black tracking-widest uppercase">{sale.itemsCount} items</span>
+                          <span className="text-[10px] text-muted-foreground font-bold tracking-widest capitalize">{sale.itemsCount} items</span>
                           <span className="text-[10px] text-muted-foreground/10">•</span>
-                          <span className={clsx("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", sale.paymentMode === 'Credit' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary')}>
+                          <span className={clsx("px-2 py-0.5 rounded text-[8px] font-bold capitalize tracking-widest", sale.paymentMode === 'Credit' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary')}>
                              {sale.paymentMode}
                           </span>
                        </div>
@@ -379,8 +370,8 @@ const TransactionsPage: React.FC = () => {
 
                  <div className="flex items-center gap-8">
                     <div className="text-right hidden sm:block">
-                       <div className="text-lg font-black text-primary uppercase">MK {sale.total.toLocaleString()}</div>
-                       <div className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">{sale.customerId || 'Walk-in customer'}</div>
+                        <div className="text-lg font-bold text-primary capitalize">MK {sale.total.toLocaleString()}</div>
+                        <div className="text-[9px] text-muted-foreground font-bold capitalize tracking-widest">{sale.customerId || 'Walk-in customer'}</div>
                     </div>
 
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -430,7 +421,7 @@ const TransactionsPage: React.FC = () => {
               <button 
                 onClick={() => setViewMode('receipt')}
                 className={clsx(
-                  "px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all flex items-center gap-2",
+                  "px-6 py-2.5 rounded-xl text-[10px] font-bold tracking-widest transition-all flex items-center gap-2",
                   viewMode === 'receipt' ? "bg-primary-500 text-white shadow-lg" : "text-surface-text/40 hover:bg-surface-border/50"
                 )}
               >
@@ -439,7 +430,7 @@ const TransactionsPage: React.FC = () => {
               <button 
                 onClick={() => setViewMode('invoice')}
                 className={clsx(
-                  "px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all flex items-center gap-2",
+                  "px-6 py-2.5 rounded-xl text-[10px] font-bold tracking-widest transition-all flex items-center gap-2",
                   viewMode === 'invoice' ? "bg-primary-500 text-white shadow-lg" : "text-surface-text/40 hover:bg-surface-border/50"
                 )}
               >
@@ -481,19 +472,19 @@ const TransactionsPage: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4">
               <button 
                 onClick={() => window.print()} 
-                className="flex-1 py-5 bg-surface-bg border border-surface-border hover:border-primary-500/20 rounded-2xl text-[10px] font-black tracking-[0.2em] flex items-center justify-center gap-2 transition-all uppercase"
+                className="flex-1 py-5 bg-surface-bg border border-surface-border hover:border-primary-500/20 rounded-2xl text-[10px] font-bold tracking-[0.2em] flex items-center justify-center gap-2 transition-all capitalize"
               >
                 <Printer className="w-4 h-4" /> Reprint
               </button>
               <button 
                 onClick={() => handleShareWhatsApp(selectedSale)}
-                className="flex-1 py-5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white rounded-2xl text-[10px] font-black tracking-[0.2em] flex items-center justify-center gap-2 transition-all uppercase"
+                className="flex-1 py-5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white rounded-2xl text-[10px] font-bold tracking-[0.2em] flex items-center justify-center gap-2 transition-all capitalize"
               >
                 <MessageSquare className="w-4 h-4" /> Reshare WhatsApp
               </button>
               <button 
                 onClick={() => setSelectedSaleId(null)} 
-                className="flex-1 btn-primary !py-5 text-[10px] font-black tracking-[0.2em] shadow-xl shadow-primary-500/20 uppercase"
+                className="flex-1 btn-primary !py-5 text-[10px] font-bold tracking-[0.2em] shadow-xl shadow-primary-500/20 capitalize"
               >
                 Done
               </button>
@@ -512,9 +503,9 @@ const TransactionsPage: React.FC = () => {
         <div className="p-8 space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Payment method</label>
+              <label className="text-[10px] font-bold tracking-widest text-surface-text/40 ml-1 capitalize">Payment method</label>
               <select 
-                className="input-field w-full py-4 px-6 text-sm font-black uppercase"
+                className="input-field w-full py-4 px-6 text-sm font-bold capitalize"
                 value={editForm.paymentMode}
                 onChange={(e) => setEditForm({...editForm, paymentMode: e.target.value})}
                 title="Select payment mode"
@@ -526,10 +517,10 @@ const TransactionsPage: React.FC = () => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Customer (Optional)</label>
+              <label className="text-[10px] font-bold tracking-widest text-surface-text/40 ml-1 capitalize">Customer (Optional)</label>
               <input 
                 type="text" 
-                className="input-field w-full py-4 px-6 text-sm font-black uppercase"
+                className="input-field w-full py-4 px-6 text-sm font-bold capitalize"
                 placeholder="Customer Name or ID"
                 value={editForm.customerId}
                 onChange={(e) => setEditForm({...editForm, customerId: e.target.value})}
@@ -538,7 +529,7 @@ const TransactionsPage: React.FC = () => {
           </div>
           <button 
             onClick={saveEdit}
-            className="w-full btn-primary !py-5 text-[10px] font-black tracking-widest shadow-xl shadow-primary-500/20 uppercase"
+            className="w-full btn-primary !py-5 text-[10px] font-bold tracking-widest shadow-xl shadow-primary-500/20 capitalize"
           >
             Save changes
           </button>
