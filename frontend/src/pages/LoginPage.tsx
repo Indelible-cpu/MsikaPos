@@ -24,7 +24,6 @@ const LoginPage: React.FC = () => {
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
   const [loginMode, setLoginMode] = useState<'biometric' | 'password'>('password');
-  const [hasPromptedBiometric, setHasPromptedBiometric] = useState(false);
 
   const handleBiometricLogin = useCallback(async () => {
     try {
@@ -54,8 +53,7 @@ const LoginPage: React.FC = () => {
             rpId: window.location.hostname,
             userVerification: 'required',
             allowCredentials
-          },
-          mediation: 'required'
+          }
         });
 
         const userDataStr = localStorage.getItem('user');
@@ -175,16 +173,11 @@ const LoginPage: React.FC = () => {
     checkBiometrics();
   }, []);
 
-  // Auto-trigger biometric prompt
+  // Biometric auto-trigger removed to ensure user manual interaction only
+  // per USER request: "it must start when user touch the biometric btn on the device"
   useEffect(() => {
-    if (loginMode === 'biometric' && !hasPromptedBiometric && !loading) {
-      const timer = setTimeout(() => {
-        handleBiometricLogin();
-        setHasPromptedBiometric(true);
-      }, 500); // Small delay for smooth entry
-      return () => clearTimeout(timer);
-    }
-  }, [loginMode, hasPromptedBiometric, loading, handleBiometricLogin]);
+    // Mode tracking logic if needed in future
+  }, [loginMode]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -343,8 +336,8 @@ const LoginPage: React.FC = () => {
               className="flex flex-col items-center py-4"
             >
               <div className="text-center mb-8">
-                <h2 className="text-xl font-black tracking-tight mb-2">Biometric Security</h2>
-                <p className="text-[9px] font-black tracking-widest text-surface-text/60 uppercase">Fingerprint or Face ID</p>
+                <h2 className="text-xl font-black tracking-tight mb-2">Fingerprint Access</h2>
+                <p className="text-[9px] font-black tracking-widest text-surface-text/60 uppercase">Touch the fingerprint sensor</p>
               </div>
 
               <button 
@@ -369,7 +362,7 @@ const LoginPage: React.FC = () => {
                   disabled={loading}
                   className="w-full h-14 bg-primary-500 text-white rounded-2xl font-black tracking-widest text-[10px] shadow-xl shadow-primary-500/20 active:scale-95 transition-all"
                 >
-                  Unlock System
+                  Verify Fingerprint
                 </button>
                 <button 
                   onClick={() => setLoginMode('password')}

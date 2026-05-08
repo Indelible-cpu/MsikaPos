@@ -16,13 +16,15 @@ import {
   CreditCard,
   Smartphone,
   User,
-  MessageCircle,
+  MessageCircle as WhatsAppIcon,
+  Phone,
   Calendar,
   FileText,
   ShieldAlert,
   Building2,
   MessageSquare,
-  Package
+  Package,
+  Info
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
@@ -56,6 +58,7 @@ const POSPage: React.FC = () => {
   const [creditMode, setCreditMode] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [witnessPhone, setWitnessPhone] = useState('');
   const [idNumber, setIdNumber] = useState('');
   const [village, setVillage] = useState('');
   const [amountPaid, setAmountPaid] = useState('');
@@ -107,13 +110,17 @@ const POSPage: React.FC = () => {
 
   const products = useLiveQuery(
     async () => {
-      if (searchTerm.length >= 2) {
-        const byName = await db.products.where('name').startsWithIgnoreCase(searchTerm).filter(p => !p.deleted).toArray();
-        const bySku = await db.products.where('sku').equals(searchTerm).filter(p => !p.deleted).toArray();
-        return Array.from(new Map([...byName, ...bySku].map(p => [p.id, p])).values());
-      } else {
-        return await db.products.filter(p => !p.deleted && p.status === 'ACTIVE').toArray();
+      // Always fetch active products first as base
+      const allActive = await db.products.where('status').equals('ACTIVE').filter(p => !p.deleted).toArray();
+      
+      if (searchTerm.length >= 1) {
+        const term = searchTerm.toLowerCase();
+        return allActive.filter(p => 
+          p.name.toLowerCase().includes(term) || 
+          p.sku.toLowerCase().includes(term)
+        );
       }
+      return allActive;
     },
     [searchTerm]
   );
@@ -129,7 +136,7 @@ const POSPage: React.FC = () => {
 
   const displayedProducts = useMemo(() => {
     if (!products) return [];
-    if (searchTerm.length >= 2 || showAll) return products;
+    if (searchTerm.length >= 1 || showAll) return products;
     
     // Deterministic shuffle within the interval window
     const shuffled = [...products].sort((a, b) => {
@@ -137,7 +144,7 @@ const POSPage: React.FC = () => {
       const hashB = (b.id * 13 + randomSeed) % 100;
       return hashA - hashB;
     });
-    return shuffled.slice(0, 24); // Show 24 products (3-4 rows)
+    return shuffled.slice(0, 30); // Show 30 products (at least 5 rows on mobile)
   }, [products, searchTerm, showAll, randomSeed]);
 
   const addToCart = useCallback((product: LocalProduct) => {
@@ -272,6 +279,7 @@ const POSPage: React.FC = () => {
         id: customerId,
         name: customerName,
         phone: whatsappNumber,
+        witnessPhone: witnessPhone,
         idNumber: idNumber.toUpperCase().substring(0, 8),
         village: village,
         balance: balance,
@@ -282,6 +290,20 @@ const POSPage: React.FC = () => {
         synced: 0
       };
       await db.customers.add(newCustomer);
+
+      // Record initial deposit in history
+      if (paidAmt > 0) {
+        await db.debtPayments.add({
+          id: crypto.randomUUID(),
+          customerId: customerId,
+          amount: paidAmt,
+          paymentMethod: 'Cash',
+          cashierName: user.fullname || 'Cashier',
+          createdAt: new Date().toISOString(),
+          synced: 0,
+          reference: 'INITIAL DEPOSIT'
+        });
+      }
 
       const invoiceNo = currentInvoiceNo;
       const saleItems: LocalSaleItem[] = cart.map(item => ({
@@ -336,6 +358,7 @@ const POSPage: React.FC = () => {
       setCreditMode(false);
       setCustomerName('');
       setWhatsappNumber('');
+      setWitnessPhone('');
       setIdNumber('');
       setVillage('');
       setAmountPaid('');
@@ -369,8 +392,12 @@ const POSPage: React.FC = () => {
                  <input title="Customer Name" aria-label="Customer Name" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Full Name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
                </div>
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
-                 <MessageCircle className="w-5 h-5 text-success mr-4" />
-                 <input title="WhatsApp Number" aria-label="WhatsApp Number" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="WhatsApp Number" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
+                 <WhatsAppIcon className="w-5 h-5 text-emerald-500 fill-emerald-500/20 mr-4" />
+                 <input title="Phone Number" aria-label="Phone Number" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Phone Number" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
+               </div>
+               <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
+                 <Phone className="w-5 h-5 text-primary mr-4" />
+                 <input title="Witness Phone" aria-label="Witness Phone" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Witness Phone" value={witnessPhone} onChange={e => setWitnessPhone(e.target.value)} />
                </div>
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
                  <ShieldAlert className="w-5 h-5 text-amber-500 mr-4" />
@@ -378,7 +405,7 @@ const POSPage: React.FC = () => {
                </div>
                <div className="flex items-center px-6 py-4 focus-within:bg-primary/5 transition-colors">
                  <Building2 className="w-5 h-5 text-blue-500 mr-4" />
-                 <input title="Location/Village" aria-label="Location/Village" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Location / Village" value={village} onChange={e => setVillage(e.target.value)} />
+                 <input title="Location / Village" aria-label="Location / Village" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Location / Village" value={village} onChange={e => setVillage(e.target.value)} />
                </div>
              </div>
            </div>
@@ -416,7 +443,7 @@ const POSPage: React.FC = () => {
                    <input title="Print Invoice" type="checkbox" className="w-5 h-5 accent-primary rounded-lg" checked={printInvoice} onChange={e => setPrintInvoice(e.target.checked)} />
                 </label>
                 <label className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-muted/10 transition-colors">
-                   <div className="flex items-center gap-4 text-[11px] text-foreground font-bold capitalize tracking-widest"><MessageCircle className="w-4 h-4 text-success" /> Send Copy Via WhatsApp</div>
+                   <div className="flex items-center gap-4 text-[11px] text-foreground font-bold capitalize tracking-widest"><WhatsAppIcon className="w-4 h-4 text-emerald-500 fill-emerald-500/10" /> Send Copy Via WhatsApp</div>
                    <input title="Send via WhatsApp" type="checkbox" className="w-5 h-5 accent-success rounded-lg" checked={sendWhatsapp} onChange={e => setSendWhatsapp(e.target.checked)} />
                 </label>
              </div>
@@ -508,25 +535,16 @@ const POSPage: React.FC = () => {
       </div>
 
       {cart.length > 0 && (
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-foreground capitalize tracking-widest text-[11px] ml-1">Current order ({cart.length})</h3>
+      <div className="py-6 space-y-4">
+        <div className="px-6 flex justify-between items-center">
+          <h3 className="font-bold text-foreground capitalize tracking-widest text-[11px] ml-1">Current Order ({cart.length})</h3>
           <div className="flex gap-4">
-            <button 
-              onClick={() => {
-                const val = prompt('Enter discount amount:', discount.toString());
-                if (val !== null) setDiscount(parseFloat(val) || 0);
-              }}
-              className="flex items-center gap-1 text-[10px] text-primary font-bold capitalize tracking-widest hover:underline transition-all"
-            >
-              Discount
-            </button>
             <button title="Clear Cart" aria-label="Clear Cart" onClick={() => setCart([])} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive font-bold capitalize tracking-widest transition-all">
-              <Trash2 className="w-3.5 h-3.5" /> Clear
+              <Trash2 className="w-3.5 h-3.5" /> Clear Order
             </button>
           </div>
         </div>
-        <div className="glass-card rounded-[2rem] border border-border overflow-hidden shadow-sm bg-card">
+        <div className="bg-card border-y border-border/50 shadow-sm">
           <table className="w-full text-sm">
             <thead className="bg-muted/30 text-muted-foreground font-bold border-b border-border/50 text-[9px] capitalize tracking-widest">
               <tr>
@@ -551,11 +569,26 @@ const POSPage: React.FC = () => {
               ))}
             </tbody>
           </table>
-          <div className="p-6 bg-muted/20 border-t border-border/50 flex flex-col items-end gap-2 text-sm">
-            <div className="flex justify-between w-48"><span className="text-muted-foreground font-bold text-[10px] capitalize tracking-widest">Subtotal</span><span className="font-bold text-foreground">MK {cartSubtotal.toLocaleString()}</span></div>
-            {discount > 0 && <div className="flex justify-between w-48"><span className="text-destructive/60 font-bold text-[10px] capitalize tracking-widest">Discount</span><span className="font-bold text-destructive">-MK {discount.toLocaleString()}</span></div>}
-            {taxConfig.rate > 0 && <div className="flex justify-between w-48"><span className="text-muted-foreground font-bold text-[10px] capitalize tracking-widest">Tax ({taxConfig.rate}%)</span><span className="font-bold text-foreground">MK {taxAmount.toLocaleString()}</span></div>}
-            <div className="flex justify-between w-48 text-lg font-bold mt-2 pt-2 border-t border-border/20"><span className="text-foreground capitalize tracking-tighter">TOTAL</span><span className="text-primary tracking-tighter">MK {finalTotal.toLocaleString()}</span></div>
+          <div className="p-6 bg-muted/10 border-t border-border/50 flex flex-col items-end gap-3 text-sm">
+            <div className="flex justify-between w-full max-w-xs"><span className="text-muted-foreground font-bold text-[10px] capitalize tracking-widest">Subtotal</span><span className="font-bold text-foreground">MK {cartSubtotal.toLocaleString()}</span></div>
+            
+            <div className="flex justify-between items-center w-full max-w-xs">
+              <span className="text-muted-foreground font-bold text-[10px] capitalize tracking-widest">Apply Discount</span>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">MK</span>
+                <input 
+                  type="number" 
+                  title="Discount Amount"
+                  placeholder="0.00"
+                  className="w-32 bg-background border border-border/50 rounded-xl px-9 py-2 text-right text-[11px] font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  value={discount || ''} 
+                  onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} 
+                />
+              </div>
+            </div>
+
+            {taxConfig.rate > 0 && <div className="flex justify-between w-full max-w-xs"><span className="text-muted-foreground font-bold text-[10px] capitalize tracking-widest">Tax ({taxConfig.rate}%)</span><span className="font-bold text-foreground">MK {taxAmount.toLocaleString()}</span></div>}
+            <div className="flex justify-between w-full max-w-xs text-xl font-bold mt-2 pt-4 border-t border-border/20"><span className="text-foreground capitalize tracking-tighter">TOTAL AMOUNT</span><span className="text-primary tracking-tighter">MK {finalTotal.toLocaleString()}</span></div>
           </div>
         </div>
       </div>
@@ -575,21 +608,37 @@ const POSPage: React.FC = () => {
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 min-h-[400px]">
           {displayedProducts.map((p: LocalProduct) => (
-            <div key={p.id} onClick={() => addToCart(p)} className="glass-card bg-card border border-border/50 rounded-3xl p-4 flex flex-col items-center gap-3 cursor-pointer btn-press group hover:border-primary/30 transition-all shadow-sm">
-              <div className="w-16 h-16 flex items-center justify-center bg-muted/20 rounded-2xl group-hover:scale-110 transition-transform overflow-hidden relative">
+            <div key={p.id} onClick={() => addToCart(p)} className="glass-card bg-card border border-border/50 rounded-2xl p-2.5 flex flex-col items-center gap-2 cursor-pointer btn-press group hover:border-primary/30 transition-all shadow-sm relative overflow-hidden">
+              <div className="w-12 h-12 flex items-center justify-center bg-muted/20 rounded-xl group-hover:scale-110 transition-transform overflow-hidden relative border border-border/30">
                 {p.imageUrl ? (
                   <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-primary/5">
-                    <Package className="w-7 h-7 text-primary/20" />
-                    <span className="text-[7px] font-bold text-primary/20 absolute bottom-2 uppercase tracking-widest">{p.isService ? 'Service' : 'Item'}</span>
+                    <Package className="w-5 h-5 text-primary/20" />
+                    <span className="text-[6px] font-bold text-primary/20 absolute bottom-1.5 uppercase tracking-tight">{p.isService ? 'Srv' : 'Item'}</span>
                   </div>
                 )}
               </div>
               <div className="text-center w-full">
-                <div className="text-[10px] font-bold text-foreground leading-tight truncate px-1 capitalize">{toSentenceCase(p.name)}</div>
-                <div className="text-[10px] text-primary font-bold mt-1">MK {p.sellPrice.toLocaleString()}</div>
+                <div className="text-[9px] font-bold text-foreground leading-tight truncate px-1 capitalize">{toSentenceCase(p.name)}</div>
+                <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                  <div className="text-[9px] text-primary font-bold">MK {p.sellPrice.toLocaleString()}</div>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toast.success(`${p.name}\nStock: ${p.quantity}\nSKU: ${p.sku}`, { icon: 'ℹ️', duration: 3000 });
+                    }}
+                    className="p-1 hover:bg-primary/10 rounded-full transition-colors"
+                  >
+                    <Info className="w-2.5 h-2.5 text-primary/40" />
+                  </button>
+                </div>
               </div>
+              {p.quantity <= 5 && !p.isService && (
+                <div className="absolute top-1 right-1">
+                   <div className="w-1.5 h-1.5 bg-destructive rounded-full animate-pulse" />
+                </div>
+              )}
             </div>
           ))}
           {!showAll && products && products.length > 24 && (

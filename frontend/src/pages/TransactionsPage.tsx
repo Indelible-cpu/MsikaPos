@@ -254,10 +254,10 @@ const TransactionsPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0 relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-4 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row items-center gap-4">
+      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+        <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
           {/* Main Search */}
-          <div className="relative flex-1 w-full">
+          <div className="relative flex-[2] min-w-[150px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input 
               type="text" 
@@ -269,22 +269,22 @@ const TransactionsPage: React.FC = () => {
           </div>
 
           {/* Date Filter */}
-          <div className="relative w-full md:w-44">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <div className="relative flex-1 min-w-[120px] md:w-44">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
             <input 
               type="date" 
-              className="input-field w-full pl-11 text-[11px] h-10 font-bold capitalize shadow-inner"
+              className="input-field w-full pl-9 text-[10px] h-9 font-bold capitalize shadow-inner"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
             />
           </div>
 
           {/* Scope Select */}
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
             <select 
               value={timeFilter} 
               onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
-              className="bg-card/50 border border-border/50 text-foreground text-[10px] font-bold tracking-widest px-4 h-10 rounded-xl appearance-none cursor-pointer hover:border-primary/50 transition-all capitalize btn-press"
+              className="bg-card/50 border border-border/50 text-foreground text-[9px] font-bold tracking-tight px-3 h-9 rounded-xl appearance-none cursor-pointer hover:border-primary/50 transition-all capitalize btn-press"
             >
               {['Today', 'Weekly', 'Monthly', 'Quarterly', 'Annual'].map(f => (
                 <option key={f} value={f}>{f}</option>
@@ -294,9 +294,9 @@ const TransactionsPage: React.FC = () => {
             {!readOnly && (
               <button 
                 onClick={handleExport}
-                className="btn-primary !px-6 h-10 text-[10px] font-bold tracking-widest shadow-xl shadow-primary/10 flex items-center gap-2 capitalize btn-press shrink-0"
+                className="btn-primary !px-4 h-9 text-[9px] font-bold tracking-tight shadow-xl shadow-primary/10 flex items-center gap-2 capitalize btn-press shrink-0"
               >
-                <Download className="w-4 h-4" /> Export
+                <Download className="w-3.5 h-3.5" /> Export
               </button>
             )}
           </div>

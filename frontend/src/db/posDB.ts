@@ -60,6 +60,7 @@ export interface LocalCustomer {
   id: string;
   name: string;
   phone: string;
+  witnessPhone?: string;
   balance: number; 
   totalCreditAmount: number; // Added: sum of all credit sales
   totalPaidAmount: number;   // Added: sum of all payments

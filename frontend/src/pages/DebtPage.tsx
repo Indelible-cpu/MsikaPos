@@ -7,7 +7,6 @@ import { useLocation } from 'react-router-dom';
 import { 
   Search, 
   Users, 
-  History as HistoryIcon,
   Camera,
   CheckCircle2,
   Calendar,
@@ -21,6 +20,7 @@ import {
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { restrictPhone } from '../utils/phoneUtils';
+import { MessageCircle as WhatsAppIcon, Shield } from 'lucide-react';
 
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
@@ -54,7 +54,7 @@ interface ReceiptData {
   change: number;
 }
 
-const MALAWI_PHONE_REGEX = /^\d{10}$|^\d{13}$/;
+const MALAWI_PHONE_REGEX = /^\d{10,13}$/;
 
 
 
@@ -72,11 +72,21 @@ const DebtPage: React.FC = () => {
   const [signature, setSignature] = useState<string | null>(null);
   const sigCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [custForm, setCustForm] = useState({ 
+  interface CustomerForm {
+    name: string;
+    phone: string;
+    idNumber: string;
+    village: string;
+    witnessPhone: string;
+    livePhoto: string;
+  }
+
+  const [custForm, setCustForm] = useState<CustomerForm>({ 
     name: '', 
     phone: '',
     idNumber: '',
     village: '',
+    witnessPhone: '',
     livePhoto: ''
   });
 
@@ -85,7 +95,7 @@ const DebtPage: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const resetForm = () => {
-    setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '' });
+    setCustForm({ name: '', phone: '', idNumber: '', village: '', witnessPhone: '', livePhoto: '' });
   };
 
   // Handle POS Redirect
@@ -183,13 +193,38 @@ const DebtPage: React.FC = () => {
     }
   });
 
+  const localCredits = useLiveQuery(
+    () => selectedCustomer ? db.salesQueue.where('customerId').equals(selectedCustomer.id).toArray() : Promise.resolve([] as any[]),
+    [selectedCustomer]
+  );
+
   const filteredCredits = useMemo(() => {
     if (!selectedCustomer) return [];
-    return allCredits?.filter(c => 
+    const fromApi = allCredits?.filter(c => 
       c.customer_phone === selectedCustomer.phone || 
       c.customer_name.toLowerCase() === selectedCustomer.name.toLowerCase()
     ) || [];
-  }, [allCredits, selectedCustomer]);
+
+    const fromLocal = (localCredits || []).map(s => ({
+      id: s.id,
+      invoice_no: s.invoiceNo,
+      original_amount: s.total,
+      paid_amount: s.paid,
+      due_date: s.dueDate || 'N/A',
+      current_total: s.total,
+      status: s.status === 'COMPLETED' ? 'Paid' : 'Pending'
+    }));
+
+    // Merge by invoice number to avoid duplicates
+    const combined = [...fromLocal];
+    fromApi.forEach(apiCredit => {
+      if (!combined.find(l => l.invoice_no === apiCredit.invoice_no)) {
+        combined.push(apiCredit);
+      }
+    });
+
+    return combined;
+  }, [allCredits, selectedCustomer, localCredits]);
 
   const startCamera = async () => {
     setUseCamera(true);
@@ -412,23 +447,32 @@ const DebtPage: React.FC = () => {
 
               <div className="glass-panel p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-border/50 shadow-xl flex flex-col xl:flex-row justify-between items-center gap-8">
                 <div className="flex items-center gap-6 w-full xl:w-auto">
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/10 rounded-3xl flex items-center justify-center text-primary shrink-0"><HistoryIcon className="w-8 h-8 md:w-10 md:h-10" /></div>
+                  <div className="w-20 h-20 md:w-24 md:h-24 bg-primary/10 rounded-[2.5rem] border-2 border-primary/20 overflow-hidden shrink-0 flex items-center justify-center shadow-inner">
+                    {selectedCustomer.livePhoto ? (
+                      <img src={selectedCustomer.livePhoto} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Users className="w-10 h-10 md:w-12 md:h-12 text-primary" />
+                    )}
+                  </div>
                   <div>
                      <h2 className="text-xl md:text-3xl font-bold tracking-tighter capitalize truncate max-w-[200px] md:max-w-none">{selectedCustomer.name}</h2>
-                    <p className="text-[8px] md:text-[10px] font-bold text-muted-foreground tracking-[0.2em] capitalize mt-1">Outstanding credit account</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <WhatsAppIcon className="w-4 h-4 text-emerald-500 fill-emerald-500/20" />
+                      <p className="text-[10px] md:text-[12px] font-bold text-muted-foreground tracking-tight">{selectedCustomer.phone}</p>
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12 text-right w-full xl:w-auto border-t xl:border-t-0 border-border/50 pt-6 xl:pt-0">
                   <div>
-                    <div className="text-[8px] md:text-[9px] font-bold text-muted-foreground capitalize mb-1 tracking-widest">Total credit</div>
+                    <div className="text-[8px] md:text-[9px] font-bold text-muted-foreground capitalize mb-1 tracking-widest">Total Credit</div>
                     <div className="text-sm md:text-xl font-bold tracking-tighter text-foreground">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="text-[8px] md:text-[9px] font-bold text-muted-foreground capitalize mb-1 tracking-widest">Total paid</div>
+                    <div className="text-[8px] md:text-[9px] font-bold text-muted-foreground capitalize mb-1 tracking-widest">Total Paid</div>
                     <div className="text-sm md:text-xl font-bold text-success tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
                   </div>
                   <div className="col-span-2 lg:col-span-1 border-t lg:border-t-0 border-border/50 pt-4 lg:pt-0">
-                    <div className="text-[8px] md:text-[9px] font-bold text-destructive/40 capitalize mb-1 tracking-widest">Balance due</div>
+                    <div className="text-[8px] md:text-[9px] font-bold text-destructive/40 capitalize mb-1 tracking-widest">Balance Due</div>
                     <div className="text-3xl md:text-5xl font-bold text-destructive tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
                   </div>
                 </div>
@@ -436,8 +480,18 @@ const DebtPage: React.FC = () => {
 
               <div className="space-y-6">
                  <div className="flex items-center justify-between border-b border-surface-border pb-4">
-                  <h3 className="text-lg font-bold tracking-tighter flex items-center gap-3"><HistoryIcon className="w-5 h-5 text-primary-500" /> Credit details</h3>
-                  <button type="button" title="Open Full Profile" aria-label="Open Full Profile" onClick={() => setIsProfileModalOpen(true)} className="text-[10px] font-bold text-primary-500 capitalize tracking-widest underline">View profile</button>
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-lg font-bold tracking-tighter flex items-center gap-3"><Shield className="w-5 h-5 text-primary-500" /> Credit Details</h3>
+                    <button 
+                      onClick={() => {
+                        window.location.href = '/pos'; // Simplest way to redirect and reset POS
+                      }}
+                      className="px-4 py-1.5 bg-primary/10 text-primary rounded-xl text-[9px] font-bold capitalize tracking-widest border border-primary/20 hover:bg-primary/20 transition-all btn-press"
+                    >
+                      + Top Up Debt
+                    </button>
+                  </div>
+                  <button type="button" title="Open Full Profile" aria-label="Open Full Profile" onClick={() => setIsProfileModalOpen(true)} className="text-[10px] font-bold text-primary-500 capitalize tracking-widest underline">View Profile</button>
                 </div>
                 <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
@@ -479,7 +533,7 @@ const DebtPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-6 pt-10">
-                  <h3 className="text-lg font-bold tracking-tighter flex items-center gap-3"><HistoryIcon className="w-5 h-5 text-emerald-500" /> Repayment history</h3>
+                  <h3 className="text-lg font-bold tracking-tighter flex items-center gap-3"><RotateCcw className="w-5 h-5 text-emerald-500" /> Repayment History</h3>
                   <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse min-w-[800px]">
@@ -604,15 +658,19 @@ const DebtPage: React.FC = () => {
                   </div>
                   <div className="space-y-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Full legal name</label>
+                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Full Name</label>
                       <input required placeholder="ENTER NAME" className="input-field w-full !py-4 font-bold uppercase" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value.toUpperCase()})} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Phone number</label>
+                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Phone Number</label>
                       <input required placeholder="0..." className="input-field w-full !py-4 font-bold" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">National ID number</label>
+                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Witness Phone</label>
+                      <input placeholder="WITNESS PHONE" className="input-field w-full !py-4 font-bold" value={custForm.witnessPhone} onChange={e => setCustForm({...custForm, witnessPhone: restrictPhone(e.target.value)})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">National ID Number</label>
                       <input placeholder="ID NUMBER" maxLength={8} className="input-field w-full !py-4 uppercase font-bold" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value.toUpperCase().substring(0, 8)})} />
                     </div>
                     <div className="space-y-2">
@@ -635,7 +693,13 @@ const DebtPage: React.FC = () => {
                   <div className="flex-1 space-y-6">
                     <div><h3 className="text-3xl font-black uppercase">{selectedCustomer.name}</h3><p className="text-primary-500 text-[10px] font-black uppercase">Registered {new Date(selectedCustomer.createdAt).toLocaleDateString()}</p></div>
                     <div className="grid grid-cols-2 gap-5">
-                      {[ {label: 'Phone Number', val: selectedCustomer.phone}, {label: 'National ID', val: selectedCustomer.idNumber || 'N/A'}, {label: 'Location / Village', val: selectedCustomer.village || 'N/A'}, {label: 'Total Paid', val: `MK ${(selectedCustomer.totalPaidAmount || 0).toLocaleString()}`} ].map((item, i) => (
+                      {[ 
+                        {label: 'Phone Number', val: selectedCustomer.phone}, 
+                        {label: 'Witness Phone', val: selectedCustomer.witnessPhone || 'N/A'},
+                        {label: 'National ID', val: selectedCustomer.idNumber || 'N/A'}, 
+                        {label: 'Location / Village', val: selectedCustomer.village || 'N/A'}, 
+                        {label: 'Total Paid', val: `MK ${(selectedCustomer.totalPaidAmount || 0).toLocaleString()}`} 
+                      ].map((item, i) => (
                         <div key={i} className="bg-muted/10 p-5 rounded-3xl border border-border/50">
                           <div className="text-[9px] font-black text-muted-foreground uppercase mb-1 tracking-widest">{item.label}</div>
                           <div className="text-[11px] font-black text-foreground">{item.val}</div>
@@ -645,7 +709,17 @@ const DebtPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex justify-between items-center pt-6 border-t border-surface-border">
-                  <button type="button" onClick={() => { setCustForm({ ...selectedCustomer } as typeof custForm); setIsEditing(true); }} className="px-8 py-3 bg-primary-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-primary-500/20">Edit Details</button>
+                  <button type="button" onClick={() => { 
+                    setCustForm({ 
+                      name: selectedCustomer.name,
+                      phone: selectedCustomer.phone,
+                      idNumber: selectedCustomer.idNumber || '',
+                      village: selectedCustomer.village || '',
+                      witnessPhone: selectedCustomer.witnessPhone || '',
+                      livePhoto: selectedCustomer.livePhoto || ''
+                    }); 
+                    setIsEditing(true); 
+                  }} className="px-8 py-3 bg-primary-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-primary-500/20">Edit Details</button>
                   <button
                     type="button"
                     onClick={() => {
@@ -700,15 +774,22 @@ const DebtPage: React.FC = () => {
             </div>
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Full legal name</label>
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Full Name</label>
                 <input required title="Full Name" aria-label="Full Name" placeholder="ENTER NAME" className="input-field w-full !py-4 font-bold uppercase" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value.toUpperCase()})} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Phone number</label>
-                <input required title="Phone Number" aria-label="Phone Number" placeholder="0..." className="input-field w-full !py-4 font-bold" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Phone Number</label>
+                <div className="relative">
+                  <WhatsAppIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
+                  <input required title="Phone Number" aria-label="Phone Number" placeholder="0..." className="input-field w-full !py-4 pl-12 font-bold" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
+                </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">National ID number</label>
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Witness Phone</label>
+                <input title="Witness Phone" aria-label="Witness Phone" placeholder="WITNESS PHONE" className="input-field w-full !py-4 font-bold" value={custForm.witnessPhone} onChange={e => setCustForm({...custForm, witnessPhone: restrictPhone(e.target.value)})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">National ID Number</label>
                 <input title="National ID" aria-label="National ID" maxLength={8} placeholder="ID NUMBER" className="input-field w-full !py-4 uppercase font-bold" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value.toUpperCase().substring(0, 8)})} />
               </div>
               <div className="space-y-2">
