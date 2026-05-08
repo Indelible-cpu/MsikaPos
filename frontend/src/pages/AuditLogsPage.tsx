@@ -18,7 +18,7 @@ import toast from 'react-hot-toast';
 interface AuditLog {
   id: string;
   action: string;
-  type: 'INFO' | 'WARNING' | 'ERROR';
+  type: 'Info' | 'Warning' | 'Error';
   details: string;
   username: string;
   createdAt: string;
@@ -52,10 +52,11 @@ const AuditLogsPage: React.FC = () => {
 
   const getLogIcon = (type: string) => {
     switch (type) {
-      case 'ERROR': return <AlertCircle className="w-5 h-5 text-destructive" />;
-      case 'WARNING': return <AlertTriangle className="w-5 h-5 text-amber-500" />;
+      case 'Error': return <AlertCircle className="w-5 h-5 text-destructive" />;
+      case 'Warning': return <AlertTriangle className="w-5 h-5 text-amber-500" />;
       default: return <Info className="w-5 h-5 text-primary" />;
     }
+
   };
 
   const handleExport = () => {
@@ -110,7 +111,7 @@ const AuditLogsPage: React.FC = () => {
               />
            </div>
            <div className="flex gap-2">
-              {['ALL', 'INFO', 'WARNING', 'ERROR'].map(t => (
+              {['ALL', 'Info', 'Warning', 'Error'].map(t => (
                 <button
                   key={t}
                   onClick={() => setTypeFilter(t)}
@@ -160,10 +161,11 @@ const AuditLogsPage: React.FC = () => {
                                {getLogIcon(log.type)}
                                <span className={clsx(
                                  "text-[10px] font-black tracking-widest px-3 py-1 rounded-lg uppercase border",
-                                 log.type === 'ERROR' ? "text-destructive border-destructive/10 bg-destructive/5" :
-                                 log.type === 'WARNING' ? "text-amber-500 border-amber-500/10 bg-amber-500/5" :
+                                 log.type === 'Error' ? "text-destructive border-destructive/10 bg-destructive/5" :
+                                 log.type === 'Warning' ? "text-amber-500 border-amber-500/10 bg-amber-500/5" :
                                  "text-primary border-primary/10 bg-primary/5"
                                )}>
+
                                   {log.action}
                                </span>
                             </div>

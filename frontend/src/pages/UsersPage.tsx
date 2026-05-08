@@ -33,7 +33,7 @@ interface User {
   phone: string;
   role: string;
   isVerified: boolean;
-  status: 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
+  status: 'Active' | 'Suspended' | 'Deactivated';
   createdAt: string;
 }
 
@@ -187,9 +187,9 @@ const UsersPage: React.FC = () => {
         });
       } else {
         const statusMap: Record<string, string> = {
-          SUSPEND: 'SUSPENDED',
-          DEACTIVATE: 'DEACTIVATED',
-          REACTIVATE: 'ACTIVE'
+          SUSPEND: 'Suspended',
+          DEACTIVATE: 'Deactivated',
+          REACTIVATE: 'Active'
         };
         await api.post('/users/status', {
           id: actionModal.user.id,
@@ -288,9 +288,9 @@ const UsersPage: React.FC = () => {
                       <div className="px-3 py-1 bg-primary-600/10 text-primary-400 border border-primary-500/20 rounded-full text-[8px] font-black tracking-widest">
                          {u.role}
                       </div>
-                      {u.status !== 'ACTIVE' && (
-                        <div className={`px-3 py-1 ${u.status === 'SUSPENDED' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'} border rounded-full text-[8px] font-black tracking-widest`}>
-                           {(u.status || 'ACTIVE').length > 0 ? (u.status || 'ACTIVE').charAt(0) + (u.status || 'ACTIVE').slice(1).toLowerCase() : ''}
+                      {u.status !== 'Active' && (
+                        <div className={`px-3 py-1 ${u.status === 'Suspended' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'} border rounded-full text-[8px] font-black tracking-widest`}>
+                           {(u.status || 'Active').length > 0 ? (u.status || 'Active').charAt(0) + (u.status || 'Active').slice(1).toLowerCase() : ''}
                         </div>
                       )}
                       {u.isVerified && (
@@ -327,7 +327,7 @@ const UsersPage: React.FC = () => {
                     </button>
                     {!readOnly && (
                       <>
-                        {u.status === 'ACTIVE' ? (
+                        {u.status === 'Active' ? (
                           <>
                             <button 
                               onClick={() => setActionModal({ isOpen: true, type: 'SUSPEND', user: u, reason: '' })} 

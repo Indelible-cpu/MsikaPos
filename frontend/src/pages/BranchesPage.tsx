@@ -32,7 +32,7 @@ interface Branch {
   tinNumber?: string;
   openingTime?: string;
   closingTime?: string;
-  status?: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
+  status?: 'Active' | 'Inactive' | 'Maintenance';
 }
 
 const BranchesPage: React.FC = () => {
@@ -59,7 +59,7 @@ const BranchesPage: React.FC = () => {
     tinNumber: string;
     openingTime: string;
     closingTime: string;
-    status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE';
+    status: 'Active' | 'Inactive' | 'Maintenance';
   }>({ 
     name: '', 
     address: '', 
@@ -74,7 +74,7 @@ const BranchesPage: React.FC = () => {
     tinNumber: '',
     openingTime: '08:00',
     closingTime: '17:00',
-    status: 'ACTIVE'
+    status: 'Active'
   });
 
   const resetForm = () => {
@@ -92,7 +92,7 @@ const BranchesPage: React.FC = () => {
       tinNumber: '',
       openingTime: '08:00',
       closingTime: '17:00',
-      status: 'ACTIVE'
+      status: 'Active'
     });
   };
 
@@ -184,7 +184,7 @@ const BranchesPage: React.FC = () => {
       tinNumber: branch.tinNumber || '',
       openingTime: branch.openingTime || '08:00',
       closingTime: branch.closingTime || '18:00',
-      status: branch.status || 'ACTIVE'
+      status: branch.status || 'Active'
     });
     setIsModalOpen(true);
   };
@@ -352,10 +352,10 @@ const BranchesPage: React.FC = () => {
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="br-status">Operational status</label>
-                      <select id="br-status" title="Operational Status" aria-label="Operational Status" className="input-field w-full py-3 px-4 font-black" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE'})}>
-                        <option value="ACTIVE">Operational (Active)</option>
-                        <option value="INACTIVE">Temporarily Closed</option>
-                        <option value="MAINTENANCE">Under Maintenance</option>
+                      <select id="br-status" title="Operational Status" aria-label="Operational Status" className="input-field w-full py-3 px-4 font-black" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value as 'Active' | 'Inactive' | 'Maintenance'})}>
+                        <option value="Active">Operational (Active)</option>
+                        <option value="Inactive">Temporarily Closed</option>
+                        <option value="Maintenance">Under Maintenance</option>
                       </select>
                     </div>
                   </div>
