@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct, LocalSale, LocalSaleItem, LocalCustomer } from '../db/posDB';
@@ -21,7 +21,8 @@ import {
   FileText,
   ShieldAlert,
   Building2,
-  MessageSquare
+  MessageSquare,
+  Package
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
@@ -111,11 +112,33 @@ const POSPage: React.FC = () => {
         const bySku = await db.products.where('sku').equals(searchTerm).filter(p => !p.deleted).toArray();
         return Array.from(new Map([...byName, ...bySku].map(p => [p.id, p])).values());
       } else {
-        return await db.products.filter(p => !p.deleted && p.status === 'ACTIVE').limit(48).toArray();
+        return await db.products.filter(p => !p.deleted && p.status === 'ACTIVE').toArray();
       }
     },
     [searchTerm]
   );
+
+  const [randomSeed, setRandomSeed] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRandomSeed(Date.now());
+    }, 30000); // Rotate products every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const displayedProducts = useMemo(() => {
+    if (!products) return [];
+    if (searchTerm.length >= 2 || showAll) return products;
+    
+    // Deterministic shuffle within the interval window
+    const shuffled = [...products].sort((a, b) => {
+      const hashA = (a.id * 13 + randomSeed) % 100;
+      const hashB = (b.id * 13 + randomSeed) % 100;
+      return hashA - hashB;
+    });
+    return shuffled.slice(0, 24); // Show 24 products (3-4 rows)
+  }, [products, searchTerm, showAll, randomSeed]);
 
   const addToCart = useCallback((product: LocalProduct) => {
     if (!product.isService && product.quantity <= 0) return toast.error('Out of stock');
@@ -550,25 +573,34 @@ const POSPage: React.FC = () => {
             {showAll ? 'Collapse' : 'Full catalog'}
           </button>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-          {(showAll ? products : products?.slice(0, 24))?.map(p => (
-            <div key={p.id} onClick={() => addToCart(p)} className="glass-card bg-card border border-border/50 rounded-2xl p-4 flex flex-col items-center gap-3 cursor-pointer btn-press group">
-              <div className="w-14 h-14 flex items-center justify-center bg-muted/20 rounded-xl group-hover:scale-110 transition-transform">
-                {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain" /> : <Plus className="w-6 h-6 text-muted-foreground/30" />}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 min-h-[400px]">
+          {displayedProducts.map((p: LocalProduct) => (
+            <div key={p.id} onClick={() => addToCart(p)} className="glass-card bg-card border border-border/50 rounded-3xl p-4 flex flex-col items-center gap-3 cursor-pointer btn-press group hover:border-primary/30 transition-all shadow-sm">
+              <div className="w-16 h-16 flex items-center justify-center bg-muted/20 rounded-2xl group-hover:scale-110 transition-transform overflow-hidden relative">
+                {p.imageUrl ? (
+                  <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-primary/5">
+                    <Package className="w-7 h-7 text-primary/20" />
+                    <span className="text-[7px] font-bold text-primary/20 absolute bottom-2 uppercase tracking-widest">{p.isService ? 'Service' : 'Item'}</span>
+                  </div>
+                )}
               </div>
               <div className="text-center w-full">
-                <div className="text-[10px] font-bold text-foreground leading-tight truncate capitalize">{toSentenceCase(p.name)}</div>
+                <div className="text-[10px] font-bold text-foreground leading-tight truncate px-1 capitalize">{toSentenceCase(p.name)}</div>
                 <div className="text-[10px] text-primary font-bold mt-1">MK {p.sellPrice.toLocaleString()}</div>
               </div>
             </div>
           ))}
-          <div 
-            onClick={() => setShowAll(true)}
-            className="glass-card bg-primary/10 border border-primary/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer text-primary btn-press"
-          >
-            <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20"><Plus className="w-5 h-5"/></div>
-            <span className="text-[10px] font-bold capitalize tracking-widest mt-1">More</span>
-          </div>
+          {!showAll && products && products.length > 24 && (
+            <div 
+              onClick={() => setShowAll(true)}
+              className="glass-card bg-primary/10 border border-primary/20 rounded-3xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer text-primary btn-press hover:bg-primary/20 transition-all shadow-sm"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20"><Plus className="w-5 h-5"/></div>
+              <span className="text-[10px] font-bold capitalize tracking-widest mt-1">Full catalog</span>
+            </div>
+          )}
         </div>
       </div>
 
