@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct, LocalSale, LocalSaleItem, LocalCustomer } from '../db/posDB';
+import { SyncService } from '../services/SyncService';
+import { apiFetch } from '../api/apiFetch';
 
 import { 
   Search, 
@@ -129,68 +131,82 @@ const POSPage: React.FC = () => {
       }
     };
     loadSettings();
+    // Trigger background sync on mount to ensure we have the latest remote data
+    SyncService.pushSales().catch(console.error);
   }, []);
+
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const products = useLiveQuery(
+  const [remoteProducts, setRemoteProducts] = useState<LocalProduct[]>([]);
+  const [isRemoteLoading, setIsRemoteLoading] = useState(false);
+
+  const localProducts = useLiveQuery(
     async () => {
-      if (searchTerm.length >= 1) {
-        const term = searchTerm.toLowerCase();
-        // Use index-based prefix search if possible, then filter
-        return await db.products
-          .where('name')
-          .startsWithIgnoreCase(term)
-          .or('sku')
-          .startsWithIgnoreCase(term)
-          .filter(p => p.status === 'ACTIVE' && !p.deleted)
-          .toArray();
-      }
-
-      // If not searching and not showing all, limit to a reasonable number to avoid fetching the whole DB
-      if (!showAll) {
-        return await db.products
-          .where('status')
-          .equals('ACTIVE')
-          .filter(p => !p.deleted)
-          .limit(150) // Fetch more than we show to allow for some shuffling
-          .toArray();
-      }
-
-      // If showing all, fetch everything
-      return await db.products
+      const allActive = await db.products
         .where('status')
         .equals('ACTIVE')
         .filter(p => !p.deleted)
         .toArray();
+
+      if (searchTerm.length >= 1) {
+        const term = searchTerm.toLowerCase();
+        return allActive.filter(p => 
+          p.name.toLowerCase().includes(term) || 
+          p.sku.toLowerCase().includes(term)
+        );
+      }
+
+      return allActive;
     },
-    [searchTerm, showAll]
+    [searchTerm]
   );
 
-  const [randomSeed, setRandomSeed] = useState(Date.now());
-
+  // Effect to fetch from remote DB when searching or on mount if local is empty
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRandomSeed(Date.now());
-    }, 30000); // Rotate products every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
+    let isMounted = true;
+    const fetchRemote = async () => {
+      if (!navigator.onLine) return;
+      setIsRemoteLoading(true);
+      try {
+        // Fetch fresh products from the remote DB
+        const data = await apiFetch(searchTerm ? `/products?search=${encodeURIComponent(searchTerm)}` : '/products');
+        if (isMounted && data.success) {
+          const items = data.data || data.updates?.products || [];
+          setRemoteProducts(items);
+          // Also sync these to local DB for offline use
+          if (items.length > 0) {
+            await db.products.bulkPut(items);
+          }
+        }
+      } catch (e) {
+        console.error('Remote fetch failed:', e);
+      } finally {
+        if (isMounted) setIsRemoteLoading(false);
+      }
+    };
+
+    const debounce = setTimeout(fetchRemote, searchTerm ? 500 : 2000);
+    return () => { isMounted = false; clearTimeout(debounce); };
+  }, [searchTerm]);
+
+  const products = useMemo(() => {
+    // Prioritize remote products if online and we have results
+    if (navigator.onLine && remoteProducts.length > 0) return remoteProducts;
+    return localProducts || [];
+  }, [localProducts, remoteProducts]);
+
 
   const displayedProducts = useMemo(() => {
     if (!products) return [];
-    if (searchTerm.length >= 1 || showAll) return products;
+    if (searchTerm.length >= 1 || showAll || products.length <= 48) return products;
     
-    // Efficiently pick 30 random-ish products without sorting the entire potentially large list
-    const result = [...products];
-    if (result.length > 30) {
-      // Pseudo-random but stable for the interval window
-      const startIdx = (randomSeed % (result.length - 30));
-      return result.slice(startIdx, startIdx + 30);
-    }
-    return result;
-  }, [products, searchTerm, showAll, randomSeed]);
+    // Pick 48 items to show initially on desktop/large screens
+    return products.slice(0, 48);
+  }, [products, searchTerm, showAll]);
 
   const addToCart = useCallback((product: LocalProduct) => {
+
     if (!product.isService && product.quantity <= 0) return toast.error('Out of stock');
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
@@ -566,11 +582,15 @@ const POSPage: React.FC = () => {
               id="product-search"
               title="Search Products"
               aria-label="Search Products"
-              className="w-full pl-10 pr-4 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all" 
-              placeholder="Search items..."
+              className={clsx(
+                "w-full pl-10 pr-4 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all",
+                isRemoteLoading && "animate-pulse border-primary/30"
+              )} 
+              placeholder={isRemoteLoading ? "Searching remote DB..." : "Search items..."}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
+
           </div>
           <button 
             title="Scan Barcode"
