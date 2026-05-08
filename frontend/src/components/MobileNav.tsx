@@ -32,8 +32,8 @@ const MobileNav: React.FC = () => {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border/50 md:hidden safe-bottom pb-2">
-        <div className="flex items-center justify-around h-20 px-4">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border/50 md:hidden safe-bottom">
+        <div className="flex items-center justify-around h-16 px-4">
           {tabs.map((tab) => (
             <NavLink
               key={tab.id}

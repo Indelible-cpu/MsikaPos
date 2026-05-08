@@ -374,19 +374,19 @@ const DebtPage: React.FC = () => {
           <div className="p-6 border-b border-border/50">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input title="Search Customers" aria-label="Search Customers" placeholder="SEARCH LEDGERS..." className="input-field w-full pl-10 text-[10px] py-3 font-black tracking-widest uppercase" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              <input title="Search Customers" aria-label="Search Customers" placeholder="Search customers..." className="input-field w-full pl-10 text-[10px] py-3 font-bold capitalize tracking-widest" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar stagger-children">
             {customers?.length === 0 ? (
-              <div className="p-10 text-center text-muted-foreground/20 font-black text-[9px] uppercase">No active credit accounts</div>
+              <div className="p-10 text-center text-muted-foreground/20 font-bold text-[9px] capitalize">No active credit accounts</div>
             ) : (
               <div className="divide-y divide-border/30">
                 {customers?.map(c => (
                   <div key={c.id} onClick={() => { setSelectedCustomer(c); }} className={clsx("p-6 flex items-center justify-between transition-all border-l-4 btn-press cursor-pointer", selectedCustomer?.id === c.id ? "bg-primary/10 border-l-primary" : "border-l-transparent hover:bg-muted/10")}>
-                    <div className="flex-1 min-w-0"><h3 className="text-[12px] font-black uppercase tracking-tighter truncate">{c.name}</h3><p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest">{c.phone}</p></div>
+                    <div className="flex-1 min-w-0"><h3 className="text-[12px] font-bold capitalize tracking-tighter truncate">{c.name}</h3><p className="text-[8px] font-bold text-muted-foreground/50 capitalize tracking-widest">{c.phone}</p></div>
                     <div className="text-right">
-                       <p className="text-[11px] font-black text-destructive">MK {c.balance.toLocaleString()}</p>
+                       <p className="text-[11px] font-bold text-destructive">MK {c.balance.toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -405,7 +405,7 @@ const DebtPage: React.FC = () => {
               <button 
                 type="button" 
                 onClick={() => setSelectedCustomer(null)}
-                className="md:hidden flex items-center gap-2 mb-4 text-primary font-black text-[10px] uppercase tracking-widest btn-press"
+                className="md:hidden flex items-center gap-2 mb-4 text-primary font-bold text-[10px] capitalize tracking-widest btn-press"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to list
               </button>
@@ -414,39 +414,39 @@ const DebtPage: React.FC = () => {
                 <div className="flex items-center gap-6 w-full xl:w-auto">
                   <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/10 rounded-3xl flex items-center justify-center text-primary shrink-0"><HistoryIcon className="w-8 h-8 md:w-10 md:h-10" /></div>
                   <div>
-                    <h2 className="text-xl md:text-3xl font-black tracking-tighter uppercase truncate max-w-[200px] md:max-w-none">{selectedCustomer.name}</h2>
-                    <p className="text-[8px] md:text-[10px] font-black text-muted-foreground tracking-[0.2em] uppercase mt-1">Outstanding Ledger Account</p>
+                     <h2 className="text-xl md:text-3xl font-bold tracking-tighter capitalize truncate max-w-[200px] md:max-w-none">{selectedCustomer.name}</h2>
+                    <p className="text-[8px] md:text-[10px] font-bold text-muted-foreground tracking-[0.2em] capitalize mt-1">Outstanding credit account</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12 text-right w-full xl:w-auto border-t xl:border-t-0 border-border/50 pt-6 xl:pt-0">
                   <div>
-                    <div className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase mb-1 tracking-widest">Total Credit</div>
-                    <div className="text-sm md:text-xl font-black tracking-tighter text-foreground">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
+                    <div className="text-[8px] md:text-[9px] font-bold text-muted-foreground capitalize mb-1 tracking-widest">Total credit</div>
+                    <div className="text-sm md:text-xl font-bold tracking-tighter text-foreground">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="text-[8px] md:text-[9px] font-black text-muted-foreground uppercase mb-1 tracking-widest">Total Paid</div>
-                    <div className="text-sm md:text-xl font-black text-success tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
+                    <div className="text-[8px] md:text-[9px] font-bold text-muted-foreground capitalize mb-1 tracking-widest">Total paid</div>
+                    <div className="text-sm md:text-xl font-bold text-success tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
                   </div>
                   <div className="col-span-2 lg:col-span-1 border-t lg:border-t-0 border-border/50 pt-4 lg:pt-0">
-                    <div className="text-[8px] md:text-[9px] font-black text-destructive/40 uppercase mb-1 tracking-widest">Balance Due</div>
-                    <div className="text-3xl md:text-5xl font-black text-destructive tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
+                    <div className="text-[8px] md:text-[9px] font-bold text-destructive/40 capitalize mb-1 tracking-widest">Balance due</div>
+                    <div className="text-3xl md:text-5xl font-bold text-destructive tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-surface-border pb-4">
-                  <h3 className="text-lg font-black tracking-tighter flex items-center gap-3"><HistoryIcon className="w-5 h-5 text-primary-500" /> Ledger Details</h3>
-                  <button type="button" title="Open Full Profile" aria-label="Open Full Profile" onClick={() => setIsProfileModalOpen(true)} className="text-[10px] font-black text-primary-500 uppercase tracking-widest underline">Re-verify Profile</button>
+                 <div className="flex items-center justify-between border-b border-surface-border pb-4">
+                  <h3 className="text-lg font-bold tracking-tighter flex items-center gap-3"><HistoryIcon className="w-5 h-5 text-primary-500" /> Credit details</h3>
+                  <button type="button" title="Open Full Profile" aria-label="Open Full Profile" onClick={() => setIsProfileModalOpen(true)} className="text-[10px] font-bold text-primary-500 capitalize tracking-widest underline">View profile</button>
                 </div>
                 <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[800px]">
                       <thead>
-                        <tr className="bg-surface-bg/50 text-[9px] font-black text-surface-text/40 tracking-widest border-b border-surface-border">
+                        <tr className="bg-surface-bg/50 text-[9px] font-bold text-surface-text/40 tracking-widest border-b border-surface-border capitalize">
                           <th className="px-8 py-5">Invoice #</th>
                           <th className="px-8 py-5">Due date</th>
-                          <th className="px-8 py-5 text-right">Original amt</th>
+                          <th className="px-8 py-5 text-right">Original amount</th>
                           <th className="px-8 py-5 text-right">Current balance</th>
                           <th className="px-8 py-5 text-right">Actions</th>
                         </tr>
@@ -479,15 +479,15 @@ const DebtPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-6 pt-10">
-                  <h3 className="text-lg font-black tracking-tighter flex items-center gap-3"><HistoryIcon className="w-5 h-5 text-emerald-500" /> Repayment History</h3>
+                  <h3 className="text-lg font-bold tracking-tighter flex items-center gap-3"><HistoryIcon className="w-5 h-5 text-emerald-500" /> Repayment history</h3>
                   <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
-                          <tr className="bg-surface-bg/50 text-[9px] font-black text-surface-text/40 tracking-widest border-b border-surface-border">
+                          <tr className="bg-surface-bg/50 text-[9px] font-bold text-surface-text/40 tracking-widest border-b border-surface-border capitalize">
                             <th className="px-8 py-5">Date</th>
                             <th className="px-8 py-5">Cashier</th>
-                            <th className="px-8 py-5 text-right">Amount Paid</th>
+                            <th className="px-8 py-5 text-right">Amount paid</th>
                             <th className="px-8 py-5 text-right">Method</th>
                             <th className="px-8 py-5 text-center">Verification</th>
                           </tr>
@@ -528,15 +528,15 @@ const DebtPage: React.FC = () => {
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-zinc-900/60 backdrop-blur-md p-6" onClick={() => { setPaymentModal(null); setSignature(null); }}>
           <div className="bg-surface-card w-full max-w-md rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="p-10 space-y-8">
-              <h3 className="text-xl font-black uppercase tracking-tighter">Record Payment</h3>
+              <h3 className="text-xl font-bold capitalize tracking-tighter">Record payment</h3>
               <div className="space-y-4">
-                <label className="text-[10px] font-black opacity-30 uppercase tracking-widest ml-1">Amount (MK)</label>
-                <input title="Payment Amount" aria-label="Payment Amount" placeholder="0.00" type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="input-field !text-2xl !py-6 w-full font-black" />
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Payment amount (MK)</label>
+                <input title="Payment Amount" aria-label="Payment Amount" placeholder="0.00" type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="input-field !text-2xl !py-6 w-full font-bold" />
               </div>
 
               <div className="space-y-4 pt-4 border-t border-surface-border/30">
                 <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-black opacity-30 uppercase tracking-widest ml-1">Authorized Signature</label>
+                  <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Authorized Signature</label>
                   <button type="button" title="Clear Signature" aria-label="Clear Signature" onClick={() => { const c = sigCanvasRef.current; if (c) { c.getContext('2d')?.clearRect(0,0,c.width,c.height); setSignature(null); } }} className="text-rose-500 hover:bg-rose-500/10 p-2 rounded-lg transition-colors"><RotateCcw className="w-4 h-4" /></button>
                 </div>
                 <div className="bg-white border-2 border-surface-border rounded-2xl h-32 relative overflow-hidden group">
@@ -583,7 +583,7 @@ const DebtPage: React.FC = () => {
         </div>
       )}
 
-      <Modal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} title="Full customer profile" maxWidth="max-w-2xl">
+       <Modal isOpen={isProfileModalOpen} onClose={() => { setIsProfileModalOpen(false); setIsEditing(false); }} title="Customer Profile" maxWidth="max-w-2xl">
         {selectedCustomer && (
           <div className="p-10 space-y-10">
             {isEditing ? (
@@ -604,26 +604,26 @@ const DebtPage: React.FC = () => {
                   </div>
                   <div className="space-y-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Full Legal Name</label>
-                      <input required placeholder="Enter full name" className="input-field w-full !py-4 font-black" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
+                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Full legal name</label>
+                      <input required placeholder="ENTER NAME" className="input-field w-full !py-4 font-bold uppercase" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value.toUpperCase()})} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Phone Number</label>
-                      <input required placeholder="0..." className="input-field w-full !py-4 font-black" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
+                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Phone number</label>
+                      <input required placeholder="0..." className="input-field w-full !py-4 font-bold" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">National ID Number</label>
-                      <input placeholder="ID Number" className="input-field w-full !py-4 uppercase font-black" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
+                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">National ID number</label>
+                      <input placeholder="ID NUMBER" maxLength={8} className="input-field w-full !py-4 uppercase font-bold" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value.toUpperCase().substring(0, 8)})} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Physical Location / Village</label>
-                      <input placeholder="Location" className="input-field w-full !py-4 font-black" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
+                      <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Location / Village</label>
+                      <input placeholder="LOCATION" className="input-field w-full !py-4 font-bold uppercase" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value.toUpperCase()})} />
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-4 pt-10 border-t border-border/50">
-                   <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-5 bg-muted/20 rounded-[2rem] font-black text-[10px] uppercase tracking-widest btn-press">Cancel Edit</button>
-                   <button type="submit" className="flex-[2] py-5 bg-primary text-primary-foreground rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl shadow-primary/20 btn-press"><Save className="w-5 h-5" /> Commit Changes</button>
+                   <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-5 bg-muted/20 rounded-[2rem] font-bold text-[10px] capitalize tracking-widest btn-press">Cancel edit</button>
+                   <button type="submit" className="flex-[2] py-5 bg-primary text-primary-foreground rounded-[2rem] font-bold text-[10px] capitalize tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl shadow-primary/20 btn-press"><Save className="w-5 h-5" /> Save changes</button>
                 </div>
               </form>
             ) : (
@@ -679,7 +679,7 @@ const DebtPage: React.FC = () => {
         )}
       </Modal>
 
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Register Credit Profile" maxWidth="max-w-2xl">
+      <Modal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); resetForm(); }} title="Register Credit Profile" maxWidth="max-w-2xl">
         <form onSubmit={handleAddCustomer} className="p-10 space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-6">
@@ -700,26 +700,26 @@ const DebtPage: React.FC = () => {
             </div>
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Full Legal Name</label>
-                <input required title="Full Name" aria-label="Full Name" placeholder="ENTER NAME" className="input-field w-full !py-4 font-black uppercase" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Full legal name</label>
+                <input required title="Full Name" aria-label="Full Name" placeholder="ENTER NAME" className="input-field w-full !py-4 font-bold uppercase" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value.toUpperCase()})} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Phone Number</label>
-                <input required title="Phone Number" aria-label="Phone Number" placeholder="0..." className="input-field w-full !py-4 font-black" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Phone number</label>
+                <input required title="Phone Number" aria-label="Phone Number" placeholder="0..." className="input-field w-full !py-4 font-bold" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">National ID Number</label>
-                <input title="National ID" aria-label="National ID" placeholder="ID NUMBER" className="input-field w-full !py-4 uppercase font-black" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">National ID number</label>
+                <input title="National ID" aria-label="National ID" maxLength={8} placeholder="ID NUMBER" className="input-field w-full !py-4 uppercase font-bold" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value.toUpperCase().substring(0, 8)})} />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Location / Village</label>
-                <input title="Location/Village" aria-label="Location/Village" placeholder="LOCATION" className="input-field w-full !py-4 font-black" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
+                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Location / Village</label>
+                <input title="Location/Village" aria-label="Location/Village" placeholder="LOCATION" className="input-field w-full !py-4 font-bold uppercase" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value.toUpperCase()})} />
               </div>
             </div>
           </div>
           <div className="pt-10 flex gap-4 border-t border-border/50">
-            <button type="button" title="Discard Changes" aria-label="Discard Changes" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-5 bg-muted/20 rounded-[2rem] font-black text-[10px] uppercase tracking-widest btn-press">Discard</button>
-            <button type="submit" title="Register Customer" aria-label="Register Customer" className="flex-[2] py-5 bg-primary text-primary-foreground rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 btn-press">Register Profile</button>
+            <button type="button" title="Discard Changes" aria-label="Discard Changes" onClick={() => { setIsAddModalOpen(false); resetForm(); }} className="flex-1 py-5 bg-muted/20 rounded-[2rem] font-bold text-[10px] capitalize tracking-widest btn-press">Discard</button>
+            <button type="submit" title="Register Customer" aria-label="Register Customer" className="flex-[2] py-5 bg-primary text-primary-foreground rounded-[2rem] font-bold text-[10px] capitalize tracking-[0.2em] shadow-xl shadow-primary/20 btn-press">Register Profile</button>
           </div>
         </form>
         <canvas ref={canvasRef} className="hidden" />

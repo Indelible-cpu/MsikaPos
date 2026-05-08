@@ -150,7 +150,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
       <div className="text-center mt-6 border-t border-black border-dashed pt-4 flex flex-col items-center w-full">
         {customer && (
           <div className="w-full py-4 mb-4 border border-black border-dotted flex flex-col items-center gap-3">
-            <div className="text-[8px] font-black tracking-widest opacity-40 uppercase">Credit Ledger Summary</div>
+            <div className="text-[8px] font-bold tracking-widest opacity-40 capitalize">Credit Summary</div>
             
             <div className="flex items-center gap-4 w-full px-4 mb-2">
               {customer.livePhoto && (
