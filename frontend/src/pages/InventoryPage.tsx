@@ -71,8 +71,18 @@ const InventoryProductCard = React.memo(({
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
           ) : (
-            <ImageIcon className="w-8 h-8 text-surface-text/10" />
+            <div className="w-full h-full relative">
+              <img 
+                src={product.isService ? "/professional_service_placeholder.png" : "/premium_product_placeholder.png"} 
+                alt="placeholder" 
+                className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity" 
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <ImageIcon className="w-8 h-8 text-primary/10" />
+              </div>
+            </div>
           )}
+
         </div>
         <div className="flex justify-between items-start mb-4">
           <div className="text-[9px] font-black text-muted-foreground tracking-widest uppercase">{product.sku}</div>
@@ -713,8 +723,18 @@ const InventoryPage: React.FC = () => {
                 {formData.imageUrl ? (
                   <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <ImageIcon className="w-8 h-8 text-surface-text/20" />
+                  <div className="w-full h-full relative">
+                    <img 
+                      src={formData.isService ? "/professional_service_placeholder.png" : "/premium_product_placeholder.png"} 
+                      alt="placeholder" 
+                      className="w-full h-full object-cover opacity-20" 
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <ImageIcon className="w-8 h-8 text-surface-text/20" />
+                    </div>
+                  </div>
                 )}
+
                 <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white">
                   <Upload className="w-5 h-5 mb-1" />
                   <span className="text-[8px] font-black tracking-widest">Upload</span>

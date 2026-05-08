@@ -49,11 +49,19 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
         {p.imageUrl ? (
           <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center">
-            <Package className="w-3 h-3 md:w-5 md:h-5 text-primary/10" />
-            <span className="text-[4px] font-bold text-primary/20 absolute bottom-1 uppercase tracking-tighter hidden md:block">{p.isService ? 'Srv' : 'Item'}</span>
+          <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden bg-muted/5">
+            <img 
+              src={p.isService ? "/professional_service_placeholder.png" : "/premium_product_placeholder.png"} 
+              alt="placeholder" 
+              className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" 
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <Package className="w-3 h-3 md:w-5 md:h-5 text-primary/20" />
+              <span className="text-[4px] font-bold text-primary/20 absolute bottom-1 uppercase tracking-tighter hidden md:block">{p.isService ? 'Srv' : 'Item'}</span>
+            </div>
           </div>
         )}
+
       </div>
       <div className="text-center w-full px-0.5 mt-0.5">
         <div className="text-[6px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
