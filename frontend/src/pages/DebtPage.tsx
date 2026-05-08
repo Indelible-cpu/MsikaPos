@@ -355,23 +355,18 @@ const DebtPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full bg-background transition-all md:pb-0 relative">
+    <div className="flex flex-col w-full bg-background transition-all md:pb-0 relative stagger-children">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <header className="glass-panel border-b border-border/50 px-6 py-4 flex items-center justify-between z-30">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-black uppercase tracking-widest text-primary">Credit Center</h1>
-        </div>
-      </header>
 
       <div className="flex flex-1 flex-col md:flex-row overflow-hidden relative">
         <aside className={clsx(
-          "w-full md:w-80 lg:w-96 border-r border-border/50 bg-card/50 backdrop-blur-xl flex flex-col shrink-0 transition-transform duration-300",
+          "w-full md:w-80 lg:w-96 border-r border-border/50 bg-card/30 backdrop-blur-xl flex flex-col shrink-0 transition-transform duration-300",
           selectedCustomer && "hidden md:flex"
         )}>
-          <div className="p-4 border-b border-border/50">
+          <div className="p-6 border-b border-border/50">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
-              <input title="Search Customers" aria-label="Search Customers" placeholder="Search names..." className="input-field w-full pl-9 text-[10px] py-2.5 font-bold" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <input title="Search Customers" aria-label="Search Customers" placeholder="SEARCH LEDGERS..." className="input-field w-full pl-10 text-[10px] py-3 font-black tracking-widest uppercase" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar stagger-children">
@@ -380,9 +375,11 @@ const DebtPage: React.FC = () => {
             ) : (
               <div className="divide-y divide-border/30">
                 {customers?.map(c => (
-                  <div key={c.id} className={clsx("p-4 flex items-center justify-between transition-all border-l-4 btn-press cursor-pointer", selectedCustomer?.id === c.id ? "bg-primary/5 border-l-primary" : "border-l-transparent hover:bg-muted/5")}>
-                    <div className="flex-1 min-w-0"><h3 className="text-[12px] font-black uppercase truncate">{c.name}</h3></div>
-                    <button type="button" title={`View profile for ${c.name}`} aria-label={`View profile for ${c.name}`} onClick={() => { setSelectedCustomer(c); setIsProfileModalOpen(true); }} className="px-4 py-1.5 bg-primary/10 text-primary rounded-lg text-[9px] font-black uppercase tracking-widest btn-press">View Profile</button>
+                  <div key={c.id} onClick={() => { setSelectedCustomer(c); }} className={clsx("p-6 flex items-center justify-between transition-all border-l-4 btn-press cursor-pointer", selectedCustomer?.id === c.id ? "bg-primary/10 border-l-primary" : "border-l-transparent hover:bg-muted/10")}>
+                    <div className="flex-1 min-w-0"><h3 className="text-[12px] font-black uppercase tracking-tighter truncate">{c.name}</h3><p className="text-[8px] font-black text-muted-foreground/50 uppercase tracking-widest">{c.phone}</p></div>
+                    <div className="text-right">
+                       <p className="text-[11px] font-black text-destructive">MK {c.balance.toLocaleString()}</p>
+                    </div>
                   </div>
                 ))}
               </div>

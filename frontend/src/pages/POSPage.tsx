@@ -18,7 +18,9 @@ import {
   User,
   MessageCircle,
   Calendar,
-  FileText
+  FileText,
+  ShieldAlert,
+  Building2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { soundService } from '../services/SoundService';
@@ -51,6 +53,8 @@ const POSPage: React.FC = () => {
   const [creditMode, setCreditMode] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [idNumber, setIdNumber] = useState('');
+  const [village, setVillage] = useState('');
   const [amountPaid, setAmountPaid] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [printInvoice, setPrintInvoice] = useState(true);
@@ -239,6 +243,8 @@ const POSPage: React.FC = () => {
         id: customerId,
         name: customerName,
         phone: whatsappNumber,
+        idNumber: idNumber.toUpperCase(),
+        village: village,
         balance: balance,
         totalCreditAmount: finalTotal,
         totalPaidAmount: paidAmt,
@@ -301,6 +307,8 @@ const POSPage: React.FC = () => {
       setCreditMode(false);
       setCustomerName('');
       setWhatsappNumber('');
+      setIdNumber('');
+      setVillage('');
       setAmountPaid('');
       setDueDate('');
       setPaymentMode('Cash');
@@ -317,69 +325,77 @@ const POSPage: React.FC = () => {
     const balance = Math.max(0, finalTotal - paidAmt);
 
     return (
-      <div className="flex flex-col h-full bg-[#f4f6f8] overflow-y-auto max-w-2xl mx-auto w-full relative">
-        <div className="bg-[#0052cc] text-white flex items-center px-4 py-4 sticky top-0 z-10 shadow-md">
+      <div className="flex flex-col h-full bg-background overflow-y-auto max-w-2xl mx-auto w-full relative stagger-children">
+        <div className="bg-primary text-primary-foreground flex items-center px-6 py-5 sticky top-0 z-10 shadow-lg">
            <button title="Go Back" aria-label="Go Back" onClick={() => setCreditMode(false)} className="mr-4 active:scale-90 transition-transform"><ChevronLeft className="w-6 h-6" /></button>
-           <h2 className="text-lg font-bold">Credit Sale</h2>
+           <h2 className="text-lg font-black uppercase tracking-tighter">Register Credit Sale</h2>
         </div>
         
-        <div className="p-4 space-y-4 pb-24">
-           <div>
-             <h3 className="font-bold text-gray-800 mb-2 text-sm">Customer Details</h3>
-             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-               <div className="flex items-center px-4 py-3 border-b border-gray-100">
-                 <User className="w-5 h-5 text-gray-400 mr-3" />
-                 <input title="Customer Name" aria-label="Customer Name" className="w-full outline-none text-sm text-gray-700 font-medium placeholder:font-normal" placeholder="Customer Name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+        <div className="p-6 space-y-8 pb-24">
+           <div className="space-y-4">
+             <h3 className="font-black text-foreground uppercase tracking-widest text-[10px] ml-1 opacity-50">Customer Verification</h3>
+             <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm space-y-px bg-card">
+               <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
+                 <User className="w-5 h-5 text-primary mr-4" />
+                 <input title="Customer Name" aria-label="Customer Name" className="w-full bg-transparent outline-none text-sm text-foreground font-black placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="FULL NAME" value={customerName} onChange={e => setCustomerName(e.target.value)} />
                </div>
-               <div className="flex items-center px-4 py-3">
-                 <MessageCircle className="w-5 h-5 text-gray-400 mr-3" />
-                 <input title="WhatsApp Number" aria-label="WhatsApp Number" className="w-full outline-none text-sm text-gray-700 font-medium placeholder:font-normal" placeholder="WhatsApp Number" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
+               <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
+                 <MessageCircle className="w-5 h-5 text-success mr-4" />
+                 <input title="WhatsApp Number" aria-label="WhatsApp Number" className="w-full bg-transparent outline-none text-sm text-foreground font-black placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="WHATSAPP NUMBER" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
+               </div>
+               <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
+                 <ShieldAlert className="w-5 h-5 text-amber-500 mr-4" />
+                 <input title="National ID" aria-label="National ID" className="w-full bg-transparent outline-none text-sm text-foreground font-black placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="NATIONAL ID NUMBER" value={idNumber} onChange={e => setIdNumber(e.target.value)} />
+               </div>
+               <div className="flex items-center px-6 py-4 focus-within:bg-primary/5 transition-colors">
+                 <Building2 className="w-5 h-5 text-blue-500 mr-4" />
+                 <input title="Location/Village" aria-label="Location/Village" className="w-full bg-transparent outline-none text-sm text-foreground font-black placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="LOCATION / VILLAGE" value={village} onChange={e => setVillage(e.target.value)} />
                </div>
              </div>
            </div>
 
-           <div>
-             <h3 className="font-bold text-gray-800 mb-2 text-sm">Sale Summary</h3>
-             <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4 shadow-sm">
+           <div className="space-y-4">
+             <h3 className="font-black text-foreground uppercase tracking-widest text-[10px] ml-1 opacity-50">Sale Summary</h3>
+             <div className="glass-card rounded-3xl border border-border p-6 space-y-5 shadow-sm bg-card">
                <div className="flex justify-between items-center text-sm">
-                 <span className="text-gray-600 font-medium">Total Amount</span>
-                 <span className="font-bold text-gray-900">{finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                 <span className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Total Amount</span>
+                 <span className="font-black text-foreground text-lg">MK {finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                </div>
                <div className="flex justify-between items-center text-sm">
-                 <span className="text-gray-600 font-medium">Amount Paid</span>
-                 <input title="Amount Paid" aria-label="Amount Paid" type="number" className="w-32 border border-gray-200 rounded-lg px-3 py-1.5 text-right outline-none focus:border-[#0052cc] font-medium" placeholder="Enter amount" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} />
+                 <span className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Initial Deposit</span>
+                 <input title="Amount Paid" aria-label="Amount Paid" type="number" className="w-32 bg-muted/20 border border-border rounded-xl px-4 py-2.5 text-right outline-none focus:ring-2 focus:ring-primary font-black" placeholder="0.00" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} />
                </div>
                <div className="flex justify-between items-center text-sm">
-                 <span className="text-gray-600 font-medium">Balance</span>
-                 <span className="font-bold text-[#0052cc]">{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                 <span className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Balance Due</span>
+                 <span className="font-black text-destructive text-lg">MK {balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                </div>
-               <div className="flex justify-between items-center text-sm pt-2 border-t border-gray-100">
-                 <span className="text-gray-600 font-medium">Due Date</span>
+               <div className="flex justify-between items-center text-sm pt-4 border-t border-border/50">
+                 <span className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Promise Date</span>
                  <div className="relative">
-                   <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                   <input title="Due Date" aria-label="Due Date" type="date" className="pl-8 pr-3 py-1.5 border border-gray-200 rounded-lg outline-none focus:border-[#0052cc] text-gray-700 text-sm font-medium" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+                   <input title="Due Date" aria-label="Due Date" type="date" className="pl-10 pr-4 py-2.5 bg-muted/20 border border-border rounded-xl outline-none focus:ring-2 focus:ring-primary text-foreground text-xs font-black uppercase" value={dueDate} onChange={e => setDueDate(e.target.value)} />
                  </div>
                </div>
              </div>
            </div>
 
-           <div>
-             <h3 className="font-bold text-gray-800 mb-2 text-sm">Invoice Options</h3>
-             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-               <label className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3 text-sm text-gray-700 font-medium"><Printer className="w-4 h-4 text-gray-500" /> Print Invoice</div>
-                  <input title="Print Invoice" type="checkbox" className="w-5 h-5 accent-[#0052cc] rounded" checked={printInvoice} onChange={e => setPrintInvoice(e.target.checked)} />
+           <div className="space-y-4">
+             <h3 className="font-black text-foreground uppercase tracking-widest text-[10px] ml-1 opacity-50">Documentation</h3>
+             <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm bg-card">
+               <label className="flex items-center justify-between px-6 py-4 border-b border-border/50 cursor-pointer hover:bg-muted/10 transition-colors">
+                  <div className="flex items-center gap-4 text-[11px] text-foreground font-black uppercase tracking-widest"><Printer className="w-4 h-4 text-muted-foreground" /> Print official invoice</div>
+                  <input title="Print Invoice" type="checkbox" className="w-5 h-5 accent-primary rounded-lg" checked={printInvoice} onChange={e => setPrintInvoice(e.target.checked)} />
                </label>
-               <label className="flex items-center justify-between px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3 text-sm text-gray-700 font-medium"><MessageCircle className="w-4 h-4 text-[#25D366]" /> Send via WhatsApp</div>
-                  <input title="Send via WhatsApp" type="checkbox" className="w-5 h-5 accent-[#25D366] rounded" checked={sendWhatsapp} onChange={e => setSendWhatsapp(e.target.checked)} />
+               <label className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-muted/10 transition-colors">
+                  <div className="flex items-center gap-4 text-[11px] text-foreground font-black uppercase tracking-widest"><MessageCircle className="w-4 h-4 text-success" /> Send copy via WhatsApp</div>
+                  <input title="Send via WhatsApp" type="checkbox" className="w-5 h-5 accent-success rounded-lg" checked={sendWhatsapp} onChange={e => setSendWhatsapp(e.target.checked)} />
                </label>
              </div>
            </div>
 
-           <div className="pt-4">
-             <button onClick={handleSaveCreditSale} disabled={isCheckingOut} className="w-full py-4 bg-[#0d8246] text-white font-bold rounded-xl flex items-center justify-center gap-2 text-base active:scale-95 transition-transform shadow-lg shadow-[#0d8246]/20">
-               <FileText className="w-5 h-5" /> SAVE CREDIT SALE
+           <div className="pt-6">
+             <button onClick={handleSaveCreditSale} disabled={isCheckingOut} className="w-full py-5 bg-success text-white font-black rounded-[2rem] flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] active:scale-95 transition-all shadow-xl shadow-success/20 uppercase">
+               <FileText className="w-5 h-5" /> Commit Credit Sale
              </button>
            </div>
         </div>
@@ -388,7 +404,7 @@ const POSPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#f4f6f8] overflow-y-auto max-w-2xl mx-auto w-full relative custom-scrollbar">
+    <div className="flex flex-col h-full bg-background overflow-y-auto max-w-2xl mx-auto w-full relative custom-scrollbar stagger-children">
       {showScanner && (
         <BarcodeScanner onScan={async (sku) => {
           const p = await db.products.where('sku').equals(sku).first();
@@ -397,30 +413,30 @@ const POSPage: React.FC = () => {
       )}
 
       {showReceipt && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-white max-w-sm w-full p-0 rounded-2xl overflow-hidden flex flex-col">
-            <div className="p-6 pb-2 flex flex-col items-center border-b border-gray-100">
-              <CheckCircle2 className="w-12 h-12 text-[#0d8246] mb-2" />
-              <h2 className="text-lg font-bold text-gray-800">Payment Successful</h2>
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
+          <div className="bg-card max-w-sm w-full p-0 rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl">
+            <div className="p-8 pb-4 flex flex-col items-center border-b border-border/50">
+              <CheckCircle2 className="w-16 h-16 text-success mb-4" />
+              <h2 className="text-xl font-black text-foreground uppercase tracking-tighter">Payment Successful</h2>
             </div>
-            <div className="max-h-[50vh] overflow-y-auto bg-white p-4">
+            <div className="max-h-[50vh] overflow-y-auto bg-card p-6">
                <Receipt {...showReceipt} />
             </div>
-            <div className="p-4 bg-gray-50 border-t border-gray-100">
-              <button onClick={() => setShowReceipt(null)} className="w-full py-3 bg-[#0052cc] text-white rounded-xl font-bold">New Sale</button>
+            <div className="p-6 bg-muted/30 border-t border-border/50">
+              <button onClick={() => setShowReceipt(null)} className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-widest text-[11px] btn-press">Close & New Sale</button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex gap-2 p-4 bg-white sticky top-0 z-10 shadow-sm border-b border-gray-100">
+      <div className="flex gap-2 p-4 bg-card/80 backdrop-blur-md sticky top-0 z-10 shadow-sm border-b border-border/50">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input 
             id="product-search"
             title="Search Products"
             aria-label="Search Products"
-            className="w-full pl-10 pr-4 py-3 bg-[#f8f9fa] border border-gray-200 rounded-xl outline-none text-sm text-gray-700 font-medium placeholder:font-normal focus:border-[#0052cc] transition-colors" 
+            className="w-full pl-10 pr-4 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all" 
             placeholder="Search products by name, barcode..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -430,141 +446,141 @@ const POSPage: React.FC = () => {
           title="Scan Barcode"
           aria-label="Scan Barcode"
           onClick={() => setShowScanner(true)}
-          className="flex items-center gap-1.5 px-4 py-3 bg-white border border-gray-200 text-[#0052cc] font-bold rounded-xl active:scale-95 transition-transform"
+          className="flex items-center gap-2 px-6 py-3 bg-primary/10 text-primary border border-primary/20 font-black rounded-2xl active:scale-95 transition-all text-[10px] tracking-widest uppercase"
         >
           <Scan className="w-5 h-5" /> SCAN
         </button>
       </div>
 
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold text-gray-800 text-sm">Current Order {cart.length > 0 && `(${cart.length})`}</h3>
-          <div className="flex gap-3">
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-black text-foreground uppercase tracking-widest text-[11px] ml-1">Current Order {cart.length > 0 && `(${cart.length})`}</h3>
+          <div className="flex gap-4">
             <button 
               onClick={() => {
                 const val = prompt('Enter discount amount:', discount.toString());
                 if (val !== null) setDiscount(parseFloat(val) || 0);
               }}
-              className="flex items-center gap-1 text-xs text-[#0052cc] hover:text-[#0043a8] font-bold transition-colors"
+              className="flex items-center gap-1 text-[10px] text-primary font-black uppercase tracking-widest hover:underline transition-all"
             >
               Discount
             </button>
-            <button title="Clear Cart" aria-label="Clear Cart" onClick={() => setCart([])} className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 font-medium transition-colors">
+            <button title="Clear Cart" aria-label="Clear Cart" onClick={() => setCart([])} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive font-black uppercase tracking-widest transition-all">
               <Trash2 className="w-3.5 h-3.5" /> Clear
             </button>
           </div>
         </div>
         {cart.length > 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="glass-card rounded-[2rem] border border-border overflow-hidden shadow-sm bg-card">
           <table className="w-full text-sm">
-            <thead className="bg-[#f8f9fa] text-gray-600 font-semibold border-b border-gray-200 text-xs">
+            <thead className="bg-muted/30 text-muted-foreground font-black border-b border-border/50 text-[9px] uppercase tracking-widest">
               <tr>
-                <th className="text-left py-3 px-4 font-semibold">Item</th>
-                <th className="text-center py-3 px-2 font-semibold">Qty</th>
-                <th className="text-right py-3 px-2 font-semibold">Price</th>
-                <th className="text-right py-3 px-4 font-semibold">Total</th>
-                <th className="py-3 px-2"></th>
+                <th className="text-left py-4 px-6">Item</th>
+                <th className="text-center py-4 px-2">Qty</th>
+                <th className="text-right py-4 px-2">Price</th>
+                <th className="text-right py-4 px-6">Total</th>
+                <th className="py-4 px-2"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border/30">
               {cart.map(item => (
-                <tr key={item.product.id} className="border-b border-gray-100 last:border-0">
-                  <td className="py-3 px-4 text-gray-800 font-medium">{toSentenceCase(item.product.name)}</td>
-                  <td className="py-3 px-2 text-center text-gray-700">{item.quantity}</td>
-                  <td className="py-3 px-2 text-right text-gray-700">{item.product.sellPrice.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                  <td className="py-3 px-4 text-right font-medium text-gray-900">{(item.product.sellPrice * item.quantity).toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-                  <td className="py-3 px-2 text-center">
-                    <button title="Remove Item" aria-label="Remove Item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-red-500 hover:bg-red-50 p-1 rounded transition-colors"><X className="w-4 h-4" /></button>
+                <tr key={item.product.id} className="hover:bg-muted/5 transition-colors">
+                  <td className="py-4 px-6 text-foreground font-black text-[11px] uppercase truncate max-w-[120px]">{toSentenceCase(item.product.name)}</td>
+                  <td className="py-4 px-2 text-center text-muted-foreground font-black text-[11px]">{item.quantity}</td>
+                  <td className="py-4 px-2 text-right text-muted-foreground font-black text-[11px]">{item.product.sellPrice.toLocaleString()}</td>
+                  <td className="py-4 px-6 text-right font-black text-foreground text-[11px]">{ (item.product.sellPrice * item.quantity).toLocaleString()}</td>
+                  <td className="py-4 px-2 text-center">
+                    <button title="Remove Item" aria-label="Remove Item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-destructive hover:bg-destructive/10 p-2 rounded-xl transition-all"><X className="w-4 h-4" /></button>
                   </td>
                 </tr>
               ))}
               {cart.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-400 text-xs font-medium">No items in order</td>
+                  <td colSpan={5} className="py-12 text-center text-muted-foreground/30 text-[10px] font-black uppercase tracking-widest">No items in order</td>
                 </tr>
               )}
             </tbody>
           </table>
-          <div className="p-4 bg-[#f8f9fa] border-t border-gray-200 flex flex-col items-end gap-1.5 text-sm">
-            <div className="flex justify-between w-48"><span className="text-gray-600 font-medium text-xs">Subtotal</span><span className="font-semibold text-gray-800">{cartSubtotal.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>
-            {discount > 0 && <div className="flex justify-between w-48"><span className="text-rose-600 font-medium text-xs">Discount</span><span className="font-semibold text-rose-600">-{discount.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>}
-            {taxConfig.rate > 0 && <div className="flex justify-between w-48"><span className="text-gray-600 font-medium text-xs">Tax ({taxConfig.rate}%)</span><span className="font-semibold text-gray-800">{taxAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>}
-            <div className="flex justify-between w-48 text-base font-bold mt-1.5"><span className="text-gray-900">TOTAL</span><span className="text-[#0052cc]">{finalTotal.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>
+          <div className="p-6 bg-muted/20 border-t border-border/50 flex flex-col items-end gap-2 text-sm">
+            <div className="flex justify-between w-48"><span className="text-muted-foreground font-black text-[10px] uppercase tracking-widest">Subtotal</span><span className="font-black text-foreground">MK {cartSubtotal.toLocaleString()}</span></div>
+            {discount > 0 && <div className="flex justify-between w-48"><span className="text-destructive/60 font-black text-[10px] uppercase tracking-widest">Discount</span><span className="font-black text-destructive">-MK {discount.toLocaleString()}</span></div>}
+            {taxConfig.rate > 0 && <div className="flex justify-between w-48"><span className="text-muted-foreground font-black text-[10px] uppercase tracking-widest">Tax ({taxConfig.rate}%)</span><span className="font-black text-foreground">MK {taxAmount.toLocaleString()}</span></div>}
+            <div className="flex justify-between w-48 text-lg font-black mt-2 pt-2 border-t border-border/20"><span className="text-foreground uppercase tracking-tighter">TOTAL</span><span className="text-primary tracking-tighter">MK {finalTotal.toLocaleString()}</span></div>
           </div>
         </div>
         ) : (
-          <div className="py-6 px-4 bg-blue-50/50 rounded-xl border border-dashed border-blue-200 text-center">
-            <p className="text-sm text-blue-600 font-medium">Cart is empty. Add products below to start a sale.</p>
+          <div className="py-12 px-6 bg-primary/5 rounded-[2rem] border-2 border-dashed border-primary/20 text-center animate-pulse">
+            <p className="text-[11px] text-primary font-black uppercase tracking-[0.2em]">Cart is currently empty</p>
           </div>
         )}
       </div>
 
-      <div className="p-4 pt-0">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold text-gray-800 text-sm">Products</h3>
+      <div className="p-6 pt-0">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-black text-foreground uppercase tracking-widest text-[11px] ml-1">Stock Inventory</h3>
           <button 
             title="View All Products" 
             aria-label="View All Products" 
             onClick={() => document.getElementById('product-search')?.focus()}
-            className="text-xs text-[#0052cc] font-bold hover:underline"
+            className="text-[10px] text-primary font-black uppercase tracking-widest hover:underline"
           >
-            View All
+            Full Catalog
           </button>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-          {products?.slice(0, cart.length === 0 ? 15 : 7).map(p => (
-            <div key={p.id} onClick={() => addToCart(p)} className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform hover:shadow-md shadow-sm">
-              <div className="w-12 h-12 flex items-center justify-center">
-                {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain" /> : <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center"><Plus className="w-4 h-4 text-gray-300"/></div>}
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+          {products?.slice(0, cart.length === 0 ? 15 : 8).map(p => (
+            <div key={p.id} onClick={() => addToCart(p)} className="glass-card bg-card border border-border/50 rounded-2xl p-4 flex flex-col items-center gap-3 cursor-pointer btn-press group">
+              <div className="w-14 h-14 flex items-center justify-center bg-muted/20 rounded-xl group-hover:scale-110 transition-transform">
+                {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain" /> : <Plus className="w-6 h-6 text-muted-foreground/30" />}
               </div>
               <div className="text-center w-full">
-                <div className="text-[11px] font-semibold text-gray-800 leading-tight truncate">{toSentenceCase(p.name)}</div>
-                <div className="text-[10px] text-gray-500 font-medium mt-0.5">{p.sellPrice.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+                <div className="text-[10px] font-black text-foreground leading-tight truncate uppercase">{toSentenceCase(p.name)}</div>
+                <div className="text-[10px] text-primary font-black mt-1">MK {p.sellPrice.toLocaleString()}</div>
               </div>
             </div>
           ))}
           <div 
             onClick={() => document.getElementById('product-search')?.focus()}
-            className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center justify-center gap-2 cursor-pointer text-[#0052cc] active:scale-95 transition-transform hover:shadow-md shadow-sm"
+            className="glass-card bg-primary/10 border border-primary/20 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer text-primary btn-press"
           >
-            <div className="w-10 h-10 rounded-full bg-[#0052cc] text-white flex items-center justify-center shadow-md shadow-[#0052cc]/20"><Plus className="w-5 h-5"/></div>
-            <span className="text-[11px] font-bold">More</span>
+            <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20"><Plus className="w-5 h-5"/></div>
+            <span className="text-[10px] font-black uppercase tracking-widest mt-1">More</span>
           </div>
         </div>
       </div>
 
-      <div className="p-4 pt-2">
-        <h3 className="font-bold text-gray-800 mb-3 text-sm">Payment Options</h3>
-        <div className="grid grid-cols-4 gap-2">
-          <button onClick={() => { setPaymentMode('Cash'); setSelectedSubMethod(''); }} className={`flex flex-col items-center justify-center py-2 rounded-xl text-white font-bold text-[9px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Cash'?'ring-2 ring-offset-2 ring-[#0d8246] shadow-md shadow-[#0d8246]/30':''} bg-[#0d8246]`}>
-             <Banknote className="w-4 h-4 sm:w-5 sm:h-5 mb-1" /> Cash
+      <div className="p-6 pt-2">
+        <h3 className="font-black text-foreground mb-4 uppercase tracking-widest text-[11px] ml-1">Payment Channel</h3>
+        <div className="grid grid-cols-4 gap-3">
+          <button onClick={() => { setPaymentMode('Cash'); setSelectedSubMethod(''); }} className={clsx("flex flex-col items-center justify-center py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all btn-press shadow-sm", paymentMode==='Cash' ? "bg-success text-white shadow-lg shadow-success/30 ring-2 ring-success ring-offset-2" : "bg-card text-muted-foreground border border-border/50")}>
+             <Banknote className="w-5 h-5 mb-2" /> Cash
           </button>
-          <button onClick={() => { setPaymentMode('Card'); setSelectedSubMethod(paymentConfig.bank[0] || ''); }} className={`flex flex-col items-center justify-center py-2 rounded-xl text-white font-bold text-[9px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Card'?'ring-2 ring-offset-2 ring-[#0052cc] shadow-md shadow-[#0052cc]/30':''} bg-[#0052cc]`}>
-             <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mb-1" /> Card
+          <button onClick={() => { setPaymentMode('Card'); setSelectedSubMethod(paymentConfig.bank[0] || ''); }} className={clsx("flex flex-col items-center justify-center py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all btn-press shadow-sm", paymentMode==='Card' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2" : "bg-card text-muted-foreground border border-border/50")}>
+             <CreditCard className="w-5 h-5 mb-2" /> Bank Card
           </button>
-          <button onClick={() => { setPaymentMode('Momo'); setSelectedSubMethod(paymentConfig.momo[0] || ''); }} className={`flex flex-col items-center justify-center py-2 rounded-xl text-white font-bold text-[9px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Momo'?'ring-2 ring-offset-2 ring-[#ff8c00] shadow-md shadow-[#ff8c00]/30':''} bg-[#ff8c00]`}>
-             <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 mb-1" /> Mobile
+          <button onClick={() => { setPaymentMode('Momo'); setSelectedSubMethod(paymentConfig.momo[0] || ''); }} className={clsx("flex flex-col items-center justify-center py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all btn-press shadow-sm", paymentMode==='Momo' ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30 ring-2 ring-amber-500 ring-offset-2" : "bg-card text-muted-foreground border border-border/50")}>
+             <Smartphone className="w-5 h-5 mb-2" /> Mobile Pay
           </button>
-          <button onClick={() => { setPaymentMode('Credit'); setSelectedSubMethod(''); }} className={`flex flex-col items-center justify-center py-2 rounded-xl text-white font-bold text-[9px] sm:text-xs transition-all active:scale-95 bg-[#8a2be2] ${paymentMode==='Credit'?'ring-2 ring-offset-2 ring-[#8a2be2] shadow-md shadow-[#8a2be2]/30':''}`}>
-             <User className="w-4 h-4 sm:w-5 sm:h-5 mb-1" /> Credit
+          <button onClick={() => { setPaymentMode('Credit'); setSelectedSubMethod(''); }} className={clsx("flex flex-col items-center justify-center py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest transition-all btn-press shadow-sm", paymentMode==='Credit' ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30 ring-2 ring-purple-600 ring-offset-2" : "bg-card text-muted-foreground border border-border/50")}>
+             <User className="w-5 h-5 mb-2" /> Ledger
           </button>
         </div>
 
         {(paymentMode === 'Card' || paymentMode === 'Momo') && (
-          <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">
-              Select {paymentMode === 'Card' ? 'Bank' : 'Mobile Provider'}
+          <div className="mt-6 animate-in fade-in slide-in-from-top-4 duration-500 stagger-children">
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3 block ml-1">
+              Confirm {paymentMode === 'Card' ? 'Bank Account' : 'Momo Channel'}
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).map(method => (
                 <button
                   key={method}
                   onClick={() => setSelectedSubMethod(method)}
                   className={clsx(
-                    "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all border-2 text-center",
+                    "px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 text-center btn-press",
                     selectedSubMethod === method 
-                      ? "bg-white border-[#0052cc] text-[#0052cc] shadow-sm" 
-                      : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                      ? "bg-primary/5 border-primary text-primary shadow-sm" 
+                      : "bg-card border-border/50 text-muted-foreground/40 hover:border-border hover:text-muted-foreground"
                   )}
                 >
                   {method}
@@ -575,23 +591,30 @@ const POSPage: React.FC = () => {
         )}
       </div>
 
-      <div className="p-4 pt-2">
-        <h3 className="font-bold text-gray-800 mb-3 text-sm">Receipt Options</h3>
-        <div className="flex gap-3">
-           <label className="flex-1 flex items-center justify-between p-3.5 bg-white border border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-colors shadow-sm">
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-700 font-medium"><Printer className="w-4 h-4 text-gray-500"/> Print Receipt</div>
-              <input title="Print Receipt" type="checkbox" checked={printReceipt} onChange={e => setPrintReceipt(e.target.checked)} className="w-5 h-5 accent-[#0052cc] rounded" />
+      <div className="p-6 pt-2">
+        <h3 className="font-black text-foreground mb-4 uppercase tracking-widest text-[11px] ml-1">Post-Sale Workflow</h3>
+        <div className="flex gap-4">
+           <label className="flex-1 flex items-center justify-between p-5 bg-card border border-border/50 rounded-2xl cursor-pointer hover:border-primary/20 transition-all shadow-sm">
+              <div className="flex items-center gap-3 text-[10px] text-foreground font-black uppercase tracking-widest"><Printer className="w-4 h-4 text-muted-foreground"/> Auto-Print</div>
+              <input title="Print Receipt" type="checkbox" checked={printReceipt} onChange={e => setPrintReceipt(e.target.checked)} className="w-5 h-5 accent-primary rounded-lg" />
            </label>
-           <label className="flex-1 flex items-center justify-between p-3.5 bg-white border border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition-colors shadow-sm">
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-700 font-medium"><MessageCircle className="w-4 h-4 text-[#25D366]"/> Send via WhatsApp</div>
-              <input title="Send via WhatsApp" type="checkbox" checked={sendWhatsapp} onChange={e => setSendWhatsapp(e.target.checked)} className="w-5 h-5 accent-[#25D366] rounded" />
+           <label className="flex-1 flex items-center justify-between p-5 bg-card border border-border/50 rounded-2xl cursor-pointer hover:border-success/20 transition-all shadow-sm">
+              <div className="flex items-center gap-3 text-[10px] text-foreground font-black uppercase tracking-widest"><MessageCircle className="w-4 h-4 text-success"/> Digital Copy</div>
+              <input title="Send via WhatsApp" type="checkbox" checked={sendWhatsapp} onChange={e => setSendWhatsapp(e.target.checked)} className="w-5 h-5 accent-success rounded-lg" />
            </label>
         </div>
       </div>
 
-      <div className="p-4 pt-2 pb-10">
-        <button disabled={cart.length === 0 || isCheckingOut} onClick={handleCheckout} className={clsx("w-full py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 text-base transition-all shadow-lg", cart.length === 0 ? "bg-gray-400 cursor-not-allowed opacity-80" : "bg-[#0052cc] active:scale-95 hover:bg-[#0043a8] shadow-[#0052cc]/30")}>
-          <CheckCircle2 className="w-5 h-5" /> COMPLETE SALE
+      <div className="p-6 pt-4 pb-12">
+        <button 
+          disabled={cart.length === 0 || isCheckingOut} 
+          onClick={handleCheckout} 
+          className={clsx(
+            "w-full py-6 text-white font-black rounded-[2rem] flex items-center justify-center gap-3 text-[12px] tracking-[0.3em] transition-all shadow-2xl uppercase btn-press", 
+            cart.length === 0 ? "bg-muted-foreground/20 cursor-not-allowed grayscale" : "bg-primary shadow-primary/40 hover:shadow-primary/60"
+          )}
+        >
+          <CheckCircle2 className="w-6 h-6" /> Commit Transaction
         </button>
       </div>
 

@@ -60,7 +60,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                  location.pathname.includes('/dashboard') ? 'DASHBOARD_INSIGHTS' : 
                  location.pathname.includes('/inventory') ? 'INVENTORY_STRATEGY' : 'GENERAL_SUPPORT';
 
-  const isPOS = location.pathname.includes('/pos');
+
 
   return (
     <div className="min-h-screen flex bg-background transition-colors duration-300 relative overflow-hidden">
@@ -70,17 +70,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         {/* Pull to Refresh Indicator */}
-        {!isPOS && (
-          <motion.div 
-            style={{ height: pullDistance }}
-            className="flex items-center justify-center overflow-hidden bg-primary-500/5"
-          >
-            <RefreshCw className={clsx("w-5 h-5 text-primary-500", (pullDistance > 60 || isRefreshing) && "animate-spin")} />
-          </motion.div>
-        )}
+        <motion.div 
+          style={{ height: pullDistance }}
+          className="flex items-center justify-center overflow-hidden bg-primary-500/5"
+        >
+          <RefreshCw className={clsx("w-5 h-5 text-primary-500", (pullDistance > 60 || isRefreshing) && "animate-spin")} />
+        </motion.div>
 
         {/* Dynamic Global Header */}
-        {!hideNav && !isPOS && <MobileHeader />}
+        {!hideNav && <MobileHeader />}
 
         {/* Main Content Area */}
         <main 
@@ -94,7 +92,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             "px-0 max-w-full"
           )}
         >
-          <div className={clsx("w-full mx-auto py-0", !isPOS ? "min-h-full" : "h-full")}>
+          <div className={clsx("w-full mx-auto py-0", "min-h-full")}>
             {children}
           </div>
         </main>
