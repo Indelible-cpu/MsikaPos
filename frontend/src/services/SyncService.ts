@@ -138,21 +138,23 @@ export const SyncService = {
         const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
         
         // 2. CHUNKED MAPPING: Map data in small batches to avoid blocking
-        const MAP_CHUNK_SIZE = 50;
+        const MAP_CHUNK_SIZE = 100;
         const yieldToMain = () => new Promise(resolve => {
-          if ('requestIdleCallback' in window) {
-            (window as any).requestIdleCallback(() => resolve(null));
-          } else {
-            setTimeout(resolve, 0);
-          }
+          // Use setTimeout to yield and let the event loop process other tasks
+          setTimeout(resolve, 0);
         });
 
         const mapInChunks = async <T, R>(items: T[], mapper: (item: T) => R): Promise<R[]> => {
           const results: R[] = [];
+          if (!items || items.length === 0) return results;
+          
           for (let i = 0; i < items.length; i += MAP_CHUNK_SIZE) {
             const chunk = items.slice(i, i + MAP_CHUNK_SIZE);
             results.push(...chunk.map(mapper));
-            await yieldToMain();
+            // Only yield if there are more chunks to process
+            if (i + MAP_CHUNK_SIZE < items.length) {
+              await yieldToMain();
+            }
           }
           return results;
         };
@@ -188,37 +190,42 @@ export const SyncService = {
           synced: 1
         }));
 
-        // 3. CHUNKED SYNC: Process each table separately with small chunks
-        const WRITE_CHUNK_SIZE = 20;
+        // 3. CHUNKED SYNC: Process each table separately with optimized chunks
+        const WRITE_CHUNK_SIZE = 100;
 
         const processInChunks = async (table: any, items: any[]) => {
+          if (!items || items.length === 0) return;
           for (let i = 0; i < items.length; i += WRITE_CHUNK_SIZE) {
             const chunk = items.slice(i, i + WRITE_CHUNK_SIZE);
             await table.bulkPut(chunk);
+            if (i + WRITE_CHUNK_SIZE < items.length) {
+              await yieldToMain();
+            }
+          }
+        };
+
+        // 1. Mark local changes as synced in small chunks
+        const markAsSynced = async (table: any, items: any[]) => {
+          const ids = items.map(i => i.id);
+          const MODIFY_CHUNK_SIZE = 50;
+          for (let i = 0; i < ids.length; i += MODIFY_CHUNK_SIZE) {
+            const chunk = ids.slice(i, i + MODIFY_CHUNK_SIZE);
+            await table.where('id').anyOf(chunk).modify({ synced: 1 });
             await yieldToMain();
           }
         };
 
-        // 1. Mark local changes as synced
         if (unsyncedSales.length > 0) {
-          const ids = unsyncedSales.map(s => s.id);
-          await db.salesQueue.where('id').anyOf(ids).modify({ synced: 1 });
-          await yieldToMain();
+          await markAsSynced(db.salesQueue, unsyncedSales);
         }
         if (unsyncedExpenses.length > 0) {
-          const ids = unsyncedExpenses.map(e => e.id);
-          await db.expenses.where('id').anyOf(ids).modify({ synced: 1 });
-          await yieldToMain();
+          await markAsSynced(db.expenses, unsyncedExpenses);
         }
         if (unsyncedCustomers.length > 0) {
-          const ids = unsyncedCustomers.map(c => c.id);
-          await db.customers.where('id').anyOf(ids).modify({ synced: 1 });
-          await yieldToMain();
+          await markAsSynced(db.customers, unsyncedCustomers);
         }
         if (unsyncedPayments.length > 0) {
-          const ids = unsyncedPayments.map(p => p.id);
-          await db.debtPayments.where('id').anyOf(ids).modify({ synced: 1 });
-          await yieldToMain();
+          await markAsSynced(db.debtPayments, unsyncedPayments);
         }
 
         // 2. Apply remote updates in tiny chunks
@@ -227,8 +234,7 @@ export const SyncService = {
         }
         
         if (categories && categories.length > 0) {
-          await db.categories.bulkPut(categories);
-          await yieldToMain();
+          await processInChunks(db.categories, categories);
         }
 
         if (mappedCustomers.length > 0) {

@@ -36,6 +36,117 @@ const generateNumericId = () => {
   return 1000000000 + Math.floor(Math.random() * 1000000000);
 };
 
+interface InventoryProductCardProps {
+  product: LocalProduct;
+  isAdmin: boolean;
+  showDeleted: boolean;
+  readOnly: boolean;
+  setPreviewImage: (url: string | null) => void;
+  openEditModal: (p: LocalProduct) => void;
+  safeDeleteProduct: (p: LocalProduct) => void;
+  restoreProduct: (p: LocalProduct) => void;
+  deleteProduct: (id: number) => void;
+}
+
+const InventoryProductCard = React.memo(({ 
+  product, 
+  isAdmin, 
+  showDeleted, 
+  readOnly, 
+  setPreviewImage, 
+  openEditModal, 
+  safeDeleteProduct, 
+  restoreProduct, 
+  deleteProduct 
+}: InventoryProductCardProps) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="overflow-hidden group transition-all flex flex-col glass-card border border-border/50 rounded-3xl hover:border-primary/20 duration-500"
+    >
+      <div className="p-6 flex-1 flex flex-col">
+        <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center">
+          {product.imageUrl ? (
+            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+          ) : (
+            <ImageIcon className="w-8 h-8 text-surface-text/10" />
+          )}
+        </div>
+        <div className="flex justify-between items-start mb-4">
+          <div className="text-[9px] font-black text-muted-foreground tracking-widest uppercase">{product.sku}</div>
+        </div>
+        <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary transition-colors tracking-tight line-clamp-2">{toSentenceCase(product.name)}</h3>
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-primary font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
+        </div>
+        <div className={clsx(
+          "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black tracking-widest",
+          product.quantity <= 5 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+        )}>
+          {product.isService ? <CheckCircle2 className="w-3 h-3" /> : (product.quantity <= 5 ? <AlertTriangle className="w-3 h-3" /> : <Package className="w-3 h-3" />)}
+          {product.isService ? 'Service item' : `${product.quantity} in stock`}
+        </div>
+      </div>
+      
+      <div className="px-6 py-4 bg-muted/30 border-t border-border/50 flex flex-wrap gap-2">
+        {product.imageUrl && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
+            className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-success hover:bg-success/10 transition-colors uppercase btn-press"
+          >
+            <ImageIcon className="w-3 h-3" /> View
+          </button>
+        )}
+        {!readOnly && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
+            className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-primary hover:bg-primary/10 transition-colors uppercase btn-press"
+          >
+            <Edit2 className="w-3 h-3" /> Edit
+          </button>
+        )}
+        {!readOnly && isAdmin && !showDeleted && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); safeDeleteProduct(product); }} 
+            className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-orange-500 hover:bg-orange-500/10 transition-colors uppercase btn-press"
+          >
+            <Trash2 className="w-3 h-3" /> Safe Del
+          </button>
+        )}
+        {!readOnly && isAdmin && showDeleted && (
+          <>
+            <button 
+              onClick={(e) => { e.stopPropagation(); restoreProduct(product); }} 
+              className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-emerald-500 hover:bg-emerald-500/10 transition-colors uppercase"
+            >
+              <CheckCircle2 className="w-3 h-3" /> Restore
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
+              className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-red-500 hover:bg-red-500/10 transition-colors uppercase"
+            >
+              <Trash2 className="w-3 h-3" /> Hard Del
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="px-6 py-4 bg-surface-bg/50 border-t border-surface-border flex justify-between items-center text-[9px] font-black tracking-widest text-surface-text/40">
+        {!product.isService && isAdmin ? (
+          <>
+            <span>Stock profit: MK{((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
+            <ArrowUpRight className="w-3 h-3 text-emerald-500" />
+          </>
+        ) : (
+          <span>Inventory item</span>
+        )}
+      </div>
+    </motion.div>
+  );
+});
+
 const InventoryPage: React.FC = () => {
   const currentUser = useAuthStore(state => state.user);
   const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPER_ADMIN';
@@ -72,8 +183,16 @@ const InventoryPage: React.FC = () => {
 
   const products = useLiveQuery(
     async () => {
-      const all = await db.products.where('name').startsWithIgnoreCase(searchTerm).toArray();
-      return all.filter(p => !!p.deleted === showDeleted);
+      let query;
+      if (searchTerm) {
+        query = db.products.where('name').startsWithIgnoreCase(searchTerm);
+      } else {
+        query = db.products.toCollection();
+      }
+      
+      // Dexie filtering is faster if we avoid toArray() on huge sets before filtering
+      const all = await query.filter(p => !!p.deleted === showDeleted).toArray();
+      return all;
     },
     [searchTerm, showDeleted]
   );
@@ -566,94 +685,20 @@ const InventoryPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {filteredProducts?.map(product => (
-              <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                key={product.id}
-                className="overflow-hidden group transition-all flex flex-col glass-card border border-border/50 rounded-3xl hover:border-primary/20 duration-500"
-              >
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center">
-                    {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    ) : (
-                      <ImageIcon className="w-8 h-8 text-surface-text/10" />
-                    )}
-                  </div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="text-[9px] font-black text-muted-foreground tracking-widest uppercase">{product.sku}</div>
-                  </div>
-                  <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary transition-colors tracking-tight line-clamp-2">{toSentenceCase(product.name)}</h3>
-                  <div className="flex items-center gap-2 mb-6">
-                    <span className="text-primary font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
-                  </div>
-                  <div className={clsx(
-                    "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black tracking-widest",
-                    product.quantity <= 5 ? "bg-red-500/10 text-red-500 border border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                  )}>
-                    {product.isService ? <CheckCircle2 className="w-3 h-3" /> : (product.quantity <= 5 ? <AlertTriangle className="w-3 h-3" /> : <Package className="w-3 h-3" />)}
-                    {product.isService ? 'Service item' : `${product.quantity} in stock`}
-                  </div>
-                </div>
-                
-                <div className="px-6 py-4 bg-muted/30 border-t border-border/50 flex flex-wrap gap-2">
-                  {product.imageUrl && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
-                      className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-success hover:bg-success/10 transition-colors uppercase btn-press"
-                    >
-                      <ImageIcon className="w-3 h-3" /> View
-                    </button>
-                  )}
-                  {!readOnly && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); openEditModal(product); }} 
-                      className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-primary hover:bg-primary/10 transition-colors uppercase btn-press"
-                    >
-                      <Edit2 className="w-3 h-3" /> Edit
-                    </button>
-                  )}
-                  {!readOnly && isAdmin && !showDeleted && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); safeDeleteProduct(product); }} 
-                      className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-orange-500 hover:bg-orange-500/10 transition-colors uppercase btn-press"
-                    >
-                      <Trash2 className="w-3 h-3" /> Safe Del
-                    </button>
-                  )}
-                  {!readOnly && isAdmin && showDeleted && (
-                    <>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); restoreProduct(product); }} 
-                        className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-emerald-500 hover:bg-emerald-500/10 transition-colors uppercase"
-                      >
-                        <CheckCircle2 className="w-3 h-3" /> Restore
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); deleteProduct(product.id); }} 
-                        className="flex-1 py-2 px-3 rounded-xl bg-surface-card border border-surface-border flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-red-500 hover:bg-red-500/10 transition-colors uppercase"
-                      >
-                        <Trash2 className="w-3 h-3" /> Hard Del
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                <div className="px-6 py-4 bg-surface-bg/50 border-t border-surface-border flex justify-between items-center text-[9px] font-black tracking-widest text-surface-text/40">
-                  {!product.isService && isAdmin ? (
-                    <>
-                      <span>Stock profit: MK{((product.sellPrice - product.costPrice) * product.quantity).toLocaleString()}</span>
-                      <ArrowUpRight className="w-3 h-3 text-emerald-500" />
-                    </>
-                  ) : (
-                    <span>Inventory item</span>
-                  )}
-                </div>
-              </motion.div>
+              <InventoryProductCard 
+                key={product.id} 
+                product={product} 
+                isAdmin={isAdmin}
+                showDeleted={showDeleted}
+                readOnly={readOnly}
+                setPreviewImage={setPreviewImage}
+                openEditModal={openEditModal}
+                safeDeleteProduct={safeDeleteProduct}
+                restoreProduct={restoreProduct}
+                deleteProduct={deleteProduct}
+              />
             ))}
           </AnimatePresence>
         </div>

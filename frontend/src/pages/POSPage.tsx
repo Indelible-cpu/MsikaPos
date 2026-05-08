@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct, LocalSale, LocalSaleItem, LocalCustomer } from '../db/posDB';
-import { toSentenceCase } from '../utils/stringUtils';
+
 import { 
   Search, 
   Scan, 
@@ -24,7 +24,7 @@ import {
   Building2,
   MessageSquare,
   Package,
-  Info
+  ShoppingCart
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
@@ -39,6 +39,31 @@ interface TaxConfig {
   rate: number;
   inclusive: boolean;
 }
+
+const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: (p: LocalProduct) => void }) => {
+  return (
+    <div onClick={() => addToCart(p)} className="aspect-square glass-card bg-card border border-border/30 rounded-xl p-1.5 flex flex-col items-center justify-center gap-1 cursor-pointer btn-press group hover:border-primary/20 transition-all shadow-sm relative overflow-hidden">
+      <div className="w-8 h-8 md:w-12 md:h-12 flex items-center justify-center bg-muted/10 rounded-lg group-hover:scale-105 transition-transform overflow-hidden relative border border-border/10">
+        {p.imageUrl ? (
+          <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-primary/5">
+            <Package className="w-4 h-4 md:w-5 md:h-5 text-primary/10" />
+            <span className="text-[5px] font-bold text-primary/20 absolute bottom-0.5 uppercase tracking-tighter">{p.isService ? 'Srv' : 'Item'}</span>
+          </div>
+        )}
+      </div>
+      <div className="text-center w-full px-0.5">
+        <div className="text-[7px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
+        <div className="text-[7px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()}</div>
+      </div>
+      {p.quantity <= 5 && !p.isService && (
+        <div className="absolute top-1 right-1 w-1 h-1 bg-destructive rounded-full animate-pulse" />
+      )}
+    </div>
+  );
+});
+
 
 const POSPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,19 +135,36 @@ const POSPage: React.FC = () => {
 
   const products = useLiveQuery(
     async () => {
-      // Always fetch active products first as base
-      const allActive = await db.products.where('status').equals('ACTIVE').filter(p => !p.deleted).toArray();
-      
       if (searchTerm.length >= 1) {
         const term = searchTerm.toLowerCase();
-        return allActive.filter(p => 
-          p.name.toLowerCase().includes(term) || 
-          p.sku.toLowerCase().includes(term)
-        );
+        // Use index-based prefix search if possible, then filter
+        return await db.products
+          .where('name')
+          .startsWithIgnoreCase(term)
+          .or('sku')
+          .startsWithIgnoreCase(term)
+          .filter(p => p.status === 'ACTIVE' && !p.deleted)
+          .toArray();
       }
-      return allActive;
+
+      // If not searching and not showing all, limit to a reasonable number to avoid fetching the whole DB
+      if (!showAll) {
+        return await db.products
+          .where('status')
+          .equals('ACTIVE')
+          .filter(p => !p.deleted)
+          .limit(150) // Fetch more than we show to allow for some shuffling
+          .toArray();
+      }
+
+      // If showing all, fetch everything
+      return await db.products
+        .where('status')
+        .equals('ACTIVE')
+        .filter(p => !p.deleted)
+        .toArray();
     },
-    [searchTerm]
+    [searchTerm, showAll]
   );
 
   const [randomSeed, setRandomSeed] = useState(Date.now());
@@ -138,13 +180,14 @@ const POSPage: React.FC = () => {
     if (!products) return [];
     if (searchTerm.length >= 1 || showAll) return products;
     
-    // Deterministic shuffle within the interval window
-    const shuffled = [...products].sort((a, b) => {
-      const hashA = (a.id * 13 + randomSeed) % 100;
-      const hashB = (b.id * 13 + randomSeed) % 100;
-      return hashA - hashB;
-    });
-    return shuffled.slice(0, 30); // Show 30 products (at least 5 rows on mobile)
+    // Efficiently pick 30 random-ish products without sorting the entire potentially large list
+    const result = [...products];
+    if (result.length > 30) {
+      // Pseudo-random but stable for the interval window
+      const startIdx = (randomSeed % (result.length - 30));
+      return result.slice(startIdx, startIdx + 30);
+    }
+    return result;
   }, [products, searchTerm, showAll, randomSeed]);
 
   const addToCart = useCallback((product: LocalProduct) => {
@@ -377,7 +420,8 @@ const POSPage: React.FC = () => {
     const balance = Math.max(0, finalTotal - paidAmt);
 
     return (
-      <div className="flex flex-col h-full bg-background overflow-y-auto max-w-2xl mx-auto w-full relative stagger-children">
+      <div className="flex flex-col h-full bg-background overflow-y-auto w-full relative stagger-children">
+
         <div className="bg-primary text-primary-foreground flex items-center px-6 py-5 sticky top-0 z-10 shadow-lg">
            <button title="Go Back" aria-label="Go Back" onClick={() => setCreditMode(false)} className="mr-4 active:scale-90 transition-transform"><ChevronLeft className="w-6 h-6" /></button>
            <h2 className="text-lg font-bold capitalize tracking-tight">Register Credit Sale</h2>
@@ -460,7 +504,8 @@ const POSPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background overflow-y-auto max-w-2xl mx-auto w-full relative custom-scrollbar stagger-children">
+    <div className="flex flex-col lg:flex-row h-full bg-background overflow-hidden w-full relative">
+      {/* Modals & Overlays */}
       {showScanner && (
         <BarcodeScanner onScan={async (sku) => {
           const p = await db.products.where('sku').equals(sku).first();
@@ -511,219 +556,226 @@ const POSPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex gap-2 p-4 bg-card/80 backdrop-blur-md sticky top-0 z-10 shadow-sm border-b border-border/50">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input 
-            id="product-search"
-            title="Search Products"
-            aria-label="Search Products"
-            className="w-full pl-10 pr-4 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all" 
-            placeholder="Search products by name, barcode..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <button 
-          title="Scan Barcode"
-          aria-label="Scan Barcode"
-          onClick={() => setShowScanner(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-primary/10 text-primary border border-primary/20 font-bold rounded-2xl active:scale-95 transition-all text-[10px] tracking-widest capitalize"
-        >
-          <Scan className="w-5 h-5" /> Scan
-        </button>
-      </div>
-
-      {cart.length > 0 && (
-      <div className="py-6 space-y-4">
-        <div className="px-6 flex justify-between items-center">
-          <h3 className="font-bold text-foreground capitalize tracking-widest text-[11px] ml-1">Current Order ({cart.length})</h3>
-          <div className="flex gap-4">
-            <button title="Clear Cart" aria-label="Clear Cart" onClick={() => setCart([])} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive font-bold capitalize tracking-widest transition-all">
-              <Trash2 className="w-3.5 h-3.5" /> Clear Order
-            </button>
+      {/* Left Pane: Products & Search */}
+      <div className="flex-1 flex flex-col min-h-0 border-r border-border/10 overflow-hidden bg-muted/5">
+        {/* Sticky Header for Search */}
+        <div className="flex gap-2 p-3 md:p-4 bg-card/80 backdrop-blur-md z-10 shadow-sm border-b border-border/50">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input 
+              id="product-search"
+              title="Search Products"
+              aria-label="Search Products"
+              className="w-full pl-10 pr-4 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all" 
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
           </div>
-        </div>
-        <div className="bg-card border-y border-border/50 shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-muted-foreground font-bold border-b border-border/50 text-[9px] capitalize tracking-widest">
-              <tr>
-                <th className="text-left py-4 px-6">Item</th>
-                <th className="text-center py-4 px-2">Qty</th>
-                <th className="text-right py-4 px-2">Price</th>
-                <th className="text-right py-4 px-6">Total</th>
-                <th className="py-4 px-2"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/30">
-              {cart.map(item => (
-                <tr key={item.product.id} className="hover:bg-muted/5 transition-colors">
-                  <td className="py-4 px-6 text-foreground font-black text-[11px] uppercase truncate max-w-[120px]">{toSentenceCase(item.product.name)}</td>
-                  <td className="py-4 px-2 text-center text-muted-foreground font-black text-[11px]">{item.quantity}</td>
-                  <td className="py-4 px-2 text-right text-muted-foreground font-black text-[11px]">{item.product.sellPrice.toLocaleString()}</td>
-                  <td className="py-4 px-6 text-right font-black text-foreground text-[11px]">{ (item.product.sellPrice * item.quantity).toLocaleString()}</td>
-                  <td className="py-4 px-2 text-center">
-                    <button title="Remove Item" aria-label="Remove Item" onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} className="text-destructive hover:bg-destructive/10 p-2 rounded-xl transition-all"><X className="w-4 h-4" /></button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="p-6 bg-muted/10 border-t border-border/50 flex flex-col items-end gap-3 text-sm">
-            <div className="flex justify-between w-full max-w-xs"><span className="text-muted-foreground font-bold text-[10px] capitalize tracking-widest">Subtotal</span><span className="font-bold text-foreground">MK {cartSubtotal.toLocaleString()}</span></div>
-            
-            <div className="flex justify-between items-center w-full max-w-xs">
-              <span className="text-muted-foreground font-bold text-[10px] capitalize tracking-widest">Apply Discount</span>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">MK</span>
-                <input 
-                  type="number" 
-                  title="Discount Amount"
-                  placeholder="0.00"
-                  className="w-32 bg-background border border-border/50 rounded-xl px-9 py-2 text-right text-[11px] font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                  value={discount || ''} 
-                  onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} 
-                />
-              </div>
-            </div>
-
-            {taxConfig.rate > 0 && <div className="flex justify-between w-full max-w-xs"><span className="text-muted-foreground font-bold text-[10px] capitalize tracking-widest">Tax ({taxConfig.rate}%)</span><span className="font-bold text-foreground">MK {taxAmount.toLocaleString()}</span></div>}
-            <div className="flex justify-between w-full max-w-xs text-xl font-bold mt-2 pt-4 border-t border-border/20"><span className="text-foreground capitalize tracking-tighter">TOTAL AMOUNT</span><span className="text-primary tracking-tighter">MK {finalTotal.toLocaleString()}</span></div>
-          </div>
-        </div>
-      </div>
-      )}
-
-      <div className="p-6 pt-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-foreground capitalize tracking-widest text-[11px] ml-1">Stock inventory</h3>
           <button 
-            title="View All Products" 
-            aria-label="View All Products" 
-            onClick={() => { setShowAll(!showAll); setSearchTerm(''); }}
-            className="text-[10px] text-primary font-bold capitalize tracking-widest hover:underline"
+            title="Scan Barcode"
+            aria-label="Scan Barcode"
+            onClick={() => setShowScanner(true)}
+            className="flex items-center gap-2 px-4 md:px-6 py-3 bg-primary/10 text-primary border border-primary/20 font-bold rounded-2xl active:scale-95 transition-all text-[10px] tracking-widest capitalize"
           >
-            {showAll ? 'Collapse' : 'Full catalog'}
+            <Scan className="w-5 h-5" /> <span className="hidden sm:inline">Scan</span>
           </button>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 min-h-[400px]">
-          {displayedProducts.map((p: LocalProduct) => (
-            <div key={p.id} onClick={() => addToCart(p)} className="glass-card bg-card border border-border/50 rounded-2xl p-2.5 flex flex-col items-center gap-2 cursor-pointer btn-press group hover:border-primary/30 transition-all shadow-sm relative overflow-hidden">
-              <div className="w-12 h-12 flex items-center justify-center bg-muted/20 rounded-xl group-hover:scale-110 transition-transform overflow-hidden relative border border-border/30">
-                {p.imageUrl ? (
-                  <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-primary/5">
-                    <Package className="w-5 h-5 text-primary/20" />
-                    <span className="text-[6px] font-bold text-primary/20 absolute bottom-1.5 uppercase tracking-tight">{p.isService ? 'Srv' : 'Item'}</span>
-                  </div>
-                )}
-              </div>
-              <div className="text-center w-full">
-                <div className="text-[9px] font-bold text-foreground leading-tight truncate px-1 capitalize">{toSentenceCase(p.name)}</div>
-                <div className="flex items-center justify-center gap-1.5 mt-0.5">
-                  <div className="text-[9px] text-primary font-bold">MK {p.sellPrice.toLocaleString()}</div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toast.success(`${p.name}\nStock: ${p.quantity}\nSKU: ${p.sku}`, { icon: 'ℹ️', duration: 3000 });
-                    }}
-                    className="p-1 hover:bg-primary/10 rounded-full transition-colors"
-                  >
-                    <Info className="w-2.5 h-2.5 text-primary/40" />
-                  </button>
-                </div>
-              </div>
-              {p.quantity <= 5 && !p.isService && (
-                <div className="absolute top-1 right-1">
-                   <div className="w-1.5 h-1.5 bg-destructive rounded-full animate-pulse" />
-                </div>
-              )}
-            </div>
-          ))}
-          {!showAll && products && products.length > 24 && (
-            <div 
-              onClick={() => setShowAll(true)}
-              className="glass-card bg-primary/10 border border-primary/20 rounded-3xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer text-primary btn-press hover:bg-primary/20 transition-all shadow-sm"
+
+        {/* Product Grid Area */}
+        <div className="flex-1 overflow-y-auto p-2 md:p-6 custom-scrollbar">
+          <div className="flex justify-between items-center mb-4 px-1">
+            <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] md:text-[11px] ml-1">Stock inventory</h3>
+            <button 
+              title="View All Products" 
+              aria-label="View All Products" 
+              onClick={() => { setShowAll(!showAll); setSearchTerm(''); }}
+              className="text-[10px] text-primary font-bold capitalize tracking-widest hover:underline"
             >
-              <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20"><Plus className="w-5 h-5"/></div>
-              <span className="text-[10px] font-bold capitalize tracking-widest mt-1">Full catalog</span>
+              {showAll ? 'Collapse' : 'Full catalog'}
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-1 md:gap-3 pb-12">
+
+            {displayedProducts.map((p: LocalProduct) => (
+              <ProductCard key={p.id} p={p} addToCart={addToCart} />
+            ))}
+            {!showAll && products && products.length > 24 && (
+              <div 
+                onClick={() => setShowAll(true)}
+                className="glass-card bg-primary/10 border border-primary/20 rounded-3xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer text-primary btn-press hover:bg-primary/20 transition-all shadow-sm aspect-square"
+              >
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20"><Plus className="w-5 h-5"/></div>
+                <span className="text-[9px] md:text-[10px] font-black capitalize tracking-widest mt-1 text-center">Full catalog</span>
+              </div>
+            )}
+            {displayedProducts.length === 0 && (
+              <div className="col-span-full py-20 text-center flex flex-col items-center gap-4 opacity-30">
+                <Package className="w-16 h-16" />
+                <p className="text-[10px] font-black tracking-widest uppercase">No products found</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Pane: Cart & Checkout */}
+      <div className="w-full lg:w-[380px] xl:w-[420px] flex flex-col bg-card border-l border-border/50 shadow-2xl z-20 min-h-0">
+        <div className="p-5 border-b border-border/50 bg-muted/10 flex justify-between items-center">
+          <h3 className="font-black text-foreground capitalize tracking-widest text-[11px]">Current Order ({cart.length})</h3>
+          {cart.length > 0 && (
+            <button title="Clear Cart" aria-label="Clear Cart" onClick={() => setCart([])} className="text-[10px] text-rose-500 font-bold flex items-center gap-1.5 hover:bg-rose-500/10 px-3 py-1.5 rounded-lg transition-all">
+              <Trash2 className="w-3.5 h-3.5" /> Clear
+            </button>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
+          {cart.length > 0 ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 gap-1">
+              {cart.map(item => (
+                <div key={item.product.id} className="aspect-square glass-card bg-primary/5 border border-primary/20 rounded-xl p-1.5 flex flex-col items-center justify-center gap-1 relative group animate-in zoom-in-95 duration-200">
+                  <div className="w-8 h-8 flex items-center justify-center bg-card rounded-lg overflow-hidden border border-border/10">
+                    {item.product.imageUrl ? (
+                      <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Package className="w-3 h-3 text-primary/30" />
+                    )}
+                  </div>
+                  <div className="text-center w-full px-0.5 min-w-0">
+                    <div className="text-[7px] font-black text-foreground uppercase truncate leading-none mb-0.5">{item.product.name}</div>
+                    <div className="text-[7px] text-primary font-black">x{item.quantity}</div>
+                  </div>
+                  <button 
+                    title="Remove" 
+                    onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} 
+                    className="absolute -top-1 -right-1 bg-rose-500 text-white p-1 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                  <div className="absolute bottom-1 right-1 flex flex-col gap-0.5">
+                     <button onClick={() => addToCart(item.product)} className="w-4 h-4 bg-primary/10 text-primary rounded-md flex items-center justify-center hover:bg-primary hover:text-white transition-colors"><Plus className="w-2.5 h-2.5" /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center p-12 opacity-20 gap-4">
+              <div className="w-20 h-20 rounded-full border-4 border-dashed border-muted-foreground flex items-center justify-center">
+                <ShoppingCart className="w-8 h-8" />
+              </div>
+              <p className="text-[10px] font-black tracking-[0.2em] uppercase text-center">Your cart is empty</p>
             </div>
           )}
         </div>
-      </div>
 
-      <div className="p-6 pt-2">
-        <h3 className="font-black text-foreground mb-4 uppercase tracking-widest text-[11px] ml-1">Payment Channel</h3>
-        <div className="grid grid-cols-4 gap-3">
-          <button onClick={() => { setPaymentMode('Cash'); setSelectedSubMethod(''); }} className={clsx("flex flex-col items-center justify-center py-2.5 rounded-xl font-bold text-[9px] capitalize tracking-widest transition-all btn-press shadow-sm", paymentMode==='Cash' ? "bg-success text-white shadow-lg shadow-success/30 ring-2 ring-success ring-offset-2" : "bg-card text-muted-foreground border border-border/50")}>
-             <Banknote className="w-4 h-4 mb-1" /> Cash
-          </button>
-          <button onClick={() => { setPaymentMode('Card'); setSelectedSubMethod(paymentConfig.bank[0] || ''); }} className={clsx("flex flex-col items-center justify-center py-2.5 rounded-xl font-bold text-[9px] capitalize tracking-widest transition-all btn-press shadow-sm", paymentMode==='Card' ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2" : "bg-card text-muted-foreground border border-border/50")}>
-             <CreditCard className="w-4 h-4 mb-1" /> Card
-          </button>
-          <button onClick={() => { setPaymentMode('Momo'); setSelectedSubMethod(paymentConfig.momo[0] || ''); }} className={clsx("flex flex-col items-center justify-center py-2.5 rounded-xl font-bold text-[9px] capitalize tracking-widest transition-all btn-press shadow-sm", paymentMode==='Momo' ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30 ring-2 ring-amber-500 ring-offset-2" : "bg-card text-muted-foreground border border-border/50")}>
-             <Smartphone className="w-4 h-4 mb-1" /> Mobile
-          </button>
-          <button onClick={() => { setPaymentMode('Credit'); setSelectedSubMethod(''); }} className={clsx("flex flex-col items-center justify-center py-2.5 rounded-xl font-bold text-[9px] capitalize tracking-widest transition-all btn-press shadow-sm", paymentMode==='Credit' ? "bg-purple-600 text-white shadow-lg shadow-purple-600/30 ring-2 ring-purple-600 ring-offset-2" : "bg-card text-muted-foreground border border-border/50")}>
-             <User className="w-4 h-4 mb-1" /> Credit
-          </button>
-        </div>
+        {cart.length > 0 && (
+          <div className="p-5 bg-muted/5 border-t border-border/50 space-y-4">
+            {/* Totals */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                <span>Subtotal</span>
+                <span>MK {cartSubtotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center gap-4">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Discount</span>
+                <div className="relative flex-1 max-w-[120px]">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black text-muted-foreground">MK</span>
+                  <input 
+                    type="number" 
+                    className="w-full bg-background border border-border/50 rounded-xl pl-8 pr-3 py-1.5 text-right text-[11px] font-black focus:ring-2 focus:ring-primary/20 outline-none"
+                    value={discount || ''} 
+                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} 
+                  />
+                </div>
+              </div>
+              {taxConfig.rate > 0 && (
+                <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <span>Tax ({taxConfig.rate}%)</span>
+                  <span>MK {taxAmount.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-lg font-black text-foreground pt-2 border-t border-border/20 tracking-tighter">
+                <span className="uppercase text-[12px] tracking-[0.1em]">Total Due</span>
+                <span className="text-primary">MK {finalTotal.toLocaleString()}</span>
+              </div>
+            </div>
 
-        {(paymentMode === 'Card' || paymentMode === 'Momo') && (
-          <div className="mt-6 animate-in fade-in slide-in-from-top-4 duration-500 stagger-children">
-            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-3 block ml-1">
-              Confirm {paymentMode === 'Card' ? 'Bank Account' : 'Momo Channel'}
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).map(method => (
-                <button
-                  key={method}
-                  onClick={() => setSelectedSubMethod(method)}
+            {/* Payment Modes */}
+            <div className="grid grid-cols-4 gap-2 pt-2">
+              {[
+                { id: 'Cash', icon: Banknote, color: 'bg-success' },
+                { id: 'Card', icon: CreditCard, color: 'bg-primary' },
+                { id: 'Momo', icon: Smartphone, color: 'bg-amber-500' },
+                { id: 'Credit', icon: User, color: 'bg-purple-600' }
+              ].map(mode => (
+                <button 
+                  key={mode.id}
+                  onClick={() => { setPaymentMode(mode.id as any); setSelectedSubMethod(''); }} 
                   className={clsx(
-                    "px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 text-center btn-press",
-                    selectedSubMethod === method 
-                      ? "bg-primary/5 border-primary text-primary shadow-sm" 
-                      : "bg-card border-border/50 text-muted-foreground/40 hover:border-border hover:text-muted-foreground"
+                    "flex flex-col items-center justify-center py-2.5 rounded-xl font-black text-[8px] uppercase tracking-widest transition-all btn-press", 
+                    paymentMode === mode.id ? `${mode.color} text-white shadow-lg` : "bg-card text-muted-foreground border border-border/50"
                   )}
                 >
-                  {method}
+                  <mode.icon className="w-3.5 h-3.5 mb-1" /> {mode.id}
                 </button>
               ))}
             </div>
+
+            {/* Sub Methods (Bank/Momo) */}
+            {(paymentMode === 'Card' || paymentMode === 'Momo') && (
+              <div className="grid grid-cols-2 gap-2 animate-in fade-in slide-in-from-top-1">
+                {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).map(method => (
+                  <button
+                    key={method}
+                    onClick={() => setSelectedSubMethod(method)}
+                    className={clsx(
+                      "px-2 py-2 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all border",
+                      selectedSubMethod === method 
+                        ? "bg-primary text-white border-primary shadow-sm" 
+                        : "bg-background border-border/50 text-muted-foreground/60 hover:border-border"
+                    )}
+                  >
+                    {method}
+                  </button>
+                ))}
+              </div>
+            )}
+
+
+            {/* Cash Input */}
+            {paymentMode === 'Cash' && (
+              <div className="bg-primary/5 rounded-2xl p-4 flex items-center justify-between gap-4 border border-primary/10">
+                <div className="flex-1">
+                  <label className="text-[9px] font-black text-primary/60 uppercase tracking-widest mb-1 block">Received</label>
+                  <input type="number" className="w-full bg-transparent text-lg font-black text-foreground outline-none border-b border-primary/20 pb-0.5" placeholder="0.00" value={amountReceived} onChange={e => setAmountReceived(e.target.value)} />
+                </div>
+                <div className="text-right">
+                  <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Change</div>
+                  <div className="text-lg font-black text-primary tracking-tighter">MK {changeDue.toLocaleString()}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Checkout Button */}
+            <button 
+              disabled={cart.length === 0 || isCheckingOut} 
+              onClick={handleCheckout} 
+              className={clsx(
+                "w-full py-5 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] transition-all shadow-xl uppercase btn-press", 
+                cart.length === 0 ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
+              )}
+            >
+              <CheckCircle2 className="w-5 h-5" /> Checkout
+            </button>
           </div>
         )}
-      </div>
-
-      {paymentMode === 'Cash' && cart.length > 0 && (
-        <div className="p-6 pt-2 animate-in fade-in slide-in-from-bottom-2">
-           <div className="glass-card bg-card border border-border/50 rounded-2xl p-5 flex items-center justify-between gap-6 shadow-sm">
-             <div className="flex-1 space-y-1">
-                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest">Amount received</label>
-                <input title="Amount Received" aria-label="Amount Received" type="number" className="w-full bg-transparent text-xl font-bold text-foreground outline-none border-b border-border/50 pb-1" placeholder="0.00" value={amountReceived} onChange={e => setAmountReceived(e.target.value)} />
-             </div>
-             <div className="text-right space-y-1">
-                <div className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest">Change due</div>
-                <div className="text-xl font-bold text-primary">MK {changeDue.toLocaleString()}</div>
-             </div>
-           </div>
-        </div>
-      )}
-
-      <div className="p-6 pt-2 pb-12">
-        <button 
-          disabled={cart.length === 0 || isCheckingOut} 
-          onClick={handleCheckout} 
-          className={clsx(
-            "w-full py-6 text-white font-bold rounded-[2rem] flex items-center justify-center gap-3 text-[12px] tracking-[0.3em] transition-all shadow-2xl capitalize btn-press", 
-            cart.length === 0 ? "bg-muted-foreground/20 cursor-not-allowed grayscale" : "bg-primary shadow-primary/40 hover:shadow-primary/60"
-          )}
-        >
-          <CheckCircle2 className="w-6 h-6" /> Checkout
-        </button>
       </div>
     </div>
   );
 };
 
 export default POSPage;
+
