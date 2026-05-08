@@ -198,7 +198,7 @@ const UsersPage: React.FC = () => {
         });
       }
 
-      await AuditService.log(`USER_${actionModal.type}`, `User: ${actionModal.user.username} | Reason: ${actionModal.reason}`, actionModal.type === 'REACTIVATE' ? 'INFO' : 'WARNING');
+      await AuditService.log(`USER_${actionModal.type}`, `User: ${actionModal.user.username} | Reason: ${actionModal.reason}`, actionModal.type === 'REACTIVATE' ? 'Info' : 'Warning');
       toast.success("Action completed successfully");
       setActionModal({ isOpen: false, type: null, user: null, reason: '' });
       fetchUsers();

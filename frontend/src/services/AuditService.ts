@@ -1,7 +1,7 @@
 import { db } from '../db/posDB';
 
 export class AuditService {
-  static async log(action: string, details: string = '', type: 'INFO' | 'WARNING' | 'ERROR' = 'INFO') {
+  static async log(action: string, details: string = '', type: 'Info' | 'Warning' | 'Error' = 'Info') {
     try {
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;

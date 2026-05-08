@@ -192,7 +192,7 @@ const InventoryPage: React.FC = () => {
     isService: false,
     imageUrl: '',
     discount: 0,
-    discountType: 'PERCENTAGE' as 'PERCENTAGE' | 'FIXED',
+    discountType: 'Percentage' as 'Percentage' | 'Fixed',
     discountValue: 0,
     discountStartDate: '',
     discountEndDate: '',
@@ -279,7 +279,7 @@ const InventoryPage: React.FC = () => {
       isService: editingProduct?.isService || false,
       imageUrl: editingProduct?.imageUrl || '',
       discount: editingProduct?.discount || 0,
-      discountType: (editingProduct?.discountType || 'PERCENTAGE') as 'PERCENTAGE' | 'FIXED',
+      discountType: (editingProduct?.discountType || 'Percentage') as 'Percentage' | 'Fixed',
       discountValue: editingProduct?.discountValue || 0,
       discountStartDate: editingProduct?.discountStartDate || '',
       discountEndDate: editingProduct?.discountEndDate || '',
@@ -324,7 +324,7 @@ const InventoryPage: React.FC = () => {
       isService: p?.isService || false,
       imageUrl: p?.imageUrl || '',
       discount: p?.discount || 0,
-      discountType: (p?.discountType || 'PERCENTAGE') as 'PERCENTAGE' | 'FIXED',
+      discountType: (p?.discountType || 'Percentage') as 'Percentage' | 'Fixed',
       discountValue: p?.discountValue || 0,
       discountStartDate: p?.discountStartDate || '',
       discountEndDate: p?.discountEndDate || '',
@@ -471,7 +471,7 @@ const InventoryPage: React.FC = () => {
       const newId = generateNumericId();
       const productData = {
         ...formData,
-        discountType: formData.discountType as 'PERCENTAGE' | 'FIXED' | undefined,
+        discountType: formData.discountType as 'Percentage' | 'Fixed' | undefined,
         quantity: formData.isService ? 1 : formData.quantity,
         updatedAt: new Date().toISOString()
       };
@@ -487,7 +487,7 @@ const InventoryPage: React.FC = () => {
         const fullNewProduct: LocalProduct = {
           ...productData,
           id: newId,
-          status: 'ACTIVE' as const,
+          status: 'Active' as const,
           createdAt: new Date().toISOString()
         };
         await db.products.add(fullNewProduct);
@@ -520,7 +520,7 @@ const InventoryPage: React.FC = () => {
     }
     await db.products.update(product.id, { deleted: true });
     await SyncService.pushProduct({ ...product, deleted: true } as Parameters<typeof SyncService.pushProduct>[0]);
-    await AuditService.log('PRODUCT_SAFE_DELETE', `Safe deleted product: ${product.name} (SKU: ${product.sku})`, 'WARNING');
+    await AuditService.log('PRODUCT_SAFE_DELETE', `Safe deleted product: ${product.name} (SKU: ${product.sku})`, 'Warning');
     toast.success('Product moved to trash');
   };
 
@@ -545,7 +545,7 @@ const InventoryPage: React.FC = () => {
         }
         await db.products.delete(deleteConfirmation);
         if (product) {
-          await AuditService.log('PRODUCT_DELETE', `Deleted product: ${product.name} (SKU: ${product.sku})`, 'WARNING');
+          await AuditService.log('PRODUCT_DELETE', `Deleted product: ${product.name} (SKU: ${product.sku})`, 'Warning');
         }
         toast.success('Product permanently removed');
       } catch (error: any) {
@@ -819,17 +819,17 @@ const InventoryPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="discount-type">Discount Type</label>
-                  <select id="discount-type" title="Discount Type" aria-label="Discount Type" className="input-field w-full py-3 px-4 font-black text-rose-500 bg-rose-500/5 border-rose-500/20" value={formData.discountType} onChange={(e) => setFormData({...formData, discountType: e.target.value as 'PERCENTAGE'|'FIXED'})}>
-                    <option value="PERCENTAGE">Percentage (%)</option>
-                    <option value="FIXED">Fixed Amount</option>
+                  <select id="discount-type" title="Discount Type" aria-label="Discount Type" className="input-field w-full py-3 px-4 font-black text-rose-500 bg-rose-500/5 border-rose-500/20" value={formData.discountType} onChange={(e) => setFormData({...formData, discountType: e.target.value as 'Percentage'|'Fixed'})}>
+                    <option value="Percentage">Percentage (%)</option>
+                    <option value="Fixed">Fixed Amount</option>
                   </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="discount-value">Discount Value</label>
                   <input id="discount-value" title="Discount Value" aria-label="Discount Value" placeholder="0" type="number" className="input-field w-full py-3 px-4 font-black text-rose-500 bg-rose-500/5 border-rose-500/20" value={formData.discountValue} onChange={(e) => {
                     let val = Math.max(0, Number(e.target.value));
-                    if (formData.discountType === 'PERCENTAGE') val = Math.min(100, val);
-                    setFormData({...formData, discountValue: val, discount: formData.discountType === 'PERCENTAGE' ? val : 0});
+                    if (formData.discountType === 'Percentage') val = Math.min(100, val);
+                    setFormData({...formData, discountValue: val, discount: formData.discountType === 'Percentage' ? val : 0});
                   }} onFocus={(e) => e.target.select()} />
                 </div>
                 <div className="space-y-1">

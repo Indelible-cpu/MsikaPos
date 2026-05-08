@@ -324,8 +324,8 @@ export const SyncService = {
         categoryId: (product.category_id ?? product.categoryId) || 0,
         isService: product.is_service ?? product.isService ?? false,
         imageUrl: product.imageUrl ?? undefined,
-        discountType: (product.discount_type ?? product.discountType) as 'PERCENTAGE' | 'FIXED' | undefined,
-        status: 'ACTIVE',
+        discountType: (product.discount_type ?? product.discountType) as 'Percentage' | 'Fixed' | undefined,
+        status: 'Active',
         createdAt: product.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });

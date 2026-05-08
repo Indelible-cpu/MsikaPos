@@ -173,7 +173,7 @@ const App: React.FC = () => {
         await SyncService.pushSales();
         await AuditService.log('SYNC', 'Background sync completed successfully');
       } catch {
-        await AuditService.log('SYNC_ERROR', 'Background sync failed', 'ERROR');
+        await AuditService.log('SYNC_ERROR', 'Background sync failed', 'Error');
       }
     }
   }, []);
