@@ -13,9 +13,7 @@ import {
   MessageSquare,
   Eye,
   FileText,
-  Calendar,
-  PackageSearch,
-  X
+  Calendar
 } from 'lucide-react';
 import { format, startOfDay, startOfWeek, startOfMonth, startOfQuarter, startOfYear, isWithinInterval, endOfDay } from 'date-fns';
 import Modal from '../components/Modal';
@@ -23,7 +21,7 @@ import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import toast from 'react-hot-toast';
-
+import html2canvas from 'html2canvas';
 import { clsx } from 'clsx';
 
 type TimeFilter = 'Today' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
@@ -34,10 +32,9 @@ const TransactionsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('Today');
   const [dateFilter, setDateFilter] = useState('');
-  const [skuFilter, setSkuFilter] = useState('');
+  const [skuFilter] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [serverSales, setServerSales] = useState<LocalSale[]>([]);
-  const [loading, setLoading] = useState(false);
   
   // View/Edit states
   const [viewMode, setViewMode] = useState<'receipt' | 'invoice'>('receipt');
@@ -81,7 +78,6 @@ const TransactionsPage: React.FC = () => {
 
   useEffect(() => {
     const loadServerSales = async () => {
-      setLoading(true);
       try {
         const params: { q: string; sku: string; date?: string; scope?: string } = { q: searchTerm, sku: skuFilter };
         if (dateFilter) params.date = dateFilter;
@@ -103,7 +99,7 @@ const TransactionsPage: React.FC = () => {
       } catch (e) {
         console.error('Failed to load server sales:', e);
       } finally {
-        setLoading(false);
+        // loading state removed
       }
     };
     loadServerSales();
@@ -183,16 +179,39 @@ const TransactionsPage: React.FC = () => {
     }
   };
 
-  const handleShareWhatsApp = (sale: LocalSale) => {
+  const handleShareWhatsApp = async (sale: LocalSale) => {
     try {
-      const itemsText = sale.items.map(i => `▫️ ${i.productName}\n   ${i.quantity} x MK ${i.unitPrice.toLocaleString()} = *MK ${i.lineTotal.toLocaleString()}*`).join('\n\n');
-      const companyName = localStorage.getItem('companyName') || 'MsikaPos';
-      const text = `*Receipt from ${companyName}*\n🧾 *Order #${sale.invoiceNo}*\n\n*Items:*\n${itemsText}\n\n*Total: MK ${sale.total.toLocaleString()}*\n\n_Thank you for your business!_`;
+      const receiptElement = document.getElementById('print-container');
+      if (!receiptElement) return;
       
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-      toast.success('WhatsApp opened');
-    } catch {
-      toast.error('Failed to share');
+      toast.loading('Generating shareable receipt...', { id: 'share' });
+      
+      // Temporarily make it visible for capture if it was hidden
+      const canvas = await html2canvas(receiptElement, { scale: 2, backgroundColor: '#ffffff' });
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      
+      if (!blob) throw new Error('Failed to generate image');
+
+      const file = new File([blob], `Receipt-${sale.invoiceNo}.png`, { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Receipt',
+          text: `Receipt from ${localStorage.getItem('companyName') || 'MsikaPos'} - Order #${sale.invoiceNo}`
+        });
+        toast.success('Shared successfully', { id: 'share' });
+      } else {
+        // Fallback to text if file share not supported
+        const itemsText = sale.items.map(i => `▫️ ${i.productName}\n   ${i.quantity} x MK ${i.unitPrice.toLocaleString()} = *MK ${i.lineTotal.toLocaleString()}*`).join('\n\n');
+        const companyName = localStorage.getItem('companyName') || 'MsikaPos';
+        const text = `*Receipt from ${companyName}*\n🧾 *Order #${sale.invoiceNo}*\n\n*Items:*\n${itemsText}\n\n*Total: MK ${sale.total.toLocaleString()}*\n\n_Thank you for your business!_`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        toast.success('WhatsApp opened (Text fallback)', { id: 'share' });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to share', { id: 'share' });
     }
   };
 
@@ -224,7 +243,7 @@ const TransactionsPage: React.FC = () => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `MsikaPos_Transactions_\${format(new Date(), 'yyyyMMdd')}.csv`);
+    link.setAttribute('download', `MsikaPos_Transactions_${format(new Date(), 'yyyyMMdd')}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -235,91 +254,51 @@ const TransactionsPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0 relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-8 sticky top-0 z-30">
-        <div className="flex flex-col gap-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex flex-col">
-            </div>
-            
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              {loading && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-lg animate-pulse mr-2">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
-                  <span className="text-[8px] font-black tracking-widest">SYNCING...</span>
-                </div>
-              )}
-              
-              <select 
-                value={timeFilter} 
-                onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
-                className="bg-card/50 border border-border/50 text-foreground text-[10px] font-black tracking-widest px-4 py-3 rounded-xl appearance-none cursor-pointer hover:border-primary/50 transition-all uppercase btn-press"
-                title="Select time scope"
-              >
-                {['Today', 'Weekly', 'Monthly', 'Quarterly', 'Annual'].map(f => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-
-              {!readOnly && (
-                <button 
-                  onClick={handleExport}
-                  className="btn-primary !px-6 !py-3 text-[10px] font-black tracking-widest shadow-xl shadow-primary/10 flex items-center gap-2 uppercase btn-press"
-                >
-                  <Download className="w-4 h-4" /> Export
-                </button>
-              )}
-            </div>
+      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-4 sticky top-0 z-30">
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          {/* Main Search */}
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search invoice or customer..."
+              className="input-field w-full pl-11 text-[11px] h-10 font-bold capitalize shadow-inner"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative col-span-1 md:col-span-2">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Search invoice or customer..."
-                className="input-field w-full pl-11 text-[11px] h-12 font-black uppercase shadow-inner"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="relative">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input 
-                type="date" 
-                className="input-field w-full pl-11 text-[11px] h-12 font-black uppercase shadow-inner"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                title="Filter by actual date"
-              />
-              {dateFilter && (
-                <button 
-                  onClick={() => setDateFilter('')} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive"
-                  title="Clear date filter"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <PackageSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Search by SKU..."
-                className="input-field w-full pl-11 text-[11px] h-12 font-black uppercase shadow-inner"
-                value={skuFilter}
-                onChange={(e) => setSkuFilter(e.target.value)}
-              />
-              {skuFilter && (
-                <button 
-                  onClick={() => setSkuFilter('')} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-destructive"
-                  title="Clear SKU filter"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
+          {/* Date Filter */}
+          <div className="relative w-full md:w-44">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <input 
+              type="date" 
+              className="input-field w-full pl-11 text-[11px] h-10 font-bold capitalize shadow-inner"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            />
+          </div>
+
+          {/* Scope Select */}
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <select 
+              value={timeFilter} 
+              onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+              className="bg-card/50 border border-border/50 text-foreground text-[10px] font-bold tracking-widest px-4 h-10 rounded-xl appearance-none cursor-pointer hover:border-primary/50 transition-all capitalize btn-press"
+            >
+              {['Today', 'Weekly', 'Monthly', 'Quarterly', 'Annual'].map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+
+            {!readOnly && (
+              <button 
+                onClick={handleExport}
+                className="btn-primary !px-6 h-10 text-[10px] font-bold tracking-widest shadow-xl shadow-primary/10 flex items-center gap-2 capitalize btn-press shrink-0"
+              >
+                <Download className="w-4 h-4" /> Export
+              </button>
+            )}
           </div>
         </div>
       </div>

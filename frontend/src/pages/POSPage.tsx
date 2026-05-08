@@ -20,9 +20,11 @@ import {
   Calendar,
   FileText,
   ShieldAlert,
-  Building2
+  Building2,
+  MessageSquare
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import html2canvas from 'html2canvas';
 import { soundService } from '../services/SoundService';
 import clsx from 'clsx';
 import { Receipt } from '../components/Receipt';
@@ -109,7 +111,7 @@ const POSPage: React.FC = () => {
         const bySku = await db.products.where('sku').equals(searchTerm).filter(p => !p.deleted).toArray();
         return Array.from(new Map([...byName, ...bySku].map(p => [p.id, p])).values());
       } else {
-        return await db.products.filter(p => !p.deleted && p.status === 'ACTIVE').limit(12).toArray();
+        return await db.products.filter(p => !p.deleted && p.status === 'ACTIVE').limit(48).toArray();
       }
     },
     [searchTerm]
@@ -337,15 +339,15 @@ const POSPage: React.FC = () => {
         
         <div className="p-6 space-y-8 pb-24">
            <div className="space-y-4">
-             <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] ml-1 opacity-50">Customer verification</h3>
-             <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm space-y-px bg-card">
+             <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] ml-1 opacity-50">Customer Verification</h3>
+             <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm bg-card">
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
                  <User className="w-5 h-5 text-primary mr-4" />
-                 <input title="Customer Name" aria-label="Customer Name" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Full name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                 <input title="Customer Name" aria-label="Customer Name" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Full Name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
                </div>
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
                  <MessageCircle className="w-5 h-5 text-success mr-4" />
-                 <input title="WhatsApp Number" aria-label="WhatsApp Number" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="WhatsApp number" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
+                 <input title="WhatsApp Number" aria-label="WhatsApp Number" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="WhatsApp Number" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
                </div>
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
                  <ShieldAlert className="w-5 h-5 text-amber-500 mr-4" />
@@ -359,22 +361,22 @@ const POSPage: React.FC = () => {
            </div>
 
            <div className="space-y-4">
-             <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] ml-1 opacity-50">Sale summary</h3>
+             <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] ml-1 opacity-50">Sale Summary</h3>
              <div className="glass-card rounded-3xl border border-border p-6 space-y-5 shadow-sm bg-card">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Total amount</span>
+                  <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Total Amount</span>
                   <span className="font-bold text-foreground text-lg">MK {finalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Initial deposit</span>
+                  <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Initial Deposit</span>
                   <input title="Initial Deposit" aria-label="Initial Deposit" type="number" className="w-32 bg-muted/20 border border-border rounded-xl px-4 py-2.5 text-right outline-none focus:ring-2 focus:ring-primary font-bold" placeholder="0.00" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} />
                 </div>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Balance due</span>
+                  <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Balance Due</span>
                   <span className="font-bold text-destructive text-lg">MK {balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm pt-4 border-t border-border/50">
-                  <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Promise date</span>
+                  <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Promise Date</span>
                  <div className="relative">
                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                    <input title="Due Date" aria-label="Due Date" type="date" className="pl-10 pr-4 py-2.5 bg-muted/20 border border-border rounded-xl outline-none focus:ring-2 focus:ring-primary text-foreground text-xs font-black uppercase" value={dueDate} onChange={e => setDueDate(e.target.value)} />
@@ -387,11 +389,11 @@ const POSPage: React.FC = () => {
              <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] ml-1 opacity-50">Documentation</h3>
              <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm bg-card">
                 <label className="flex items-center justify-between px-6 py-4 border-b border-border/50 cursor-pointer hover:bg-muted/10 transition-colors">
-                   <div className="flex items-center gap-4 text-[11px] text-foreground font-bold capitalize tracking-widest"><Printer className="w-4 h-4 text-muted-foreground" /> Print official invoice</div>
+                   <div className="flex items-center gap-4 text-[11px] text-foreground font-bold capitalize tracking-widest"><Printer className="w-4 h-4 text-muted-foreground" /> Print Official Invoice</div>
                    <input title="Print Invoice" type="checkbox" className="w-5 h-5 accent-primary rounded-lg" checked={printInvoice} onChange={e => setPrintInvoice(e.target.checked)} />
                 </label>
                 <label className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-muted/10 transition-colors">
-                   <div className="flex items-center gap-4 text-[11px] text-foreground font-bold capitalize tracking-widest"><MessageCircle className="w-4 h-4 text-success" /> Send copy via WhatsApp</div>
+                   <div className="flex items-center gap-4 text-[11px] text-foreground font-bold capitalize tracking-widest"><MessageCircle className="w-4 h-4 text-success" /> Send Copy Via WhatsApp</div>
                    <input title="Send via WhatsApp" type="checkbox" className="w-5 h-5 accent-success rounded-lg" checked={sendWhatsapp} onChange={e => setSendWhatsapp(e.target.checked)} />
                 </label>
              </div>
@@ -399,7 +401,7 @@ const POSPage: React.FC = () => {
 
            <div className="pt-6">
              <button onClick={handleSaveCreditSale} disabled={isCheckingOut} className="w-full py-5 bg-success text-white font-bold rounded-[2rem] flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] active:scale-95 transition-all shadow-xl shadow-success/20 capitalize">
-               <FileText className="w-5 h-5" /> Save credit sale
+               <FileText className="w-5 h-5" /> Save Credit Sale
              </button>
            </div>
         </div>
@@ -423,15 +425,37 @@ const POSPage: React.FC = () => {
               <CheckCircle2 className="w-16 h-16 text-success mb-4" />
               <h2 className="text-xl font-black text-foreground uppercase tracking-tighter">Payment Successful</h2>
             </div>
-            <div className="max-h-[50vh] overflow-y-auto bg-card p-6">
+            <div className="max-h-[50vh] overflow-y-auto bg-card p-6" id="receipt-print">
                <Receipt {...showReceipt} />
             </div>
             <div className="p-6 bg-muted/30 border-t border-border/50 flex gap-4">
-              <button onClick={() => {
-                const text = encodeURIComponent(`Receipt from ${localStorage.getItem('companyName') || 'MsikaPos'}\nInvoice: ${showReceipt.invoiceNo}\nTotal: MK ${showReceipt.total.toLocaleString()}\nThank you!`);
-                window.open(`https://wa.me/${whatsappNumber || ''}?text=${text}`, '_blank');
-              }} className="flex-1 py-4 bg-success text-white rounded-2xl font-bold capitalize tracking-widest text-[11px] flex items-center justify-center gap-2 btn-press"><MessageCircle className="w-4 h-4" /> Share</button>
-              <button onClick={() => setShowReceipt(null)} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-bold capitalize tracking-widest text-[11px] btn-press">New sale</button>
+              <button 
+                onClick={async () => {
+                  const receiptElement = document.getElementById('receipt-print');
+                  if (!receiptElement) return;
+                  toast.loading('Generating shareable receipt...', { id: 'share' });
+                  try {
+                    const canvas = await html2canvas(receiptElement, { scale: 2, backgroundColor: '#ffffff' });
+                    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+                    if (!blob) throw new Error('Blob error');
+                    const file = new File([blob], `Receipt-${showReceipt.invoiceNo}.png`, { type: 'image/png' });
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                      await navigator.share({ files: [file], title: 'Receipt', text: `Receipt from ${localStorage.getItem('companyName') || 'MsikaPos'}` });
+                      toast.success('Shared successfully', { id: 'share' });
+                    } else {
+                      const text = encodeURIComponent(`Receipt from ${localStorage.getItem('companyName') || 'MsikaPos'}\nInvoice: ${showReceipt.invoiceNo}\nTotal: MK ${showReceipt.total.toLocaleString()}\nThank you!`);
+                      window.open(`https://wa.me/?text=${text}`, '_blank');
+                      toast.success('WhatsApp opened', { id: 'share' });
+                    }
+                  } catch (e) {
+                    toast.error('Failed to share', { id: 'share' });
+                  }
+                }}
+                className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-bold tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 capitalize"
+              >
+                <MessageSquare className="w-4 h-4" /> Share WhatsApp
+              </button>
+              <button onClick={() => setShowReceipt(null)} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-bold capitalize tracking-widest text-[11px] btn-press">New Sale</button>
             </div>
           </div>
         </div>
@@ -526,8 +550,8 @@ const POSPage: React.FC = () => {
             {showAll ? 'Collapse' : 'Full catalog'}
           </button>
         </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-          {(showAll ? products : products?.slice(0, cart.length === 0 ? 15 : 8))?.map(p => (
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+          {(showAll ? products : products?.slice(0, 24))?.map(p => (
             <div key={p.id} onClick={() => addToCart(p)} className="glass-card bg-card border border-border/50 rounded-2xl p-4 flex flex-col items-center gap-3 cursor-pointer btn-press group">
               <div className="w-14 h-14 flex items-center justify-center bg-muted/20 rounded-xl group-hover:scale-110 transition-transform">
                 {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain" /> : <Plus className="w-6 h-6 text-muted-foreground/30" />}
