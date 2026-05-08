@@ -44,27 +44,28 @@ interface TaxConfig {
 
 const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: (p: LocalProduct) => void }) => {
   return (
-    <div onClick={() => addToCart(p)} className="aspect-square glass-card bg-card border border-border/30 rounded-xl p-1.5 flex flex-col items-center justify-center gap-1 cursor-pointer btn-press group hover:border-primary/20 transition-all shadow-sm relative overflow-hidden">
-      <div className="w-8 h-8 md:w-12 md:h-12 flex items-center justify-center bg-muted/10 rounded-lg group-hover:scale-105 transition-transform overflow-hidden relative border border-border/10">
+    <div onClick={() => addToCart(p)} className="aspect-square flex flex-col items-center justify-center gap-0.5 cursor-pointer active:scale-95 transition-all relative group">
+      <div className="w-full aspect-square flex items-center justify-center bg-muted/5 rounded-lg overflow-hidden border border-border/5 group-hover:bg-primary/5 transition-colors">
         {p.imageUrl ? (
           <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-primary/5">
-            <Package className="w-4 h-4 md:w-5 md:h-5 text-primary/10" />
-            <span className="text-[5px] font-bold text-primary/20 absolute bottom-0.5 uppercase tracking-tighter">{p.isService ? 'Srv' : 'Item'}</span>
+          <div className="w-full h-full flex flex-col items-center justify-center">
+            <Package className="w-3 h-3 md:w-5 md:h-5 text-primary/10" />
+            <span className="text-[4px] font-bold text-primary/20 absolute bottom-1 uppercase tracking-tighter hidden md:block">{p.isService ? 'Srv' : 'Item'}</span>
           </div>
         )}
       </div>
-      <div className="text-center w-full px-0.5">
-        <div className="text-[7px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
-        <div className="text-[7px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()}</div>
+      <div className="text-center w-full px-0.5 mt-0.5">
+        <div className="text-[6px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
+        <div className="text-[6px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()}</div>
       </div>
       {p.quantity <= 5 && !p.isService && (
-        <div className="absolute top-1 right-1 w-1 h-1 bg-destructive rounded-full animate-pulse" />
+        <div className="absolute top-0.5 right-0.5 w-1 h-1 bg-destructive rounded-full animate-pulse" />
       )}
     </div>
   );
 });
+
 
 
 const POSPage: React.FC = () => {
@@ -612,10 +613,11 @@ const POSPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Product Grid Area */}
-        <div className="flex-1 overflow-y-auto p-2 md:p-6 custom-scrollbar">
-          <div className="flex justify-between items-center mb-4 px-1">
-            <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] md:text-[11px] ml-1">Stock inventory</h3>
+        {/* Product Grid Area - Limited height on mobile to show ~2 rows */}
+        <div className="h-[180px] lg:h-auto lg:flex-1 overflow-y-auto p-2 md:p-6 custom-scrollbar bg-card/20">
+          <div className="flex justify-between items-center mb-2 px-1">
+            <h3 className="font-bold text-foreground capitalize tracking-widest text-[9px] md:text-[11px]">Stock</h3>
+
             <button 
               title="View All Products" 
               aria-label="View All Products" 
@@ -626,7 +628,8 @@ const POSPage: React.FC = () => {
             </button>
           </div>
           
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-1 md:gap-3 pb-12">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 md:gap-3 pb-4">
+
 
             {displayedProducts.map((p: LocalProduct) => (
               <ProductCard key={p.id} p={p} addToCart={addToCart} />
