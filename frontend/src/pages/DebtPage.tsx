@@ -9,14 +9,13 @@ import {
   Users, 
   History as HistoryIcon,
   Camera,
-  Fingerprint,
-  Upload,
   CheckCircle2,
   Calendar,
   Trash2,
   Save,
   RotateCcw,
-  ArrowLeft
+  ArrowLeft,
+  Upload
 } from 'lucide-react';
 
 import toast from 'react-hot-toast';
@@ -57,7 +56,7 @@ interface ReceiptData {
 
 const MALAWI_PHONE_REGEX = /^\d{10}$|^\d{13}$/;
 
-const mockEncrypt = (data: string) => btoa(data);
+
 
 const DebtPage: React.FC = () => {
   const location = useLocation();
@@ -78,8 +77,7 @@ const DebtPage: React.FC = () => {
     phone: '',
     idNumber: '',
     village: '',
-    livePhoto: '',
-    fingerprintData: ''
+    livePhoto: ''
   });
 
   const [useCamera, setUseCamera] = useState(false);
@@ -87,7 +85,7 @@ const DebtPage: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const resetForm = () => {
-    setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '', fingerprintData: '' });
+    setCustForm({ name: '', phone: '', idNumber: '', village: '', livePhoto: '' });
   };
 
   // Handle POS Redirect
@@ -259,13 +257,7 @@ const DebtPage: React.FC = () => {
     }
   };
 
-  const captureFingerprint = async () => {
-    toast.loading('Scanning...', { id: 'fp' });
-    setTimeout(() => {
-      setCustForm({ ...custForm, fingerprintData: mockEncrypt("FP_" + Math.random().toString(36).substring(2)) });
-      toast.success('Fingerprint captured', { id: 'fp' });
-    }, 1000);
-  };
+
 
   const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,14 +271,16 @@ const DebtPage: React.FC = () => {
 
       const customerId = crypto.randomUUID();
       const creditSale = location.state?.creditSale;
+      const initialPaid = creditSale ? creditSale.paid : 0;
+      const totalAmt = creditSale ? creditSale.total : 0;
       
       const newCustomer: LocalCustomer = {
         ...custForm,
         id: customerId,
         idNumber: custForm.idNumber.toUpperCase(),
-        balance: creditSale ? creditSale.total : 0,
-        totalCreditAmount: creditSale ? creditSale.total : 0,
-        totalPaidAmount: 0,
+        balance: Math.max(0, totalAmt - initialPaid),
+        totalCreditAmount: totalAmt,
+        totalPaidAmount: initialPaid,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         synced: 0
@@ -307,6 +301,20 @@ const DebtPage: React.FC = () => {
           status: 'PENDING'
         };
         await db.salesQueue.add(saleData);
+
+        // Record initial deposit in history if any
+        if (initialPaid > 0) {
+          await db.debtPayments.add({
+            id: crypto.randomUUID(),
+            customerId,
+            amount: initialPaid,
+            paymentMethod: creditSale.paymentMode || 'Cash',
+            cashierName: saleData.sellerName || 'System',
+            createdAt: new Date().toISOString(),
+            synced: 0,
+            reference: 'INITIAL DEPOSIT'
+          });
+        }
         
         // Update product quantities
         for (const item of creditSale.items) {
@@ -495,7 +503,7 @@ const DebtPage: React.FC = () => {
                                 <td className="px-8 py-5 text-right font-black text-emerald-500">MK {p.amount.toLocaleString()}</td>
                                 <td className="px-8 py-5 text-right text-[11px] font-black uppercase opacity-40">{p.paymentMethod}</td>
                                 <td className="px-8 py-5 text-center">
-                                  {p.signature ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-rose-500 font-black text-[8px]">NO SIGN</span>}
+                                  {p.reference === 'INITIAL DEPOSIT' ? <span className="text-[9px] font-black text-primary px-3 py-1 bg-primary/10 rounded-full">DEPOSIT</span> : p.signature ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-rose-500 font-black text-[8px]">NO SIGN</span>}
                                 </td>
                               </tr>
                             ))
@@ -580,45 +588,42 @@ const DebtPage: React.FC = () => {
           <div className="p-10 space-y-10">
             {isEditing ? (
               <form onSubmit={handleUpdateCustomer} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black opacity-30 uppercase ml-1">Full Name</label>
-                      <input required placeholder="Name" className="input-field w-full" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black opacity-30 uppercase ml-1">Phone</label>
-                      <input required placeholder="Phone" className="input-field w-full" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black opacity-30 uppercase ml-1">National ID</label>
-                      <input placeholder="National ID" className="input-field w-full uppercase" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black opacity-30 uppercase ml-1">Location/Village</label>
-                      <input placeholder="Location" className="input-field w-full" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-6">
-                    <div className="aspect-square bg-surface-bg rounded-3xl border border-surface-border flex flex-col items-center justify-center overflow-hidden group relative">
-                      {custForm.livePhoto ? <img src={custForm.livePhoto} alt="" className="w-full h-full object-cover" /> : useCamera ? <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" /> : <Camera className="w-10 h-10 opacity-10" />}
-                      <div className="absolute inset-x-0 bottom-0 p-3 bg-black/40 backdrop-blur-md flex gap-2">
+                    <div className="aspect-square bg-muted/20 rounded-[3rem] border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group relative transition-all hover:border-primary/50">
+                      {custForm.livePhoto ? <img src={custForm.livePhoto} alt="" className="w-full h-full object-cover" /> : useCamera ? <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" /> : <Camera className="w-16 h-16 opacity-10" />}
+                      <div className="absolute inset-x-0 bottom-0 p-4 bg-background/80 backdrop-blur-md flex gap-3 translate-y-full group-hover:translate-y-0 transition-transform">
                         {!useCamera ? (
-                          <button type="button" title="Start Camera" aria-label="Start Camera" onClick={startCamera} className="flex-1 bg-white p-2 rounded-xl"><Camera className="w-4 h-4 mx-auto" /></button>
+                          <button type="button" title="Start Camera" aria-label="Start Camera" onClick={startCamera} className="flex-1 bg-primary text-primary-foreground p-3 rounded-2xl shadow-lg active:scale-95 transition-all"><Camera className="w-5 h-5 mx-auto" /></button>
                         ) : (
-                          <button type="button" title="Capture Photo" aria-label="Capture Photo" onClick={capturePhoto} className="flex-1 bg-emerald-500 text-white p-2 rounded-xl"><CheckCircle2 className="w-4 h-4 mx-auto" /></button>
+                          <button type="button" title="Capture Photo" aria-label="Capture Photo" onClick={capturePhoto} className="flex-1 bg-success text-white p-3 rounded-2xl shadow-lg active:scale-95 transition-all"><CheckCircle2 className="w-5 h-5 mx-auto" /></button>
                         )}
-                        <label className="flex-1 bg-white p-2 rounded-xl cursor-pointer"><Upload className="w-4 h-4 mx-auto" /><input type="file" title="Upload Photo" aria-label="Upload Photo" className="hidden" onChange={handleFileUpload} /></label>
+                        <label className="flex-1 bg-card border border-border p-3 rounded-2xl cursor-pointer shadow-lg active:scale-95 transition-all hover:bg-muted/50"><Upload className="w-5 h-5 mx-auto text-foreground" /><input type="file" title="Upload Photo" aria-label="Upload Photo" className="hidden" onChange={handleFileUpload} /></label>
                       </div>
                     </div>
-                    <button type="button" onClick={captureFingerprint} className={clsx("w-full py-4 rounded-2xl border flex items-center justify-center gap-3", custForm.fingerprintData ? "bg-emerald-500/10 text-emerald-500" : "bg-surface-bg")}>
-                      <Fingerprint className="w-5 h-5" /> <span className="text-[10px] font-black uppercase">{custForm.fingerprintData ? 'Update Biometrics' : 'Scan Finger'}</span>
-                    </button>
+                  </div>
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Full Legal Name</label>
+                      <input required placeholder="Enter full name" className="input-field w-full !py-4 font-black" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Phone Number</label>
+                      <input required placeholder="0..." className="input-field w-full !py-4 font-black" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">National ID Number</label>
+                      <input placeholder="ID Number" className="input-field w-full !py-4 uppercase font-black" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Physical Location / Village</label>
+                      <input placeholder="Location" className="input-field w-full !py-4 font-black" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-4 pt-6 border-t border-surface-border">
-                   <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-4 bg-surface-bg rounded-2xl font-black text-[10px] uppercase">Cancel</button>
-                   <button type="submit" className="flex-[2] btn-primary !py-4 text-[10px] font-black uppercase flex items-center justify-center gap-3"><Save className="w-4 h-4" /> Save Changes</button>
+                <div className="flex gap-4 pt-10 border-t border-border/50">
+                   <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-5 bg-muted/20 rounded-[2rem] font-black text-[10px] uppercase tracking-widest btn-press">Cancel Edit</button>
+                   <button type="submit" className="flex-[2] py-5 bg-primary text-primary-foreground rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl shadow-primary/20 btn-press"><Save className="w-5 h-5" /> Commit Changes</button>
                 </div>
               </form>
             ) : (
@@ -629,11 +634,11 @@ const DebtPage: React.FC = () => {
                   </div>
                   <div className="flex-1 space-y-6">
                     <div><h3 className="text-3xl font-black uppercase">{selectedCustomer.name}</h3><p className="text-primary-500 text-[10px] font-black uppercase">Registered {new Date(selectedCustomer.createdAt).toLocaleDateString()}</p></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      {[ {label: 'Phone', val: selectedCustomer.phone}, {label: 'ID Number', val: selectedCustomer.idNumber || 'N/A'}, {label: 'Location', val: selectedCustomer.village || 'N/A'}, {label: 'Biometrics', val: selectedCustomer.fingerprintData ? 'VERIFIED' : 'NOT ENROLLED'} ].map((item, i) => (
-                        <div key={i} className="bg-surface-bg p-5 rounded-2xl border border-surface-border">
-                          <div className="text-[8px] font-black opacity-30 uppercase mb-1">{item.label}</div>
-                          <div className="text-sm font-black">{item.val}</div>
+                    <div className="grid grid-cols-2 gap-5">
+                      {[ {label: 'Phone Number', val: selectedCustomer.phone}, {label: 'National ID', val: selectedCustomer.idNumber || 'N/A'}, {label: 'Location / Village', val: selectedCustomer.village || 'N/A'}, {label: 'Total Paid', val: `MK ${(selectedCustomer.totalPaidAmount || 0).toLocaleString()}`} ].map((item, i) => (
+                        <div key={i} className="bg-muted/10 p-5 rounded-3xl border border-border/50">
+                          <div className="text-[9px] font-black text-muted-foreground uppercase mb-1 tracking-widest">{item.label}</div>
+                          <div className="text-[11px] font-black text-foreground">{item.val}</div>
                         </div>
                       ))}
                     </div>
@@ -674,38 +679,47 @@ const DebtPage: React.FC = () => {
         )}
       </Modal>
 
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Register profile">
-        <form onSubmit={handleAddCustomer} className="p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <input required title="Full Name" aria-label="Full Name" placeholder="Name" className="input-field w-full py-4" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
-              <input required title="Phone Number" aria-label="Phone Number" placeholder="Phone" className="input-field w-full py-4" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
-              <input title="National ID" aria-label="National ID" placeholder="National ID" className="input-field w-full py-4 uppercase" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
-              <input title="Location/Village" aria-label="Location/Village" placeholder="Location" className="input-field w-full py-4" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
-            </div>
-            <div className="space-y-4">
-               <div className="aspect-square bg-surface-bg rounded-3xl border border-surface-border flex flex-col items-center justify-center overflow-hidden">
-                 {custForm.livePhoto ? <img src={custForm.livePhoto} alt="" className="w-full h-full object-cover" /> : useCamera ? <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" /> : <Camera className="w-10 h-10 opacity-10" />}
-                 <div className="flex gap-2 p-2 w-full bg-black/5">
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Register Credit Profile" maxWidth="max-w-2xl">
+        <form onSubmit={handleAddCustomer} className="p-10 space-y-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-6">
+               <div className="aspect-square bg-muted/20 rounded-[3rem] border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group relative transition-all hover:border-primary/50">
+                 {custForm.livePhoto ? <img src={custForm.livePhoto} alt="" className="w-full h-full object-cover" /> : useCamera ? <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" /> : <Camera className="w-16 h-16 opacity-10" />}
+                 <div className="absolute inset-x-0 bottom-0 p-4 bg-background/80 backdrop-blur-md flex gap-3 translate-y-full group-hover:translate-y-0 transition-transform">
                    {!useCamera ? (
-                     <button type="button" title="Start Camera" aria-label="Start Camera" onClick={startCamera} className="flex-1 bg-white p-2 rounded-xl"><Camera className="w-4 h-4 mx-auto" /></button>
+                     <button type="button" title="Start Camera" aria-label="Start Camera" onClick={startCamera} className="flex-1 bg-primary text-primary-foreground p-3 rounded-2xl shadow-lg active:scale-95 transition-all"><Camera className="w-5 h-5 mx-auto" /></button>
                    ) : (
-                     <button type="button" title="Capture Photo" aria-label="Capture Photo" onClick={capturePhoto} className="flex-1 bg-emerald-500 text-white p-2 rounded-xl"><CheckCircle2 className="w-4 h-4 mx-auto" /></button>
+                     <button type="button" title="Capture Photo" aria-label="Capture Photo" onClick={capturePhoto} className="flex-1 bg-success text-white p-3 rounded-2xl shadow-lg active:scale-95 transition-all"><CheckCircle2 className="w-5 h-5 mx-auto" /></button>
                    )}
-                   <label title="Upload Photo" aria-label="Upload Photo" className="flex-1 bg-white p-2 rounded-xl cursor-pointer">
-                     <Upload className="w-4 h-4 mx-auto" />
+                   <label title="Upload Photo" aria-label="Upload Photo" className="flex-1 bg-card border border-border p-3 rounded-2xl cursor-pointer shadow-lg active:scale-95 transition-all hover:bg-muted/50">
+                     <Upload className="w-5 h-5 mx-auto text-foreground" />
                      <input title="Select Photo File" aria-label="Select Photo File" type="file" className="hidden" onChange={handleFileUpload} />
                    </label>
                  </div>
                </div>
-               <button type="button" title="Scan Fingerprint" aria-label="Scan Fingerprint" onClick={captureFingerprint} className={clsx("w-full py-4 rounded-2xl border flex items-center justify-center gap-3", custForm.fingerprintData ? "bg-emerald-500/10 text-emerald-500" : "bg-surface-bg")}>
-                 <Fingerprint className="w-5 h-5" /> <span className="text-[10px] font-black uppercase">{custForm.fingerprintData ? 'Biometric Verified' : 'Scan Finger'}</span>
-               </button>
+            </div>
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Full Legal Name</label>
+                <input required title="Full Name" aria-label="Full Name" placeholder="ENTER NAME" className="input-field w-full !py-4 font-black uppercase" value={custForm.name} onChange={e => setCustForm({...custForm, name: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Phone Number</label>
+                <input required title="Phone Number" aria-label="Phone Number" placeholder="0..." className="input-field w-full !py-4 font-black" value={custForm.phone} onChange={e => setCustForm({...custForm, phone: restrictPhone(e.target.value)})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">National ID Number</label>
+                <input title="National ID" aria-label="National ID" placeholder="ID NUMBER" className="input-field w-full !py-4 uppercase font-black" value={custForm.idNumber} onChange={e => setCustForm({...custForm, idNumber: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Location / Village</label>
+                <input title="Location/Village" aria-label="Location/Village" placeholder="LOCATION" className="input-field w-full !py-4 font-black" value={custForm.village} onChange={e => setCustForm({...custForm, village: e.target.value})} />
+              </div>
             </div>
           </div>
-          <div className="pt-6 flex gap-4">
-            <button type="button" title="Discard Changes" aria-label="Discard Changes" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg rounded-2xl font-black text-[10px] uppercase">Discard</button>
-            <button type="submit" title="Register Customer" aria-label="Register Customer" className="flex-[2] btn-primary !py-4 text-[10px] font-black uppercase">Register</button>
+          <div className="pt-10 flex gap-4 border-t border-border/50">
+            <button type="button" title="Discard Changes" aria-label="Discard Changes" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-5 bg-muted/20 rounded-[2rem] font-black text-[10px] uppercase tracking-widest btn-press">Discard</button>
+            <button type="submit" title="Register Customer" aria-label="Register Customer" className="flex-[2] py-5 bg-primary text-primary-foreground rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-primary/20 btn-press">Register Profile</button>
           </div>
         </form>
         <canvas ref={canvasRef} className="hidden" />
