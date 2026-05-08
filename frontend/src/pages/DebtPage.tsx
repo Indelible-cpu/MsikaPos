@@ -355,7 +355,7 @@ const DebtPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full bg-background transition-all pb-24 md:pb-0 relative">
+    <div className="flex flex-col w-full bg-background transition-all md:pb-0 relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <header className="glass-panel border-b border-border/50 px-6 py-4 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">

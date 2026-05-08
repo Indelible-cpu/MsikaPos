@@ -89,9 +89,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           className={clsx(
-            "flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth",
-            !isPOS ? "pb-24 md:pb-6 pt-0" : "p-0",
-            "px-0 max-w-full transition-transform duration-300 ease-out"
+            "flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out",
+            !hideNav ? "pb-24 md:pb-6" : "pb-0",
+            "px-0 max-w-full"
           )}
         >
           <div className={clsx("w-full mx-auto py-0", !isPOS ? "min-h-full" : "h-full")}>
@@ -99,7 +99,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         </main>
 
-        {!hideNav && !isPOS && <MobileNav />}
+        {!hideNav && <MobileNav />}
       </div>
       {!hideNav && <AiAssistant type={aiType} context={getAiContext()} />}
     </div>

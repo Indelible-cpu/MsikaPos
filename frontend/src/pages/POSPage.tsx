@@ -38,8 +38,10 @@ const POSPage: React.FC = () => {
   const [paymentMode, setPaymentMode] = useState<'Cash' | 'Card' | 'Momo' | 'Credit'>('Cash');
   const [cart, setCart] = useState<{ product: LocalProduct; quantity: number }[]>([]);
   const [showScanner, setShowScanner] = useState(false);
-  const [discount] = useState<number>(0);
+  const [discount, setDiscount] = useState<number>(0);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [paymentConfig, setPaymentConfig] = useState<{ momo: string[]; bank: string[] }>({ momo: [], bank: [] });
+  const [selectedSubMethod, setSelectedSubMethod] = useState<string>('');
 
   // Receipt Options
   const [printReceipt, setPrintReceipt] = useState(false);
@@ -79,6 +81,15 @@ const POSPage: React.FC = () => {
     const loadSettings = async () => {
       const tax = await db.settings.get('tax_config');
       if (tax?.value) setTaxConfig(tax.value as TaxConfig);
+
+      const payment = await db.settings.get('payment_config');
+      if (payment?.value) {
+        const val = payment.value as { momo: string; bank: string };
+        setPaymentConfig({
+          momo: val.momo ? val.momo.split(',').map(s => s.trim()) : [],
+          bank: val.bank ? val.bank.split(',').map(s => s.trim()) : []
+        });
+      }
     };
     loadSettings();
   }, []);
@@ -173,7 +184,8 @@ const POSPage: React.FC = () => {
         profit: finalProfit,
         createdAt: new Date().toISOString(),
         synced: 0,
-        status: 'COMPLETED'
+        status: 'COMPLETED',
+        bankName: selectedSubMethod || undefined
       };
 
       await db.salesQueue.add(saleData);
@@ -405,6 +417,7 @@ const POSPage: React.FC = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input 
+            id="product-search"
             title="Search Products"
             aria-label="Search Products"
             className="w-full pl-10 pr-4 py-3 bg-[#f8f9fa] border border-gray-200 rounded-xl outline-none text-sm text-gray-700 font-medium placeholder:font-normal focus:border-[#0052cc] transition-colors" 
@@ -425,12 +438,24 @@ const POSPage: React.FC = () => {
 
       <div className="p-4">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold text-gray-800 text-sm">Current Order</h3>
-          <button title="Clear Cart" aria-label="Clear Cart" onClick={() => setCart([])} className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 font-medium transition-colors">
-            <Trash2 className="w-3.5 h-3.5" /> Clear
-          </button>
+          <h3 className="font-bold text-gray-800 text-sm">Current Order {cart.length > 0 && `(${cart.length})`}</h3>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => {
+                const val = prompt('Enter discount amount:', discount.toString());
+                if (val !== null) setDiscount(parseFloat(val) || 0);
+              }}
+              className="flex items-center gap-1 text-xs text-[#0052cc] hover:text-[#0043a8] font-bold transition-colors"
+            >
+              Discount
+            </button>
+            <button title="Clear Cart" aria-label="Clear Cart" onClick={() => setCart([])} className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 font-medium transition-colors">
+              <Trash2 className="w-3.5 h-3.5" /> Clear
+            </button>
+          </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        {cart.length > 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
           <table className="w-full text-sm">
             <thead className="bg-[#f8f9fa] text-gray-600 font-semibold border-b border-gray-200 text-xs">
               <tr>
@@ -462,19 +487,32 @@ const POSPage: React.FC = () => {
           </table>
           <div className="p-4 bg-[#f8f9fa] border-t border-gray-200 flex flex-col items-end gap-1.5 text-sm">
             <div className="flex justify-between w-48"><span className="text-gray-600 font-medium text-xs">Subtotal</span><span className="font-semibold text-gray-800">{cartSubtotal.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>
+            {discount > 0 && <div className="flex justify-between w-48"><span className="text-rose-600 font-medium text-xs">Discount</span><span className="font-semibold text-rose-600">-{discount.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>}
             {taxConfig.rate > 0 && <div className="flex justify-between w-48"><span className="text-gray-600 font-medium text-xs">Tax ({taxConfig.rate}%)</span><span className="font-semibold text-gray-800">{taxAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>}
             <div className="flex justify-between w-48 text-base font-bold mt-1.5"><span className="text-gray-900">TOTAL</span><span className="text-[#0052cc]">{finalTotal.toLocaleString(undefined, {minimumFractionDigits:2})}</span></div>
           </div>
         </div>
+        ) : (
+          <div className="py-6 px-4 bg-blue-50/50 rounded-xl border border-dashed border-blue-200 text-center">
+            <p className="text-sm text-blue-600 font-medium">Cart is empty. Add products below to start a sale.</p>
+          </div>
+        )}
       </div>
 
       <div className="p-4 pt-0">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-gray-800 text-sm">Products</h3>
-          <button title="View All Products" aria-label="View All Products" className="text-xs text-[#0052cc] font-bold hover:underline">View All</button>
+          <button 
+            title="View All Products" 
+            aria-label="View All Products" 
+            onClick={() => document.getElementById('product-search')?.focus()}
+            className="text-xs text-[#0052cc] font-bold hover:underline"
+          >
+            View All
+          </button>
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-          {products?.slice(0, 7).map(p => (
+          {products?.slice(0, cart.length === 0 ? 15 : 7).map(p => (
             <div key={p.id} onClick={() => addToCart(p)} className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform hover:shadow-md shadow-sm">
               <div className="w-12 h-12 flex items-center justify-center">
                 {p.imageUrl ? <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain" /> : <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center"><Plus className="w-4 h-4 text-gray-300"/></div>}
@@ -485,7 +523,10 @@ const POSPage: React.FC = () => {
               </div>
             </div>
           ))}
-          <div className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center justify-center gap-2 cursor-pointer text-[#0052cc] active:scale-95 transition-transform hover:shadow-md shadow-sm">
+          <div 
+            onClick={() => document.getElementById('product-search')?.focus()}
+            className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col items-center justify-center gap-2 cursor-pointer text-[#0052cc] active:scale-95 transition-transform hover:shadow-md shadow-sm"
+          >
             <div className="w-10 h-10 rounded-full bg-[#0052cc] text-white flex items-center justify-center shadow-md shadow-[#0052cc]/20"><Plus className="w-5 h-5"/></div>
             <span className="text-[11px] font-bold">More</span>
           </div>
@@ -494,20 +535,44 @@ const POSPage: React.FC = () => {
 
       <div className="p-4 pt-2">
         <h3 className="font-bold text-gray-800 mb-3 text-sm">Payment Options</h3>
-        <div className="grid grid-cols-4 gap-2.5">
-          <button onClick={() => setPaymentMode('Cash')} className={`flex flex-col items-center justify-center py-3.5 rounded-xl text-white font-bold text-[10px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Cash'?'ring-2 ring-offset-2 ring-[#0d8246] shadow-md shadow-[#0d8246]/30':''} bg-[#0d8246]`}>
-             <Banknote className="w-5 h-5 sm:w-6 sm:h-6 mb-1.5" /> Cash
+        <div className="grid grid-cols-4 gap-2">
+          <button onClick={() => { setPaymentMode('Cash'); setSelectedSubMethod(''); }} className={`flex flex-col items-center justify-center py-2 rounded-xl text-white font-bold text-[9px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Cash'?'ring-2 ring-offset-2 ring-[#0d8246] shadow-md shadow-[#0d8246]/30':''} bg-[#0d8246]`}>
+             <Banknote className="w-4 h-4 sm:w-5 sm:h-5 mb-1" /> Cash
           </button>
-          <button onClick={() => setPaymentMode('Card')} className={`flex flex-col items-center justify-center py-3.5 rounded-xl text-white font-bold text-[10px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Card'?'ring-2 ring-offset-2 ring-[#0052cc] shadow-md shadow-[#0052cc]/30':''} bg-[#0052cc]`}>
-             <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 mb-1.5" /> Card
+          <button onClick={() => { setPaymentMode('Card'); setSelectedSubMethod(paymentConfig.bank[0] || ''); }} className={`flex flex-col items-center justify-center py-2 rounded-xl text-white font-bold text-[9px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Card'?'ring-2 ring-offset-2 ring-[#0052cc] shadow-md shadow-[#0052cc]/30':''} bg-[#0052cc]`}>
+             <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mb-1" /> Card
           </button>
-          <button onClick={() => setPaymentMode('Momo')} className={`flex flex-col items-center justify-center py-3.5 rounded-xl text-white font-bold text-[10px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Momo'?'ring-2 ring-offset-2 ring-[#ff8c00] shadow-md shadow-[#ff8c00]/30':''} bg-[#ff8c00]`}>
-             <Smartphone className="w-5 h-5 sm:w-6 sm:h-6 mb-1.5" /> Mobile Money
+          <button onClick={() => { setPaymentMode('Momo'); setSelectedSubMethod(paymentConfig.momo[0] || ''); }} className={`flex flex-col items-center justify-center py-2 rounded-xl text-white font-bold text-[9px] sm:text-xs transition-all active:scale-95 ${paymentMode==='Momo'?'ring-2 ring-offset-2 ring-[#ff8c00] shadow-md shadow-[#ff8c00]/30':''} bg-[#ff8c00]`}>
+             <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 mb-1" /> Mobile
           </button>
-          <button onClick={() => setPaymentMode('Credit')} className={`flex flex-col items-center justify-center py-3.5 rounded-xl text-white font-bold text-[10px] sm:text-xs transition-all active:scale-95 bg-[#8a2be2] ${paymentMode==='Credit'?'ring-2 ring-offset-2 ring-[#8a2be2] shadow-md shadow-[#8a2be2]/30':''}`}>
-             <User className="w-5 h-5 sm:w-6 sm:h-6 mb-1.5" /> Credit Sale →
+          <button onClick={() => { setPaymentMode('Credit'); setSelectedSubMethod(''); }} className={`flex flex-col items-center justify-center py-2 rounded-xl text-white font-bold text-[9px] sm:text-xs transition-all active:scale-95 bg-[#8a2be2] ${paymentMode==='Credit'?'ring-2 ring-offset-2 ring-[#8a2be2] shadow-md shadow-[#8a2be2]/30':''}`}>
+             <User className="w-4 h-4 sm:w-5 sm:h-5 mb-1" /> Credit
           </button>
         </div>
+
+        {(paymentMode === 'Card' || paymentMode === 'Momo') && (
+          <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block ml-1">
+              Select {paymentMode === 'Card' ? 'Bank' : 'Mobile Provider'}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {(paymentMode === 'Card' ? paymentConfig.bank : paymentConfig.momo).map(method => (
+                <button
+                  key={method}
+                  onClick={() => setSelectedSubMethod(method)}
+                  className={clsx(
+                    "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-tight transition-all border-2 text-center",
+                    selectedSubMethod === method 
+                      ? "bg-white border-[#0052cc] text-[#0052cc] shadow-sm" 
+                      : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                  )}
+                >
+                  {method}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-4 pt-2">
