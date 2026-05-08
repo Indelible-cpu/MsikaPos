@@ -43,25 +43,35 @@ interface TaxConfig {
 }
 
 const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: (p: LocalProduct) => void }) => {
+  const getPlaceholder = () => {
+    const name = (p.name || '').toLowerCase();
+    if (p.isService || name.includes('print') || name.includes('copy') || name.includes('scan') || name.includes('solution') || name.includes('service')) {
+      return "/stationery_services_placeholder.png";
+    }
+    if (name.includes('pen') || name.includes('book') || name.includes('paper') || name.includes('staple') || name.includes('office') || name.includes('stationery')) {
+      return "/stationery_items_placeholder.png";
+    }
+    return "/phone_accessories_placeholder.png";
+  };
+
   return (
     <div onClick={() => addToCart(p)} className="aspect-square flex flex-col items-center justify-center gap-0.5 cursor-pointer active:scale-95 transition-all relative group">
-      <div className="w-full aspect-square flex items-center justify-center bg-muted/5 rounded-lg overflow-hidden border border-border/5 group-hover:bg-primary/5 transition-colors">
+      <div className="w-full aspect-square flex items-center justify-center bg-muted/5 rounded-lg overflow-hidden border border-border/5 group-hover:bg-primary/5 transition-colors relative">
         {p.imageUrl ? (
           <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden bg-muted/5">
+          <>
             <img 
-              src={p.isService ? "/professional_service_placeholder.png" : "/premium_product_placeholder.png"} 
+              src={getPlaceholder()} 
               alt="placeholder" 
-              className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity" 
+              className="w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity" 
             />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <Package className="w-3 h-3 md:w-5 md:h-5 text-primary/20" />
+              <Package className="w-3 h-3 md:w-5 md:h-5 text-primary/10" />
               <span className="text-[4px] font-bold text-primary/20 absolute bottom-1 uppercase tracking-tighter hidden md:block">{p.isService ? 'Srv' : 'Item'}</span>
             </div>
-          </div>
+          </>
         )}
-
       </div>
       <div className="text-center w-full px-0.5 mt-0.5">
         <div className="text-[6px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
@@ -73,6 +83,7 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
     </div>
   );
 });
+
 
 
 
@@ -621,10 +632,14 @@ const POSPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Product Grid Area - Limited height on mobile to show ~2 rows */}
-        <div className="h-[180px] lg:h-auto lg:flex-1 overflow-y-auto p-2 md:p-6 custom-scrollbar bg-card/20">
+        {/* Product Grid Area - Adaptive height on mobile */}
+        <div className={clsx(
+          "lg:h-auto lg:flex-1 overflow-y-auto p-2 md:p-6 custom-scrollbar bg-card/20",
+          cart.length === 0 ? "flex-1" : "h-[280px]"
+        )}>
           <div className="flex justify-between items-center mb-2 px-1">
             <h3 className="font-bold text-foreground capitalize tracking-widest text-[9px] md:text-[11px]">Stock</h3>
+
 
             <button 
               title="View All Products" 
@@ -661,8 +676,12 @@ const POSPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Pane: Cart & Checkout */}
-      <div className="w-full lg:w-[380px] xl:w-[420px] flex flex-col bg-card border-l border-border/50 shadow-2xl z-20 min-h-0">
+      {/* Right Pane: Cart & Checkout - Hidden on mobile if empty */}
+      <div className={clsx(
+        "w-full lg:w-[380px] xl:w-[420px] flex flex-col bg-card border-l border-border/50 shadow-2xl z-20 min-h-0 transition-all",
+        cart.length === 0 ? "hidden lg:flex" : "flex"
+      )}>
+
         <div className="p-5 border-b border-border/50 bg-muted/10 flex justify-between items-center">
           <h3 className="font-black text-foreground capitalize tracking-widest text-[11px]">Current Order ({cart.length})</h3>
           {cart.length > 0 && (

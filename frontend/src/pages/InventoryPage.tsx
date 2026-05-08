@@ -73,7 +73,16 @@ const InventoryProductCard = React.memo(({
           ) : (
             <div className="w-full h-full relative">
               <img 
-                src={product.isService ? "/professional_service_placeholder.png" : "/premium_product_placeholder.png"} 
+                src={(() => {
+                  const name = (product.name || '').toLowerCase();
+                  if (product.isService || name.includes('print') || name.includes('copy') || name.includes('scan') || name.includes('solution') || name.includes('service')) {
+                    return "/stationery_services_placeholder.png";
+                  }
+                  if (name.includes('pen') || name.includes('book') || name.includes('paper') || name.includes('staple') || name.includes('office') || name.includes('stationery')) {
+                    return "/stationery_items_placeholder.png";
+                  }
+                  return "/phone_accessories_placeholder.png";
+                })()} 
                 alt="placeholder" 
                 className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity" 
               />
@@ -82,6 +91,7 @@ const InventoryProductCard = React.memo(({
               </div>
             </div>
           )}
+
 
         </div>
         <div className="flex justify-between items-start mb-4">
@@ -725,7 +735,16 @@ const InventoryPage: React.FC = () => {
                 ) : (
                   <div className="w-full h-full relative">
                     <img 
-                      src={formData.isService ? "/professional_service_placeholder.png" : "/premium_product_placeholder.png"} 
+                      src={(() => {
+                        const name = (formData.name || '').toLowerCase();
+                        if (formData.isService || name.includes('print') || name.includes('copy') || name.includes('scan') || name.includes('solution') || name.includes('service')) {
+                          return "/stationery_services_placeholder.png";
+                        }
+                        if (name.includes('pen') || name.includes('book') || name.includes('paper') || name.includes('staple') || name.includes('office') || name.includes('stationery')) {
+                          return "/stationery_items_placeholder.png";
+                        }
+                        return "/phone_accessories_placeholder.png";
+                      })()} 
                       alt="placeholder" 
                       className="w-full h-full object-cover opacity-20" 
                     />
@@ -734,6 +753,7 @@ const InventoryPage: React.FC = () => {
                     </div>
                   </div>
                 )}
+
 
                 <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white">
                   <Upload className="w-5 h-5 mb-1" />
