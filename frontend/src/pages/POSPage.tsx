@@ -536,9 +536,12 @@ const POSPage: React.FC = () => {
               <CheckCircle2 className="w-16 h-16 text-success mb-4" />
               <h2 className="text-xl font-black text-foreground uppercase tracking-tighter">Payment Successful</h2>
             </div>
-            <div className="max-h-[50vh] overflow-y-auto bg-card p-6" id="receipt-print">
-               <Receipt {...showReceipt} />
+            <div className="max-h-[60vh] overflow-y-auto bg-card p-4 custom-scrollbar">
+              <div id="receipt-print" className="bg-white p-4 rounded-xl">
+                <Receipt {...showReceipt} />
+              </div>
             </div>
+
             <div className="p-6 bg-muted/30 border-t border-border/50 flex gap-4">
               <button 
                 onClick={async () => {
@@ -546,7 +549,14 @@ const POSPage: React.FC = () => {
                   if (!receiptElement) return;
                   toast.loading('Generating shareable receipt...', { id: 'share' });
                   try {
-                    const canvas = await html2canvas(receiptElement, { scale: 2, backgroundColor: '#ffffff' });
+                    const canvas = await html2canvas(receiptElement, { 
+                      scale: 3, 
+                      backgroundColor: '#ffffff',
+                      useCORS: true,
+                      logging: false,
+                      windowWidth: 400 
+                    });
+
                     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
                     if (!blob) throw new Error('Blob error');
                     const file = new File([blob], `Receipt-${showReceipt.invoiceNo}.png`, { type: 'image/png' });
