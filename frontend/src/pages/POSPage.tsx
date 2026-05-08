@@ -14,6 +14,7 @@ import {
   X,
   ChevronLeft,
   Plus,
+  Minus,
   Banknote,
   CreditCard,
   Smartphone,
@@ -55,25 +56,19 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
   };
 
   return (
-    <div onClick={() => addToCart(p)} className="aspect-square flex flex-col items-center justify-center gap-0.5 cursor-pointer active:scale-95 transition-all relative group">
-      <div className="w-full aspect-square flex items-center justify-center bg-muted/5 rounded-lg overflow-hidden border border-border/5 group-hover:bg-primary/5 transition-colors relative">
+    <div onClick={() => addToCart(p)} className="aspect-square flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 transition-all relative group">
+      <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden">
         {p.imageUrl ? (
-          <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+          <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
         ) : (
-          <>
-            <img 
-              src={getPlaceholder()} 
-              alt="placeholder" 
-              className="w-full h-full object-cover opacity-20 group-hover:opacity-40 transition-opacity" 
-            />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <Package className="w-3 h-3 md:w-5 md:h-5 text-primary/10" />
-              <span className="text-[4px] font-bold text-primary/20 absolute bottom-1 uppercase tracking-tighter hidden md:block">{p.isService ? 'Srv' : 'Item'}</span>
-            </div>
-          </>
+          <img 
+            src={getPlaceholder()} 
+            alt="placeholder" 
+            className="w-full h-full object-contain opacity-100 group-hover:scale-105 transition-transform drop-shadow-md" 
+          />
         )}
       </div>
-      <div className="text-center w-full px-0.5 mt-0.5">
+      <div className="text-center w-full px-1">
         <div className="text-[6px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
         <div className="text-[6px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()}</div>
       </div>
@@ -242,6 +237,17 @@ const POSPage: React.FC = () => {
       return [...prev, { product, quantity: 1 }];
     });
     setSearchTerm('');
+  }, []);
+
+  const decreaseQuantity = useCallback((productId: number) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.product.id === productId);
+      if (existing && existing.quantity > 1) {
+        soundService.playBeep();
+        return prev.map(item => item.product.id === productId ? { ...item, quantity: item.quantity - 1 } : item);
+      }
+      return prev.filter(i => i.product.id !== productId);
+    });
   }, []);
 
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.product.sellPrice * item.quantity), 0);
@@ -716,6 +722,7 @@ const POSPage: React.FC = () => {
                   </button>
                   <div className="absolute bottom-1 right-1 flex flex-col gap-0.5">
                      <button onClick={() => addToCart(item.product)} className="w-4 h-4 bg-primary/10 text-primary rounded-md flex items-center justify-center hover:bg-primary hover:text-white transition-colors"><Plus className="w-2.5 h-2.5" /></button>
+                     <button onClick={() => decreaseQuantity(item.product.id)} className="w-4 h-4 bg-primary/10 text-primary rounded-md flex items-center justify-center hover:bg-primary hover:text-white transition-colors"><Minus className="w-2.5 h-2.5" /></button>
                   </div>
                 </div>
               ))}
