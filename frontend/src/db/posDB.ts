@@ -9,11 +9,11 @@ export interface LocalProduct {
   sellPrice: number;
   quantity: number;
   isService: boolean;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: 'Active' | 'Inactive';
   imageUrl?: string;
   soldCount?: number;
   discount?: number; // legacy
-  discountType?: 'PERCENTAGE' | 'FIXED';
+  discountType?: 'Percentage' | 'Fixed';
   discountValue?: number;
   discountStartDate?: string;
   discountEndDate?: string;
@@ -33,7 +33,7 @@ export interface LocalSaleItem {
 }
 
 export interface LocalSale {
-  id: string; 
+  id: string;
   invoiceNo: string;
   subtotal: number;
   discount: number;
@@ -43,7 +43,7 @@ export interface LocalSale {
   paymentMode: string;
   itemsCount: number;
   createdAt: string;
-  synced: number; 
+  synced: number;
   customerId?: string;
   items: LocalSaleItem[];
   sellerName?: string;
@@ -61,7 +61,7 @@ export interface LocalCustomer {
   name: string;
   phone: string;
   witnessPhone?: string;
-  balance: number; 
+  balance: number;
   totalCreditAmount: number; // Added: sum of all credit sales
   totalPaidAmount: number;   // Added: sum of all payments
   idNumber?: string;
@@ -113,7 +113,7 @@ export interface LocalAuditLog {
   username: string;
   action: string;
   details: string;
-  type: 'INFO' | 'WARNING' | 'ERROR';
+  type: 'Info' | 'Warning' | 'Error';
   createdAt: string;
 }
 
