@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
-import { Lock, User as UserIcon, Eye, EyeOff, Fingerprint, ChevronRight, ShieldCheck, Info } from 'lucide-react';
+import { Lock, User as UserIcon, Eye, EyeOff, Fingerprint, ChevronRight, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
@@ -165,10 +165,10 @@ const LoginPage: React.FC = () => {
         setIsBiometricAvailable(available);
         if (registered) {
           setLoginMode('biometric');
-          // Auto-trigger biometric verification immediately
+          // Start the biometric challenge immediately
           setTimeout(() => {
             handleBiometricLogin();
-          }, 500);
+          }, 100);
         }
       } else {
         setIsBiometricAvailable(false);
@@ -348,9 +348,7 @@ const LoginPage: React.FC = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="flex flex-col items-center py-4"
             >
-              <div className="text-center mb-8">
-                <h2 className="text-xl font-black tracking-tight mb-2">Fingerprint Access</h2>
-              </div>
+              <h2 className="text-xl font-black tracking-tight mb-2">Biometric access</h2>
 
               <button 
                 onClick={handleBiometricLogin}
@@ -373,7 +371,7 @@ const LoginPage: React.FC = () => {
                   onClick={() => setLoginMode('password')}
                   className="w-full h-14 bg-surface-card border border-surface-border rounded-2xl font-black tracking-widest text-[10px] text-surface-text/40 hover:text-surface-text active:scale-95 transition-all"
                 >
-                  Use Password instead
+                  Use password instead
                 </button>
               </div>
             </motion.div>
@@ -434,8 +432,7 @@ const LoginPage: React.FC = () => {
                   onClick={registerBiometrics}
                   className="w-full h-16 bg-primary-500 text-white rounded-3xl font-black tracking-widest text-[10px] transition-all active:scale-95 shadow-xl shadow-primary-500/30 flex items-center justify-center gap-2"
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  Enable Biometric Login
+                  Enable biometric login
                 </button>
                 <button 
                   onClick={() => {

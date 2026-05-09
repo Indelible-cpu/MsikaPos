@@ -4,7 +4,7 @@ import { db } from '../db/posDB';
 import type { LocalProduct, LocalSale, LocalSaleItem, LocalCustomer } from '../db/posDB';
 import { SyncService } from '../services/SyncService';
 import { apiFetch } from '../api/apiFetch';
-import { isValidMalawianPhone } from '../utils/phoneUtils';
+import { isValidMalawianPhone, restrictPhone } from '../utils/phoneUtils';
 
 import { 
   Search, 
@@ -537,33 +537,36 @@ const POSPage: React.FC = () => {
       <div className="flex flex-col h-full bg-background overflow-y-auto w-full relative stagger-children">
 
         <div className="bg-primary text-primary-foreground flex items-center px-6 py-5 sticky top-0 z-10 shadow-lg">
-           <button title="Go Back" aria-label="Go Back" onClick={() => setCreditMode(false)} className="mr-4 active:scale-90 transition-transform"><ChevronLeft className="w-6 h-6" /></button>
-           <h2 className="text-lg font-bold capitalize tracking-tight">Register Credit Sale</h2>
+           <button title="Go back" aria-label="Go back" onClick={() => setCreditMode(false)} className="mr-4 active:scale-90 transition-transform"><ChevronLeft className="w-6 h-6" /></button>
+           <h2 className="text-lg font-bold tracking-tight">Register credit sale</h2>
         </div>
         
         <div className="p-6 space-y-8 pb-24">
            <div className="space-y-4">
-             <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] ml-1 opacity-50">Customer Verification</h3>
+             <h3 className="font-bold text-foreground tracking-widest text-[10px] ml-1 opacity-50">Customer verification</h3>
              <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm bg-card">
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
                  <User className="w-5 h-5 text-primary mr-4" />
-                 <input title="Customer Name" aria-label="Customer Name" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Full Name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                 <input title="Customer name" aria-label="Customer name" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Full name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
                </div>
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
                  <WhatsAppIcon className="w-5 h-5 text-emerald-500 fill-emerald-500/20 mr-4" />
-                 <input title="Phone Number" aria-label="Phone Number" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Phone Number" value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} />
+                 <div className="flex-1">
+                   <input title="Phone number" aria-label="Phone number" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Phone (e.g. 0... or +265...)" value={whatsappNumber} onChange={e => setWhatsappNumber(restrictPhone(e.target.value))} />
+                   <div className="text-[7px] text-muted-foreground font-black tracking-widest mt-0.5">10 digits if starts with 0, 13 if +265</div>
+                 </div>
                </div>
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
                  <Phone className="w-5 h-5 text-primary mr-4" />
-                 <input title="Witness Phone" aria-label="Witness Phone" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Witness Phone" value={witnessPhone} onChange={e => setWitnessPhone(e.target.value)} />
+                 <input title="Witness phone" aria-label="Witness phone" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Witness phone" value={witnessPhone} onChange={e => setWitnessPhone(restrictPhone(e.target.value))} />
                </div>
                <div className="flex items-center px-6 py-4 border-b border-border/50 focus-within:bg-primary/5 transition-colors">
                  <ShieldAlert className="w-5 h-5 text-amber-500 mr-4" />
-                 <input title="National ID" aria-label="National ID" maxLength={8} className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30 uppercase" placeholder="National ID (Max 8)" value={idNumber} onChange={e => setIdNumber(e.target.value.toUpperCase().substring(0, 8))} />
+                 <input title="National ID" aria-label="National ID" maxLength={8} className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="National ID (Max 8)" value={idNumber} onChange={e => setIdNumber(e.target.value.toUpperCase().substring(0, 8))} />
                </div>
                <div className="flex items-center px-6 py-4 focus-within:bg-primary/5 transition-colors">
                  <Building2 className="w-5 h-5 text-blue-500 mr-4" />
-                 <input title="Location / Village" aria-label="Location / Village" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Location / Village" value={village} onChange={e => setVillage(e.target.value)} />
+                 <input title="Location / Village" aria-label="Location / Village" className="w-full bg-transparent outline-none text-sm text-foreground font-bold placeholder:font-normal placeholder:text-muted-foreground/30" placeholder="Location / village" value={village} onChange={e => setVillage(e.target.value)} />
                </div>
              </div>
            </div>
@@ -598,7 +601,10 @@ const POSPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Initial Deposit</span>
-                  <input title="Initial Deposit" aria-label="Initial Deposit" type="number" className="w-32 bg-muted/20 border border-border rounded-xl px-4 py-2.5 text-right outline-none focus:ring-2 focus:ring-primary font-bold" placeholder="0.00" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} />
+                  <div className="relative group">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground opacity-40 group-focus-within:opacity-100 transition-opacity">MK</span>
+                    <input title="Initial Deposit" aria-label="Initial Deposit" type="number" className="w-32 bg-muted/20 border border-border rounded-xl pl-9 pr-4 py-2.5 text-right outline-none focus:ring-2 focus:ring-primary font-bold" placeholder="0.00" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} />
+                  </div>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground font-bold capitalize tracking-widest text-[10px]">Balance Due</span>
@@ -896,14 +902,14 @@ const POSPage: React.FC = () => {
               </div>
               <div className="flex justify-between items-center gap-4">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Discount</span>
-                <div className="relative flex-1 max-w-[120px]">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black text-muted-foreground">MK</span>
+                <div className="relative flex-1 max-w-[140px]">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-muted-foreground bg-background pr-1">MK</span>
                   <input 
                     title="Discount Amount"
                     aria-label="Discount Amount"
                     placeholder="0"
                     type="number" 
-                    className="w-full bg-background border border-border/50 rounded-xl pl-8 pr-3 py-1.5 text-right text-[11px] font-black focus:ring-2 focus:ring-primary/20 outline-none"
+                    className="w-full bg-background border border-border/50 rounded-xl pl-10 pr-3 py-2 text-right text-[11px] font-black focus:ring-2 focus:ring-primary/20 outline-none"
                     value={discount || ''} 
                     onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} 
                   />
@@ -963,32 +969,44 @@ const POSPage: React.FC = () => {
             )}
 
 
-            {/* Cash Input */}
-            {paymentMode === 'Cash' && (
-              <div className="bg-primary/5 rounded-2xl p-4 flex items-center justify-between gap-4 border border-primary/10">
-                <div className="flex-1">
-                  <label className="text-[9px] font-black text-primary/60 uppercase tracking-widest mb-1 block">Received</label>
-                  <input type="number" className="w-full bg-transparent text-lg font-black text-foreground outline-none border-b border-primary/20 pb-0.5" placeholder="0.00" value={amountReceived} onChange={e => setAmountReceived(e.target.value)} />
-                </div>
-                <div className="text-right">
-                  <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Change</div>
-                  <div className="text-lg font-black text-primary tracking-tighter">MK {changeDue.toLocaleString()}</div>
+            {/* Amount Received Input (Mandatory for all) */}
+            <div className="bg-primary/5 rounded-2xl p-4 flex items-center justify-between gap-4 border border-primary/10">
+              <div className="flex-1">
+                <label className="text-[9px] font-black text-primary/60 tracking-widest mb-1 block">Amount received</label>
+                <div className="relative">
+                   <span className="absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground">MK</span>
+                   <input 
+                    title="Amount Received"
+                    aria-label="Amount Received"
+                    type="number" 
+                    className="w-full bg-transparent text-lg font-black text-foreground outline-none border-b border-primary/20 pb-0.5 pl-8" 
+                    placeholder="0.00" 
+                    value={amountReceived} 
+                    onChange={e => setAmountReceived(e.target.value)} 
+                    onFocus={(e) => e.target.select()} 
+                   />
                 </div>
               </div>
-            )}
+              {paymentMode === 'Cash' && (
+                <div className="text-right">
+                  <div className="text-[9px] font-black text-muted-foreground tracking-widest mb-1">Change</div>
+                  <div className="text-lg font-black text-primary tracking-tighter">MK {changeDue.toLocaleString()}</div>
+                </div>
+              )}
+            </div>
 
             {/* Checkout Button */}
             <button 
               disabled={
                 cart.length === 0 || 
                 isCheckingOut || 
-                (paymentMode === 'Cash' && (!amountReceived || parseFloat(amountReceived) < finalTotal)) ||
+                (!amountReceived || parseFloat(amountReceived) < finalTotal) ||
                 ((paymentMode === 'Card' || paymentMode === 'Momo') && !selectedSubMethod)
               } 
               onClick={handleCheckout} 
               className={clsx(
-                "w-full py-5 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] transition-all shadow-xl uppercase btn-press", 
-                (cart.length === 0 || (paymentMode === 'Cash' && (!amountReceived || parseFloat(amountReceived) < finalTotal))) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
+                "w-full py-5 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] transition-all shadow-xl btn-press", 
+                (cart.length === 0 || (!amountReceived || parseFloat(amountReceived) < finalTotal)) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
               )}
             >
               <CheckCircle2 className="w-5 h-5" /> Checkout

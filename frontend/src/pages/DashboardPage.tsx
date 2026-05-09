@@ -122,27 +122,31 @@ const DashboardPage: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex-1 flex items-center gap-3">
-             <button 
-               onClick={() => {
-                 toast.promise(SyncService.pushSales(), {
-                   loading: 'Syncing with cloud...',
-                   success: 'Database synchronized',
-                   error: 'Sync failed. Check connection.'
-                 });
-               }}
-               className="btn-press px-6 py-2.5 bg-muted/10 border border-border/50 rounded-xl text-[9px] font-black tracking-[0.2em] uppercase hover:bg-muted/20 transition-all flex items-center gap-2"
-             >
-               <RefreshCw className="w-3 h-3" /> Sync Data
-             </button>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex-1">
+             <h2 className="text-xl font-black tracking-tight uppercase">Overview Dashboard</h2>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-               <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Local Session</div>
-               <div className="text-xs font-black text-success uppercase">System Online</div>
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => {
+                toast.promise(SyncService.pushSales(), {
+                  loading: 'Synchronizing...',
+                  success: 'Cloud sync complete',
+                  error: 'Sync error'
+                });
+              }}
+              title="Force Cloud Sync"
+              className="w-10 h-10 rounded-xl bg-muted/10 border border-border/50 flex items-center justify-center hover:bg-muted/20 transition-all text-primary"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-4 border-l border-border/30 pl-6">
+              <div className="text-right">
+                 <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Local Session</div>
+                 <div className="text-xs font-black text-success uppercase">System Online</div>
+              </div>
+              <div className="w-3 h-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50" />
             </div>
-            <div className="w-3 h-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50" />
           </div>
         </div>
       </div>

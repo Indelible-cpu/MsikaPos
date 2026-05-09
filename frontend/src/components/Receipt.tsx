@@ -27,12 +27,14 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
   const branch = currentBranchStr ? JSON.parse(currentBranchStr) : null;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const shopAddress = branch?.address || 'Excellence in Service'; 
-  const shopTel = branch?.phone || '+265 999 000 000';
-  const shopEmail = branch?.email;
-  const shopSlogan = branch?.slogan;
-  const shopFB = branch?.facebook;
   const cashierName = user.fullname || user.username || 'System';
+
+  const shopName = branch?.name || localStorage.getItem('companyName') || 'MsikaPos';
+  const shopAddress = branch?.address || localStorage.getItem('companyAddress') || 'Excellence in Service'; 
+  const shopTel = branch?.phone || localStorage.getItem('companyPhone') || '+265 999 000 000';
+  const shopEmail = branch?.email || localStorage.getItem('companyEmail');
+  const shopSlogan = branch?.slogan || localStorage.getItem('companySlogan');
+  const shopFB = branch?.facebook || localStorage.getItem('companyFacebook');
 
   const [customer, setCustomer] = React.useState<LocalCustomer | null>(null);
   const [history, setHistory] = React.useState<{ createdAt: string; amount: number; paymentMethod: string }[]>([]);
@@ -53,7 +55,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
     <div className="receipt p-0 bg-white text-black font-mono w-full text-[11px] leading-tight shadow-sm flex flex-col items-center">
       <div className="text-center w-full border-b-2 border-black pb-4 mb-4">
         <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="h-14 w-auto mx-auto mb-2 object-contain" />
-        <h1 className="text-xl font-bold tracking-tight  uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
+        <h1 className="text-xl font-bold tracking-tight  uppercase">{shopName}</h1>
         {shopSlogan && <p className="text-[8px]  font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
         <p className="text-[9px] tracking-widest">{shopAddress}</p>
         <p className="text-[9px] font-bold mt-1">Tel: {shopTel}</p>

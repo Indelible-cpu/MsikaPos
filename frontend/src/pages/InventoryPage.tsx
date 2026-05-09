@@ -609,7 +609,8 @@ const InventoryPage: React.FC = () => {
         toast.success('Category created');
       }
       setNewCategoryTitle('');
-    } catch (err: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Failed to save category');
     }
   };
@@ -695,7 +696,7 @@ const InventoryPage: React.FC = () => {
           </div>
           <div className="p-8 bg-card/50">
             <div className="card-label !text-primary">Low stock alert</div>
-            <div className="text-xl md:text-2xl font-black tracking-tighter text-primary">{analytics.lowStock} <span className="text-[10px] text-muted-foreground">Items</span></div>
+            <div className="text-xl md:text-2xl font-black tracking-tighter text-primary">{analytics.lowStock} <span className="text-[10px] text-muted-foreground font-black">items</span></div>
           </div>
         </div>
 
@@ -809,8 +810,8 @@ const InventoryPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-[10px] font-black tracking-widest mb-1">Product image</p>
-                <p className="text-[9px] font-bold text-surface-text/40 uppercase">Adding an image improves experience.</p>
-                <p className="text-[9px] font-bold text-surface-text/40 uppercase">Optimal ratio is 1:1.</p>
+                <p className="text-[9px] font-bold text-surface-text/40">Adding an image improves experience.</p>
+                <p className="text-[9px] font-bold text-surface-text/40">Optimal ratio is 1:1.</p>
                 {formData.imageUrl && formData.imageUrl.split('|').length > 1 && (
                   <div className="flex gap-2 mt-2">
                     {formData.imageUrl.split('|').map((img, i) => (
@@ -836,7 +837,7 @@ const InventoryPage: React.FC = () => {
             </div>
 
             <div className="space-y-1 col-span-2">
-              <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-name">Product name</label>
+              <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="product-name">Product name</label>
               <input required id="product-name" type="text" className="input-field w-full py-3 px-4 font-black" placeholder="e.g. Coca Cola 300ml" title="Product name" aria-label="Product name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
             </div>
             <div className="space-y-1">
@@ -859,25 +860,31 @@ const InventoryPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-cost">Cost price</label>
-              <input 
-                required 
-                id="product-cost" 
-                type="number" 
-                className={clsx("input-field w-full py-3 px-4 font-black", !isSuperAdmin && "opacity-50 cursor-not-allowed")} 
-                title="Cost price" 
-                aria-label="Cost price" 
-                value={formData.costPrice} 
-                onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})} 
-                onFocus={(e) => e.target.select()} 
-                readOnly={!isSuperAdmin}
-              />
+              <div className="relative group">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground opacity-40 group-focus-within:opacity-100 transition-opacity">MK</span>
+                <input 
+                  required 
+                  id="product-cost" 
+                  type="number" 
+                  className={clsx("input-field w-full py-3 pl-10 pr-4 font-black", !isSuperAdmin && "opacity-50 cursor-not-allowed")} 
+                  title="Cost price" 
+                  aria-label="Cost price" 
+                  value={formData.costPrice} 
+                  onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})} 
+                  onFocus={(e) => e.target.select()} 
+                  readOnly={!isSuperAdmin}
+                />
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-sell">Sell price</label>
-              <input required id="product-sell" type="number" className="input-field w-full py-3 px-4 font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              <div className="relative group">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary-500 opacity-40 group-focus-within:opacity-100 transition-opacity">MK</span>
+                <input required id="product-sell" type="number" className="input-field w-full py-3 pl-10 pr-4 font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              </div>
             </div>
             <div className="space-y-1 col-span-2 p-4 bg-surface-bg/50 border border-surface-border rounded-2xl">
-              <div className="text-[10px] font-black tracking-widest text-surface-text/40 mb-3 uppercase">Discount Configuration</div>
+              <div className="text-[10px] font-black tracking-widest text-surface-text/40 mb-3">Discount configuration</div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="discount-type">Discount Type</label>
@@ -906,8 +913,11 @@ const InventoryPage: React.FC = () => {
             </div>
             {!formData.isService && (
               <div className="space-y-1 col-span-2">
-                <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-qty">Opening Stock Quantity</label>
-                <input required id="product-qty" type="number" className="input-field w-full py-3 px-4 font-black" title="Opening Stock Quantity" aria-label="Opening Stock Quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+                <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="product-qty">Opening stock quantity</label>
+                <div className="relative group">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground opacity-40 group-focus-within:opacity-100 transition-opacity">UNITS</span>
+                  <input required id="product-qty" type="number" className="input-field w-full py-3 pl-4 pr-16 font-black" title="Opening stock quantity" aria-label="Opening stock quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+                </div>
               </div>
             )}
             <div className="space-y-1 col-span-2">
@@ -919,8 +929,8 @@ const InventoryPage: React.FC = () => {
                   className="w-5 h-5 rounded border-surface-border text-primary-500 focus:ring-primary-500"
                 />
                 <div>
-                  <div className="text-[10px] font-black tracking-widest uppercase">Service / Non-Stock Item</div>
-                  <div className="text-[9px] text-surface-text/30 font-bold uppercase">Exclude from stock alerts</div>
+                  <div className="text-[10px] font-black tracking-widest">Service / non-stock item</div>
+                  <div className="text-[9px] text-surface-text/30 font-bold">Exclude from stock alerts</div>
                 </div>
               </label>
             </div>
@@ -949,12 +959,12 @@ const InventoryPage: React.FC = () => {
              <div className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase">Existing categories</div>
              <div className="bg-surface-bg border border-surface-border rounded-2xl divide-y divide-surface-border overflow-hidden">
                 {categories?.map(cat => (
-                  <div key={cat.id} className="p-4 flex justify-between items-center group hover:bg-primary-500/5 transition-colors">
-                    <span className="font-bold text-sm uppercase">{cat.title}</span>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                  <div key={cat.id} className="p-4 flex justify-between items-center group hover:bg-primary-500/5 transition-colors border-b last:border-0 border-border/10">
+                    <span className="font-bold text-sm">{cat.title}</span>
+                    <div className="flex items-center gap-2">
                       <button 
                         onClick={() => handleEditCategory(cat)} 
-                        className="p-2 text-surface-text/20 hover:text-primary-500"
+                        className="p-2 text-surface-text/30 hover:text-primary-500 transition-colors"
                         title={`Edit ${cat.title} category`}
                       >
                         <Edit2 className="w-4 h-4" />
@@ -962,7 +972,7 @@ const InventoryPage: React.FC = () => {
                       {isSuperAdmin && (
                         <button 
                           onClick={() => handleDeleteCategory(cat.id)} 
-                          className="p-2 text-surface-text/20 hover:text-red-500"
+                          className="p-2 text-surface-text/30 hover:text-red-500 transition-colors"
                           title={`Delete ${cat.title} category`}
                           aria-label={`Delete ${cat.title} category`}
                         >
@@ -984,12 +994,12 @@ const InventoryPage: React.FC = () => {
             <Trash2 className="w-8 h-8 text-red-500" />
           </div>
           <div>
-            <h2 className="text-xl font-black tracking-tighter text-red-500 mb-2 uppercase">Delete Product?</h2>
-            <p className="text-surface-text/40 text-[10px] font-black tracking-widest px-4 leading-relaxed uppercase">This action cannot be undone.</p>
+            <h2 className="text-xl font-black tracking-tighter text-red-500 mb-2">Delete product?</h2>
+            <p className="text-surface-text/40 text-[10px] font-black tracking-widest px-4 leading-relaxed">This action cannot be undone.</p>
           </div>
           <div className="flex gap-4">
             <button onClick={() => setDeleteConfirmation(null)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest uppercase">Cancel</button>
-            <button onClick={confirmDelete} className="flex-1 bg-red-500 text-white rounded-2xl text-[10px] font-black tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all uppercase">Delete</button>
+            <button onClick={confirmDelete} className="flex-1 bg-red-500 text-white rounded-2xl text-[10px] font-black tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all">Delete</button>
           </div>
         </div>
       </Modal>
@@ -999,7 +1009,7 @@ const InventoryPage: React.FC = () => {
           <div className="relative group w-full max-w-lg aspect-square rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
             <img src={previewImage || ''} alt="Preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
-              <button onClick={() => setPreviewImage(null)} className="btn-primary !bg-white !text-black !py-3 !px-8 text-[10px] font-black tracking-widest uppercase">CLOSE PREVIEW</button>
+              <button onClick={() => setPreviewImage(null)} className="btn-primary !bg-white !text-black !py-3 !px-8 text-[10px] font-black tracking-widest">Close preview</button>
             </div>
           </div>
         </div>

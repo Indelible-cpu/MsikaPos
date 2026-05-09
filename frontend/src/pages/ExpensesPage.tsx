@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type LocalExpense, type LocalProduct } from '../db/posDB';
 import { 
@@ -7,7 +7,8 @@ import {
   Trash2, 
   ArrowDownCircle,
   FileText,
-  MessageSquare
+  MessageSquare,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
@@ -44,19 +45,30 @@ const ExpensesPage: React.FC = () => {
 
   const totalSpent = expenses?.reduce((sum, e) => sum + Number(e.amount || 0), 0) || 0;
 
-  const getAutoFrequency = (dateStr: string): 'Daily' | 'Weekly' | 'Monthly' | 'Annually' => {
-    const d = new Date(dateStr);
+  const groupedExpenses = useMemo(() => {
+    if (!expenses) return {};
     const now = new Date();
-    // Normalize to midnight for fair day calculation
-    const dDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    const nDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const diff = Math.floor((nDate.getTime() - dDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diff <= 1) return 'Daily';
-    if (diff <= 7) return 'Weekly';
-    if (diff <= 30) return 'Monthly';
-    return 'Annually';
-  };
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const oneWeekAgo = today - (7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = today - (30 * 24 * 60 * 60 * 1000);
+
+    const groups: Record<string, LocalExpense[]> = {
+      'Today': [],
+      'This week': [],
+      'This month': [],
+      'Older': []
+    };
+
+    expenses.forEach(exp => {
+      const expDate = new Date(exp.date).getTime();
+      if (expDate >= today) groups['Today'].push(exp);
+      else if (expDate >= oneWeekAgo) groups['This week'].push(exp);
+      else if (expDate >= oneMonthAgo) groups['This month'].push(exp);
+      else groups['Older'].push(exp);
+    });
+
+    return groups;
+  }, [expenses]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,15 +81,13 @@ const ExpensesPage: React.FC = () => {
         const expenseData = {
           ...formData,
           id: expenseId,
-          frequency: getAutoFrequency(formData.date),
           createdAt: new Date().toISOString(),
           synced: 0
         };
         await db.expenses.add(expenseData);
         
-        // Prepare receipt for sharing
         setExpenseReceipt({
-          items: [{ product: { name: `EXPENSE: ${formData.description}`, sellPrice: formData.amount } as unknown as LocalProduct, quantity: 1 }],
+          items: [{ product: { name: `Expense: ${formData.description}`, sellPrice: formData.amount } as unknown as LocalProduct, quantity: 1 }],
           total: formData.amount,
           subtotal: formData.amount,
           tax: 0,
@@ -116,93 +126,113 @@ const ExpensesPage: React.FC = () => {
     });
   };
 
-  const categories = ['Utilities', 'Stock Purchase', 'Salaries', 'Rent', 'Maintenance', 'Marketing', 'Other'];
+  const categories = ['Utilities', 'Stock purchase', 'Salaries', 'Rent', 'Maintenance', 'Marketing', 'Other'];
 
   return (
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex-1"></div>
-        {!readOnly && (
-          <button 
-            onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
-            className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 w-full md:w-auto uppercase btn-press"
-          >
-            <Plus className="w-4 h-4 mr-2 inline" /> Add expense
-          </button>
-        )}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <h1 className="text-xl font-black tracking-tighter">Finance & expenses</h1>
+          {!readOnly && (
+            <button 
+              onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
+              className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 w-full md:w-auto uppercase btn-press"
+            >
+              <Plus className="w-4 h-4 mr-2 inline" /> Add expense
+            </button>
+          )}
         </div>
       </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 stagger-children">
-             <div className="p-4 border-r border-border/30 flex items-center gap-4 glass-card m-2 rounded-2xl">
-                <div className="w-12 h-12 bg-destructive/10 text-destructive rounded-xl flex items-center justify-center">
-                   <ArrowDownCircle className="w-6 h-6" />
-                </div>
-                <div>
-                   <div className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">Total outflow</div>
-                   <div className="text-2xl font-black text-foreground">MK {totalSpent.toLocaleString()}</div>
-                </div>
-             </div>
-             <div className="relative glass-card m-2 rounded-2xl flex items-center flex-1">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <input 
-                   type="text" 
-                   placeholder="Search description or category..."
-                   className="input-field w-full pl-14 pr-12 text-sm h-full font-bold shadow-inner bg-transparent border-none"
-                   value={searchTerm}
-                   onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                {searchTerm && (
-                  <button 
-                    title="Clear search"
-                    aria-label="Clear search"
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-             </div>
+      <div className="max-w-6xl mx-auto w-full p-6 md:p-12 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-8 glass-panel rounded-[2rem] border border-border/50 flex items-center gap-6 shadow-xl">
+            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center">
+               <ArrowDownCircle className="w-8 h-8" />
+            </div>
+            <div>
+               <div className="text-[10px] font-black tracking-widest text-muted-foreground uppercase mb-1">Total outflow</div>
+               <div className="text-3xl font-black text-foreground tracking-tighter">MK {totalSpent.toLocaleString()}</div>
+            </div>
           </div>
 
-      <div className="p-0 border-t border-border/50 stagger-children">
-        <div className="overflow-hidden divide-y divide-border/30">
-          {expenses?.length === 0 ? (
-            <div className="p-20 text-center text-muted-foreground/20 font-black text-[10px] tracking-widest uppercase">No expenses recorded</div>
-          ) : (
-            expenses?.map(exp => (
-              <div key={exp.id} className="p-6 flex justify-between items-center group hover:bg-destructive/5 transition-colors btn-press">
-                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-background border border-border/50 rounded-xl flex items-center justify-center text-muted-foreground/20 group-hover:text-destructive transition-colors">
-                       <FileText className="w-5 h-5" />
+          <div className="p-2 glass-panel rounded-[2rem] border border-border/50 flex items-center shadow-xl">
+            <div className="relative flex-1">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+              <input 
+                 type="text" 
+                 placeholder="Search expenses..."
+                 className="w-full pl-16 pr-12 py-6 text-sm font-bold bg-transparent outline-none"
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button 
+                  title="Clear search"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors bg-muted/20 rounded-xl"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-12 pb-20">
+          {Object.entries(groupedExpenses).map(([groupName, items]) => {
+            if (items.length === 0) return null;
+            return (
+              <div key={groupName} className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <h3 className="text-[10px] font-black tracking-[0.3em] text-primary uppercase whitespace-nowrap">{groupName}</h3>
+                  <div className="h-px bg-primary/10 flex-1" />
+                </div>
+                <div className="glass-panel border border-border/50 rounded-[2.5rem] overflow-hidden shadow-2xl divide-y divide-border/30">
+                  {items.map(exp => (
+                    <div key={exp.id} className="p-8 flex justify-between items-center group hover:bg-destructive/5 transition-all">
+                       <div className="flex items-center gap-6">
+                          <div className="w-14 h-14 bg-background border border-border rounded-2xl flex items-center justify-center text-muted-foreground/20 group-hover:text-destructive group-hover:border-destructive/20 transition-all shadow-inner">
+                             <FileText className="w-6 h-6" />
+                          </div>
+                          <div>
+                             <div className="font-black text-lg tracking-tight">{exp.description || 'No description'}</div>
+                             <div className="text-[10px] text-muted-foreground font-black tracking-widest uppercase flex items-center gap-2">
+                                <span>{exp.category}</span>
+                                <span className="w-1 h-1 bg-border rounded-full" />
+                                <span>{exp.date}</span>
+                              </div>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-8">
+                          <div className="text-right">
+                             <div className="text-xl font-black text-destructive tracking-tighter">MK {exp.amount.toLocaleString()}</div>
+                             <div className="text-[9px] text-muted-foreground/40 font-black tracking-widest uppercase">{exp.paymentMethod}</div>
+                          </div>
+                          {!readOnly && (
+                            <button 
+                              title="Delete expense"
+                              onClick={() => handleDelete(exp.id)} 
+                              className="p-4 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all opacity-0 group-hover:opacity-100"
+                            >
+                             <Trash2 className="w-5 h-5" />
+                            </button>
+                          )}
+                       </div>
                     </div>
-                    <div>
-                       <div className="font-black text-sm tracking-tight uppercase">{exp.description || 'No description'}</div>
-                       <div className="text-[9px] text-muted-foreground font-black tracking-widest uppercase">
-                          {exp.category} • {getAutoFrequency(exp.date)} • {exp.date}
-                        </div>
-                    </div>
-                 </div>
-                 <div className="flex items-center gap-6">
-                    <div className="text-right">
-                       <div className="text-base font-black text-destructive">MK {exp.amount.toLocaleString()}</div>
-                       <div className="text-[8px] text-muted-foreground/40 font-black tracking-widest uppercase">{exp.paymentMethod}</div>
-                    </div>
-                    {!readOnly && (
-                      <button 
-                        title="Delete" 
-                        aria-label="Delete expense" 
-                        onClick={() => handleDelete(exp.id)} 
-                        className="p-2 text-muted-foreground/20 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 btn-press"
-                      >
-                       <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                 </div>
+                  ))}
+                </div>
               </div>
-            ))
+            );
+          })}
+          {expenses?.length === 0 && (
+            <div className="py-32 text-center">
+              <div className="w-24 h-24 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FileText className="w-10 h-10 text-muted-foreground/20" />
+              </div>
+              <p className="text-[10px] font-black tracking-widest text-muted-foreground/30 uppercase">No records found</p>
+            </div>
           )}
         </div>
       </div>
@@ -210,40 +240,54 @@ const ExpensesPage: React.FC = () => {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title={editingExpense ? 'Edit Expense' : 'New Expense'}
+        title={editingExpense ? 'Edit expense' : 'New expense'}
       >
-        <form onSubmit={handleSave} className="p-8 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1 col-span-2">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Description</label>
-              <input required type="text" className="input-field w-full" placeholder="e.g. Electricity Bill" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
+        <form onSubmit={handleSave} className="p-10 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2 col-span-full">
+              <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1">Description</label>
+              <input required type="text" className="input-field w-full py-4 px-6 text-sm font-black" placeholder="e.g. Electricity bill" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} />
             </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Category</label>
-              <select title="Select Category" aria-label="Select Category" className="input-field w-full appearance-none bg-surface-bg" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1">Category</label>
+              <select title="Expense category" className="input-field w-full py-4 px-6 text-sm font-black appearance-none bg-background" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Date</label>
-              <input type="date" title="Select Date" aria-label="Select Date" placeholder="Select Date" className="input-field w-full font-bold" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1">Date</label>
+              <input title="Expense date" type="date" className="input-field w-full py-4 px-6 text-sm font-black" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
             </div>
           </div>
-          <div className="space-y-1">
-            <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Amount (MK)</label>
-            <input required type="number" className="input-field w-full text-3xl font-black text-red-500" placeholder="0.00" value={formData.amount} onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})} onFocus={(e) => e.target.select()} />
+          <div className="space-y-2">
+            <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1">Amount (MK)</label>
+            <div className="relative group">
+              <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl font-black text-destructive opacity-20 group-focus-within:opacity-100 transition-opacity">MK</span>
+              <input 
+                title="Expense amount"
+                required 
+                type="number" 
+                className="input-field w-full py-8 pl-20 pr-8 text-4xl font-black text-destructive text-right" 
+                placeholder="0.00" 
+                value={formData.amount || ''} 
+                onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})} 
+                onFocus={(e) => e.target.select()} 
+              />
+            </div>
           </div>
-          <div className="flex gap-4 pt-4">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-muted/10 border border-border/50 rounded-2xl text-[10px] font-black tracking-widest uppercase btn-press">Cancel</button>
-            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 uppercase btn-press">Save expense</button>
+          <div className="flex gap-4 pt-6">
+            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-5 bg-muted/20 border border-border/50 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase transition-all hover:bg-muted/30">Cancel</button>
+            <button type="submit" className="flex-1 btn-primary !py-5 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 uppercase transition-all">Save expense</button>
           </div>
         </form>
       </Modal>
 
-      <Modal isOpen={!!expenseReceipt} onClose={() => setExpenseReceipt(null)} title="Expense Voucher">
+      <Modal isOpen={!!expenseReceipt} onClose={() => setExpenseReceipt(null)} title="Expense voucher">
         {expenseReceipt && (
-          <div className="p-6 flex flex-col items-center gap-6">
-            <div className="bg-white p-6 w-full" id="expense-voucher"><Receipt {...expenseReceipt} /></div>
+          <div className="p-10 flex flex-col items-center gap-8">
+            <div className="bg-white p-10 w-full rounded-[2rem] shadow-2xl" id="expense-voucher">
+              <Receipt {...expenseReceipt} />
+            </div>
             <div className="flex gap-4 w-full">
                <button 
                 onClick={async () => {
@@ -251,26 +295,26 @@ const ExpensesPage: React.FC = () => {
                   if (!el) return;
                   toast.loading('Preparing voucher...', { id: 'share' });
                   try {
-                    const canvas = await html2canvas(el);
+                    const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff' });
                     const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
                     if (blob) {
                       const file = new File([blob], `voucher-${expenseReceipt.invoiceNo}.png`, { type: 'image/png' });
                       if (navigator.share) {
-                        await navigator.share({ files: [file], title: 'Expense Voucher', text: `Voucher for ${formData.description}` });
+                        await navigator.share({ files: [file], title: 'Expense voucher', text: `Voucher for ${formData.description}` });
                         toast.success('Shared successfully', { id: 'share' });
                       } else {
-                        const text = encodeURIComponent(`Expense Voucher\nRef: ${expenseReceipt.invoiceNo}\nAmount: MK ${expenseReceipt.total.toLocaleString()}\nDesc: ${formData.description}`);
+                        const text = encodeURIComponent(`Expense voucher\nRef: ${expenseReceipt.invoiceNo}\nAmount: MK ${expenseReceipt.total.toLocaleString()}\nDesc: ${formData.description}`);
                         window.open(`https://wa.me/?text=${text}`, '_blank');
                         toast.success('WhatsApp opened', { id: 'share' });
                       }
                     }
                   } catch { toast.error('Failed to share', { id: 'share' }); }
                 }}
-                className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase"
+                className="flex-1 py-5 bg-emerald-500 text-white rounded-[1.5rem] text-[10px] font-black tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 uppercase"
               >
-                <MessageSquare className="w-4 h-4" /> Share WhatsApp
+                <MessageSquare className="w-5 h-5" /> Share WhatsApp
               </button>
-              <button type="button" onClick={() => setExpenseReceipt(null)} className="flex-1 py-4 btn-primary font-black text-[10px] uppercase">Close</button>
+              <button type="button" onClick={() => setExpenseReceipt(null)} className="flex-1 py-5 btn-primary font-black text-[10px] tracking-widest uppercase rounded-[1.5rem]">Close</button>
             </div>
           </div>
         )}
