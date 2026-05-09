@@ -56,10 +56,10 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
   };
 
   return (
-    <div onClick={() => addToCart(p)} className="aspect-square flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 transition-all relative group">
-      <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden">
+    <div onClick={() => addToCart(p)} className="aspect-square bg-card flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 active:bg-primary/5 transition-all relative group">
+      <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden p-1">
         {p.imageUrl ? (
-          <img src={p.imageUrl} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+          <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
         ) : (
           <img 
             src={getPlaceholder()} 
@@ -68,12 +68,12 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
           />
         )}
       </div>
-      <div className="text-center w-full px-1">
-        <div className="text-[6px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
-        <div className="text-[6px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()}</div>
+      <div className="text-center w-full px-1 pb-1">
+        <div className="text-[7px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
+        <div className="text-[7px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()}</div>
       </div>
       {p.quantity <= 5 && !p.isService && (
-        <div className="absolute top-0.5 right-0.5 w-1 h-1 bg-destructive rounded-full animate-pulse" />
+        <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-destructive rounded-full animate-pulse" />
       )}
     </div>
   );
@@ -109,14 +109,65 @@ const POSPage: React.FC = () => {
   const [printInvoice, setPrintInvoice] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
+  // Camera State
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [livePhoto, setLivePhoto] = useState('');
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [flashOn, setFlashOn] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
+
+  const startCamera = async (mode = facingMode) => {
+    try {
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: mode } 
+      });
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      setIsCameraOpen(true);
+      setFlashOn(false);
+    } catch {
+      toast.error('Could not access camera');
+    }
+  };
+
+  const toggleFlash = async () => {
+    if (!streamRef.current) return;
+    const track = streamRef.current.getVideoTracks()[0];
+    const caps = track.getCapabilities?.() as MediaTrackCapabilities & { torch?: boolean };
+    if (caps && caps.torch) {
+      try {
+        await track.applyConstraints({ advanced: [{ torch: !flashOn }] } as unknown as MediaTrackConstraints);
+        setFlashOn(!flashOn);
+      } catch {
+        toast.error('Flashlight error');
+      }
+    } else {
+      toast.error('Flashlight not supported on this camera');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(videoRef.current, 0, 0);
+      setLivePhoto(canvas.toDataURL('image/jpeg', 0.7));
+      stopCamera();
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    setIsCameraOpen(false);
+  };
+
   const [taxConfig, setTaxConfig] = useState<TaxConfig>({ rate: 10, inclusive: false });
   const [currentInvoiceNo, setCurrentInvoiceNo] = useState(generateInvoiceNo());
 
-  useEffect(() => {
-    if (cart.length === 0) {
-      setCurrentInvoiceNo(generateInvoiceNo());
-    }
-  }, [cart.length]);
 
   const [showReceipt, setShowReceipt] = useState<{
     items: { product: LocalProduct; quantity: number }[];
@@ -153,7 +204,7 @@ const POSPage: React.FC = () => {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const [remoteProducts, setRemoteProducts] = useState<LocalProduct[]>([]);
+
   const [isRemoteLoading, setIsRemoteLoading] = useState(false);
 
   const localProducts = useLiveQuery(
@@ -177,19 +228,16 @@ const POSPage: React.FC = () => {
     [searchTerm]
   );
 
-  // Effect to fetch from remote DB when searching or on mount if local is empty
+  // Effect to fetch from remote DB in background to keep local fresh
   useEffect(() => {
     let isMounted = true;
     const fetchRemote = async () => {
       if (!navigator.onLine) return;
       setIsRemoteLoading(true);
       try {
-        // Fetch fresh products from the remote DB
         const data = await apiFetch(searchTerm ? `/products?search=${encodeURIComponent(searchTerm)}` : '/products');
         if (isMounted && data.success) {
           const items = data.data || data.updates?.products || [];
-          setRemoteProducts(items);
-          // Also sync these to local DB for offline use
           if (items.length > 0) {
             await db.products.bulkPut(items);
           }
@@ -205,12 +253,7 @@ const POSPage: React.FC = () => {
     return () => { isMounted = false; clearTimeout(debounce); };
   }, [searchTerm]);
 
-  const products = useMemo(() => {
-    // Prioritize remote products if online and we have results
-    if (navigator.onLine && remoteProducts.length > 0) return remoteProducts;
-    return localProducts || [];
-  }, [localProducts, remoteProducts]);
-
+  const products = React.useMemo(() => localProducts || [], [localProducts]);
 
   const displayedProducts = useMemo(() => {
     if (!products) return [];
@@ -340,6 +383,7 @@ const POSPage: React.FC = () => {
       });
 
       setCart([]);
+      setCurrentInvoiceNo(generateInvoiceNo());
       toast.success('Sale Completed!');
       if (printReceipt) setTimeout(() => window.print(), 800);
       
@@ -370,6 +414,7 @@ const POSPage: React.FC = () => {
         balance: balance,
         totalCreditAmount: finalTotal,
         totalPaidAmount: paidAmt,
+        livePhoto: livePhoto || undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         synced: 0
@@ -440,6 +485,7 @@ const POSPage: React.FC = () => {
       toast.success('Credit Sale Saved!');
       
       setCart([]);
+      setCurrentInvoiceNo(generateInvoiceNo());
       setCreditMode(false);
       setCustomerName('');
       setWhatsappNumber('');
@@ -449,6 +495,7 @@ const POSPage: React.FC = () => {
       setAmountPaid('');
       setDueDate('');
       setPaymentMode('Cash');
+      setLivePhoto('');
       
     } catch {
       toast.error('Failed to save credit sale');
@@ -496,6 +543,27 @@ const POSPage: React.FC = () => {
              </div>
            </div>
 
+            <div className="space-y-4">
+              <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] ml-1 opacity-50">Customer Photo</h3>
+              <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm bg-card p-6 flex flex-col items-center">
+                {livePhoto ? (
+                  <div className="relative w-32 h-32 rounded-2xl overflow-hidden mb-4 border border-border">
+                    <img src={livePhoto} alt="Customer" className="w-full h-full object-cover" />
+                    <button title="Remove Photo" aria-label="Remove Photo" onClick={() => setLivePhoto('')} className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1"><X className="w-4 h-4" /></button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center mb-4 text-muted-foreground/50">
+                    <User className="w-10 h-10" />
+                  </div>
+                )}
+                {!livePhoto && (
+                  <button onClick={() => startCamera()} className="btn-primary !py-3 !px-6 text-[10px] font-bold tracking-widest flex items-center gap-2 uppercase">
+                    <Scan className="w-4 h-4" /> Take Photo
+                  </button>
+                )}
+              </div>
+            </div>
+
            <div className="space-y-4">
              <h3 className="font-bold text-foreground capitalize tracking-widest text-[10px] ml-1 opacity-50">Sale Summary</h3>
              <div className="glass-card rounded-3xl border border-border p-6 space-y-5 shadow-sm bg-card">
@@ -541,6 +609,28 @@ const POSPage: React.FC = () => {
              </button>
            </div>
         </div>
+
+        {/* Camera Modal */}
+        {isCameraOpen && (
+          <div className="fixed inset-0 z-[200] bg-black/90 flex flex-col">
+            <div className="p-4 flex justify-between items-center bg-black/50">
+              <button title="Switch Camera" aria-label="Switch Camera" onClick={() => {
+                const newMode = facingMode === 'user' ? 'environment' : 'user';
+                setFacingMode(newMode);
+                startCamera(newMode);
+              }} className="p-3 bg-white/20 rounded-full text-white"><Scan className="w-5 h-5" /></button>
+              <button title="Toggle Flash" aria-label="Toggle Flash" onClick={toggleFlash} className={clsx("p-3 rounded-full text-white", flashOn ? "bg-amber-500" : "bg-white/20")}><Smartphone className="w-5 h-5" /></button>
+              <button title="Close Camera" aria-label="Close Camera" onClick={stopCamera} className="p-3 bg-white/20 rounded-full text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
+              <div className="absolute inset-0 border-4 border-dashed border-white/20 pointer-events-none m-8 rounded-3xl" />
+            </div>
+            <div className="p-8 pb-12 flex justify-center bg-black/50">
+              <button title="Capture Photo" aria-label="Capture Photo" onClick={capturePhoto} className="w-20 h-20 bg-white rounded-full border-4 border-white/50 active:scale-95 transition-transform" />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -594,7 +684,7 @@ const POSPage: React.FC = () => {
                       window.open(`https://wa.me/?text=${text}`, '_blank');
                       toast.success('WhatsApp opened', { id: 'share' });
                     }
-                  } catch (e) {
+                  } catch {
                     toast.error('Failed to share', { id: 'share' });
                   }
                 }}
@@ -612,21 +702,30 @@ const POSPage: React.FC = () => {
       <div className="flex-1 flex flex-col min-h-0 border-r border-border/10 overflow-hidden bg-muted/5">
         {/* Sticky Header for Search */}
         <div className="flex gap-2 p-3 md:p-4 bg-card/80 backdrop-blur-md z-10 shadow-sm border-b border-border/50">
-          <div className="relative flex-1">
+          <div className="relative flex-1 group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input 
               id="product-search"
               title="Search Products"
               aria-label="Search Products"
               className={clsx(
-                "w-full pl-10 pr-4 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all",
+                "w-full pl-10 pr-10 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all",
                 isRemoteLoading && "animate-pulse border-primary/30"
               )} 
               placeholder={isRemoteLoading ? "Searching remote DB..." : "Search items..."}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
-
+            {searchTerm && (
+              <button 
+                title="Clear Search"
+                aria-label="Clear Search"
+                onClick={() => setSearchTerm('')} 
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground bg-background/50 rounded-full p-1 transition-all active:scale-90"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
           <button 
             title="Scan Barcode"
@@ -657,7 +756,7 @@ const POSPage: React.FC = () => {
             </button>
           </div>
           
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 md:gap-3 pb-4">
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-[1px] bg-border/50 border border-border/50 rounded-xl overflow-hidden pb-0">
 
 
             {displayedProducts.map((p: LocalProduct) => (
@@ -691,7 +790,7 @@ const POSPage: React.FC = () => {
         <div className="p-5 border-b border-border/50 bg-muted/10 flex justify-between items-center">
           <h3 className="font-black text-foreground capitalize tracking-widest text-[11px]">Current Order ({cart.length})</h3>
           {cart.length > 0 && (
-            <button title="Clear Cart" aria-label="Clear Cart" onClick={() => setCart([])} className="text-[10px] text-rose-500 font-bold flex items-center gap-1.5 hover:bg-rose-500/10 px-3 py-1.5 rounded-lg transition-all">
+            <button title="Clear Cart" aria-label="Clear Cart" onClick={() => { setCart([]); setCurrentInvoiceNo(generateInvoiceNo()); }} className="text-[10px] text-rose-500 font-bold flex items-center gap-1.5 hover:bg-rose-500/10 px-3 py-1.5 rounded-lg transition-all">
               <Trash2 className="w-3.5 h-3.5" /> Clear
             </button>
           )}
@@ -699,33 +798,43 @@ const POSPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
           {cart.length > 0 ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 gap-1">
-              {cart.map(item => (
-                <div key={item.product.id} className="aspect-square glass-card bg-primary/5 border border-primary/20 rounded-xl p-1.5 flex flex-col items-center justify-center gap-1 relative group animate-in zoom-in-95 duration-200">
-                  <div className="w-8 h-8 flex items-center justify-center bg-card rounded-lg overflow-hidden border border-border/10">
-                    {item.product.imageUrl ? (
-                      <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package className="w-3 h-3 text-primary/30" />
-                    )}
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 gap-[1px] bg-border/50 border border-border/50 rounded-xl overflow-hidden p-0">
+              {cart.map(item => {
+                const p = item.product;
+                const getPlaceholder = () => {
+                  const name = (p.name || '').toLowerCase();
+                  if (p.isService || name.includes('print') || name.includes('copy') || name.includes('scan') || name.includes('solution') || name.includes('service')) return "/stationery_services_placeholder.png";
+                  if (name.includes('pen') || name.includes('book') || name.includes('paper') || name.includes('staple') || name.includes('office') || name.includes('stationery')) return "/stationery_items_placeholder.png";
+                  return "/phone_accessories_placeholder.png";
+                };
+
+                return (
+                  <div key={p.id} className="aspect-square bg-card flex flex-col items-center justify-center relative group animate-in zoom-in-95 duration-200">
+                    <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden p-1">
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <img src={getPlaceholder()} alt="placeholder" className="w-full h-full object-contain" />
+                      )}
+                    </div>
+                    <div className="text-center w-full px-1 pb-1">
+                      <div className="text-[7px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
+                      <div className="text-[7px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()} (x{item.quantity})</div>
+                    </div>
+                    <button 
+                      title="Remove" 
+                      onClick={() => setCart(prev => prev.filter(i => i.product.id !== p.id))} 
+                      className="absolute top-1 right-1 bg-destructive/80 text-white p-1 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-destructive"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                    <div className="absolute inset-x-0 bottom-1/2 translate-y-1/2 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button title="Decrease Quantity" aria-label="Decrease Quantity" onClick={() => decreaseQuantity(p.id)} className="w-6 h-6 bg-background/80 backdrop-blur-sm border border-border text-foreground rounded flex items-center justify-center hover:bg-primary hover:text-white transition-colors shadow-sm"><Minus className="w-3 h-3" /></button>
+                      <button title="Increase Quantity" aria-label="Increase Quantity" onClick={() => addToCart(p)} className="w-6 h-6 bg-background/80 backdrop-blur-sm border border-border text-foreground rounded flex items-center justify-center hover:bg-primary hover:text-white transition-colors shadow-sm"><Plus className="w-3 h-3" /></button>
+                    </div>
                   </div>
-                  <div className="text-center w-full px-0.5 min-w-0">
-                    <div className="text-[7px] font-black text-foreground uppercase truncate leading-none mb-0.5">{item.product.name}</div>
-                    <div className="text-[7px] text-primary font-black">x{item.quantity}</div>
-                  </div>
-                  <button 
-                    title="Remove" 
-                    onClick={() => setCart(prev => prev.filter(i => i.product.id !== item.product.id))} 
-                    className="absolute -top-1 -right-1 bg-rose-500 text-white p-1 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  >
-                    <X className="w-2.5 h-2.5" />
-                  </button>
-                  <div className="absolute bottom-1 right-1 flex flex-col gap-0.5">
-                     <button onClick={() => addToCart(item.product)} className="w-4 h-4 bg-primary/10 text-primary rounded-md flex items-center justify-center hover:bg-primary hover:text-white transition-colors"><Plus className="w-2.5 h-2.5" /></button>
-                     <button onClick={() => decreaseQuantity(item.product.id)} className="w-4 h-4 bg-primary/10 text-primary rounded-md flex items-center justify-center hover:bg-primary hover:text-white transition-colors"><Minus className="w-2.5 h-2.5" /></button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
           ) : (
@@ -751,6 +860,9 @@ const POSPage: React.FC = () => {
                 <div className="relative flex-1 max-w-[120px]">
                   <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black text-muted-foreground">MK</span>
                   <input 
+                    title="Discount Amount"
+                    aria-label="Discount Amount"
+                    placeholder="0"
                     type="number" 
                     className="w-full bg-background border border-border/50 rounded-xl pl-8 pr-3 py-1.5 text-right text-[11px] font-black focus:ring-2 focus:ring-primary/20 outline-none"
                     value={discount || ''} 
@@ -780,7 +892,7 @@ const POSPage: React.FC = () => {
               ].map(mode => (
                 <button 
                   key={mode.id}
-                  onClick={() => { setPaymentMode(mode.id as any); setSelectedSubMethod(''); }} 
+                  onClick={() => { setPaymentMode(mode.id as 'Cash'|'Card'|'Momo'|'Credit'); setSelectedSubMethod(''); }} 
                   className={clsx(
                     "flex flex-col items-center justify-center py-2.5 rounded-xl font-black text-[8px] uppercase tracking-widest transition-all btn-press", 
                     paymentMode === mode.id ? `${mode.color} text-white shadow-lg` : "bg-card text-muted-foreground border border-border/50"

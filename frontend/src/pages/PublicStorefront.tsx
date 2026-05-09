@@ -67,6 +67,7 @@ export const PublicStorefront: React.FC = () => {
   const [ratingProduct, setRatingProduct] = useState<StoreProduct | null>(null);
   const [ratingValue, setRatingValue] = useState(5);
   const [ratingComment, setRatingComment] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const CUSTOM_CATEGORIES = [
     'Phone Accessories',
@@ -133,7 +134,7 @@ export const PublicStorefront: React.FC = () => {
         action,
         productId: product.id,
         productName: product.name,
-        imageUrl: product.imageUrl || null,
+        imageUrl: product.imageUrl?.split('|')[0] || null,
         discount: product.discount || 0,
         discount_rate: product.discount_rate || product.discount || 0,
         timestamp: new Date().toISOString()
@@ -662,7 +663,7 @@ export const PublicStorefront: React.FC = () => {
                 <div key={p.id} className="px-1.5 pb-1.5 mb-1.5 border-b border-surface-border/30">
                   <div 
                     id={`product-${p.id}`}
-                    onClick={() => setSelectedProduct(p as StoreProduct)}
+                    onClick={() => { setSelectedProduct(p as StoreProduct); setCurrentImageIndex(0); }}
                     className="group relative glass-card border border-border/50 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-1 flex flex-col h-full cursor-pointer"
                   >
                     <div className="absolute top-3 md:top-6 left-3 md:left-6 right-3 md:right-6 z-10 flex justify-between items-start pointer-events-none">
@@ -699,7 +700,7 @@ export const PublicStorefront: React.FC = () => {
 
                   <div className="aspect-square bg-muted/10 border-b border-border/30 flex items-center justify-center relative overflow-hidden shrink-0">
                     <img 
-                      src={p.imageUrl || "/premium-item.png"} 
+                      src={p.imageUrl?.split('|')[0] || "/premium-item.png"} 
                       alt={p.name} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                     />
@@ -842,7 +843,7 @@ export const PublicStorefront: React.FC = () => {
                     onClick={() => scrollToProduct(item.product.id)}
                   >
                     <div className="w-16 h-16 glass-card border border-border/30 rounded-xl overflow-hidden shrink-0">
-                      <img src={item.product.imageUrl || '/premium-item.png'} className="w-full h-full object-cover" alt="" />
+                      <img src={item.product.imageUrl?.split('|')[0] || '/premium-item.png'} className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[10px] font-black text-primary tracking-widest mb-0.5">{item.product.category?.name ? item.product.category.name.charAt(0).toUpperCase() + item.product.category.name.slice(1).toLowerCase() : 'Item'}</p>
@@ -957,6 +958,7 @@ export const PublicStorefront: React.FC = () => {
             <div className="absolute inset-0 bg-background/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setSelectedProduct(null)}></div>
             <div className="relative w-full max-w-4xl bg-surface-card border border-border/50 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row max-h-[90vh]">
               <button 
+                title="Close Modal" aria-label="Close Modal"
                 onClick={() => setSelectedProduct(null)}
                 className="absolute top-4 right-4 z-20 w-10 h-10 bg-background/50 backdrop-blur-md border border-border/50 rounded-full flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-all btn-press"
               >
@@ -984,7 +986,30 @@ export const PublicStorefront: React.FC = () => {
                      </div>
                    );
                  })()}
-                <img src={selectedProduct.imageUrl || '/premium-item.png'} className="w-full max-w-sm h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" alt={selectedProduct.name} />
+                
+                <div className="flex flex-col items-center w-full max-w-sm">
+                  <div className="w-full aspect-square relative mb-4">
+                    <img 
+                      src={selectedProduct.imageUrl?.split('|')[currentImageIndex] || selectedProduct.imageUrl?.split('|')[0] || '/premium-item.png'} 
+                      className="w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" 
+                      alt={selectedProduct.name} 
+                    />
+                  </div>
+                  {selectedProduct.imageUrl && selectedProduct.imageUrl.split('|').length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto p-2 no-scrollbar w-full justify-center">
+                      {selectedProduct.imageUrl.split('|').map((img, i) => (
+                        <button 
+                          title={`View image ${i + 1}`} aria-label={`View image ${i + 1}`}
+                          key={i} 
+                          onClick={() => setCurrentImageIndex(i)}
+                          className={`w-12 h-12 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${currentImageIndex === i ? 'border-primary shadow-lg scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                        >
+                          <img src={img} className="w-full h-full object-cover" alt="" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col overflow-y-auto custom-scrollbar">
@@ -1040,6 +1065,7 @@ export const PublicStorefront: React.FC = () => {
 
                 <div className="mt-auto pt-6 border-t border-border/50 flex gap-4 bg-surface-card sticky bottom-0">
                   <button 
+                    title={likedItems.has(selectedProduct.id) ? "Unlike" : "Like"} aria-label={likedItems.has(selectedProduct.id) ? "Unlike" : "Like"}
                     onClick={() => {
                        toggleLike(selectedProduct.id);
                     }}

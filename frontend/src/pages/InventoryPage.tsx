@@ -17,7 +17,8 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   Upload,
-  Download
+  Download,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -69,7 +70,7 @@ const InventoryProductCard = React.memo(({
       <div className="p-6 flex-1 flex flex-col">
         <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+            <img src={product.imageUrl.split('|')[0]} alt={product.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
           ) : (
             <div className="w-full h-full relative">
               <img 
@@ -113,7 +114,7 @@ const InventoryProductCard = React.memo(({
       <div className="px-6 py-4 bg-muted/30 border-t border-border/50 flex flex-wrap gap-2">
         {product.imageUrl && (
           <button 
-            onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl || null); }} 
+            onClick={(e) => { e.stopPropagation(); setPreviewImage(product.imageUrl?.split('|')[0] || null); }} 
             className="flex-1 py-2 px-3 rounded-xl bg-card border border-border/50 flex items-center justify-center gap-1 text-[10px] font-black tracking-widest text-success hover:bg-success/10 transition-colors uppercase btn-press"
           >
             <ImageIcon className="w-3 h-3" /> View
@@ -415,54 +416,65 @@ const InventoryPage: React.FC = () => {
     }
   }, [formData.name, formData.categoryId, editingProduct, wasScanned]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Check file size (limit to 10MB for processing)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('Image is too large. Please use a file under 10MB.');
-      return;
-    }
+    toast.loading('Processing image(s)...', { id: 'img-upload' });
+    
+    try {
+      const currentImages = formData.imageUrl ? formData.imageUrl.split('|') : [];
+      const newImages: string[] = [];
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const size = Math.min(img.width, img.height);
-        
-        // Target resolution: 800x800 for high-quality Retina/Mobile displays
-        // while maintaining a small footprint.
-        canvas.width = 800;
-        canvas.height = 800;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          // Enable high-quality image smoothing
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          
-          const offsetX = (img.width - size) / 2;
-          const offsetY = (img.height - size) / 2;
-          
-          // Draw and crop to center square
-          ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, 800, 800);
-          
-          // Try WebP first for superior compression/quality ratio
-          let dataUrl = canvas.toDataURL('image/webp', 0.8);
-          
-          // Fallback to JPEG if WebP is not supported or results in larger size (rare)
-          if (dataUrl.length > 500000) { // If still > 500KB, increase compression
-             dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-          }
-          
-          setFormData(prev => ({ ...prev, imageUrl: dataUrl }));
-          toast.success('Image optimized for storefront');
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`Image ${file.name} is too large. Skipping.`);
+          continue;
         }
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const size = Math.min(img.width, img.height);
+              canvas.width = 800;
+              canvas.height = 800;
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                const offsetX = (img.width - size) / 2;
+                const offsetY = (img.height - size) / 2;
+                ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, 800, 800);
+                
+                let resUrl = canvas.toDataURL('image/webp', 0.8);
+                if (resUrl.length > 500000) {
+                   resUrl = canvas.toDataURL('image/jpeg', 0.7);
+                }
+                resolve(resUrl);
+              } else {
+                reject('Canvas error');
+              }
+            };
+            img.onerror = reject;
+            img.src = event.target?.result as string;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        
+        newImages.push(dataUrl);
+      }
+
+      const finalImages = [...currentImages, ...newImages].slice(0, 4);
+      setFormData(prev => ({ ...prev, imageUrl: finalImages.join('|') }));
+      toast.success(`Optimized ${newImages.length} image(s)`, { id: 'img-upload' });
+    } catch {
+      toast.error('Failed to process image', { id: 'img-upload' });
+    }
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -733,7 +745,7 @@ const InventoryPage: React.FC = () => {
             <div className="col-span-2 flex items-center gap-6 mb-2">
               <div className="w-24 h-24 rounded-2xl bg-surface-bg border border-surface-border flex items-center justify-center overflow-hidden shrink-0 relative group">
                 {formData.imageUrl ? (
-                  <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <img src={formData.imageUrl.split('|')[0]} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full relative">
                     <img 
@@ -760,16 +772,32 @@ const InventoryPage: React.FC = () => {
                 <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white">
                   <Upload className="w-5 h-5 mb-1" />
                   <span className="text-[8px] font-black tracking-widest">Upload</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
               </div>
               <div>
                 <p className="text-[10px] font-black tracking-widest mb-1">Product image</p>
                 <p className="text-[9px] font-bold text-surface-text/40 uppercase">Adding an image improves experience.</p>
                 <p className="text-[9px] font-bold text-surface-text/40 uppercase">Optimal ratio is 1:1.</p>
+                {formData.imageUrl && formData.imageUrl.split('|').length > 1 && (
+                  <div className="flex gap-2 mt-2">
+                    {formData.imageUrl.split('|').map((img, i) => (
+                      <div key={i} className="w-8 h-8 rounded border border-surface-border overflow-hidden relative group">
+                        <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                        <button title="Delete Image" aria-label="Delete Image" type="button" onClick={() => {
+                          const imgs = formData.imageUrl.split('|');
+                          imgs.splice(i, 1);
+                          setFormData({...formData, imageUrl: imgs.join('|')});
+                        }} className="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {formData.imageUrl && (
                   <button type="button" onClick={() => setFormData({...formData, imageUrl: ''})} className="text-[9px] font-black tracking-widest text-red-500 mt-2 hover:underline">
-                    Remove image
+                    Remove all images
                   </button>
                 )}
               </div>

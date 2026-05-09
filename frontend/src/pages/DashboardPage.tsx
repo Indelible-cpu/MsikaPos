@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import api from '../api/client';
+import React from 'react';
 import { 
   TrendingUp, 
   Users, 
@@ -26,27 +25,6 @@ import {
 } from 'recharts';
 import AiAssistant from '../components/AiAssistant';
 
-interface DashboardStats {
-  today_sales: number;
-  today_profit: number;
-  today_expenses: number;
-  total_sales: number;
-  total_cost: number;
-  total_profit: number;
-  total_transactions: number;
-  active_products: number;
-  low_stock: number;
-  credit_reminders: number;
-  chart_data: Array<{ name: string; revenue: number; customers: number }>;
-}
-
-interface Expense {
-  amount: number;
-  createdAt: string;
-  description: string;
-  category: string;
-}
-
 interface Product {
   isService: boolean;
   quantity: number;
@@ -62,44 +40,67 @@ interface Credit {
   customer_phone: string;
 }
 
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/posDB';
+
 const DashboardPage: React.FC = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [credits, setCredits] = useState<Credit[]>([]);
+  const localSales = useLiveQuery(() => db.salesQueue.toArray());
+  const localExpenses = useLiveQuery(() => db.expenses.toArray());
+  const localProducts = useLiveQuery(() => db.products.filter(p => !p.deleted && p.status === 'Active').toArray());
+  const localCustomers = useLiveQuery(() => db.customers.toArray());
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [dashRes, expRes, prodRes, credRes] = await Promise.all([
-          api.get('/dashboard/stats'),
-          api.get('/expenses'),
-          api.get('/products'),
-          api.get('/credits'),
-        ]);
-        if (dashRes.data.success) setStats(dashRes.data.data);
-        if (expRes.data.success) setExpenses(expRes.data.data);
-        if (prodRes.data.success) setProducts(prodRes.data.data);
-        if (credRes.data.success) setCredits(credRes.data.data);
-      } catch (e) {
-        console.error('Dashboard load error:', e);
-      }
-    };
-    load();
-  }, []);
-
-  const totalRevenueToday = stats?.today_sales || 0;
-  const totalProfitToday = stats?.today_profit || 0;
-  const totalExpensesToday = stats?.today_expenses || 0;
+  const today = new Date().toISOString().split('T')[0];
   
-  const totalSalesAllTime = stats?.total_sales || 0;
-  const totalProfitAllTime = stats?.total_profit || 0;
-  const totalCostAllTime = stats?.total_cost || 0;
+  const todaySales = (localSales || []).filter(s => s.createdAt.startsWith(today));
+  const todayExpensesArr = (localExpenses || []).filter(e => e.date?.startsWith(today) || e.createdAt?.startsWith(today));
+  
+  const totalRevenueToday = todaySales.reduce((sum, s) => sum + s.total, 0);
+  const totalProfitToday = todaySales.reduce((sum, s) => sum + (s.profit || 0), 0);
+  const totalExpensesToday = todayExpensesArr.reduce((sum, e) => sum + e.amount, 0);
 
-  const activeCredits = credits.filter((c: Credit) => c.status !== 'Paid');
-  const totalCreditAmount = activeCredits.reduce((sum: number, c: Credit) => sum + (c.current_total - c.paid_amount), 0);
-  const lowStockItems = products.filter((p: Product) => !p.isService && p.quantity <= 5);
-  const chartData = stats?.chart_data || [];
+  const totalSalesAllTime = (localSales || []).reduce((sum, s) => sum + s.total, 0);
+  const totalProfitAllTime = (localSales || []).reduce((sum, s) => sum + (s.profit || 0), 0);
+  const totalCostAllTime = (localProducts || []).reduce((sum, p) => sum + ((p.costPrice || 0) * p.quantity), 0);
+
+  const activeCredits = (localCustomers || []).filter(c => c.balance > 0).map(c => ({
+    status: 'Pending',
+    current_total: c.totalCreditAmount,
+    paid_amount: c.totalPaidAmount,
+    customer_name: c.name,
+    customer_phone: c.phone
+  }));
+  const totalCreditAmount = (localCustomers || []).reduce((sum, c) => sum + c.balance, 0);
+  const lowStockItems = (localProducts || []).filter(p => !p.isService && p.quantity <= 5);
+  const expenses = localExpenses || [];
+
+  const chartData = React.useMemo(() => {
+    if (!localSales) return [];
+    const days = [];
+    for(let i=6; i>=0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const salesOnDate = localSales.filter(s => s.createdAt.startsWith(dateStr));
+      days.push({
+        name: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        revenue: salesOnDate.reduce((sum, s) => sum + s.total, 0),
+        customers: salesOnDate.length
+      });
+    }
+    return days;
+  }, [localSales]);
+
+  const stats = {
+    today_sales: totalRevenueToday,
+    today_profit: totalProfitToday,
+    today_expenses: totalExpensesToday,
+    total_sales: totalSalesAllTime,
+    total_cost: totalCostAllTime,
+    total_profit: totalProfitAllTime,
+    active_products: localProducts?.length || 0,
+    low_stock: lowStockItems.length,
+    chart_data: chartData
+  };
 
   const statCards = [
     { label: "Today's sales", value: `MK ${totalRevenueToday.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },

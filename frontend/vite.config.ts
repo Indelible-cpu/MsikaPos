@@ -78,6 +78,7 @@ export default defineConfig({
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/api') || url.host === 'msikapos.onrender.com',
             handler: 'NetworkFirst',
+            method: 'GET',
             options: {
               cacheName: 'api-cache',
               expiration: {

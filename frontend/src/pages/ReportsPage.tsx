@@ -7,8 +7,7 @@ import {
   Users, 
   DollarSign, 
   ArrowUpRight, 
-  BarChart3,
-  Download
+  BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -65,8 +64,9 @@ interface ServerStats {
     username: string;
   }>;
   chart_data: Array<{
-    date: string;
-    total: number;
+    name: string;
+    revenue: number;
+    customers: number;
   }>;
 }
 
@@ -97,9 +97,12 @@ const ReportsPage: React.FC = () => {
     loadStats();
   }, []);
 
-  const totalRevenue = serverStats?.today_sales || 0;
-  const totalSalesCount = serverStats?.total_transactions || 0;
-  const totalProfit = serverStats?.total_profit || 0; // Might need to add this to backend
+  const today = new Date().toISOString().split('T')[0];
+  const todayLocalSales = (localSales || []).filter(s => s.createdAt.startsWith(today));
+  
+  const totalRevenue = serverStats?.today_sales || todayLocalSales.reduce((sum, s) => sum + s.total, 0);
+  const totalSalesCount = serverStats?.total_transactions || localSales?.length || 0;
+  const totalProfit = serverStats?.total_profit || localSales?.reduce((sum, s) => sum + (s.profit || 0), 0) || 0;
 
   // Process actual data for graphs
   const analyticsData = useMemo(() => {
@@ -112,20 +115,27 @@ const ReportsPage: React.FC = () => {
     const now = new Date();
 
     if (timeFilter === 'Weekly') {
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const weeklyMap: Record<string, number> = {};
-      const last7Days = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - (6 - i));
-        return { key: d.toLocaleDateString(), label: days[d.getDay()] };
-      });
-      salesToUse.forEach(s => {
-        const d = new Date(s.createdAt);
-        if ((now.getTime() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000) {
-          weeklyMap[d.toLocaleDateString()] = (weeklyMap[d.toLocaleDateString()] || 0) + s.total;
-        }
-      });
-      financialData = last7Days.map(d => ({ label: d.label, value: weeklyMap[d.key] || 0 }));
+      if (serverStats?.chart_data && serverStats.chart_data.length > 0) {
+        financialData = serverStats.chart_data.map(d => ({
+          label: d.name,
+          value: d.revenue
+        }));
+      } else {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weeklyMap: Record<string, number> = {};
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          return { key: d.toLocaleDateString(), label: days[d.getDay()] };
+        });
+        salesToUse.forEach(s => {
+          const d = new Date(s.createdAt);
+          if ((now.getTime() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000) {
+            weeklyMap[d.toLocaleDateString()] = (weeklyMap[d.toLocaleDateString()] || 0) + s.total;
+          }
+        });
+        financialData = last7Days.map(d => ({ label: d.label, value: weeklyMap[d.key] || 0 }));
+      }
     } else if (timeFilter === 'Monthly') {
       const monthlyMap: Record<string, number> = {};
       const last4Weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
@@ -249,22 +259,68 @@ const ReportsPage: React.FC = () => {
             )}
 
             <button 
-              onClick={async () => {
-                const { downloadCSV } = await import('../utils/exportUtils');
+              onClick={() => {
                 const data = activeTab === 'Financial' ? analyticsData.financial : 
                              activeTab === 'Staff' ? analyticsData.staff : 
                              analyticsData.payment;
                 
-                downloadCSV(
-                  ['Label', 'Value'],
-                  data.map(d => [d.label, d.value]),
-                  `MsikaPos_${activeTab}_Report_${new Date().toISOString().split('T')[0]}`
-                );
+                const companyName = localStorage.getItem('companyName') || 'MsikaPOS';
+                
+                const html = `
+                  <html>
+                    <head>
+                      <title>${companyName} - ${activeTab} Report</title>
+                      <style>
+                        body { font-family: 'Inter', sans-serif; color: #111; padding: 40px; max-width: 800px; margin: 0 auto; }
+                        .header { border-bottom: 2px solid #111; padding-bottom: 20px; margin-bottom: 30px; }
+                        h1 { font-size: 28px; font-weight: 900; text-transform: uppercase; margin: 0 0 5px 0; }
+                        h2 { font-size: 12px; color: #666; text-transform: uppercase; margin: 0; letter-spacing: 2px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { padding: 15px 10px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
+                        th { font-weight: 900; text-transform: uppercase; background: #f9f9f9; letter-spacing: 1px; color: #444; }
+                        .val { text-align: right; font-family: monospace; font-size: 14px; }
+                        th.val { text-align: right; font-family: 'Inter', sans-serif; font-size: 13px; }
+                        .total { font-weight: 900; font-size: 16px; margin-top: 30px; text-align: right; padding-top: 20px; border-top: 2px solid #111; }
+                        .footer { margin-top: 50px; font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+                        @media print { body { padding: 0; } }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="header">
+                        <h1>${companyName}</h1>
+                        <h2>Official ${activeTab} Report &mdash; ${timeFilter}</h2>
+                      </div>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Metric / Category</th>
+                            <th class="val">Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${data.map(d => `<tr><td>${d.label}</td><td class="val">${activeTab !== 'Payment' ? 'MK ' : ''}${d.value.toLocaleString()}</td></tr>`).join('')}
+                        </tbody>
+                      </table>
+                      <div class="total">
+                        Total Value: ${activeTab !== 'Payment' ? 'MK ' : ''}${data.reduce((s, d) => s + d.value, 0).toLocaleString()}
+                      </div>
+                      <div class="footer">Generated by MsikaPOS on ${new Date().toLocaleString()}</div>
+                      <script>
+                        window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); }
+                      </script>
+                    </body>
+                  </html>
+                `;
+                const win = window.open('', '_blank');
+                if (win) {
+                  win.document.write(html);
+                  win.document.close();
+                }
               }}
-              title="Export Report Data"
-              className="p-2.5 bg-card/50 border border-border/50 rounded-xl text-primary hover:bg-primary/10 transition-all btn-press"
+              title="Print Professional Report"
+              className="px-4 py-2 bg-primary text-primary-foreground font-bold tracking-widest text-[10px] uppercase rounded-xl hover:bg-primary/90 transition-all btn-press shadow-lg shadow-primary/20"
             >
-              <Download className="w-4 h-4" />
+              Print Report
             </button>
 
             {loading && (

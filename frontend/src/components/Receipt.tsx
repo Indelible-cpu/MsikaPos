@@ -66,7 +66,6 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
           })()}</span>
         </div>
         <div className="flex justify-between uppercase">
-          <span>Cashier: {cashierName}</span>
           <span>Branch: {branch?.name || 'Main HQ'}</span>
         </div>
         {customerName && <div className="text-right">Cust: {customerName}</div>}
