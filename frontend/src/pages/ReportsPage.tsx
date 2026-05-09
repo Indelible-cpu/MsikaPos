@@ -100,9 +100,9 @@ const ReportsPage: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
   const todayLocalSales = (localSales || []).filter(s => s.createdAt.startsWith(today));
   
-  const totalRevenue = serverStats?.today_sales || todayLocalSales.reduce((sum, s) => sum + s.total, 0);
+  const totalRevenue = serverStats?.today_sales || todayLocalSales.reduce((sum, s) => sum + Number(s.total || 0), 0);
   const totalSalesCount = serverStats?.total_transactions || localSales?.length || 0;
-  const totalProfit = serverStats?.total_profit || localSales?.reduce((sum, s) => sum + (s.profit || 0), 0) || 0;
+  const totalProfit = serverStats?.total_profit || localSales?.reduce((sum, s) => sum + Number(s.profit || 0), 0) || 0;
 
   // Process actual data for graphs
   const analyticsData = useMemo(() => {
@@ -131,7 +131,7 @@ const ReportsPage: React.FC = () => {
         salesToUse.forEach(s => {
           const d = new Date(s.createdAt);
           if ((now.getTime() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000) {
-            weeklyMap[d.toLocaleDateString()] = (weeklyMap[d.toLocaleDateString()] || 0) + s.total;
+            weeklyMap[d.toLocaleDateString()] = (weeklyMap[d.toLocaleDateString()] || 0) + Number(s.total || 0);
           }
         });
         financialData = last7Days.map(d => ({ label: d.label, value: weeklyMap[d.key] || 0 }));
@@ -145,7 +145,7 @@ const ReportsPage: React.FC = () => {
         if (daysDiff < 28) {
           const weekIdx = 3 - Math.floor(daysDiff / 7);
           const label = last4Weeks[Math.max(0, weekIdx)];
-          monthlyMap[label] = (monthlyMap[label] || 0) + s.total;
+          monthlyMap[label] = (monthlyMap[label] || 0) + Number(s.total || 0);
         }
       });
       financialData = last4Weeks.map(l => ({ label: l, value: monthlyMap[l] || 0 }));
@@ -162,7 +162,7 @@ const ReportsPage: React.FC = () => {
         const monthsDiff = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
         if (monthsDiff < 3) {
           const m = d.getMonth();
-          qMap[m] = (qMap[m] || 0) + s.total;
+          qMap[m] = (qMap[m] || 0) + Number(s.total || 0);
         }
       });
       financialData = last3Months.map(m => ({ label: m.label, value: qMap[m.key] || 0 }));
@@ -179,7 +179,7 @@ const ReportsPage: React.FC = () => {
         const monthsDiff = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
         if (monthsDiff < 12) {
           const m = d.getMonth();
-          aMap[m] = (aMap[m] || 0) + s.total;
+          aMap[m] = (aMap[m] || 0) + Number(s.total || 0);
         }
       });
       financialData = last12Months.map(m => ({ label: m.label, value: aMap[m.key] || 0 }));
@@ -189,7 +189,7 @@ const ReportsPage: React.FC = () => {
     const staffMap: Record<string, number> = {};
     salesToUse.forEach(s => {
       const name = s.sellerName || 'System';
-      staffMap[name] = (staffMap[name] || 0) + s.total;
+      staffMap[name] = (staffMap[name] || 0) + Number(s.total || 0);
     });
     const staff = Object.entries(staffMap)
       .map(([label, value]) => ({ label, value }))

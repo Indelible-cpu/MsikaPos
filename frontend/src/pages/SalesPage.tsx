@@ -56,7 +56,7 @@ const SalesPage: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
   const todaySales = sales.filter(s => s.createdAt.startsWith(today)) || [];
   const totalDiscounts = todaySales.reduce((sum, s) => sum + Number(s.discount || 0), 0);
-  const totalRevenue = todaySales.reduce((sum, s) => sum + Number(s.total), 0);
+  const totalRevenue = todaySales.reduce((sum, s) => sum + Number(s.total || 0), 0);
   const totalProfit = todaySales.reduce((sum, s) => {
     const saleProfit = s.items.reduce((pSum: number, item: LocalSaleItem) => pSum + (Number(item.profit) || 0), 0);
     return sum + saleProfit;

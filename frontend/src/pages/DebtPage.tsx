@@ -421,7 +421,7 @@ const DebtPage: React.FC = () => {
                   <div key={c.id} onClick={() => { setSelectedCustomer(c); }} className={clsx("p-6 flex items-center justify-between transition-all border-l-4 btn-press cursor-pointer", selectedCustomer?.id === c.id ? "bg-primary/10 border-l-primary" : "border-l-transparent hover:bg-muted/10")}>
                     <div className="flex-1 min-w-0"><h3 className="text-[12px] font-bold capitalize tracking-tighter truncate">{c.name}</h3><p className="text-[8px] font-bold text-muted-foreground/50 capitalize tracking-widest">{c.phone}</p></div>
                     <div className="text-right">
-                       <p className="text-[11px] font-bold text-destructive">MK {c.balance.toLocaleString()}</p>
+                       <p className="text-[11px] font-bold text-destructive">MK {Number(c.balance || 0).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -465,15 +465,15 @@ const DebtPage: React.FC = () => {
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12 text-right w-full xl:w-auto border-t xl:border-t-0 border-border/50 pt-6 xl:pt-0">
                   <div>
                     <div className="text-[8px] md:text-[9px] font-bold text-muted-foreground capitalize mb-1 tracking-widest">Total Credit</div>
-                    <div className="text-sm md:text-xl font-bold tracking-tighter text-foreground">MK {(selectedCustomer.totalCreditAmount || selectedCustomer.balance).toLocaleString()}</div>
+                    <div className="text-sm md:text-xl font-bold tracking-tighter text-foreground">MK {Number(selectedCustomer.totalCreditAmount || selectedCustomer.balance || 0).toLocaleString()}</div>
                   </div>
                   <div>
                     <div className="text-[8px] md:text-[9px] font-bold text-muted-foreground capitalize mb-1 tracking-widest">Total Paid</div>
-                    <div className="text-sm md:text-xl font-bold text-success tracking-tighter">MK {(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
+                    <div className="text-sm md:text-xl font-bold text-success tracking-tighter">MK {Number(selectedCustomer.totalPaidAmount || 0).toLocaleString()}</div>
                   </div>
                   <div className="col-span-2 lg:col-span-1 border-t lg:border-t-0 border-border/50 pt-4 lg:pt-0">
                     <div className="text-[8px] md:text-[9px] font-bold text-destructive/40 capitalize mb-1 tracking-widest">Balance Due</div>
-                    <div className="text-3xl md:text-5xl font-bold text-destructive tracking-tighter leading-none">MK {selectedCustomer.balance.toLocaleString()}</div>
+                    <div className="text-3xl md:text-5xl font-bold text-destructive tracking-tighter leading-none">MK {Number(selectedCustomer.balance || 0).toLocaleString()}</div>
                   </div>
                 </div>
               </div>
@@ -517,8 +517,8 @@ const DebtPage: React.FC = () => {
                               <td className="px-8 py-6">
                                 <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5 opacity-20" /><span className="text-[11px] font-black">{credit.due_date}</span></div>
                               </td>
-                              <td className="px-8 py-6 text-right text-[11px] font-black">MK {credit.original_amount.toLocaleString()}</td>
-                              <td className="px-8 py-6 text-right"><div className="text-sm font-black text-rose-500">MK {(credit.current_total - credit.paid_amount).toLocaleString()}</div></td>
+                              <td className="px-8 py-6 text-right text-[11px] font-black">MK {Number(credit.original_amount || 0).toLocaleString()}</td>
+                              <td className="px-8 py-6 text-right"><div className="text-sm font-black text-rose-500">MK {Number(Number(credit.current_total || 0) - Number(credit.paid_amount || 0)).toLocaleString()}</div></td>
                               <td className="px-8 py-6 text-right">
                                 {credit.status !== 'Paid' && (
                                   <button type="button" title="Pay This Invoice" aria-label="Pay This Invoice" onClick={() => { setPaymentModal({ id: credit.id, total: credit.current_total - credit.paid_amount }); setPayAmount(String(credit.current_total - credit.paid_amount)); }} className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-[9px] font-black uppercase">Pay balance</button>
@@ -554,7 +554,7 @@ const DebtPage: React.FC = () => {
                               <tr key={p.id} className="hover:bg-emerald-500/[0.01]">
                                 <td className="px-8 py-5"><span className="text-[11px] font-black">{new Date(p.createdAt).toLocaleDateString()}</span></td>
                                 <td className="px-8 py-5"><span className="text-[11px] font-black uppercase">{p.cashierName || 'System'}</span></td>
-                                <td className="px-8 py-5 text-right font-black text-emerald-500">MK {p.amount.toLocaleString()}</td>
+                                <td className="px-8 py-5 text-right font-black text-emerald-500">MK {Number(p.amount || 0).toLocaleString()}</td>
                                 <td className="px-8 py-5 text-right text-[11px] font-black uppercase opacity-40">{p.paymentMethod}</td>
                                 <td className="px-8 py-5 text-center">
                                   {p.reference === 'INITIAL DEPOSIT' ? <span className="text-[9px] font-black text-primary px-3 py-1 bg-primary/10 rounded-full">DEPOSIT</span> : p.signature ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-rose-500 font-black text-[8px]">NO SIGN</span>}

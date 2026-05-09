@@ -7,10 +7,13 @@ import {
   ArrowUpRight,
   Wallet,
   Receipt,
-  Plus
+  Plus,
+  RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { SyncService } from '../services/SyncService';
 import { 
   AreaChart, 
   Area, 
@@ -46,7 +49,7 @@ import { db } from '../db/posDB';
 const DashboardPage: React.FC = () => {
   const localSales = useLiveQuery(() => db.salesQueue.toArray());
   const localExpenses = useLiveQuery(() => db.expenses.toArray());
-  const localProducts = useLiveQuery(() => db.products.filter(p => !p.deleted && p.status === 'Active').toArray());
+  const localProducts = useLiveQuery(() => db.products.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active')).toArray());
   const localCustomers = useLiveQuery(() => db.customers.toArray());
 
   const today = new Date().toISOString().split('T')[0];
@@ -54,22 +57,22 @@ const DashboardPage: React.FC = () => {
   const todaySales = (localSales || []).filter(s => s.createdAt.startsWith(today));
   const todayExpensesArr = (localExpenses || []).filter(e => e.date?.startsWith(today) || e.createdAt?.startsWith(today));
   
-  const totalRevenueToday = todaySales.reduce((sum, s) => sum + s.total, 0);
-  const totalProfitToday = todaySales.reduce((sum, s) => sum + (s.profit || 0), 0);
-  const totalExpensesToday = todayExpensesArr.reduce((sum, e) => sum + e.amount, 0);
+  const totalRevenueToday = todaySales.reduce((sum, s) => sum + Number(s.total || 0), 0);
+  const totalProfitToday = todaySales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
+  const totalExpensesToday = todayExpensesArr.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
-  const totalSalesAllTime = (localSales || []).reduce((sum, s) => sum + s.total, 0);
-  const totalProfitAllTime = (localSales || []).reduce((sum, s) => sum + (s.profit || 0), 0);
-  const totalCostAllTime = (localProducts || []).reduce((sum, p) => sum + ((p.costPrice || 0) * p.quantity), 0);
+  const totalSalesAllTime = (localSales || []).reduce((sum, s) => sum + Number(s.total || 0), 0);
+  const totalProfitAllTime = (localSales || []).reduce((sum, s) => sum + Number(s.profit || 0), 0);
+  const totalCostAllTime = (localProducts || []).reduce((sum, p) => sum + (Number(p.costPrice || 0) * Number(p.quantity || 0)), 0);
 
-  const activeCredits = (localCustomers || []).filter(c => c.balance > 0).map(c => ({
+  const activeCredits = (localCustomers || []).filter(c => Number(c.balance || 0) > 0).map(c => ({
     status: 'Pending',
-    current_total: c.totalCreditAmount,
-    paid_amount: c.totalPaidAmount,
+    current_total: Number(c.totalCreditAmount || 0),
+    paid_amount: Number(c.totalPaidAmount || 0),
     customer_name: c.name,
     customer_phone: c.phone
   }));
-  const totalCreditAmount = (localCustomers || []).reduce((sum, c) => sum + c.balance, 0);
+  const totalCreditAmount = (localCustomers || []).reduce((sum, c) => sum + Number(c.balance || 0), 0);
   const lowStockItems = (localProducts || []).filter(p => !p.isService && p.quantity <= 5);
   const expenses = localExpenses || [];
 
@@ -83,7 +86,7 @@ const DashboardPage: React.FC = () => {
       const salesOnDate = localSales.filter(s => s.createdAt.startsWith(dateStr));
       days.push({
         name: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        revenue: salesOnDate.reduce((sum, s) => sum + s.total, 0),
+        revenue: salesOnDate.reduce((sum, s) => sum + Number(s.total || 0), 0),
         customers: salesOnDate.length
       });
     }
@@ -106,7 +109,7 @@ const DashboardPage: React.FC = () => {
     { label: "Today's sales", value: `MK ${totalRevenueToday.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
     { label: "Today's profit", value: `MK ${totalProfitToday.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-400', trend: 'Net margin' },
     { label: "Today's expenses", value: `MK ${totalExpensesToday.toLocaleString()}`, icon: Wallet, color: 'text-rose-500', trend: 'Daily outflow' },
-    { label: 'Active credits', value: `MK ${totalCreditAmount.toLocaleString()}`, icon: Users, color: 'text-amber-500', trend: `${activeCredits.length} Users` },
+    { label: 'Active credits', value: `MK ${totalCreditAmount.toLocaleString()}`, icon: Users, color: 'text-amber-500', trend: `${activeCredits.length} Customers` },
   ];
 
   const historicalCards = [
@@ -120,14 +123,27 @@ const DashboardPage: React.FC = () => {
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex-1"></div>
-        <div className="flex items-center gap-4">
-           <div className="text-right">
-              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Local Session</div>
-              <div className="text-xs font-black text-success uppercase">System Online</div>
-           </div>
-           <div className="w-3 h-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50" />
-        </div>
+          <div className="flex-1 flex items-center gap-3">
+             <button 
+               onClick={() => {
+                 toast.promise(SyncService.pushSales(), {
+                   loading: 'Syncing with cloud...',
+                   success: 'Database synchronized',
+                   error: 'Sync failed. Check connection.'
+                 });
+               }}
+               className="btn-press px-6 py-2.5 bg-muted/10 border border-border/50 rounded-xl text-[9px] font-black tracking-[0.2em] uppercase hover:bg-muted/20 transition-all flex items-center gap-2"
+             >
+               <RefreshCw className="w-3 h-3" /> Sync Data
+             </button>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+               <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Local Session</div>
+               <div className="text-xs font-black text-success uppercase">System Online</div>
+            </div>
+            <div className="w-3 h-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50" />
+          </div>
         </div>
       </div>
 
@@ -147,7 +163,7 @@ const DashboardPage: React.FC = () => {
                 <div className={`p-3 rounded-2xl bg-muted/10 border border-border/50 group-hover:border-primary/20 transition-colors ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <div className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${stat.trend.includes('outflow') || stat.trend.includes('Users') || stat.trend.includes('margin') ? 'bg-primary/10 text-primary' : stat.trend.startsWith('+') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                <div className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${stat.trend.includes('outflow') || stat.trend.includes('Customers') || stat.trend.includes('margin') ? 'bg-primary/10 text-primary' : stat.trend.startsWith('+') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
                   {stat.trend.startsWith('+') && <ArrowUpRight className="w-3 h-3" />}
                   {stat.trend}
                 </div>

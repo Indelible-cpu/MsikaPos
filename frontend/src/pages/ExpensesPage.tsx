@@ -35,7 +35,7 @@ const ExpensesPage: React.FC = () => {
     [searchTerm]
   );
 
-  const totalSpent = expenses?.reduce((sum, e) => sum + e.amount, 0) || 0;
+  const totalSpent = expenses?.reduce((sum, e) => sum + Number(e.amount || 0), 0) || 0;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

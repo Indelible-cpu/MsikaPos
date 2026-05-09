@@ -447,6 +447,7 @@ const SettingsPage: React.FC = () => {
                           <input
                             type="color"
                             value={primaryColor}
+                            title="Choose system theme color"
                             onChange={(e) => setPrimaryColor(e.target.value)}
                             className="w-12 h-12 rounded-xl border border-surface-border bg-surface-bg cursor-pointer p-1"
                           />
@@ -463,6 +464,7 @@ const SettingsPage: React.FC = () => {
                         <label className="text-[10px] font-black text-surface-text/40 ml-1 tracking-widest">Base currency</label>
                         <select
                           value={currency}
+                          title="Select base currency"
                           onChange={(e) => setCurrency(e.target.value)}
                           className="input-field w-full py-3 px-4 text-sm font-black shadow-inner appearance-none bg-surface-bg"
                         >
@@ -585,6 +587,7 @@ const SettingsPage: React.FC = () => {
                     <input
                       type="time"
                       value={lockTime}
+                      title="Set system auto-lock time"
                       onChange={(e) => setLockTime(e.target.value)}
                       className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
                     />
@@ -594,6 +597,7 @@ const SettingsPage: React.FC = () => {
                     <input
                       type="time"
                       value={unlockTime}
+                      title="Set system auto-unlock time"
                       onChange={(e) => setUnlockTime(e.target.value)}
                       className="input-field w-full py-3 px-4 text-sm font-black shadow-inner"
                     />
@@ -604,6 +608,34 @@ const SettingsPage: React.FC = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+
+              <div className="px-6 md:px-12 py-8 flex items-center justify-between group hover:bg-red-500/5 transition-colors border-t border-surface-border">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-red-500/10 rounded-2xl flex items-center justify-center border border-red-500/20 group-hover:border-red-500 transition-all">
+                    <History className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <div className="font-black text-sm tracking-tight text-red-500">Force system data reset</div>
+                    <div className="text-xs text-surface-text/40 font-bold">Wipes local cache and re-downloads all data from the cloud. Use if data is missing or out of sync.</div>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (window.confirm('This will wipe local cached data and re-download everything from the cloud. Your unsynced sales may be lost if not synced. Continue?')) {
+                      localStorage.removeItem('lastSyncTimestamp');
+                      await db.products.clear();
+                      await db.customers.clear();
+                      await db.expenses.clear();
+                      await db.salesQueue.where('synced').equals(1).delete();
+                      toast.success('Local cache cleared. Reloading...');
+                      setTimeout(() => window.location.reload(), 1500);
+                    }
+                  }}
+                  className="btn-primary !bg-zinc-900 hover:!bg-black !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg"
+                >
+                  RESET LOCAL DATA
+                </button>
               </div>
 
               <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors">
@@ -682,6 +714,7 @@ const SettingsPage: React.FC = () => {
           <div className="w-full max-w-lg bg-surface-card rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl relative">
             <button
               onClick={stopCamera}
+              title="Close camera"
               className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
             >
               <X className="w-5 h-5" />

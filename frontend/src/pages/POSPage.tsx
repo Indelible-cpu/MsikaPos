@@ -27,7 +27,8 @@ import {
   Building2,
   MessageSquare,
   Package,
-  ShoppingCart
+  ShoppingCart,
+  RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
@@ -209,11 +210,8 @@ const POSPage: React.FC = () => {
 
   const localProducts = useLiveQuery(
     async () => {
-      const allActive = await db.products
-        .where('status')
-        .equals('Active')
-        .filter(p => !p.deleted)
-        .toArray();
+      const all = await db.products.toArray();
+      const allActive = all.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active'));
 
       if (searchTerm.length >= 1) {
         const term = searchTerm.toLowerCase();
@@ -235,9 +233,12 @@ const POSPage: React.FC = () => {
       if (!navigator.onLine) return;
       setIsRemoteLoading(true);
       try {
+        console.log('🔍 Fetching products...', searchTerm ? `Search: ${searchTerm}` : 'All');
         const data = await apiFetch(searchTerm ? `/products?search=${encodeURIComponent(searchTerm)}` : '/products');
+        console.log('📦 Received products data:', data);
         if (isMounted && data.success) {
           const items = data.data || data.updates?.products || [];
+          console.log(`✅ Processing ${items.length} products`);
           if (items.length > 0) {
             await db.products.bulkPut(items);
           }
@@ -343,10 +344,10 @@ const POSPage: React.FC = () => {
         items: saleItems,
         subtotal: cartSubtotal,
         discount,
-        tax: taxAmount,
-        total: finalTotal,
-        paid: parseFloat(amountReceived) || finalTotal,
-        changeDue: changeDue,
+        tax: Number(taxAmount || 0),
+        total: Number(finalTotal || 0),
+        paid: Number(parseFloat(amountReceived) || finalTotal || 0),
+        changeDue: Number(changeDue || 0),
         paymentMode,
         itemsCount,
         profit: finalProfit,
@@ -455,9 +456,9 @@ const POSPage: React.FC = () => {
         items: saleItems,
         subtotal: cartSubtotal,
         discount,
-        tax: taxAmount,
-        total: finalTotal,
-        paid: paidAmt,
+        tax: Number(taxAmount || 0),
+        total: Number(finalTotal || 0),
+        paid: Number(paidAmt || 0),
         changeDue: 0,
         paymentMode: 'Credit',
         itemsCount: cart.reduce((s, i) => s + i.quantity, 0),
@@ -727,6 +728,20 @@ const POSPage: React.FC = () => {
               </button>
             )}
           </div>
+          <button 
+            title="Refresh Products"
+            aria-label="Refresh Products"
+            onClick={() => {
+              toast.promise(SyncService.pushSales(), {
+                loading: 'Updating list...',
+                success: 'Products refreshed',
+                error: 'Refresh failed'
+              });
+            }}
+            className="p-3 bg-muted/10 border border-border rounded-2xl text-muted-foreground hover:bg-muted/20 transition-all flex items-center justify-center btn-press"
+          >
+            <RefreshCw className={clsx("w-5 h-5", isRemoteLoading && "animate-spin")} />
+          </button>
           <button 
             title="Scan Barcode"
             aria-label="Scan Barcode"
