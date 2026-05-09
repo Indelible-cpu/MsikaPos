@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db } from '../db/posDB';
+import BrandName from '../components/BrandName';
 
 const LandingPage: React.FC = () => {
   const [branding, setBranding] = useState({
@@ -49,7 +50,7 @@ const LandingPage: React.FC = () => {
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-surface-bg border border-border flex items-center justify-center">
             <img src="/icon.png?v=2" alt="MsikaPos" className="w-full h-full object-contain" />
           </div>
-          <span className="font-black text-xl tracking-tighter uppercase">MsikaPos</span>
+          <span className="font-black text-xl tracking-tighter"><BrandName /></span>
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors uppercase">Features</a>
@@ -198,10 +199,10 @@ const LandingPage: React.FC = () => {
           <div className="w-8 h-8 rounded-lg overflow-hidden bg-surface-bg border border-border flex items-center justify-center">
             <img src="/icon.png?v=2" alt="MsikaPos" className="w-full h-full object-contain" />
           </div>
-          <span className="font-black text-sm tracking-widest uppercase">MsikaPos</span>
+          <span className="font-black text-sm tracking-widest"><BrandName /></span>
         </div>
         <p className="text-[10px] font-black tracking-[0.4em] text-muted-foreground uppercase opacity-40">
-          © {new Date().getFullYear()} MsikaPos Systems. All Rights Reserved.
+          © {new Date().getFullYear()} <BrandName /> Systems. All Rights Reserved.
         </p>
       </footer>
     </div>

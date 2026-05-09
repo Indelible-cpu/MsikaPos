@@ -5,6 +5,7 @@ import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
+import BrandName from './BrandName';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -97,7 +98,7 @@ const Sidebar: React.FC = () => {
           Sign Out
         </button>
         <div className="mt-4 px-4 flex items-center justify-between opacity-30">
-           <span className="text-[7px] font-black tracking-[0.2em]">Powered By MsikaPos</span>
+           <span className="text-[7px] font-black tracking-[0.2em]">Powered By <BrandName /></span>
            <div className={clsx(
              "w-1.5 h-1.5 rounded-full",
              navigator.onLine ? "bg-emerald-500 animate-pulse" : "bg-rose-500"

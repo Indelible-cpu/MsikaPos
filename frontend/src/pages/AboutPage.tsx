@@ -7,6 +7,7 @@ import {
   Wrench
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import BrandName from '../components/BrandName';
 
 const AboutPage: React.FC = () => {
   const sections = [
@@ -49,7 +50,7 @@ const AboutPage: React.FC = () => {
             <img src="/icon.png?v=2" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <div>
-            <h2 className="text-3xl font-black tracking-tight text-foreground">MsikaPos</h2>
+            <h2 className="text-3xl font-black tracking-tight text-foreground"><BrandName /></h2>
             <p className="text-muted-foreground/60 text-xs font-black tracking-widest uppercase">Version 2.4.0 • Cloud Powered</p>
           </div>
         </section>
@@ -133,7 +134,7 @@ const AboutPage: React.FC = () => {
             <p className="text-sm font-black tracking-tight text-primary">Indelible</p>
           </div>
           
-          <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.4em] pb-10 uppercase">© 2026 MsikaPos • Indelible-cpu</p>
+          <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.4em] pb-10 uppercase">© 2026 <BrandName /> • Indelible-cpu</p>
         </footer>
       </main>
     </div>

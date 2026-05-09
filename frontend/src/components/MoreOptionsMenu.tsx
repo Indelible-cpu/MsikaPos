@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import ThemeToggle from './ThemeToggle';
+import BrandName from './BrandName';
 
 interface MoreOptionsMenuProps {
   isOpen: boolean;
@@ -110,7 +111,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
             </div>
 
             <div className="mt-8 text-center">
-              <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em]">MsikaPos v2.4.0</p>
+              <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em]"><BrandName /> v2.4.0</p>
             </div>
           </motion.div>
         </>

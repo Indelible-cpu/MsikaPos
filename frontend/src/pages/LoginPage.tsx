@@ -8,6 +8,7 @@ import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
 import { db } from '../db/posDB';
 import { hashPassword } from '../utils/cryptoUtils';
+import BrandName from '../components/BrandName';
 
 interface UserData {
   id: string;
@@ -328,8 +329,8 @@ const LoginPage: React.FC = () => {
             />
           </motion.div>
           <div className="space-y-1">
-            <div className="text-[10px] font-black text-primary-500 tracking-[0.4em] opacity-60 ">
-              MsikaPos
+            <div className="text-base font-black tracking-[0.2em] opacity-80">
+              <BrandName />
             </div>
             {branding.name !== 'MsikaPos' && (
               <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1 opacity-40">
