@@ -156,6 +156,8 @@ const ExpensesPage: React.FC = () => {
                 />
                 {searchTerm && (
                   <button 
+                    title="Clear search"
+                    aria-label="Clear search"
                     onClick={() => setSearchTerm('')}
                     className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors"
                   >
