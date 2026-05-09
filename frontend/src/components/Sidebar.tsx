@@ -44,7 +44,7 @@ const Sidebar: React.FC = () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
     toast.success('Signed out successfully');
-    navigate('/staff/login');
+    navigate('/');
   };
 
   React.useEffect(() => {

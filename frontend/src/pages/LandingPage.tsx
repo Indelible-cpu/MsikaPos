@@ -47,9 +47,9 @@ const LandingPage: React.FC = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-border/50 px-6 py-4 flex items-center justify-between backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-surface-bg border border-border flex items-center justify-center">
-            <img src={branding.logo} alt="Logo" className="w-full h-full object-contain" />
+            <img src="/icon.png?v=2" alt="MsikaPos" className="w-full h-full object-contain" />
           </div>
-          <span className="font-black text-xl tracking-tighter uppercase">{branding.name}</span>
+          <span className="font-black text-xl tracking-tighter uppercase">MsikaPos</span>
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors uppercase">Features</a>
@@ -196,12 +196,12 @@ const LandingPage: React.FC = () => {
       <footer className="py-12 px-6 border-t border-border/50 text-center space-y-6">
         <div className="flex items-center justify-center gap-3">
           <div className="w-8 h-8 rounded-lg overflow-hidden bg-surface-bg border border-border flex items-center justify-center">
-            <img src={branding.logo} alt="Logo" className="w-full h-full object-contain" />
+            <img src="/icon.png?v=2" alt="MsikaPos" className="w-full h-full object-contain" />
           </div>
-          <span className="font-black text-sm tracking-widest uppercase">{branding.name}</span>
+          <span className="font-black text-sm tracking-widest uppercase">MsikaPos</span>
         </div>
         <p className="text-[10px] font-black tracking-[0.4em] text-muted-foreground uppercase opacity-40">
-          © {new Date().getFullYear()} {branding.name} Systems. All Rights Reserved.
+          © {new Date().getFullYear()} MsikaPos Systems. All Rights Reserved.
         </p>
       </footer>
     </div>

@@ -44,7 +44,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
     toast.success('Signed out');
-    window.location.href = '/staff/login';
+    window.location.href = '/';
   };
 
   return (

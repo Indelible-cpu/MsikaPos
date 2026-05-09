@@ -63,9 +63,15 @@ const LoginPage: React.FC = () => {
           }
         });
 
-        const userDataStr = localStorage.getItem('user');
-        if (userDataStr) {
+        const userDataStr = localStorage.getItem('user') || localStorage.getItem('biometricUser');
+        const token = localStorage.getItem('token') || localStorage.getItem('biometricToken');
+        
+        if (userDataStr && token) {
           const userData = JSON.parse(userDataStr);
+          // Restore session
+          localStorage.setItem('user', userDataStr);
+          localStorage.setItem('token', token);
+          
           await AuditService.log('BIOMETRIC_LOGIN', 'User signed in using biometrics');
           toast.success('Welcome back!', { id: 'biometric-auth' });
           SyncService.pushSales().catch(console.error);
@@ -78,7 +84,7 @@ const LoginPage: React.FC = () => {
             window.location.href = '/staff/dashboard';
           }
         } else {
-          throw new Error('Please login with password first.');
+          throw new Error('Please login with password first to enable biometrics.');
         }
       }
     } catch (err: unknown) {
@@ -133,6 +139,9 @@ const LoginPage: React.FC = () => {
         
         localStorage.setItem('biometricCredentialId', idBase64);
         localStorage.setItem('biometricRegistered', 'true');
+        localStorage.setItem('biometricUser', JSON.stringify(user));
+        localStorage.setItem('biometricToken', localStorage.getItem('token') || '');
+        
         setIsBiometricAvailable(true);
         setShowBiometricPrompt(false);
         toast.success('Biometric login enabled for this device!');
@@ -313,16 +322,21 @@ const LoginPage: React.FC = () => {
             className="w-32 h-32 mx-auto flex items-center justify-center overflow-hidden flex-shrink-0 mb-6 rounded-full bg-surface-bg border border-surface-border shadow-2xl p-1"
           >
             <img 
-              src={branding.logo} 
-              alt="Logo" 
+              src="/icon.png?v=2" 
+              alt="MsikaPos Icon" 
               className="w-full h-full object-contain" 
             />
           </motion.div>
           <div className="space-y-1">
             <div className="text-[10px] font-black text-primary-500 tracking-[0.4em] opacity-60 ">
-              {branding.name}
+              MsikaPos
             </div>
-            <div className="w-16 h-1 bg-primary-500/10 mx-auto rounded-full"></div>
+            {branding.name !== 'MsikaPos' && (
+              <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1 opacity-40">
+                {branding.name} Portal
+              </div>
+            )}
+            <div className="w-16 h-1 bg-primary-500/10 mx-auto rounded-full mt-2"></div>
           </div>
         </div>
 
