@@ -180,6 +180,7 @@ const InventoryPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<LocalProduct | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<{ id: number; title: string } | null>(null);
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -571,20 +572,51 @@ const InventoryPage: React.FC = () => {
 
   const handleAddCategory = async () => {
     if (!newCategoryTitle) return;
-    try {
-      const slug = newCategoryTitle.toLowerCase().replace(/ /g, '-');
-      const newCat = {
-        id: generateNumericId(),
-        title: newCategoryTitle,
-        slug: slug,
-      };
-      await db.categories.add(newCat);
-      await SyncService.pushCategory(newCat);
-      setNewCategoryTitle('');
-      toast.success('Category created');
-    } catch {
-      toast.error('Failed to create category');
+    const normalizedTitle = newCategoryTitle.trim();
+    
+    // Check if category already exists (case-insensitive)
+    const exists = categories?.find(c => c.title.toLowerCase() === normalizedTitle.toLowerCase());
+    
+    if (exists && (!editingCategory || editingCategory.id !== exists.id)) {
+      toast.error('Category already exists!');
+      return;
     }
+
+    try {
+      if (editingCategory) {
+        // Handle Edit
+        const updatedCat = {
+          ...editingCategory,
+          title: normalizedTitle,
+          slug: normalizedTitle.toLowerCase().replace(/ /g, '-')
+        };
+        await db.categories.update(editingCategory.id, updatedCat);
+        if (navigator.onLine) {
+          await api.post(`/categories/${editingCategory.id}`, updatedCat);
+        }
+        toast.success('Category updated');
+        setEditingCategory(null);
+      } else {
+        // Handle Create
+        const slug = normalizedTitle.toLowerCase().replace(/ /g, '-');
+        const newCat = {
+          id: generateNumericId(),
+          title: normalizedTitle,
+          slug: slug,
+        };
+        await db.categories.add(newCat);
+        await SyncService.pushCategory(newCat);
+        toast.success('Category created');
+      }
+      setNewCategoryTitle('');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to save category');
+    }
+  };
+
+  const handleEditCategory = (cat: { id: number; title: string }) => {
+    setEditingCategory(cat);
+    setNewCategoryTitle(cat.title);
   };
 
   const handleDeleteCategory = async (id: number) => {
@@ -904,10 +936,13 @@ const InventoryPage: React.FC = () => {
       <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} title="Manage Categories">
         <div className="w-full space-y-10 px-8 py-4">
           <div className="space-y-2">
-            <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="new-category">Create new category</label>
+            <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="new-category">{editingCategory ? 'Edit category' : 'Create new category'}</label>
             <div className="flex gap-2">
-              <input id="new-category" type="text" className="input-field flex-1 py-3 px-4 font-black" placeholder="Category name..." title="New category name" aria-label="New category name" value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
-              <button onClick={handleAddCategory} className="btn-primary !px-8 !py-3 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20" title="Add category" aria-label="Add category">Add</button>
+              <input id="new-category" type="text" className="input-field flex-1 py-3 px-4 font-black" placeholder="Category name..." title="Category name" aria-label="Category name" value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
+              <button onClick={handleAddCategory} className="btn-primary !px-8 !py-3 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20" title={editingCategory ? "Update category" : "Add category"} aria-label={editingCategory ? "Update category" : "Add category"}>{editingCategory ? 'Update' : 'Add'}</button>
+              {editingCategory && (
+                <button onClick={() => { setEditingCategory(null); setNewCategoryTitle(''); }} className="btn-secondary !px-4 !py-3 font-black text-[10px] tracking-widest uppercase" title="Cancel Edit">Cancel</button>
+              )}
             </div>
           </div>
           <div className="space-y-2">
@@ -916,16 +951,25 @@ const InventoryPage: React.FC = () => {
                 {categories?.map(cat => (
                   <div key={cat.id} className="p-4 flex justify-between items-center group hover:bg-primary-500/5 transition-colors">
                     <span className="font-bold text-sm uppercase">{cat.title}</span>
-                    {isSuperAdmin && (
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                       <button 
-                        onClick={() => handleDeleteCategory(cat.id)} 
-                        className="p-2 text-surface-text/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                        title={`Delete ${cat.title} category`}
-                        aria-label={`Delete ${cat.title} category`}
+                        onClick={() => handleEditCategory(cat)} 
+                        className="p-2 text-surface-text/20 hover:text-primary-500"
+                        title={`Edit ${cat.title} category`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Edit2 className="w-4 h-4" />
                       </button>
-                    )}
+                      {isSuperAdmin && (
+                        <button 
+                          onClick={() => handleDeleteCategory(cat.id)} 
+                          className="p-2 text-surface-text/20 hover:text-red-500"
+                          title={`Delete ${cat.title} category`}
+                          aria-label={`Delete ${cat.title} category`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
              </div>
