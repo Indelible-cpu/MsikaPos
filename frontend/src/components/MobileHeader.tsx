@@ -13,7 +13,7 @@ export default function MobileHeader() {
 
   useEffect(() => {
     const updateHeader = async () => {
-      const activeBranchId = localStorage.getItem('activeBranchId');
+      const activeBranchId = localStorage.getItem('activeBranchId') || sessionStorage.getItem('activeBranchId');
       
       // Try to get branch name if activeBranchId exists
       if (activeBranchId) {
@@ -38,11 +38,15 @@ export default function MobileHeader() {
       if (company?.value) {
         setShopName((company.value as { name: string }).name);
       } else {
-        const storedName = localStorage.getItem('companyName');
+        const storedName = localStorage.getItem('companyName') || sessionStorage.getItem('companyName');
         if (storedName) setShopName(storedName);
       }
 
-      const storedLogo = localStorage.getItem('companyLogo');
+      let storedLogo = localStorage.getItem('companyLogo') || sessionStorage.getItem('companyLogo');
+      if (!storedLogo) {
+        const logoSetting = await db.settings.get('company_logo');
+        if (logoSetting?.value) storedLogo = logoSetting.value as string;
+      }
       if (storedLogo) setShopLogo(storedLogo);
     };
 

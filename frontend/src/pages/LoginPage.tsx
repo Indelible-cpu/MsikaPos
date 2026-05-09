@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
 import { AuditService } from '../services/AuditService';
+import { db } from '../db/posDB';
+import { hashPassword } from '../utils/cryptoUtils';
 
 interface UserData {
   id: string;
@@ -21,9 +23,14 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
   const [loginMode, setLoginMode] = useState<'biometric' | 'password'>('password');
+  const [branding, setBranding] = useState({ 
+    logo: localStorage.getItem('companyLogo') || sessionStorage.getItem('companyLogo') || '/icon.png?v=2',
+    name: localStorage.getItem('companyName') || sessionStorage.getItem('companyName') || 'MsikaPos'
+  });
 
   const handleBiometricLogin = useCallback(async () => {
     try {
@@ -184,6 +191,17 @@ const LoginPage: React.FC = () => {
       localStorage.removeItem('user');
       // Keep biometric data as it's device-linked, but clear auth
     }
+
+    const loadBranding = async () => {
+      const nameSetting = await db.settings.get('company_config');
+      const logoSetting = await db.settings.get('company_logo');
+      
+      setBranding(prev => ({
+        name: (nameSetting?.value as { name: string })?.name || prev.name,
+        logo: (logoSetting?.value as string) || prev.logo
+      }));
+    };
+    loadBranding();
   }, [handleBiometricLogin]);
 
   // Biometric auto-trigger removed to ensure user manual interaction only
@@ -200,20 +218,56 @@ const LoginPage: React.FC = () => {
       let userData: UserData | null = null;
       let userToken: string | null = null;
 
-      try {
-        const response = await api.post('/auth/login', { username, password });
-        userData = response.data.user;
-        userToken = response.data.token;
-      } catch (err: unknown) {
-        const loginError = err as { response?: { data?: { message?: string } } };
-        const msg = loginError.response?.data?.message || 'Invalid credentials';
-        throw new Error(msg);
+      // Try Online First
+      if (navigator.onLine) {
+        try {
+          const response = await api.post('/auth/login', { username, password });
+          userData = response.data.user;
+          userToken = response.data.token;
+
+          // Cache for offline use
+          const passwordHash = await hashPassword(password);
+          await db.offlineAuth.put({
+            username,
+            passwordHash,
+            userData,
+            token: userToken!
+          });
+        } catch (err: unknown) {
+          const loginError = err as { response?: { data?: { message?: string } } };
+          if (loginError.response) {
+            const msg = loginError.response?.data?.message || 'Invalid credentials';
+            throw new Error(msg);
+          }
+          // If no response, maybe network is flaky but navigator.onLine is true
+          throw err;
+        }
+      }
+
+      // Offline Fallback or Network Error
+      if (!userData) {
+        const offlineUser = await db.offlineAuth.get(username);
+        if (offlineUser) {
+          const passwordHash = await hashPassword(password);
+          if (passwordHash === offlineUser.passwordHash) {
+            userData = offlineUser.userData;
+            userToken = offlineUser.token;
+            toast.success('Logged in offline mode');
+          } else {
+            throw new Error('Invalid credentials (Offline)');
+          }
+        } else {
+          if (!navigator.onLine) throw new Error('No offline credentials found. Please login online first.');
+          else throw new Error('Invalid credentials');
+        }
       }
       
       if (userToken && userData) {
-        localStorage.setItem('token', userToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-        await AuditService.log('LOGIN', `User ${username} signed in`);
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('token', userToken);
+        storage.setItem('user', JSON.stringify(userData));
+        
+        await AuditService.log('LOGIN', `User ${username} signed in ${navigator.onLine ? '' : '(Offline)'}`);
         
         const isMobile = window.innerWidth < 768;
         const canRegister = isMobile && 
@@ -258,10 +312,16 @@ const LoginPage: React.FC = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="w-32 h-32 mx-auto flex items-center justify-center overflow-hidden flex-shrink-0 mb-6 rounded-full bg-surface-bg border border-surface-border shadow-2xl p-1"
           >
-            <img src="/icon.png?v=2" alt="MsikaPos Icon" className="w-full h-full object-contain" />
+            <img 
+              src={branding.logo} 
+              alt="Logo" 
+              className="w-full h-full object-contain" 
+            />
           </motion.div>
           <div className="space-y-1">
-            <div className="text-[10px] font-black text-primary-500 tracking-[0.4em] opacity-60 ">MsikaPos</div>
+            <div className="text-[10px] font-black text-primary-500 tracking-[0.4em] opacity-60 ">
+              {branding.name}
+            </div>
             <div className="w-16 h-1 bg-primary-500/10 mx-auto rounded-full"></div>
           </div>
         </div>
@@ -315,7 +375,24 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
 
+              <div className="flex items-center justify-between px-1">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative w-4 h-4 border-2 border-surface-border rounded flex items-center justify-center group-hover:border-primary-500 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="peer hidden" 
+                      checked={rememberMe} 
+                      onChange={(e) => setRememberMe(e.target.checked)} 
+                    />
+                    <div className="w-2 h-2 bg-primary-500 rounded-sm scale-0 peer-checked:scale-100 transition-transform" />
+                  </div>
+                  <span className="text-[10px] font-black tracking-widest text-surface-text/30 group-hover:text-surface-text/60 transition-colors">Remember me</span>
+                </label>
+                <Link to="/staff/forgot-password" title="Forgot Password" className="text-[10px] font-black tracking-widest text-primary-500 hover:text-primary-400">Forgot password?</Link>
+              </div>
+
               <button 
+                title="Sign in"
                 type="submit"
                 disabled={loading}
                 className="w-full h-16 bg-primary-500 text-white rounded-3xl font-black  tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-primary-500/20 active:scale-95 transition-all"

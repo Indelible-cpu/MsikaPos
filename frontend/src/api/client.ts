@@ -14,8 +14,8 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  const activeBranchId = localStorage.getItem('activeBranchId');
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const activeBranchId = localStorage.getItem('activeBranchId') || sessionStorage.getItem('activeBranchId');
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

@@ -9,7 +9,7 @@ import { useFeatureAccess } from '../hooks/useFeatureAccess';
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const [pendingCount, setPendingCount] = React.useState(0);
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
   const { canAccess } = useFeatureAccess();
 
@@ -41,6 +41,8 @@ const Sidebar: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     toast.success('Signed out successfully');
     navigate('/staff/login');
   };

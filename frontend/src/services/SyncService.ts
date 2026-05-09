@@ -63,7 +63,7 @@ export const SyncService = {
   },
 
   async pushSales() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token) {
       console.warn('📡 Sync skipped: No authentication token found.');
       this.isSyncing = false;

@@ -71,7 +71,7 @@ const OnboardingPage: React.FC = () => {
     console.log('🔍 [Onboarding] Checking for magicToken:', magicToken ? 'FOUND' : 'NOT FOUND');
 
     if (magicToken) {
-      if (localStorage.getItem('token')) {
+      if (localStorage.getItem('token') || sessionStorage.getItem('token')) {
         console.log('✅ [Onboarding] User already has a session, skipping token validation.');
         return;
       }
@@ -96,7 +96,7 @@ const OnboardingPage: React.FC = () => {
         }
       };
       validateToken();
-    } else if (!localStorage.getItem('token')) {
+    } else if (!(localStorage.getItem('token') || sessionStorage.getItem('token'))) {
       console.log('⚠️ [Onboarding] No token and no session. Redirecting to login.');
       navigate('/staff/login');
     }

@@ -2,13 +2,12 @@ import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 
 export const getFeatureConfigs = async (req: Request, res: Response) => {
-  const { branchId, role } = req.query;
+  const { role } = req.query;
 
   try {
     const configs = await prisma.featureConfig.findMany({
       where: {
-        roleName: role as any,
-        branchId: branchId ? parseInt(branchId as any) : null
+        roleName: role as any
       }
     });
 
@@ -19,14 +18,13 @@ export const getFeatureConfigs = async (req: Request, res: Response) => {
 };
 
 export const updateFeatureConfig = async (req: Request, res: Response) => {
-  const { featureKey, roleName, accessLevel, branchId } = req.body;
+  const { featureKey, roleName, accessLevel } = req.body;
 
   try {
     const existing = await prisma.featureConfig.findFirst({
       where: {
         featureKey,
-        roleName,
-        branchId: branchId ? parseInt(branchId as any) : null
+        roleName
       }
     });
 
@@ -41,8 +39,7 @@ export const updateFeatureConfig = async (req: Request, res: Response) => {
         data: {
           featureKey,
           roleName,
-          accessLevel,
-          branchId: branchId ? parseInt(branchId as any) : null
+          accessLevel
         }
       });
     }

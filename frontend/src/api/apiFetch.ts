@@ -40,7 +40,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
     ? endpoint 
     : `${baseUrl.replace(/\/+$/, '')}/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
   const activeBranchId = localStorage.getItem('activeBranchId');
 
   const headers = new Headers(fetchOptions.headers || {});
@@ -57,7 +57,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  let lastError: any;
+  let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -71,7 +71,7 @@ export async function apiFetch(endpoint: string, options: FetchOptions = {}) {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorData: any = await response.json().catch(() => ({}));
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
         
         // Handle session invalidation
         if (response.status === 401 || response.status === 403) {

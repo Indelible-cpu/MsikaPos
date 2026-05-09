@@ -23,7 +23,7 @@ interface AuthState {
 
 const getUserFromStorage = () => {
   try {
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   } catch {
     return null;
@@ -32,7 +32,7 @@ const getUserFromStorage = () => {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: getUserFromStorage(),
-  isAuthenticated: !!localStorage.getItem('token'),
+  isAuthenticated: !!(localStorage.getItem('token') || sessionStorage.getItem('token')),
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   logout: () => set({ user: null, isAuthenticated: false }),
 }));

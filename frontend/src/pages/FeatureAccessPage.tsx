@@ -38,26 +38,29 @@ const FeatureAccessPage: React.FC = () => {
 
   const fetchConfigs = useCallback(async () => {
     try {
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (selectedBranch !== 'all') params.branchId = selectedBranch;
       
       const res = await api.get('/feature-configs', { params });
       setConfigs(Array.isArray(res.data.data) ? res.data.data : []);
     } catch (err: unknown) {
-      const error = err as any;
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
       const msg = error.response?.data?.message || error.message;
       toast.error('Failed to load permissions: ' + msg);
     }
   }, [selectedBranch]);
 
   useEffect(() => {
-    fetchConfigs();
+    const loadData = async () => {
+      await fetchConfigs();
+    };
+    loadData();
   }, [fetchConfigs]);
 
   const handleUpdate = async (featureKey: string, roleName: string, accessLevel: string) => {
     setSaving(true);
     try {
-      const payload: any = {
+      const payload: Record<string, string> = {
         featureKey,
         roleName,
         accessLevel
@@ -68,7 +71,7 @@ const FeatureAccessPage: React.FC = () => {
       toast.success('Permission updated');
       fetchConfigs();
     } catch (err: unknown) {
-      const error = err as any;
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
       const msg = error.response?.data?.message || error.message;
       toast.error('Failed to update permission: ' + msg);
     } finally {

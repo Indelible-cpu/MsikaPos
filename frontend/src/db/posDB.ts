@@ -119,6 +119,13 @@ export interface LocalAuditLog {
   createdAt: string;
 }
 
+export interface LocalOfflineAuth {
+  username: string;
+  passwordHash: string;
+  userData: any;
+  token: string;
+}
+
 export class POSDatabase extends Dexie {
   products!: Table<LocalProduct>;
   categories!: Table<{ id: number; title: string; slug: string }>;
@@ -129,10 +136,11 @@ export class POSDatabase extends Dexie {
   expenses!: Table<LocalExpense>;
   users!: Table<LocalUser>;
   auditLogs!: Table<LocalAuditLog>;
+  offlineAuth!: Table<LocalOfflineAuth>;
 
   constructor() {
     super('JEF_POS_DB');
-    this.version(13).stores({
+    this.version(14).stores({
       products: 'id, categoryId, sku, name, status, updatedAt',
       categories: 'id, slug',
       salesQueue: 'id, customerId, status, synced, createdAt',
@@ -141,7 +149,8 @@ export class POSDatabase extends Dexie {
       debtPayments: 'id, customerId, createdAt, synced',
       expenses: 'id, category, date, synced',
       users: 'id, username, role',
-      auditLogs: 'id, userId, action, createdAt'
+      auditLogs: 'id, userId, action, createdAt',
+      offlineAuth: 'username'
     });
   }
 }

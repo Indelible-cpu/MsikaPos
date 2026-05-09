@@ -339,7 +339,7 @@ export const PublicStorefront: React.FC = () => {
 
 
   const handleInquiry = async (product: StoreProduct) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
     

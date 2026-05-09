@@ -20,7 +20,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const startY = useRef(0);
   const hideNav = location.pathname.includes('/login');
 
-  const userStr = localStorage.getItem('user');
+  const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 

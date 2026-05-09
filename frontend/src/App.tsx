@@ -18,6 +18,7 @@ import ReportsPage from './pages/ReportsPage';
 import BranchesPage from './pages/BranchesPage';
 import AboutPage from './pages/AboutPage';
 import PublicStorefront from './pages/PublicStorefront';
+import LandingPage from './pages/LandingPage';
 import SupportPage from './pages/SupportPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import FeatureAccessPage from './pages/FeatureAccessPage';
@@ -26,6 +27,7 @@ import MainLayout from './components/MainLayout';
 import { db } from './db/posDB';
 import { initDB } from './db/seedData';
 import { AuditService } from './services/AuditService';
+import { getBase64Image } from './utils/imageUtils';
 import api from './api/client';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -85,9 +87,9 @@ const App: React.FC = () => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isStandalone || localStorage.getItem('pwa-installed') === 'true') return;
 
-    const handleBeforeInstallPrompt = (e: any) => {
+    const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setDeferredPrompt(e as unknown as BeforeInstallPromptEvent);
     };
 
     const handleAppInstalled = () => {
@@ -198,7 +200,7 @@ const App: React.FC = () => {
             // Use requestIdleCallback if available to avoid blocking interaction
             const update = () => registration.update().catch(() => {});
             if ('requestIdleCallback' in window) {
-              (window as any).requestIdleCallback(update);
+              (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(update);
             } else {
               setTimeout(update, 1000);
             }
@@ -229,7 +231,10 @@ const App: React.FC = () => {
               localStorage.setItem('companyName', settings.companyName);
             }
             if (settings.logo) {
-              localStorage.setItem('companyLogo', settings.logo);
+              const base64Logo = await getBase64Image(settings.logo);
+              localStorage.setItem('companyLogo', base64Logo);
+              sessionStorage.setItem('companyLogo', base64Logo);
+              await db.settings.put({ key: 'company_logo', value: base64Logo });
             }
             window.dispatchEvent(new Event('storage'));
           }
@@ -245,7 +250,7 @@ const App: React.FC = () => {
 
     setTimeout(() => {
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(() => checkSystemLock());
+        (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(() => checkSystemLock());
       } else {
         checkSystemLock();
       }
@@ -253,21 +258,32 @@ const App: React.FC = () => {
 
     const lockInterval = setInterval(() => {
       if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(() => checkSystemLock());
+        (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(() => checkSystemLock());
       } else {
         checkSystemLock();
       }
     }, 60000); // Check lock every min
 
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+    };
+    window.addEventListener('focusin', handleFocusIn);
+
     return () => {
       window.removeEventListener('mousemove', handleActivity);
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('touchstart', handleActivity);
+      window.removeEventListener('focusin', handleFocusIn);
       clearInterval(lockInterval);
     };
   }, [handleSync, checkSystemLock]);
 
-  const userStr = localStorage.getItem('user');
+  const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
@@ -305,7 +321,8 @@ const App: React.FC = () => {
       <div className="min-h-screen selection:bg-primary-500/30">
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<PublicStorefront />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/store" element={<PublicStorefront />} />
           <Route path="/about" element={<AboutPage />} />
 
           {/* Staff Auth */}
@@ -313,17 +330,17 @@ const App: React.FC = () => {
           <Route path="/staff" element={<Navigate to="/staff/login" replace />} />
           <Route path="/staff/login" element={<LoginPage />} />
           <Route path="/staff/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/staff/onboarding" element={localStorage.getItem('token') ? <OnboardingPage /> : <Navigate to="/staff/login" replace />} />
+          <Route path="/staff/onboarding" element={(localStorage.getItem('token') || sessionStorage.getItem('token')) ? <OnboardingPage /> : <Navigate to="/staff/login" replace />} />
           
           {/* Private Staff Interface */}
           <Route 
             path="/staff/*" 
             element={
-              localStorage.getItem('token') ? (
+              (localStorage.getItem('token') || sessionStorage.getItem('token')) ? (
                 (() => {
                     let u;
                     try {
-                      u = JSON.parse(localStorage.getItem('user') || '{}');
+                      u = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
                     } catch {
                       return <Navigate to="/staff/login" replace />;
                     }
