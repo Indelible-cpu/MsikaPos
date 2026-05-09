@@ -271,11 +271,8 @@ const SettingsPage: React.FC = () => {
                       <Store className="w-8 h-8 text-foreground/10" />
                     )}
                   </div>
-                  <div>
-                    <div className="font-black text-base tracking-tight uppercase">Company branding</div>
-                  </div>
                 </div>
-                <label className="btn-primary btn-press hover-lift !px-6 !py-3 text-[10px] font-black tracking-widest cursor-pointer w-full md:w-auto text-center shadow-lg shadow-primary/20 uppercase" title="Upload company logo">
+                <label className="btn-primary btn-press hover-lift !px-6 !py-3 text-[10px] font-black tracking-widest cursor-pointer w-full md:w-auto text-center shadow-lg shadow-primary/20" title="Upload company logo">
                   Upload logo
                   <input
                     type="file"

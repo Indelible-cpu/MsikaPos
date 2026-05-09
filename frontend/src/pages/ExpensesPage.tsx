@@ -29,8 +29,7 @@ const ExpensesPage: React.FC = () => {
     amount: 0,
     description: '',
     date: new Date().toISOString().split('T')[0],
-    paymentMethod: 'Cash',
-    frequency: 'Daily' as 'Daily' | 'Weekly' | 'Monthly' | 'Annually'
+    paymentMethod: 'Cash'
   });
 
   const [expenseReceipt, setExpenseReceipt] = useState<ExpenseReceiptProps | null>(null);
@@ -45,6 +44,20 @@ const ExpensesPage: React.FC = () => {
 
   const totalSpent = expenses?.reduce((sum, e) => sum + Number(e.amount || 0), 0) || 0;
 
+  const getAutoFrequency = (dateStr: string): 'Daily' | 'Weekly' | 'Monthly' | 'Annually' => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    // Normalize to midnight for fair day calculation
+    const dDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const nDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diff = Math.floor((nDate.getTime() - dDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diff <= 1) return 'Daily';
+    if (diff <= 7) return 'Weekly';
+    if (diff <= 30) return 'Monthly';
+    return 'Annually';
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -56,6 +69,7 @@ const ExpensesPage: React.FC = () => {
         const expenseData = {
           ...formData,
           id: expenseId,
+          frequency: getAutoFrequency(formData.date),
           createdAt: new Date().toISOString(),
           synced: 0
         };
@@ -98,8 +112,7 @@ const ExpensesPage: React.FC = () => {
       amount: 0,
       description: '',
       date: new Date().toISOString().split('T')[0],
-      paymentMethod: 'Cash',
-      frequency: 'Daily' as 'Daily' | 'Weekly' | 'Monthly' | 'Annually'
+      paymentMethod: 'Cash'
     });
   };
 
@@ -132,15 +145,23 @@ const ExpensesPage: React.FC = () => {
                    <div className="text-2xl font-black text-foreground">MK {totalSpent.toLocaleString()}</div>
                 </div>
              </div>
-             <div className="relative glass-card m-2 rounded-2xl flex items-center">
+             <div className="relative glass-card m-2 rounded-2xl flex items-center flex-1">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input 
                    type="text" 
                    placeholder="Search description or category..."
-                   className="input-field w-full pl-14 text-sm h-full font-bold shadow-inner bg-transparent border-none"
+                   className="input-field w-full pl-14 pr-12 text-sm h-full font-bold shadow-inner bg-transparent border-none"
                    value={searchTerm}
                    onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                {searchTerm && (
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
              </div>
           </div>
 
@@ -158,7 +179,7 @@ const ExpensesPage: React.FC = () => {
                     <div>
                        <div className="font-black text-sm tracking-tight uppercase">{exp.description || 'No description'}</div>
                        <div className="text-[9px] text-muted-foreground font-black tracking-widest uppercase">
-                          {exp.category} • {exp.frequency || 'Daily'} • {exp.date}
+                          {exp.category} • {getAutoFrequency(exp.date)} • {exp.date}
                         </div>
                     </div>
                  </div>
@@ -199,15 +220,6 @@ const ExpensesPage: React.FC = () => {
               <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Category</label>
               <select title="Select Category" aria-label="Select Category" className="input-field w-full appearance-none bg-surface-bg" value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})}>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Frequency</label>
-              <select title="Select Frequency" className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.frequency} onChange={(e) => setFormData({...formData, frequency: e.target.value as 'Daily' | 'Weekly' | 'Monthly' | 'Annually'})}>
-                <option value="Daily">Daily</option>
-                <option value="Weekly">Weekly</option>
-                <option value="Monthly">Monthly</option>
-                <option value="Annually">Annually</option>
               </select>
             </div>
             <div className="space-y-1">
