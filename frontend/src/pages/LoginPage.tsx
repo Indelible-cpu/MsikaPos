@@ -171,6 +171,15 @@ const LoginPage: React.FC = () => {
       }
     };
     checkBiometrics();
+    
+    // Session Awareness: No more than 1 session must exist. 
+    // If exist, destroy session first before starting a new one.
+    const existingToken = localStorage.getItem('token');
+    if (existingToken) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Keep biometric data as it's device-linked, but clear auth
+    }
   }, []);
 
   // Biometric auto-trigger removed to ensure user manual interaction only

@@ -4,6 +4,7 @@ import { db } from '../db/posDB';
 import type { LocalProduct, LocalSale, LocalSaleItem, LocalCustomer } from '../db/posDB';
 import { SyncService } from '../services/SyncService';
 import { apiFetch } from '../api/apiFetch';
+import { isValidMalawianPhone } from '../utils/phoneUtils';
 
 import { 
   Search, 
@@ -86,9 +87,18 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
 const POSPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentMode, setPaymentMode] = useState<'Cash' | 'Card' | 'Momo' | 'Credit'>('Cash');
-  const [cart, setCart] = useState<{ product: LocalProduct; quantity: number }[]>([]);
+  const [cart, setCart] = useState<{ product: LocalProduct; quantity: number }[]>(() => {
+    const saved = localStorage.getItem('posCart');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return []; }
+    }
+    return [];
+  });
   const [showScanner, setShowScanner] = useState(false);
-  const [discount, setDiscount] = useState<number>(0);
+  const [discount, setDiscount] = useState<number>(() => {
+    const saved = localStorage.getItem('posDiscount');
+    return parseFloat(saved || '0') || 0;
+  });
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [paymentConfig, setPaymentConfig] = useState<{ momo: string[]; bank: string[] }>({ momo: [], bank: [] });
   const [selectedSubMethod, setSelectedSubMethod] = useState<string>('');
@@ -117,6 +127,12 @@ const POSPage: React.FC = () => {
   const [flashOn, setFlashOn] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
+
+  // Persistence logic
+  useEffect(() => {
+    localStorage.setItem('posCart', JSON.stringify(cart));
+    localStorage.setItem('posDiscount', discount.toString());
+  }, [cart, discount]);
 
   const startCamera = async (mode = facingMode) => {
     try {
@@ -384,6 +400,9 @@ const POSPage: React.FC = () => {
       });
 
       setCart([]);
+      setDiscount(0);
+      localStorage.removeItem('posCart');
+      localStorage.removeItem('posDiscount');
       setCurrentInvoiceNo(generateInvoiceNo());
       toast.success('Sale Completed!');
       if (printReceipt) setTimeout(() => window.print(), 800);
@@ -397,6 +416,8 @@ const POSPage: React.FC = () => {
 
   const handleSaveCreditSale = async () => {
     if (!customerName || !whatsappNumber) return toast.error("Please provide customer details");
+    if (!isValidMalawianPhone(whatsappNumber)) return toast.error("Invalid phone format");
+    if (witnessPhone && !isValidMalawianPhone(witnessPhone)) return toast.error("Invalid witness phone");
     if (!dueDate) return toast.error("Please select a due date");
     
     setIsCheckingOut(true);
@@ -486,6 +507,9 @@ const POSPage: React.FC = () => {
       toast.success('Credit Sale Saved!');
       
       setCart([]);
+      setDiscount(0);
+      localStorage.removeItem('posCart');
+      localStorage.removeItem('posDiscount');
       setCurrentInvoiceNo(generateInvoiceNo());
       setCreditMode(false);
       setCustomerName('');
@@ -955,11 +979,16 @@ const POSPage: React.FC = () => {
 
             {/* Checkout Button */}
             <button 
-              disabled={cart.length === 0 || isCheckingOut} 
+              disabled={
+                cart.length === 0 || 
+                isCheckingOut || 
+                (paymentMode === 'Cash' && (!amountReceived || parseFloat(amountReceived) < finalTotal)) ||
+                ((paymentMode === 'Card' || paymentMode === 'Momo') && !selectedSubMethod)
+              } 
               onClick={handleCheckout} 
               className={clsx(
                 "w-full py-5 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] transition-all shadow-xl uppercase btn-press", 
-                cart.length === 0 ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
+                (cart.length === 0 || (paymentMode === 'Cash' && (!amountReceived || parseFloat(amountReceived) < finalTotal))) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
               )}
             >
               <CheckCircle2 className="w-5 h-5" /> Checkout

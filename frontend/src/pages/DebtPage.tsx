@@ -2,8 +2,14 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../api/client';
-import { db, type LocalCustomer, type LocalProduct, type LocalDebtPayment } from '../db/posDB';
+import { db, type LocalCustomer, type LocalProduct, type LocalDebtPayment, type LocalSale } from '../db/posDB';
 import { useLocation } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+import toast from 'react-hot-toast';
+import { clsx } from 'clsx';
+import { Receipt } from '../components/Receipt';
+import { SyncService } from '../services/SyncService';
+import { isValidMalawianPhone, restrictPhone } from '../utils/phoneUtils';
 import { 
   Search, 
   Users, 
@@ -15,18 +21,11 @@ import {
   RotateCcw,
   ArrowLeft,
   Upload,
-  MessageSquare
+  MessageSquare,
+  MessageCircle as WhatsAppIcon, 
+  Shield 
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
-
-import toast from 'react-hot-toast';
-import { clsx } from 'clsx';
-import { restrictPhone } from '../utils/phoneUtils';
-import { MessageCircle as WhatsAppIcon, Shield } from 'lucide-react';
-
 import Modal from '../components/Modal';
-import { Receipt } from '../components/Receipt';
-import { SyncService } from '../services/SyncService';
 
 interface Credit {
   id: number;
@@ -56,7 +55,7 @@ interface ReceiptData {
   change: number;
 }
 
-const MALAWI_PHONE_REGEX = /^\d{10,13}$/;
+
 
 
 
@@ -65,7 +64,7 @@ const DebtPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<LocalCustomer | null>(null);
-  const [paymentModal, setPaymentModal] = useState<{ id: number, total: number } | null>(null);
+  const [paymentModal, setPaymentModal] = useState<{ id: string, total: number } | null>(null);
   const [payAmount, setPayAmount] = useState('');
   const [clearedReceipt, setClearedReceipt] = useState<ReceiptData | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -103,11 +102,11 @@ const DebtPage: React.FC = () => {
   // Handle POS Redirect
   useEffect(() => {
     if (location.state?.creditSale) {
-      resetForm();
-      const timer = setTimeout(() => setIsAddModalOpen(true), 0);
-      // Clean up state so it doesn't re-trigger on refresh
+      requestAnimationFrame(() => {
+        resetForm();
+        setIsAddModalOpen(true);
+      });
       window.history.replaceState({}, document.title);
-      return () => clearTimeout(timer);
     }
   }, [location.state]);
 
@@ -133,7 +132,7 @@ const DebtPage: React.FC = () => {
   });
 
   const payMutation = useMutation({
-    mutationFn: async (data: { id: number, amount: number }) => {
+    mutationFn: async (data: { id: string, amount: number }) => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const cashierName = user.fullname || 'Unknown Cashier';
       const paymentId = crypto.randomUUID();
@@ -161,20 +160,26 @@ const DebtPage: React.FC = () => {
         synced: 0
       });
 
+      // If id is numeric string, it's a remote credit, so notify server
+      if (!isNaN(Number(data.id))) {
+        await api.post(`/credits/${data.id}/pay`, { amount: data.amount });
+      }
+
       void SyncService.pushSales();
       
       return { 
         success: true,
         receipt: {
-          items: [{ product: { name: 'DEBT REPAYMENT', sellPrice: data.amount } as unknown as LocalProduct, quantity: 1 }],
+          items: [{ product: { name: `PAYMENT TOWARDS ACCOUNT`, sellPrice: data.amount } as unknown as LocalProduct, quantity: 1 }],
           total: data.amount,
           subtotal: data.amount,
           tax: 0,
           discount: 0,
-          invoiceNo: `REPAY-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+          invoiceNo: (filteredCredits.find(c => String(c.id) === String(data.id))?.invoice_no) || `PAY-${Date.now().toString(36).toUpperCase()}`,
           date: new Date().toISOString(),
           mode: 'Cash',
           customerName: selectedCustomer.name,
+          customerId: selectedCustomer.id,
           paid: data.amount,
           change: 0,
           signature: signature || undefined
@@ -196,19 +201,15 @@ const DebtPage: React.FC = () => {
   });
 
   const localCredits = useLiveQuery(
-    () => selectedCustomer ? db.salesQueue.where('customerId').equals(selectedCustomer.id).toArray() : Promise.resolve([] as any[]),
+    () => selectedCustomer ? db.salesQueue.where('customerId').equals(selectedCustomer.id).toArray() : Promise.resolve([] as LocalSale[]),
     [selectedCustomer]
-  );
+  ) || [];
 
   const filteredCredits = useMemo(() => {
     if (!selectedCustomer) return [];
-    const fromApi = allCredits?.filter(c => 
-      c.customer_phone === selectedCustomer.phone || 
-      c.customer_name.toLowerCase() === selectedCustomer.name.toLowerCase()
-    ) || [];
-
-    const fromLocal = (localCredits || []).map(s => ({
-      id: s.id,
+    
+    const creditsFromLocal = (localCredits || []).map(s => ({
+      id: String(s.id),
       invoice_no: s.invoiceNo,
       original_amount: s.total,
       paid_amount: s.paid,
@@ -217,8 +218,15 @@ const DebtPage: React.FC = () => {
       status: s.status === 'COMPLETED' ? 'Paid' : 'Pending'
     }));
 
-    // Merge by invoice number to avoid duplicates
-    const combined = [...fromLocal];
+    const fromApi = (allCredits || []).filter(c => 
+      c.customer_phone === selectedCustomer.phone || 
+      c.customer_name.toLowerCase() === selectedCustomer.name.toLowerCase()
+    ).map(c => ({
+      ...c,
+      id: String(c.id)
+    }));
+
+    const combined = [...creditsFromLocal];
     fromApi.forEach(apiCredit => {
       if (!combined.find(l => l.invoice_no === apiCredit.invoice_no)) {
         combined.push(apiCredit);
@@ -294,15 +302,13 @@ const DebtPage: React.FC = () => {
     }
   };
 
-
-
   const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!MALAWI_PHONE_REGEX.test(custForm.phone)) return toast.error('Invalid Malawian phone format (10 or 13 digits)');
+    if (!isValidMalawianPhone(custForm.phone)) return toast.error('Phone number must be 10 digits (starting with 0) or 13 digits (starting with +265)');
+    if (custForm.witnessPhone && !isValidMalawianPhone(custForm.witnessPhone)) return toast.error('Witness phone number invalid');
     if (!custForm.name || !custForm.village || !custForm.idNumber) return toast.error('Please fill all mandatory fields');
     
     try {
-      // Duplicate check
       const existing = await db.customers.where('phone').equals(custForm.phone).first();
       if (existing) return toast.error(`Customer with phone ${custForm.phone} already exists (${existing.name})`);
 
@@ -332,7 +338,7 @@ const DebtPage: React.FC = () => {
           id: crypto.randomUUID(),
           customerId,
           paymentMode: 'Credit',
-          itemsCount: creditSale.items.reduce((s: number, i: any) => s + i.quantity, 0),
+          itemsCount: creditSale.items.reduce((s: number, i: { quantity: number }) => s + i.quantity, 0),
           createdAt: creditSale.date || new Date().toISOString(),
           synced: 0,
           status: 'PENDING'
@@ -381,7 +387,8 @@ const DebtPage: React.FC = () => {
   const handleUpdateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomer) return;
-    if (!MALAWI_PHONE_REGEX.test(custForm.phone)) return toast.error('Invalid phone format');
+    if (!isValidMalawianPhone(custForm.phone)) return toast.error('Phone number must be 10 digits (starting with 0) or 13 digits (starting with +265)');
+    if (custForm.witnessPhone && !isValidMalawianPhone(custForm.witnessPhone)) return toast.error('Witness phone number invalid');
     
     try {
       await db.customers.update(selectedCustomer.id, {
@@ -520,10 +527,10 @@ const DebtPage: React.FC = () => {
                                 <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5 opacity-20" /><span className="text-[11px] font-black">{credit.due_date}</span></div>
                               </td>
                               <td className="px-8 py-6 text-right text-[11px] font-black">MK {Number(credit.original_amount || 0).toLocaleString()}</td>
-                              <td className="px-8 py-6 text-right"><div className="text-sm font-black text-rose-500">MK {Number(Number(credit.current_total || 0) - Number(credit.paid_amount || 0)).toLocaleString()}</div></td>
+                              <td className="px-8 py-6 text-right"><div className="text-sm font-black text-rose-500">MK {(Number(credit.current_total || 0) - Number(credit.paid_amount || 0)).toLocaleString()}</div></td>
                               <td className="px-8 py-6 text-right">
                                 {credit.status !== 'Paid' && (
-                                  <button type="button" title="Pay This Invoice" aria-label="Pay This Invoice" onClick={() => { setPaymentModal({ id: credit.id, total: credit.current_total - credit.paid_amount }); setPayAmount(String(credit.current_total - credit.paid_amount)); }} className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-[9px] font-black uppercase">Pay balance</button>
+                                  <button type="button" title="Pay This Invoice" aria-label="Pay This Invoice" onClick={() => { setPaymentModal({ id: String(credit.id), total: Number(credit.current_total) - Number(credit.paid_amount) }); setPayAmount(String(Number(credit.current_total) - Number(credit.paid_amount))); }} className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-[9px] font-black uppercase">Pay balance</button>
                                 )}
                               </td>
                             </tr>

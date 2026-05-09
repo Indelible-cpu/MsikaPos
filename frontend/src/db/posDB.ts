@@ -54,6 +54,7 @@ export interface LocalSale {
   amountReceived?: number;
   profit: number;
   status: string;
+  dueDate?: string;
 }
 
 export interface LocalCustomer {

@@ -19,6 +19,7 @@ interface ReceiptProps {
   customerName?: string;
   customerId?: string;
   signature?: string;
+  paymentHistory?: { date: string; amount: number; method: string }[];
 }
 
 export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, paid, change, mode, bankName, accountNumber, customerName, customerId, signature }) => {
@@ -34,11 +35,16 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
   const cashierName = user.fullname || user.username || 'System';
 
   const [customer, setCustomer] = React.useState<LocalCustomer | null>(null);
+  const [history, setHistory] = React.useState<{ createdAt: string; amount: number; paymentMethod: string }[]>([]);
 
   React.useEffect(() => {
     if (customerId) {
       import('../db/posDB').then(({ db }) => {
         db.customers.get(customerId).then(c => setCustomer(c || null));
+        db.debtPayments
+          .where('customerId').equals(customerId)
+          .sortBy('createdAt')
+          .then(payments => setHistory(payments));
       });
     }
   }, [customerId]);
@@ -165,19 +171,36 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
             </div>
 
             <div className="w-full px-4 space-y-1 text-[9px] border-t border-black/10 pt-2">
-              <div className="flex justify-between font-bold">
-                <span>Total credit limit</span>
+              <div className="flex justify-between font-bold opacity-60">
+                <span>Original Credit Total</span>
                 <span>Mk {(customer.totalCreditAmount || customer.balance).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between font-bold text-emerald-700">
-                <span>Total paid to date</span>
-                <span>Mk {(customer.totalPaidAmount || 0).toLocaleString()}</span>
-              </div>
-               <div className="flex justify-between font-black text-[11px] border-t border-black/20 pt-1 mt-1">
-                <span>Remaining balance</span>
-                <span>Mk {customer.balance.toLocaleString()}</span>
+              
+              <div className="flex justify-between font-black text-primary-600 border-b border-black/5 pb-1">
+                <span>AMOUNT PAID NOW</span>
+                <span>Mk {paid.toLocaleString()}</span>
               </div>
 
+              {history.length > 0 && (
+                <div className="py-2 space-y-1 border-b border-black/5 mb-1">
+                  <div className="text-[7px] font-black opacity-30 uppercase mb-1">Cumulative History</div>
+                  {history.map((h, i) => (
+                    <div key={i} className="flex justify-between text-[8px] opacity-70">
+                      <span>{new Date(h.createdAt).toLocaleDateString()}</span>
+                      <span className="font-bold">Mk {h.amount.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-between font-bold text-emerald-700">
+                <span>Total Paid to Date</span>
+                <span>Mk {(customer.totalPaidAmount || 0).toLocaleString()}</span>
+              </div>
+               <div className="flex justify-between font-black text-[13px] border-t-2 border-black pt-2 mt-1 bg-black/5 px-1 py-1">
+                <span>NEW BALANCE</span>
+                <span>Mk {customer.balance.toLocaleString()}</span>
+              </div>
             </div>
           </div>
         )}

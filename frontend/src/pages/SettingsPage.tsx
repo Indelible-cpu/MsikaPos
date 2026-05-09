@@ -273,7 +273,6 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <div>
                     <div className="font-black text-base tracking-tight uppercase">Company branding</div>
-                    <div className="card-label !mb-0 uppercase">Set a circular logo for the system header</div>
                   </div>
                 </div>
                 <label className="btn-primary btn-press hover-lift !px-6 !py-3 text-[10px] font-black tracking-widest cursor-pointer w-full md:w-auto text-center shadow-lg shadow-primary/20 uppercase" title="Upload company logo">

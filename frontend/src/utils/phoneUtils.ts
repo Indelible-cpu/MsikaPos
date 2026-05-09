@@ -1,7 +1,7 @@
 export const restrictPhone = (value: string): string => {
   if (!value) return '';
   // Remove non-numeric/plus
-  let clean = value.replace(/[^\d+]/g, '');
+  const clean = value.replace(/[^\d+]/g, '');
   
   if (clean.startsWith('+')) {
     return clean.substring(0, 13);
@@ -14,10 +14,10 @@ export const normalizePhone = (phone: string): string => {
   if (!phone) return '';
   
   // Remove all non-numeric characters except +
-  let clean = phone.replace(/[^\d+]/g, '');
+  const clean = phone.replace(/[^\d+]/g, '');
   
   // Remove leading + for logic
-  let digits = clean.replace('+', '');
+  const digits = clean.replace('+', '');
 
   // Malawi specific logic (+265)
   // If it's a 10 digit number starting with 0 (e.g. 0999123456)
@@ -40,13 +40,8 @@ export const normalizePhone = (phone: string): string => {
 
 export const isValidMalawianPhone = (phone: string): boolean => {
   if (!phone) return false;
-  let clean = phone.replace(/[^\d+]/g, '');
-  let digits = clean.replace('+', '');
-  
-  if (digits.startsWith('0') && digits.length === 10) return true;
-  if (digits.length === 9 && (digits.startsWith('8') || digits.startsWith('9'))) return true;
-  if (digits.startsWith('265') && digits.length === 12) return true;
-  
+  if (phone.startsWith('0')) return phone.length === 10 && /^\d{10}$/.test(phone);
+  if (phone.startsWith('+265')) return phone.length === 13 && /^\+265\d{9}$/.test(phone);
   return false;
 };
 
