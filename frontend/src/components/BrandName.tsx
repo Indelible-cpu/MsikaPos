@@ -2,8 +2,8 @@ import React from 'react';
 
 /**
  * Renders the official MsikaPos brand name with correct colour treatment:
- *   "Msika" → black (foreground)
- *   "Pos"   → green (#22c55e  = Tailwind green-500)
+ *   "Msika" → inherits foreground colour (black in light mode, white in dark)
+ *   "Pos"   → green-500 (#22c55e)
  */
 interface BrandNameProps {
   className?: string;
@@ -11,8 +11,8 @@ interface BrandNameProps {
 
 const BrandName: React.FC<BrandNameProps> = ({ className = '' }) => (
   <span className={className}>
-    <span style={{ color: 'inherit' }}>Msika</span>
-    <span style={{ color: '#22c55e' }}>Pos</span>
+    <span className="text-foreground">Msika</span>
+    <span className="text-green-500">Pos</span>
   </span>
 );
 

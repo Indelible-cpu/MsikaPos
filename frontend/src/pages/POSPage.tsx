@@ -59,7 +59,7 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
 
   return (
     <div onClick={() => addToCart(p)} className="aspect-square bg-card flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 active:bg-primary/5 transition-all relative group">
-      <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden p-1">
+      <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden p-2">
         {p.imageUrl ? (
           <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
         ) : (
@@ -70,9 +70,9 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
           />
         )}
       </div>
-      <div className="text-center w-full px-1 pb-1">
-        <div className="text-[7px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
-        <div className="text-[7px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()}</div>
+      <div className="text-center w-full px-2 pb-2">
+        <div className="text-[8px] md:text-[10px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
+        <div className="text-[9px] md:text-[11px] text-primary font-black mt-1">MK {p.sellPrice.toLocaleString()}</div>
       </div>
       {p.quantity <= 5 && !p.isService && (
         <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-destructive rounded-full animate-pulse" />
@@ -801,7 +801,7 @@ const POSPage: React.FC = () => {
             </button>
           </div>
           
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-[1px] bg-border/50 border border-border/50 rounded-xl overflow-hidden pb-0">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-[1px] bg-border/50 border border-border/50 rounded-xl overflow-hidden pb-0">
 
 
             {displayedProducts.map((p: LocalProduct) => (
@@ -843,7 +843,7 @@ const POSPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
           {cart.length > 0 ? (
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 gap-[1px] bg-border/50 border border-border/50 rounded-xl overflow-hidden p-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-2 gap-[1px] bg-border/50 border border-border/50 rounded-xl overflow-hidden p-0">
               {cart.map(item => {
                 const p = item.product;
                 const getPlaceholder = () => {
@@ -862,21 +862,22 @@ const POSPage: React.FC = () => {
                         <img src={getPlaceholder()} alt="placeholder" className="w-full h-full object-contain" />
                       )}
                     </div>
-                    <div className="text-center w-full px-1 pb-1">
-                      <div className="text-[7px] md:text-[9px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
-                      <div className="text-[7px] md:text-[9px] text-primary font-black mt-0.5">MK {p.sellPrice.toLocaleString()} (x{item.quantity})</div>
+                    <div className="text-center w-full px-1 pb-2">
+                      <div className="text-[8px] md:text-[10px] font-black text-foreground leading-none truncate uppercase tracking-tighter mb-1.5">{p.name}</div>
+                      <div className="flex items-center justify-center gap-2">
+                        <button title="Decrease Quantity" aria-label="Decrease Quantity" onClick={(e) => { e.stopPropagation(); decreaseQuantity(p.id); }} className="w-6 h-6 bg-muted/80 text-foreground rounded flex items-center justify-center hover:bg-primary hover:text-white transition-colors"><Minus className="w-3 h-3" /></button>
+                        <span className="text-[10px] font-black w-4 text-center">{item.quantity}</span>
+                        <button title="Increase Quantity" aria-label="Increase Quantity" onClick={(e) => { e.stopPropagation(); addToCart(p); }} className="w-6 h-6 bg-muted/80 text-foreground rounded flex items-center justify-center hover:bg-primary hover:text-white transition-colors"><Plus className="w-3 h-3" /></button>
+                      </div>
+                      <div className="text-[8px] md:text-[10px] text-primary font-black mt-1">MK {p.sellPrice.toLocaleString()}</div>
                     </div>
                     <button 
                       title="Remove" 
-                      onClick={() => setCart(prev => prev.filter(i => i.product.id !== p.id))} 
+                      onClick={(e) => { e.stopPropagation(); setCart(prev => prev.filter(i => i.product.id !== p.id)); }} 
                       className="absolute top-1 right-1 bg-destructive/80 text-white p-1 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-destructive"
                     >
                       <X className="w-2.5 h-2.5" />
                     </button>
-                    <div className="absolute inset-x-0 bottom-1/2 translate-y-1/2 flex justify-between px-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button title="Decrease Quantity" aria-label="Decrease Quantity" onClick={() => decreaseQuantity(p.id)} className="w-6 h-6 bg-background/80 backdrop-blur-sm border border-border text-foreground rounded flex items-center justify-center hover:bg-primary hover:text-white transition-colors shadow-sm"><Minus className="w-3 h-3" /></button>
-                      <button title="Increase Quantity" aria-label="Increase Quantity" onClick={() => addToCart(p)} className="w-6 h-6 bg-background/80 backdrop-blur-sm border border-border text-foreground rounded flex items-center justify-center hover:bg-primary hover:text-white transition-colors shadow-sm"><Plus className="w-3 h-3" /></button>
-                    </div>
                   </div>
                 );
               })}
@@ -1000,16 +1001,16 @@ const POSPage: React.FC = () => {
               disabled={
                 cart.length === 0 || 
                 isCheckingOut || 
-                (!amountReceived || parseFloat(amountReceived) < finalTotal) ||
+                (paymentMode !== 'Credit' && (!amountReceived || parseFloat(amountReceived) < finalTotal)) ||
                 ((paymentMode === 'Card' || paymentMode === 'Momo') && !selectedSubMethod)
               } 
               onClick={handleCheckout} 
               className={clsx(
                 "w-full py-5 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] transition-all shadow-xl btn-press", 
-                (cart.length === 0 || (!amountReceived || parseFloat(amountReceived) < finalTotal)) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
+                (cart.length === 0 || (paymentMode !== 'Credit' && (!amountReceived || parseFloat(amountReceived) < finalTotal))) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
               )}
             >
-              <CheckCircle2 className="w-5 h-5" /> Checkout
+              <CheckCircle2 className="w-5 h-5" /> {paymentMode === 'Credit' ? 'Proceed to Credit Sale' : 'Checkout'}
             </button>
           </div>
         )}

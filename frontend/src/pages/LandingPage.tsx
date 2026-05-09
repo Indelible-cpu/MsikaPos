@@ -194,13 +194,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-border/50 text-center space-y-6">
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-8 h-8 rounded-lg overflow-hidden bg-surface-bg border border-border flex items-center justify-center">
-            <img src="/icon.png?v=2" alt="MsikaPos" className="w-full h-full object-contain" />
-          </div>
-          <span className="font-black text-sm tracking-widest"><BrandName /></span>
-        </div>
+      <footer className="py-8 px-6 border-t border-border/50 text-center space-y-4">
         <p className="text-[10px] font-black tracking-[0.4em] text-muted-foreground uppercase opacity-40">
           © {new Date().getFullYear()} <BrandName /> Systems. All Rights Reserved.
         </p>

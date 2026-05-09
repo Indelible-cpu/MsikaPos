@@ -123,9 +123,7 @@ const DashboardPage: React.FC = () => {
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex-1">
-             <h2 className="text-xl font-black tracking-tight uppercase">Overview Dashboard</h2>
-          </div>
+          <div className="flex-1"></div>
           <div className="flex items-center gap-6">
             <button 
               onClick={() => {

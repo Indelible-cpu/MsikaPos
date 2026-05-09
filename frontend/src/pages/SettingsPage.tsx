@@ -243,7 +243,7 @@ const SettingsPage: React.FC = () => {
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-10 sticky top-0 z-30">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-black tracking-tighter text-foreground">System settings</h1>
+          <div className="flex-1"></div>
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Active session</span>
