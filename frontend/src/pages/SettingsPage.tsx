@@ -6,11 +6,48 @@ import { db } from '../db/posDB';
 import { AuditService } from '../services/AuditService';
 import api from '../api/client';
 import { restrictPhone } from '../utils/phoneUtils';
+import { SyncService } from '../services/SyncService';
 
 const SettingsPage: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
+
+  const handleMasterReset = async () => {
+    if (!window.confirm('CRITICAL ACTION: This will permanently delete ALL local settings and ALL transactions. This cannot be undone. Are you absolutely sure?')) {
+      return;
+    }
+
+    if (!window.confirm('FINAL WARNING: You are about to wipe everything. Continue?')) {
+      return;
+    }
+
+    toast.loading('Performing master reset...', { id: 'master-reset' });
+
+    try {
+      // 1. Clear all DB tables
+      const tables = [
+        db.products, db.categories, db.salesQueue, 
+        db.settings, db.customers, db.debtPayments, 
+        db.expenses, db.users, db.auditLogs
+      ];
+      
+      await Promise.all(tables.map(t => t.clear()));
+
+      // 2. Clear local storage except some essentials if needed
+      // Actually, user wants to reset everything
+      localStorage.clear();
+
+      toast.success('System reset successfully. Restarting...', { id: 'master-reset' });
+      
+      setTimeout(() => {
+        window.location.href = '/staff/login';
+      }, 2000);
+    } catch (err) {
+      toast.error('Master reset failed.', { id: 'master-reset' });
+      console.error(err);
+    }
+  };
 
   const [lockTime, setLockTime] = React.useState('20:00');
   const [unlockTime, setUnlockTime] = React.useState('06:00');
@@ -618,13 +655,23 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={async () => {
-                    if (window.confirm('This will wipe local cached data and re-download everything from the cloud. Your unsynced sales may be lost if not synced. Continue?')) {
+                    if (window.confirm('This will wipe local cached data and re-download everything from the cloud. Your unsynced sales will be synced first. Continue?')) {
+                      toast.loading('Finalizing sync before reset...', { id: 'reset' });
+                      const syncSuccess = await SyncService.pushSales();
+                      
+                      if (!syncSuccess) {
+                        if (!window.confirm('Sync failed. Some local transactions might not be saved on the server. Reset anyway?')) {
+                          toast.dismiss('reset');
+                          return;
+                        }
+                      }
+
                       localStorage.removeItem('lastSyncTimestamp');
                       await db.products.clear();
                       await db.customers.clear();
                       await db.expenses.clear();
                       await db.salesQueue.where('synced').equals(1).delete();
-                      toast.success('Local cache cleared. Reloading...');
+                      toast.success('Local cache cleared. Reloading...', { id: 'reset' });
                       setTimeout(() => window.location.reload(), 1500);
                     }
                   }}
@@ -633,6 +680,26 @@ const SettingsPage: React.FC = () => {
                   RESET LOCAL DATA
                 </button>
               </div>
+
+              {isSuperAdmin && (
+                <div className="px-6 md:px-12 py-8 flex items-center justify-between group hover:bg-rose-500/5 transition-colors border-t border-surface-border">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/20 group-hover:border-rose-500 transition-all">
+                      <ShieldAlert className="w-5 h-5 text-rose-500" />
+                    </div>
+                    <div>
+                      <div className="font-black text-sm tracking-tight text-rose-500 uppercase">Master system reset</div>
+                      <div className="text-xs text-surface-text/40 font-bold">Resets ALL system settings and deletes ALL transactions. This is irreversible.</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleMasterReset}
+                    className="btn-primary !bg-rose-600 hover:!bg-rose-700 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-xl shadow-rose-500/20 uppercase"
+                  >
+                    FULL MASTER RESET
+                  </button>
+                </div>
+              )}
 
               <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary-500/[0.02] transition-colors">
                 <div className="flex items-center gap-4">

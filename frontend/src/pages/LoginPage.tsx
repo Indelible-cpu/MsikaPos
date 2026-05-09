@@ -165,6 +165,10 @@ const LoginPage: React.FC = () => {
         setIsBiometricAvailable(available);
         if (registered) {
           setLoginMode('biometric');
+          // Auto-trigger biometric verification immediately
+          setTimeout(() => {
+            handleBiometricLogin();
+          }, 500);
         }
       } else {
         setIsBiometricAvailable(false);
@@ -180,7 +184,7 @@ const LoginPage: React.FC = () => {
       localStorage.removeItem('user');
       // Keep biometric data as it's device-linked, but clear auth
     }
-  }, []);
+  }, [handleBiometricLogin]);
 
   // Biometric auto-trigger removed to ensure user manual interaction only
   // per USER request: "it must start when user touch the biometric btn on the device"
@@ -346,7 +350,6 @@ const LoginPage: React.FC = () => {
             >
               <div className="text-center mb-8">
                 <h2 className="text-xl font-black tracking-tight mb-2">Fingerprint Access</h2>
-                <p className="text-[9px] font-black tracking-widest text-surface-text/60 uppercase">Touch the fingerprint sensor</p>
               </div>
 
               <button 
@@ -366,13 +369,6 @@ const LoginPage: React.FC = () => {
               </button>
 
               <div className="mt-12 space-y-4 w-full">
-                <button 
-                  onClick={handleBiometricLogin}
-                  disabled={loading}
-                  className="w-full h-14 bg-primary-500 text-white rounded-2xl font-black tracking-widest text-[10px] shadow-xl shadow-primary-500/20 active:scale-95 transition-all"
-                >
-                  Verify Fingerprint
-                </button>
                 <button 
                   onClick={() => setLoginMode('password')}
                   className="w-full h-14 bg-surface-card border border-surface-border rounded-2xl font-black tracking-widest text-[10px] text-surface-text/40 hover:text-surface-text active:scale-95 transition-all"
