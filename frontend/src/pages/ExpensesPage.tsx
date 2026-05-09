@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type LocalExpense } from '../db/posDB';
+import { db, type LocalExpense, type LocalProduct } from '../db/posDB';
 import { 
   Plus, 
   Search, 
   Trash2, 
   ArrowDownCircle,
-  FileText
+  FileText,
+  MessageSquare
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
+import { Receipt } from '../components/Receipt';
+import html2canvas from 'html2canvas';
+
+type ExpenseReceiptProps = React.ComponentProps<typeof Receipt>;
 
 const ExpensesPage: React.FC = () => {
   const { isReadOnly } = useFeatureAccess();
@@ -24,8 +29,11 @@ const ExpensesPage: React.FC = () => {
     amount: 0,
     description: '',
     date: new Date().toISOString().split('T')[0],
-    paymentMethod: 'Cash'
+    paymentMethod: 'Cash',
+    frequency: 'Daily' as 'Daily' | 'Weekly' | 'Monthly' | 'Annually'
   });
+
+  const [expenseReceipt, setExpenseReceipt] = useState<ExpenseReceiptProps | null>(null);
 
   const expenses = useLiveQuery(
     () => db.expenses
@@ -44,12 +52,29 @@ const ExpensesPage: React.FC = () => {
         await db.expenses.update(editingExpense.id, { ...formData });
         toast.success('Expense updated');
       } else {
-        await db.expenses.add({
+        const expenseId = crypto.randomUUID();
+        const expenseData = {
           ...formData,
-          id: crypto.randomUUID(),
+          id: expenseId,
           createdAt: new Date().toISOString(),
           synced: 0
+        };
+        await db.expenses.add(expenseData);
+        
+        // Prepare receipt for sharing
+        setExpenseReceipt({
+          items: [{ product: { name: `EXPENSE: ${formData.description}`, sellPrice: formData.amount } as unknown as LocalProduct, quantity: 1 }],
+          total: formData.amount,
+          subtotal: formData.amount,
+          tax: 0,
+          discount: 0,
+          invoiceNo: `EXP-${expenseId.substring(0, 6).toUpperCase()}`,
+          date: formData.date,
+          mode: formData.paymentMethod,
+          paid: formData.amount,
+          change: 0
         });
+
         toast.success('Expense recorded');
       }
       setIsModalOpen(false);
@@ -73,7 +98,8 @@ const ExpensesPage: React.FC = () => {
       amount: 0,
       description: '',
       date: new Date().toISOString().split('T')[0],
-      paymentMethod: 'Cash'
+      paymentMethod: 'Cash',
+      frequency: 'Daily' as 'Daily' | 'Weekly' | 'Monthly' | 'Annually'
     });
   };
 
@@ -131,7 +157,9 @@ const ExpensesPage: React.FC = () => {
                     </div>
                     <div>
                        <div className="font-black text-sm tracking-tight uppercase">{exp.description || 'No description'}</div>
-                       <div className="text-[9px] text-muted-foreground font-black tracking-widest uppercase">{exp.category} • {exp.date}</div>
+                       <div className="text-[9px] text-muted-foreground font-black tracking-widest uppercase">
+                          {exp.category} • {exp.frequency || 'Daily'} • {exp.date}
+                        </div>
                     </div>
                  </div>
                  <div className="flex items-center gap-6">
@@ -174,8 +202,17 @@ const ExpensesPage: React.FC = () => {
               </select>
             </div>
             <div className="space-y-1">
+              <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Frequency</label>
+              <select title="Select Frequency" className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.frequency} onChange={(e) => setFormData({...formData, frequency: e.target.value as 'Daily' | 'Weekly' | 'Monthly' | 'Annually'})}>
+                <option value="Daily">Daily</option>
+                <option value="Weekly">Weekly</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Annually">Annually</option>
+              </select>
+            </div>
+            <div className="space-y-1">
               <label className="text-[9px] font-black  tracking-widest text-surface-text/30 ml-1">Date</label>
-              <input type="date" title="Select Date" aria-label="Select Date" placeholder="Select Date" className="input-field w-full" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+              <input type="date" title="Select Date" aria-label="Select Date" placeholder="Select Date" className="input-field w-full font-bold" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
             </div>
           </div>
           <div className="space-y-1">
@@ -187,6 +224,42 @@ const ExpensesPage: React.FC = () => {
             <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 uppercase btn-press">Save expense</button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={!!expenseReceipt} onClose={() => setExpenseReceipt(null)} title="Expense Voucher">
+        {expenseReceipt && (
+          <div className="p-6 flex flex-col items-center gap-6">
+            <div className="bg-white p-6 w-full" id="expense-voucher"><Receipt {...expenseReceipt} /></div>
+            <div className="flex gap-4 w-full">
+               <button 
+                onClick={async () => {
+                  const el = document.getElementById('expense-voucher');
+                  if (!el) return;
+                  toast.loading('Preparing voucher...', { id: 'share' });
+                  try {
+                    const canvas = await html2canvas(el);
+                    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
+                    if (blob) {
+                      const file = new File([blob], `voucher-${expenseReceipt.invoiceNo}.png`, { type: 'image/png' });
+                      if (navigator.share) {
+                        await navigator.share({ files: [file], title: 'Expense Voucher', text: `Voucher for ${formData.description}` });
+                        toast.success('Shared successfully', { id: 'share' });
+                      } else {
+                        const text = encodeURIComponent(`Expense Voucher\nRef: ${expenseReceipt.invoiceNo}\nAmount: MK ${expenseReceipt.total.toLocaleString()}\nDesc: ${formData.description}`);
+                        window.open(`https://wa.me/?text=${text}`, '_blank');
+                        toast.success('WhatsApp opened', { id: 'share' });
+                      }
+                    }
+                  } catch { toast.error('Failed to share', { id: 'share' }); }
+                }}
+                className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase"
+              >
+                <MessageSquare className="w-4 h-4" /> Share WhatsApp
+              </button>
+              <button type="button" onClick={() => setExpenseReceipt(null)} className="flex-1 py-4 btn-primary font-black text-[10px] uppercase">Close</button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

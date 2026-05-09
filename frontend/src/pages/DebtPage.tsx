@@ -14,8 +14,10 @@ import {
   Save,
   RotateCcw,
   ArrowLeft,
-  Upload
+  Upload,
+  MessageSquare
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
@@ -484,7 +486,7 @@ const DebtPage: React.FC = () => {
                     <h3 className="text-lg font-bold tracking-tighter flex items-center gap-3"><Shield className="w-5 h-5 text-primary-500" /> Credit Details</h3>
                     <button 
                       onClick={() => {
-                        window.location.href = '/pos'; // Simplest way to redirect and reset POS
+                        window.location.href = '/staff/pos'; // Redirect to staff POS
                       }}
                       className="px-4 py-1.5 bg-primary/10 text-primary rounded-xl text-[9px] font-bold capitalize tracking-widest border border-primary/20 hover:bg-primary/20 transition-all btn-press"
                     >
@@ -584,7 +586,16 @@ const DebtPage: React.FC = () => {
             <div className="p-10 space-y-8">
               <h3 className="text-xl font-bold capitalize tracking-tighter">Record payment</h3>
               <div className="space-y-4">
-                <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Payment amount (MK)</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-bold text-muted-foreground capitalize tracking-widest ml-1">Payment amount (MK)</label>
+                  <button 
+                    type="button"
+                    onClick={() => setPayAmount(String(paymentModal.total))}
+                    className="text-[9px] font-black text-primary uppercase tracking-widest hover:underline"
+                  >
+                    Pay Full Balance
+                  </button>
+                </div>
                 <input title="Payment Amount" aria-label="Payment Amount" placeholder="0.00" type="number" value={payAmount} onChange={e => setPayAmount(e.target.value)} className="input-field !text-2xl !py-6 w-full font-bold" />
               </div>
 
@@ -599,38 +610,71 @@ const DebtPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => { setPaymentModal(null); setSignature(null); }} className="flex-1 py-5 bg-surface-bg border border-surface-border rounded-2xl font-black text-[10px] uppercase">Discard</button>
-                <button
-                  type="button"
-                  disabled={!signature || !payAmount || Number(payAmount) <= 0}
-                  onClick={() => {
-                    const amount = Number(payAmount);
-                    if (amount > (selectedCustomer?.balance || 0)) return toast.error('Overpayment not allowed');
-                    
-                    toast(
-                      (t) => (
-                        <div className="flex flex-col gap-3">
-                          <p className="text-sm font-bold">Confirm payment of <span className="text-emerald-500">MK {amount.toLocaleString()}</span>?</p>
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => { toast.dismiss(t.id); payMutation.mutate({ id: paymentModal.id, amount }); }}
-                              className="flex-1 py-2 bg-primary-500 text-white rounded-lg text-xs font-black"
-                            >Yes, Confirm</button>
-                            <button
-                              type="button"
-                              onClick={() => toast.dismiss(t.id)}
-                              className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
-                            >Cancel</button>
+              <div className="flex flex-col gap-3 pt-4">
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    disabled={!signature || !payAmount || Number(payAmount) <= 0}
+                    onClick={() => {
+                      const amount = Number(payAmount);
+                      if (amount > (selectedCustomer?.balance || 0)) return toast.error('Overpayment not allowed');
+                      
+                      toast(
+                        (t) => (
+                          <div className="flex flex-col gap-3">
+                            <p className="text-sm font-bold">Record partial payment of <span className="text-emerald-500">MK {amount.toLocaleString()}</span>?</p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => { toast.dismiss(t.id); payMutation.mutate({ id: paymentModal.id, amount }); }}
+                                className="flex-1 py-2 bg-zinc-900 text-white rounded-lg text-xs font-black"
+                              >Yes, Update</button>
+                              <button
+                                type="button"
+                                onClick={() => toast.dismiss(t.id)}
+                                className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
+                              >Cancel</button>
+                            </div>
                           </div>
-                        </div>
-                      ),
-                      { duration: 8000 }
-                    );
-                  }}
-                  className={clsx("flex-[2] py-5 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg", (!signature || !payAmount) ? "bg-surface-bg border border-surface-border opacity-50 cursor-not-allowed" : "bg-primary-500 text-white shadow-primary-500/20 active:scale-95")}
-                >Complete Payment</button>
+                        ),
+                        { duration: 8000 }
+                      );
+                    }}
+                    className={clsx("flex-1 py-5 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg", (!signature || !payAmount) ? "bg-surface-bg border border-surface-border opacity-50 cursor-not-allowed" : "bg-zinc-900 text-white shadow-xl active:scale-95")}
+                  >Update Balance</button>
+
+                  <button
+                    type="button"
+                    disabled={!signature}
+                    onClick={() => {
+                      const amount = paymentModal.total;
+                      setPayAmount(String(amount));
+                      
+                      toast(
+                        (t) => (
+                          <div className="flex flex-col gap-3">
+                            <p className="text-sm font-bold">Clear full balance of <span className="text-primary-500">MK {amount.toLocaleString()}</span>?</p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => { toast.dismiss(t.id); payMutation.mutate({ id: paymentModal.id, amount }); }}
+                                className="flex-1 py-2 bg-primary-500 text-white rounded-lg text-xs font-black"
+                              >Yes, Clear All</button>
+                              <button
+                                type="button"
+                                onClick={() => toast.dismiss(t.id)}
+                                className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
+                              >Cancel</button>
+                            </div>
+                          </div>
+                        ),
+                        { duration: 8000 }
+                      );
+                    }}
+                    className={clsx("flex-1 py-5 rounded-2xl font-black text-[10px] uppercase transition-all shadow-lg", (!signature) ? "bg-surface-bg border border-surface-border opacity-50 cursor-not-allowed" : "bg-primary-500 text-white shadow-primary-500/20 active:scale-95")}
+                  >Complete Payment</button>
+                </div>
+                <button type="button" onClick={() => { setPaymentModal(null); setSignature(null); }} className="w-full py-4 text-muted-foreground font-bold text-[9px] uppercase tracking-widest hover:text-foreground transition-colors">Discard Transaction</button>
               </div>
             </div>
           </div>
@@ -809,8 +853,35 @@ const DebtPage: React.FC = () => {
       <Modal isOpen={!!clearedReceipt} onClose={() => setClearedReceipt(null)} title="Payment receipt">
         {clearedReceipt && (
           <div className="p-6 flex flex-col items-center gap-6">
-            <div className="bg-white p-6 w-full" id="printable-receipt"><Receipt {...clearedReceipt} /></div>
-            <button type="button" title="Close Receipt View" aria-label="Close Receipt View" onClick={() => setClearedReceipt(null)} className="w-full py-4 btn-primary font-black text-[10px] uppercase">Close</button>
+            <div className="bg-white p-6 w-full" id="printable-repayment-receipt"><Receipt {...clearedReceipt} /></div>
+            <div className="flex gap-4 w-full">
+              <button 
+                onClick={async () => {
+                  const el = document.getElementById('printable-repayment-receipt');
+                  if (!el) return;
+                  toast.loading('Preparing receipt...', { id: 'share' });
+                  try {
+                    const canvas = await html2canvas(el);
+                    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
+                    if (blob) {
+                      const file = new File([blob], `receipt-${clearedReceipt.invoiceNo}.png`, { type: 'image/png' });
+                      if (navigator.share) {
+                        await navigator.share({ files: [file], title: 'Payment Receipt', text: `Repayment from ${clearedReceipt.customerName}` });
+                        toast.success('Shared successfully', { id: 'share' });
+                      } else {
+                        const text = encodeURIComponent(`Payment Receipt\nInvoice: ${clearedReceipt.invoiceNo}\nAmount: MK ${clearedReceipt.total.toLocaleString()}\nThank you, ${clearedReceipt.customerName}!`);
+                        window.open(`https://wa.me/?text=${text}`, '_blank');
+                        toast.success('WhatsApp opened', { id: 'share' });
+                      }
+                    }
+                  } catch { toast.error('Failed to share', { id: 'share' }); }
+                }}
+                className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase"
+              >
+                <MessageSquare className="w-4 h-4" /> Share WhatsApp
+              </button>
+              <button type="button" title="Close Receipt View" aria-label="Close Receipt View" onClick={() => setClearedReceipt(null)} className="flex-1 py-4 btn-primary font-black text-[10px] uppercase">Close</button>
+            </div>
           </div>
         )}
       </Modal>

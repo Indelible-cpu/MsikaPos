@@ -8,13 +8,15 @@ import {
   TrendingUp, 
   DollarSign, 
   Package,
-  Download
+  Download,
+  MessageSquare
 } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
+import html2canvas from 'html2canvas';
 
 const SalesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -230,9 +232,41 @@ const SalesPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex gap-4">
-              <button onClick={() => window.print()} className="flex-1 py-4 bg-surface-card border border-surface-border rounded-2xl text-[10px] font-bold">Reprint receipt</button>
-              <button onClick={() => setSelectedSale(null)} className="flex-1 btn-primary !py-4 text-[10px] font-bold">Done</button>
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-4">
+                <button 
+                  onClick={async () => {
+                    const el = document.getElementById('print-container');
+                    if (!el) return;
+                    el.classList.remove('hidden');
+                    toast.loading('Preparing sharing file...', { id: 'share' });
+                    try {
+                      const canvas = await html2canvas(el);
+                      el.classList.add('hidden');
+                      const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
+                      if (blob) {
+                        const file = new File([blob], `receipt-${selectedSale.invoiceNo}.png`, { type: 'image/png' });
+                        if (navigator.share) {
+                          await navigator.share({ files: [file], title: 'Transaction Receipt', text: `Receipt for ${selectedSale.invoiceNo}` });
+                          toast.success('Shared successfully', { id: 'share' });
+                        } else {
+                          const text = encodeURIComponent(`Transaction Receipt\nInvoice: ${selectedSale.invoiceNo}\nTotal: MK ${selectedSale.total.toLocaleString()}\nThank you for your business!`);
+                          window.open(`https://wa.me/?text=${text}`, '_blank');
+                          toast.success('WhatsApp opened', { id: 'share' });
+                        }
+                      }
+                    } catch { 
+                      el.classList.add('hidden');
+                      toast.error('Failed to share', { id: 'share' }); 
+                    }
+                  }}
+                  className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase"
+                >
+                  <MessageSquare className="w-4 h-4" /> Share WhatsApp
+                </button>
+                <button onClick={() => window.print()} className="flex-1 py-4 bg-surface-card border border-surface-border rounded-2xl text-[10px] font-bold uppercase tracking-widest">Print copy</button>
+              </div>
+              <button onClick={() => setSelectedSale(null)} className="w-full py-4 text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity">Close History</button>
             </div>
           </div>
         )}

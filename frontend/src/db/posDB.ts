@@ -92,6 +92,7 @@ export interface LocalExpense {
   description: string;
   date: string;
   paymentMethod: string;
+  frequency?: 'Daily' | 'Weekly' | 'Monthly' | 'Annually';
   createdAt: string;
   synced: number;
 }
