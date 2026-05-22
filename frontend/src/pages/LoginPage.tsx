@@ -480,9 +480,6 @@ const LoginPage: React.FC = () => {
             Support
           </Link>
 
-          <Link to="/staff/forgot-password" className="text-[10px] font-black  tracking-widest text-surface-text/60 hover:text-primary-500 transition-colors">
-             Forgot password?
-          </Link>
 
           <Link to="/about" className="hidden md:block text-[10px] font-black tracking-widest text-surface-text/60 hover:text-primary-500 transition-colors">
             Support

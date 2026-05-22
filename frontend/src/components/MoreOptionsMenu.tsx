@@ -85,7 +85,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
             </div>
 
             <div className="mt-8 px-4 flex flex-row flex-nowrap justify-center items-stretch gap-2 max-w-sm mx-auto">
-              <div className="flex-1 flex flex-col items-center justify-center gap-1 bg-surface-bg border border-surface-border p-1 rounded-3xl min-w-0">
+              <div className="flex-1 flex flex-col items-center justify-center gap-1 bg-surface-bg border border-surface-border rounded-3xl min-w-0">
                 <span className="text-[8px] font-black text-surface-text/40 uppercase tracking-widest text-center">Appearance</span>
                 <div className="scale-75 origin-top">
                   <ThemeToggle />
@@ -94,7 +94,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
 
               <button
                 onClick={onClose}
-                className="flex-1 flex flex-col items-center justify-center gap-1 bg-surface-bg border border-surface-border p-1 rounded-3xl min-w-0 active:scale-95 transition-all group"
+                className="flex-1 flex flex-col items-center justify-center gap-1 bg-surface-bg border border-surface-border rounded-3xl min-w-0 active:scale-95 transition-all group"
               >
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-surface-bg border border-surface-border text-surface-text/40 shadow-sm transition-transform group-active:scale-110">
                   <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-1 transition-transform" />
@@ -104,7 +104,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
 
               <button
                 onClick={handleLogout}
-                className="flex-1 flex flex-col items-center justify-center gap-1 bg-surface-bg border border-surface-border p-1 rounded-3xl min-w-0 active:scale-95 transition-all group"
+                className="flex-1 flex flex-col items-center justify-center gap-1 bg-surface-bg border border-surface-border rounded-3xl min-w-0 active:scale-95 transition-all group"
               >
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-rose-500 text-white shadow-lg transition-transform group-active:scale-110">
                   <LogOut className="w-3.5 h-3.5" />
