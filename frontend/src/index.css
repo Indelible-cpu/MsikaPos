@@ -156,7 +156,9 @@
   .stagger-children > * {
     @apply opacity-0 animate-fade-in;
   }
+}
 
+@layer components {
   .input-field {
     @apply px-4 py-3 rounded-2xl bg-surface-card border border-surface-border focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none text-sm font-medium placeholder:text-surface-text/20;
   }
