@@ -84,30 +84,32 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
 
             </div>
 
-            <div className="mt-8 px-6 flex flex-row flex-wrap justify-center items-stretch gap-4">
-              <button
-                onClick={handleLogout}
-                className="flex flex-col items-center justify-between gap-3 bg-surface-bg border border-surface-border py-4 px-6 rounded-3xl min-w-[120px] active:scale-95 transition-all group"
-              >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-500 text-white shadow-lg transition-transform group-active:scale-110">
-                  <LogOut className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] font-black tracking-widest text-rose-500 text-center">Sign Out</span>
-              </button>
-
-              <div className="flex flex-col items-center justify-between gap-3 bg-surface-bg border border-surface-border py-4 px-6 rounded-3xl min-w-[120px]">
+            <div className="mt-8 px-4 flex flex-row flex-nowrap justify-center items-stretch gap-3 max-w-sm mx-auto">
+              <div className="flex-1 flex flex-col items-center justify-between gap-2 bg-surface-bg border border-surface-border p-1 rounded-3xl min-w-0">
                 <span className="text-[8px] font-black text-surface-text/40 uppercase tracking-widest text-center mt-1">Appearance</span>
-                <ThemeToggle />
+                <div className="scale-90 origin-top">
+                  <ThemeToggle />
+                </div>
               </div>
 
               <button
                 onClick={onClose}
-                className="flex flex-col items-center justify-between gap-3 bg-surface-bg border border-surface-border py-4 px-6 rounded-3xl min-w-[120px] active:scale-95 transition-all group"
+                className="flex-1 flex flex-col items-center justify-between gap-2 bg-surface-bg border border-surface-border p-1 rounded-3xl min-w-0 active:scale-95 transition-all group"
               >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-surface-bg border border-surface-border text-surface-text/40 shadow-sm transition-transform group-active:scale-110">
-                  <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform" />
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-surface-bg border border-surface-border text-surface-text/40 shadow-sm transition-transform group-active:scale-110 mt-1">
+                  <ChevronDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
                 </div>
-                <span className="text-[10px] font-black tracking-widest text-surface-text/40 text-center">Close</span>
+                <span className="text-[10px] font-black tracking-widest text-surface-text/40 text-center mb-1">Close</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="flex-1 flex flex-col items-center justify-between gap-2 bg-surface-bg border border-surface-border p-1 rounded-3xl min-w-0 active:scale-95 transition-all group"
+              >
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-rose-500 text-white shadow-lg transition-transform group-active:scale-110 mt-1">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-black tracking-widest text-rose-500 text-center mb-1">Sign Out</span>
               </button>
             </div>
 
