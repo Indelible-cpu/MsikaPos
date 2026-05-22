@@ -1,36 +1,40 @@
 /**
  * MsikaPos AI Service
- * Handles communication with Google Gemini API
+ * Handles communication with xAI (Grok) API
  */
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash-latest";
-const API_VERSION = "v1beta";
-const BASE_URL = `https://generativelanguage.googleapis.com/${API_VERSION}/models/${MODEL}:generateContent`;
+const MODEL = process.env.XAI_MODEL || "grok-beta";
+const BASE_URL = `https://api.x.ai/v1/chat/completions`;
 
 export const aiService = {
   /**
-   * Generates content using Gemini AI
+   * Generates content using xAI
    */
   async generate(prompt: string, _context?: any) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      console.error("[AI Service] Error: GEMINI_API_KEY is not set in environment.");
+      console.error("[AI Service] Error: OPENAI_API_KEY is not set in environment.");
       throw new Error("AI_CONFIG_ERROR");
     }
 
     try {
-      const response = await fetch(`${BASE_URL}?key=${apiKey}`, {
+      const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [
+          model: MODEL,
+          messages: [
             {
-              parts: [
-                { text: prompt }
-              ]
+              role: "system",
+              content: "You are Msika Brain, a professional and highly intelligent AI business assistant for MsikaPos. Provide concise, actionable, and analytical responses."
+            },
+            {
+              role: "user",
+              content: prompt
             }
           ]
         })
@@ -38,14 +42,14 @@ export const aiService = {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("[AI Service] Gemini API Error:", errorData);
+        console.error("[AI Service] xAI API Error:", errorData);
         throw new Error(`AI_API_ERROR: ${response.status}`);
       }
 
       const data = await response.json();
       
       // Extract text from response
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const text = data.choices?.[0]?.message?.content;
       
       if (!text) {
         console.warn("[AI Service] Warning: Empty response from AI.");

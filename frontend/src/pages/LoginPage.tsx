@@ -182,10 +182,6 @@ const LoginPage: React.FC = () => {
         setIsBiometricAvailable(available);
         if (registered) {
           setLoginMode('biometric');
-          // Start the biometric challenge immediately
-          setTimeout(() => {
-            handleBiometricLogin();
-          }, 100);
         }
       } else {
         setIsBiometricAvailable(false);
