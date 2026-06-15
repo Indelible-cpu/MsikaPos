@@ -6,7 +6,6 @@ import {
   Users,
   Wallet,
   Building2,
-  Info,
   LogOut,
   ChevronDown,
   BarChart3,

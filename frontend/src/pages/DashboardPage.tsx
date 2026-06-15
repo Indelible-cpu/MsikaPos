@@ -7,13 +7,10 @@ import {
   ArrowUpRight,
   Wallet,
   Receipt,
-  Plus,
-  RefreshCw
+  Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
-
+import { Link } from 'react-router-dom'; 
 import { 
   LineChart, 
   Line, 
@@ -92,17 +89,7 @@ const DashboardPage: React.FC = () => {
     return days;
   }, [localSales]);
 
-  const stats = {
-    today_sales: totalRevenueToday,
-    today_profit: totalProfitToday,
-    today_expenses: totalExpensesToday,
-    total_sales: totalSalesAllTime,
-    total_cost: totalCostAllTime,
-    total_profit: totalProfitAllTime,
-    active_products: localProducts?.length || 0,
-    low_stock: lowStockItems.length,
-    chart_data: chartData
-  };
+
 
   const statCards = [
     { label: "Today's sales", value: `MK ${totalRevenueToday.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
