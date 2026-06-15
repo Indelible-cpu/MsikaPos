@@ -13,7 +13,11 @@ export default function MobileHeader() {
 
   const localSales = useLiveQuery(() => db.salesQueue.toArray());
   const today = new Date().toISOString().split('T')[0];
-  const transactionsToday = (localSales || []).filter(s => s.createdAt.startsWith(today)).length;
+  const transactionsToday = (localSales || []).filter(s => 
+    s.createdAt.startsWith(today) && 
+    s.status !== 'DELETED' && 
+    s.status !== 'REFUNDED'
+  ).length;
 
   useEffect(() => {
     const updateHeader = async () => {
