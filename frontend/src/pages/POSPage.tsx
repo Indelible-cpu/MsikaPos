@@ -58,24 +58,48 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
   };
 
   return (
-    <div onClick={() => addToCart(p)} className="aspect-square bg-card rounded-2xl border border-border/50 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 hover:border-primary/20 hover:shadow-md active:bg-primary/5 transition-all relative group overflow-hidden">
-      <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden p-2">
+    <div onClick={() => addToCart(p)} className="bg-white rounded-2xl flex flex-col cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all relative group overflow-hidden border border-border/40 pb-2">
+      {/* Image Container */}
+      <div className="w-full aspect-square relative overflow-hidden bg-gray-50 flex items-center justify-center">
         {p.imageUrl ? (
-          <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+          <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
           <img 
             src={getPlaceholder()} 
             alt="placeholder" 
-            className="w-full h-full object-contain opacity-100 group-hover:scale-105 transition-transform drop-shadow-md" 
+            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300 drop-shadow-sm" 
           />
         )}
       </div>
-      <div className="text-center w-full px-2 pb-2">
-        <div className="text-[8px] md:text-[10px] font-black text-foreground leading-none truncate uppercase tracking-tighter">{p.name}</div>
-        <div className="text-[9px] md:text-[11px] text-primary font-black mt-1">MK {p.sellPrice.toLocaleString()}</div>
+      
+      {/* Details Container */}
+      <div className="w-full px-2.5 pt-2 flex flex-col gap-1">
+        {/* Price */}
+        <div className="flex items-baseline gap-0.5">
+          <span className="text-[10px] font-bold text-[#ff4747]">MK</span>
+          <span className="text-sm md:text-base font-black text-[#ff4747] leading-none tracking-tight">{p.sellPrice.toLocaleString()}</span>
+        </div>
+        
+        {/* Title */}
+        <div className="text-[10px] md:text-[11px] text-zinc-800 font-medium leading-tight line-clamp-2 min-h-[2.5em] tracking-tight">
+          {p.name}
+        </div>
+        
+        {/* Bottom tags/stock */}
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-[9px] text-zinc-400 font-medium tracking-tight">
+            {p.isService ? 'Service' : `${p.quantity} in stock`}
+          </span>
+          <div className="w-5 h-5 rounded-full bg-red-50 flex items-center justify-center text-[#ff4747] shadow-sm">
+            <Plus className="w-3 h-3 stroke-[3]" />
+          </div>
+        </div>
       </div>
+      
       {p.quantity <= 5 && !p.isService && (
-        <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-destructive rounded-full animate-pulse" />
+        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded text-[8px] font-bold text-[#ff4747] shadow-sm border border-[#ff4747]/20">
+          Low Stock
+        </div>
       )}
     </div>
   );
