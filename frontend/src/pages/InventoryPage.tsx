@@ -23,7 +23,6 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
-import AiAssistant from '../components/AiAssistant';
 import Modal from '../components/Modal';
 import { soundService } from '../services/SoundService';
 import { AuditService } from '../services/AuditService';
@@ -1015,7 +1014,6 @@ const InventoryPage: React.FC = () => {
         </div>
       </Modal>
 
-      <AiAssistant type="INVENTORY_STRATEGY" context={products} />
       {isScannerOpen && (
         <BarcodeScanner 
           onScan={handleScan} 

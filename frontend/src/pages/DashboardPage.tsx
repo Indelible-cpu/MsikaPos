@@ -13,7 +13,7 @@ import {
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { SyncService } from '../services/SyncService';
+
 import { 
   LineChart, 
   Line, 
@@ -26,7 +26,6 @@ import {
   Bar,
   Cell
 } from 'recharts';
-import AiAssistant from '../components/AiAssistant';
 
 interface Product {
   isService: boolean;
@@ -123,21 +122,8 @@ const DashboardPage: React.FC = () => {
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex-1"></div>
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => {
-                toast.promise(SyncService.pushSales(), {
-                  loading: 'Synchronizing...',
-                  success: 'Cloud sync complete',
-                  error: 'Sync error'
-                });
-              }}
-              title="Force Cloud Sync"
-              className="w-10 h-10 rounded-xl bg-muted/10 border border-border/50 flex items-center justify-center hover:bg-muted/20 transition-all text-primary"
-            >
-              <RefreshCw className="w-5 h-5" />
-            </button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-black uppercase tracking-tighter">Business Overview</h1>
           </div>
         </div>
       </div>
@@ -386,7 +372,7 @@ const DashboardPage: React.FC = () => {
            </div>
         </div>
       </div>
-      <AiAssistant type="DASHBOARD_INSIGHTS" context={stats} />
+
     </div>
   );
 };

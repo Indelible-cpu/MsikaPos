@@ -36,7 +36,6 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
     { id: 'reports', label: 'Reports', icon: BarChart3, path: '/staff/reports', color: 'bg-violet-500' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/staff/settings', color: 'bg-slate-500' },
     ...(isSuperAdmin ? [{ id: 'audit', label: 'Audit Logs', icon: History, path: '/staff/audit-logs', color: 'bg-amber-600' }] : []),
-    { id: 'about', label: 'Support', icon: Info, path: '/staff/about', color: 'bg-indigo-500' },
   ];
 
   const handleLogout = () => {

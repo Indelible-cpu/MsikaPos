@@ -4,7 +4,6 @@ import MobileNav from './MobileNav';
 import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
 import { clsx } from 'clsx';
-import AiAssistant from './AiAssistant';
 import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
@@ -19,10 +18,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const startY = useRef(0);
   const hideNav = location.pathname.includes('/login');
-
-  const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (mainRef.current?.scrollTop === 0) {
@@ -48,19 +43,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     setPullDistance(0);
     startY.current = 0;
   };
-
-  const getAiContext = () => {
-    if (isSuperAdmin) return { mode: 'DIAGNOSTIC' };
-    if (location.pathname.includes('/dashboard')) return { mode: 'DASHBOARD' };
-    if (location.pathname.includes('/inventory')) return { mode: 'INVENTORY' };
-    return { mode: 'GENERAL' };
-  };
-
-  const aiType = isSuperAdmin ? 'SYSTEM_DIAGNOSTICS' : 
-                 location.pathname.includes('/dashboard') ? 'DASHBOARD_INSIGHTS' : 
-                 location.pathname.includes('/inventory') ? 'INVENTORY_STRATEGY' : 'GENERAL_SUPPORT';
-
-
 
   return (
     <div className="min-h-screen flex bg-background transition-colors duration-300 relative overflow-hidden">
@@ -99,7 +81,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         {!hideNav && <MobileNav />}
       </div>
-      {!hideNav && <AiAssistant type={aiType} context={getAiContext()} />}
     </div>
   );
 };
