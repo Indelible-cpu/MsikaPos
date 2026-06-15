@@ -115,7 +115,7 @@ export const loginCustomer = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role.name, branchId: user.branchId },
+      { id: user.id, username: user.username, role: user.role.name, branchId: (user as any).branchId },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '30d' }
     );

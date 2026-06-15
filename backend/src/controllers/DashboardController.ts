@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma';
 import { SaleStatus } from '@prisma/client';
 import { startOfDay, endOfDay, subDays, format } from 'date-fns';
 
-export const getDashboardStats = async (req: Request, res: Response) => {
+export const getDashboardStats = async (_req: Request, res: Response) => {
   const today = new Date();
   const threeDaysLater = new Date();
   threeDaysLater.setDate(today.getDate() + 3);

@@ -144,7 +144,7 @@ export class ProductService {
         action: 'DELETE_PRODUCT_PERMANENT',
         entityType: 'PRODUCT',
         entityId: productId,
-        branchId: product.branchId || user.branchId
+        branchId: (product as any).branchId || user.branchId
       });
     } catch (error: any) {
       console.error('❌ Database Delete Error:', error);

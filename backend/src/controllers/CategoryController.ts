@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 
-export const listCategories = async (req: Request, res: Response) => {
+export const listCategories = async (_req: Request, res: Response) => {
   try {
     const categories = await prisma.category.findMany({
       orderBy: { title: 'asc' }
@@ -34,7 +34,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
   try {
     // Check if category has products
     const productCount = await prisma.product.count({
-      where: { categoryId: parseInt(id) }
+      where: { categoryId: parseInt(id as string) }
     });
 
     if (productCount > 0) {
@@ -45,7 +45,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
     }
 
     await prisma.category.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id as string) }
     });
 
     return res.status(200).json({ success: true, message: 'Category deleted' });

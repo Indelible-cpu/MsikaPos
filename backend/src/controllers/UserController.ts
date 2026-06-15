@@ -59,10 +59,7 @@ export const loginUser = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: 'Login failed', error: error.message });
   }
 };
-
-export const fetchUsers = async (req: Request, res: Response) => {
-  const authUser = (req as any).user;
-
+export const fetchUsers = async (_req: Request, res: Response) => {
   try {
     const where: any = { 
       deleted: false,
@@ -430,7 +427,7 @@ export const magicLogin = async (req: Request, res: Response) => {
     }
 
     const jwtToken = jwt.sign(
-      { id: user.id, username: user.username, role: user.role.name, branchId: user.branchId },
+      { id: user.id, username: user.username, role: user.role.name, branchId: (user as any).branchId },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '24h' }
     );
@@ -443,7 +440,7 @@ export const magicLogin = async (req: Request, res: Response) => {
         username: user.username,
         fullname: user.fullname,
         role: user.role.name,
-        branchId: user.branchId,
+        branchId: (user as any).branchId,
         isVerified: user.isVerified,
         mustChangePassword: user.mustChangePassword
       }
