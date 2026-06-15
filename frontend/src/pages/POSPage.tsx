@@ -58,7 +58,7 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
   };
 
   return (
-    <div onClick={() => addToCart(p)} className="aspect-square bg-card flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 active:bg-primary/5 transition-all relative group">
+    <div onClick={() => addToCart(p)} className="aspect-square bg-card rounded-2xl border border-border/50 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 hover:border-primary/20 hover:shadow-md active:bg-primary/5 transition-all relative group overflow-hidden">
       <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden p-2">
         {p.imageUrl ? (
           <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
@@ -801,7 +801,7 @@ const POSPage: React.FC = () => {
             </button>
           </div>
           
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-[1px] bg-border/50 border border-border/50 rounded-xl overflow-hidden pb-0">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
 
 
             {displayedProducts.map((p: LocalProduct) => (
@@ -843,7 +843,7 @@ const POSPage: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
           {cart.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-2 gap-[1px] bg-border/50 border border-border/50 rounded-xl overflow-hidden p-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-2 gap-2">
               {cart.map(item => {
                 const p = item.product;
                 const getPlaceholder = () => {
@@ -854,7 +854,7 @@ const POSPage: React.FC = () => {
                 };
 
                 return (
-                  <div key={p.id} className="aspect-square bg-card flex flex-col items-center justify-center relative group animate-in zoom-in-95 duration-200">
+                  <div key={p.id} className="aspect-square bg-card rounded-2xl border border-border/50 flex flex-col items-center justify-center relative group animate-in zoom-in-95 duration-200 overflow-hidden">
                     <div className="w-full flex-1 flex items-center justify-center relative overflow-hidden p-1">
                       {p.imageUrl ? (
                         <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-contain" />
