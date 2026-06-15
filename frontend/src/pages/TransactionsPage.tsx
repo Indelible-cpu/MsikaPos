@@ -401,9 +401,9 @@ const TransactionsPage: React.FC = () => {
                         <div className="text-[9px] text-muted-foreground font-bold capitalize tracking-widest">{sale.customerId || 'Walk-in customer'}</div>
                     </div>
 
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-2">
                        <button 
-                         onClick={() => { setSelectedSaleId(sale.id); setViewMode('receipt'); }}
+                         onClick={(e) => { e.stopPropagation(); setSelectedSaleId(sale.id); setViewMode('receipt'); }}
                          className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-primary hover:border-primary/20 transition-all shadow-sm btn-press"
                          title="View Receipt"
                        >
@@ -452,8 +452,8 @@ const TransactionsPage: React.FC = () => {
         maxWidth="max-w-2xl"
       >
         {selectedSale && (
-          <div className="p-8 space-y-10">
-            <div className="flex justify-center p-1 bg-surface-bg border border-surface-border rounded-2xl w-fit mx-auto shadow-sm">
+        <div className="space-y-6">
+            <div className="flex justify-center p-1 bg-surface-bg border border-surface-border rounded-2xl w-fit mx-auto shadow-sm mt-6">
               <button 
                 onClick={() => setViewMode('receipt')}
                 className={clsx(
@@ -474,7 +474,7 @@ const TransactionsPage: React.FC = () => {
               </button>
             </div>
 
-            <div id="print-container" className="bg-white rounded-[2rem] overflow-hidden shadow-inner border border-zinc-100 p-8 max-h-[50vh] overflow-y-auto text-black flex justify-center">
+            <div id="print-container" className="bg-white overflow-hidden shadow-inner border border-zinc-100 max-h-[55vh] overflow-y-auto text-black w-full">
               {viewMode === 'invoice' ? (
                 <Invoice 
                   items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as unknown as LocalProduct, quantity: item.quantity }))}
@@ -505,7 +505,7 @@ const TransactionsPage: React.FC = () => {
               )}
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4 px-6 pb-6">
               <button 
                 onClick={() => window.print()} 
                 className="flex-1 py-5 bg-surface-bg border border-surface-border hover:border-primary-500/20 rounded-2xl text-[10px] font-bold tracking-[0.2em] flex items-center justify-center gap-2 transition-all capitalize"
