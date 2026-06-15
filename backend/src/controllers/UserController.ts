@@ -176,44 +176,13 @@ export const saveUser = async (req: Request, res: Response) => {
 
 export const updateOnboarding = async (req: Request, res: Response) => {
   const authUser = (req as any).user;
-  const {
-    fullname,
-    nationalId,
-    phone,
-    profilePic,
-    homeAddress,
-    nextOfKinName,
-    nextOfKinPhone,
-    relationship,
-    newPassword
-  } = req.body;
-  const email = req.body.email?.trim();
+  const { newPassword } = req.body;
 
   try {
-    if (phone && !isValidMalawianPhone(phone)) {
-      return res.status(400).json({ success: false, message: 'Invalid phone number format' });
-    }
-    if (nextOfKinPhone && !isValidMalawianPhone(nextOfKinPhone)) {
-      return res.status(400).json({ success: false, message: 'Invalid next of kin phone number format' });
-    }
-
-    if (nationalId && !/^[A-Z0-9]{8}$/.test(nationalId.toUpperCase())) {
-      return res.status(400).json({ success: false, message: 'National ID must be 8 alphanumeric characters' });
-    }
-
     const data: any = {
-      fullname,
-      nationalId: nationalId?.toUpperCase(),
-      phone: normalizePhone(phone),
-      email,
-      profilePic,
-      homeAddress,
-      nextOfKinName,
-      nextOfKinPhone: normalizePhone(nextOfKinPhone),
-      relationship,
-      verificationCode: Math.floor(100000 + Math.random() * 900000).toString(),
-      magicToken: null, // Clear magic token once used/profile updated
-      magicTokenExpires: null
+      magicToken: null,
+      magicTokenExpires: null,
+      isVerified: true
     };
 
     if (newPassword) {
@@ -226,28 +195,9 @@ export const updateOnboarding = async (req: Request, res: Response) => {
       data
     });
 
-    // Send Verification Email (Background)
-    if (email) {
-      sendMail({
-        to: email,
-        subject: "MsikaPos Account Verification",
-        text: `Your MsikaPos verification code is: ${data.verificationCode}. For security reasons, do not share this code with anyone.`,
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #10b981;">Account Verification</h2>
-            <p>Your verification code is: <strong style="font-size: 24px; letter-spacing: 2px;">${data.verificationCode}</strong></p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #ef4444; font-weight: bold;">⚠️ Security Warning: Do not share this code with anyone. MsikaPos staff will never ask for your code.</p>
-          </div>
-        `
-      }).catch(err => {
-        console.error('❌ Verification email failed:', err);
-      });
-    }
-
     return res.status(200).json({
       success: true,
-      message: "Profile updated. Verification code sent to email."
+      message: "Password updated successfully. System unlocked."
     });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Onboarding failed', error: error.message });

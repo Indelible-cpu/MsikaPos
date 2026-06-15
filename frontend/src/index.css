@@ -136,13 +136,13 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-background/70 backdrop-blur-xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)];
+    @apply bg-transparent border-transparent shadow-none;
   }
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border shadow-sm hover:shadow-lg transition-all duration-300 relative overflow-hidden;
+    @apply bg-transparent border-transparent shadow-none hover:bg-surface-text/5 hover:shadow-none transition-all duration-300 relative overflow-hidden;
   }
   .glass-card:hover {
-    @apply -translate-y-1 shadow-xl;
+    @apply -translate-y-1 shadow-none;
   }
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary to-blue-400;

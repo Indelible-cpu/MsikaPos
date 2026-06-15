@@ -1,27 +1,37 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
-import DashboardPage from './pages/DashboardPage';
-import POSPage from './pages/POSPage';
-import LoginPage from './pages/LoginPage';
-import SettingsPage from './pages/SettingsPage';
-import InventoryPage from './pages/InventoryPage';
-import SalesPage from './pages/SalesPage';
-import DebtPage from './pages/DebtPage';
-import ExpensesPage from './pages/ExpensesPage';
-import TransactionsPage from './pages/TransactionsPage';
-import UsersPage from './pages/UsersPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import OnboardingPage from './pages/OnboardingPage';
-import LockedPage from './pages/LockedPage';
-import ReportsPage from './pages/ReportsPage';
-import BranchesPage from './pages/BranchesPage';
-import AboutPage from './pages/AboutPage';
-import PublicStorefront from './pages/PublicStorefront';
-import LandingPage from './pages/LandingPage';
-import SupportPage from './pages/SupportPage';
-import AuditLogsPage from './pages/AuditLogsPage';
-import FeatureAccessPage from './pages/FeatureAccessPage';
+
+const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
+const POSPage = React.lazy(() => import('./pages/POSPage'));
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const InventoryPage = React.lazy(() => import('./pages/InventoryPage'));
+const SalesPage = React.lazy(() => import('./pages/SalesPage'));
+const DebtPage = React.lazy(() => import('./pages/DebtPage'));
+const ExpensesPage = React.lazy(() => import('./pages/ExpensesPage'));
+const TransactionsPage = React.lazy(() => import('./pages/TransactionsPage'));
+const UsersPage = React.lazy(() => import('./pages/UsersPage'));
+const ForgotPasswordPage = React.lazy(() => import('./pages/ForgotPasswordPage'));
+const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));
+const LockedPage = React.lazy(() => import('./pages/LockedPage'));
+const ReportsPage = React.lazy(() => import('./pages/ReportsPage'));
+const BranchesPage = React.lazy(() => import('./pages/BranchesPage'));
+const AboutPage = React.lazy(() => import('./pages/AboutPage'));
+const PublicStorefront = React.lazy(() => import('./pages/PublicStorefront'));
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
+const SupportPage = React.lazy(() => import('./pages/SupportPage'));
+const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
+const FeatureAccessPage = React.lazy(() => import('./pages/FeatureAccessPage'));
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-surface-bg">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-surface-border border-t-primary-500 rounded-full animate-spin"></div>
+      <p className="text-[10px] font-black tracking-widest text-surface-text/40 uppercase animate-pulse">Loading Module...</p>
+    </div>
+  </div>
+);
 import { SyncService } from './services/SyncService';
 import MainLayout from './components/MainLayout';
 import { db } from './db/posDB';
@@ -319,74 +329,76 @@ const App: React.FC = () => {
         }} 
       />
       <div className="min-h-screen selection:bg-primary-500/30">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/store" element={<PublicStorefront />} />
-          <Route path="/about" element={<AboutPage />} />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/store" element={<PublicStorefront />} />
+            <Route path="/about" element={<AboutPage />} />
 
-          {/* Staff Auth */}
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/staff" element={<Navigate to="/staff/login" replace />} />
-          <Route path="/staff/login" element={<LoginPage />} />
-          <Route path="/staff/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/staff/onboarding" element={(localStorage.getItem('token') || sessionStorage.getItem('token')) ? <OnboardingPage /> : <Navigate to="/staff/login" replace />} />
-          
-          {/* Private Staff Interface */}
-          <Route 
-            path="/staff/*" 
-            element={
-              (localStorage.getItem('token') || sessionStorage.getItem('token')) ? (
-                (() => {
-                    let u;
-                    try {
-                      u = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
-                    } catch {
-                      return <Navigate to="/staff/login" replace />;
-                    }
+            {/* Staff Auth */}
+            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/staff" element={<Navigate to="/staff/login" replace />} />
+            <Route path="/staff/login" element={<LoginPage />} />
+            <Route path="/staff/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/staff/onboarding" element={(localStorage.getItem('token') || sessionStorage.getItem('token')) ? <OnboardingPage /> : <Navigate to="/staff/login" replace />} />
+            
+            {/* Private Staff Interface */}
+            <Route 
+              path="/staff/*" 
+              element={
+                (localStorage.getItem('token') || sessionStorage.getItem('token')) ? (
+                  (() => {
+                      let u;
+                      try {
+                        u = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+                      } catch {
+                        return <Navigate to="/staff/login" replace />;
+                      }
+                      
+                      // STRICT ROLE CHECK: Only Staff can access staff portal
+                      const isStaff = ['SUPER_ADMIN', 'ADMIN', 'CASHIER'].includes(u.role);
+                      if (!isStaff) {
+                        return <Navigate to="/" replace />;
+                      }
+    
+                      if (!u.isVerified || u.mustChangePassword) {
+                        return <Navigate to="/staff/onboarding" replace />;
+                      }
                     
-                    // STRICT ROLE CHECK: Only Staff can access staff portal
-                    const isStaff = ['SUPER_ADMIN', 'ADMIN', 'CASHIER'].includes(u.role);
-                    if (!isStaff) {
-                      return <Navigate to="/" replace />;
-                    }
-  
-                    if (!u.isVerified || u.mustChangePassword) {
-                      return <Navigate to="/staff/onboarding" replace />;
-                    }
-                  
-                  return (
-                    <MainLayout>
-                      <Routes>
-                        <Route path="dashboard" element={<DashboardPage />} />
-                        <Route path="pos" element={<POSPage />} />
-                        <Route path="inquiries" element={<SupportPage />} />
-                        <Route path="inventory" element={<InventoryPage />} />
-                        <Route path="sales" element={<SalesPage />} />
-                        <Route path="debt" element={<DebtPage />} />
-                        <Route path="expenses" element={<ExpensesPage />} />
-                        <Route path="transactions" element={<TransactionsPage />} />
-                        <Route path="users" element={<UsersPage />} />
-                        <Route path="settings" element={<SettingsPage />} />
-                        <Route path="reports" element={<ReportsPage />} />
-                        <Route path="branches" element={<BranchesPage />} />
-                        <Route path="audit-logs" element={isSuperAdmin ? <AuditLogsPage /> : <Navigate to="/staff/dashboard" replace />} />
-                        <Route path="feature-access" element={isSuperAdmin ? <FeatureAccessPage /> : <Navigate to="/staff/dashboard" replace />} />
-                        <Route path="about" element={<AboutPage />} />
-                        <Route path="" element={<Navigate to="dashboard" replace />} />
-                      </Routes>
-                    </MainLayout>
-                  );
-                })()
-              ) : (
-                <Navigate to="/staff/login" replace />
-              )
-            } 
-          />
-          
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+                    return (
+                      <MainLayout>
+                        <Routes>
+                          <Route path="dashboard" element={<DashboardPage />} />
+                          <Route path="pos" element={<POSPage />} />
+                          <Route path="inquiries" element={<SupportPage />} />
+                          <Route path="inventory" element={<InventoryPage />} />
+                          <Route path="sales" element={<SalesPage />} />
+                          <Route path="debt" element={<DebtPage />} />
+                          <Route path="expenses" element={<ExpensesPage />} />
+                          <Route path="transactions" element={<TransactionsPage />} />
+                          <Route path="users" element={<UsersPage />} />
+                          <Route path="settings" element={<SettingsPage />} />
+                          <Route path="reports" element={<ReportsPage />} />
+                          <Route path="branches" element={<BranchesPage />} />
+                          <Route path="audit-logs" element={isSuperAdmin ? <AuditLogsPage /> : <Navigate to="/staff/dashboard" replace />} />
+                          <Route path="feature-access" element={isSuperAdmin ? <FeatureAccessPage /> : <Navigate to="/staff/dashboard" replace />} />
+                          <Route path="about" element={<AboutPage />} />
+                          <Route path="" element={<Navigate to="dashboard" replace />} />
+                        </Routes>
+                      </MainLayout>
+                    );
+                  })()
+                ) : (
+                  <Navigate to="/staff/login" replace />
+                )
+              } 
+            />
+            
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
         <PWAInstallPrompt 
           deferredPrompt={deferredPrompt} 
           onInstall={handleInstallClick} 

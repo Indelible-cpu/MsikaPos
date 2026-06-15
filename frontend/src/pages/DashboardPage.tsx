@@ -15,8 +15,8 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';
 import { 
-  AreaChart, 
-  Area, 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -138,13 +138,6 @@ const DashboardPage: React.FC = () => {
             >
               <RefreshCw className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-4 border-l border-border/30 pl-6">
-              <div className="text-right">
-                 <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Local Session</div>
-                 <div className="text-xs font-black text-success uppercase">System Online</div>
-              </div>
-              <div className="w-3 h-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/50" />
-            </div>
           </div>
         </div>
       </div>
@@ -222,13 +215,7 @@ const DashboardPage: React.FC = () => {
 
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-primary-500)" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="var(--color-primary-500)" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
+                  <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                     <XAxis 
                       dataKey="name" 
@@ -248,23 +235,23 @@ const DashboardPage: React.FC = () => {
                         fontWeight: '900'
                       }}
                     />
-                    <Area 
-                      type="monotone" 
+                    <Line 
+                      type="linear" 
                       dataKey="revenue" 
                       stroke="var(--color-primary-500)" 
                       strokeWidth={4}
-                      fillOpacity={1} 
-                      fill="url(#colorRev)" 
+                      dot={{ r: 4, fill: "var(--color-primary-500)", strokeWidth: 0 }}
+                      activeDot={{ r: 6 }}
                     />
-                    <Area 
-                      type="monotone" 
+                    <Line 
+                      type="linear" 
                       dataKey="customers" 
                       stroke="#f59e0b" 
-                      strokeWidth={2}
+                      strokeWidth={3}
                       strokeDasharray="5 5"
-                      fill="transparent" 
+                      dot={{ r: 4, fill: "#f59e0b", strokeWidth: 0 }}
                     />
-                  </AreaChart>
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
            </div>

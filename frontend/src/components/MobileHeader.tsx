@@ -3,13 +3,17 @@ import { useLocation } from 'react-router-dom';
 import { Bell, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db } from '../db/posDB';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 
 export default function MobileHeader() {
   const location = useLocation();
   const [shopName, setShopName] = useState('Management');
   const [shopLogo, setShopLogo] = useState('/icon.png?v=2');
-  const [pendingCount, setPendingCount] = useState(0);
+
+  const localSales = useLiveQuery(() => db.salesQueue.toArray());
+  const today = new Date().toISOString().split('T')[0];
+  const transactionsToday = (localSales || []).filter(s => s.createdAt.startsWith(today)).length;
 
   useEffect(() => {
     const updateHeader = async () => {
@@ -50,22 +54,10 @@ export default function MobileHeader() {
       if (storedLogo) setShopLogo(storedLogo);
     };
 
-    const fetchPending = async () => {
-      try {
-        const api = (await import('../api/client')).default;
-        const res = await api.get('/inquiries');
-        const pending = res.data.data.filter((i: { status: string }) => i.status === 'NEW').length;
-        setPendingCount(pending);
-      } catch { /* silent */ }
-    };
-
     updateHeader();
-    fetchPending();
-    const interval = setInterval(fetchPending, 15000);
     window.addEventListener('storage', updateHeader);
     return () => {
       window.removeEventListener('storage', updateHeader);
-      clearInterval(interval);
     };
   }, []);
 
@@ -126,19 +118,19 @@ export default function MobileHeader() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-
+        <div className="flex items-center gap-4">
+          <div className="w-2.5 h-2.5 bg-success rounded-full animate-pulse shadow-lg shadow-success/50" title="System Online" />
 
           <button
-            onClick={() => window.location.href = '/staff/inquiries'}
+            onClick={() => window.location.href = '/staff/transactions'}
             className="relative p-2.5 bg-background border border-border/50 rounded-xl text-muted-foreground hover:text-primary active:scale-95 transition-all btn-press"
-            title="Notifications"
-            aria-label="Notifications"
+            title="Transactions"
+            aria-label="Transactions"
           >
             <Bell className="w-5 h-5" />
-            {pendingCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[8px] font-black rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-lg shadow-destructive/20">
-                {pendingCount}
+            {transactionsToday > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-primary-foreground text-[8px] font-black rounded-full flex items-center justify-center border-2 border-background animate-pulse shadow-lg shadow-primary/20">
+                {transactionsToday}
               </span>
             )}
           </button>
