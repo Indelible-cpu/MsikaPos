@@ -55,6 +55,7 @@ export interface LocalSale {
   profit: number;
   status: string;
   dueDate?: string;
+  refundReason?: string;
 }
 
 export interface LocalCustomer {

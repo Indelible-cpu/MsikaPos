@@ -143,6 +143,7 @@ model Sale {
   taxAmount   Decimal     @default(0.00) @db.Decimal(10, 2)
   isCredit    Boolean     @default(false)
   dueDate     DateTime?
+  refundReason String?
   itemsCount  Int         @default(0)
   synced      Boolean     @default(false)
   deviceId    String?
@@ -271,6 +272,7 @@ enum SaleStatus {
   COMPLETED
   PENDING
   DELETED
+  REFUNDED
 }
 
 model ProductRating {

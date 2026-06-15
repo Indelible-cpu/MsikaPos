@@ -13,7 +13,8 @@ import {
   MessageSquare,
   Eye,
   FileText,
-  Calendar
+  Calendar,
+  RotateCcw
 } from 'lucide-react';
 import { format, startOfDay, startOfWeek, startOfMonth, startOfQuarter, startOfYear, isWithinInterval, endOfDay } from 'date-fns';
 import Modal from '../components/Modal';
@@ -42,6 +43,10 @@ const TransactionsPage: React.FC = () => {
   const [editingSale, setEditingSale] = useState<LocalSale | null>(null);
   const [editForm, setEditForm] = useState({ paymentMode: '', customerId: '' });
 
+  const [isRefundOpen, setIsRefundOpen] = useState(false);
+  const [refundingSale, setRefundingSale] = useState<LocalSale | null>(null);
+  const [refundReason, setRefundReason] = useState('');
+
   const localSales = useLiveQuery(
     () => db.salesQueue
       .filter(s => {
@@ -69,7 +74,7 @@ const TransactionsPage: React.FC = () => {
 
         const matchesScope = isWithinInterval(saleDate, interval);
 
-        return matchesSearch && matchesSku && matchesScope;
+        return matchesSearch && matchesSku && matchesScope && s.status !== 'DELETED';
       })
       .reverse()
       .toArray(),
@@ -111,7 +116,7 @@ const TransactionsPage: React.FC = () => {
     const localInvoices = new Set(merged.map(s => s.invoiceNo));
     
     serverSales.forEach(ss => {
-      if (!localInvoices.has(ss.invoiceNo)) {
+      if (ss.status !== 'DELETED' && !localInvoices.has(ss.invoiceNo)) {
         merged.push(ss);
       }
     });
@@ -125,17 +130,17 @@ const TransactionsPage: React.FC = () => {
   }, [selectedSaleId, sales]);
 
   const totalSalesCount = sales.length;
-  const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+  const totalRevenue = sales.reduce((sum, s) => sum + (s.status === 'REFUNDED' ? 0 : Number(s.total)), 0);
 
   const handleDeleteSale = async (saleId: string) => {
     if (!window.confirm('Are you sure you want to delete this transaction? This cannot be undone.')) return;
     try {
-      // 1. Local Delete
-      await db.salesQueue.delete(saleId);
+      // 1. Local Delete (Soft delete)
+      await db.salesQueue.update(saleId, { status: 'DELETED' });
       
-      // 2. Server Delete (Optional, depends if it's synced)
+      // 2. Server Delete
       try {
-        await api.delete(`/sales/\${saleId}`);
+        await api.delete(`/sales/${saleId}`);
       } catch { /* Silent if not found on server */ }
       
       toast.success('Transaction deleted');
@@ -173,9 +178,44 @@ const TransactionsPage: React.FC = () => {
       
       toast.success('Sale updated');
       setIsEditOpen(false);
-      // Refresh local merge by trigger
+      setServerSales(prev => prev.map(s => s.id === editingSale.id ? { ...s, paymentMode: updates.paymentMode, customerId: updates.customerId } : s));
     } catch {
       toast.error('Failed to update sale');
+    }
+  };
+
+  const handleRefundSale = (sale: LocalSale) => {
+    setRefundingSale(sale);
+    setRefundReason('');
+    setIsRefundOpen(true);
+  };
+
+  const saveRefund = async () => {
+    if (!refundingSale) return;
+    if (!refundReason.trim()) {
+      toast.error('Refund reason is required');
+      return;
+    }
+    try {
+      const updates = { 
+        status: 'REFUNDED',
+        refundReason: refundReason,
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Local update
+      await db.salesQueue.update(refundingSale.id, updates);
+      
+      // Server update
+      try {
+        await api.put(`/sales/${refundingSale.id}`, updates);
+      } catch { /* Silent */ }
+      
+      toast.success('Sale marked as refunded');
+      setIsRefundOpen(false);
+      setServerSales(prev => prev.map(s => s.id === refundingSale.id ? { ...s, status: 'REFUNDED', refundReason } : s));
+    } catch {
+      toast.error('Failed to refund sale');
     }
   };
 
@@ -343,6 +383,14 @@ const TransactionsPage: React.FC = () => {
                           <span className={clsx("px-2 py-0.5 rounded text-[8px] font-bold capitalize tracking-widest", sale.paymentMode === 'Credit' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary')}>
                              {sale.paymentMode}
                           </span>
+                          {sale.status === 'REFUNDED' && (
+                            <>
+                              <span className="text-[10px] text-muted-foreground/10">•</span>
+                              <span className="px-2 py-0.5 rounded text-[8px] font-bold capitalize tracking-widest bg-red-500/10 text-red-500" title={sale.refundReason}>
+                                 Refunded
+                              </span>
+                            </>
+                          )}
                        </div>
                     </div>
                  </div>
@@ -363,15 +411,24 @@ const TransactionsPage: React.FC = () => {
                        </button>
                        {!readOnly && (
                          <>
+                           {sale.status !== 'REFUNDED' && (
+                             <button 
+                               onClick={(e) => { e.stopPropagation(); handleRefundSale(sale); }}
+                               className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-blue-500 hover:border-blue-500/20 transition-all shadow-sm btn-press"
+                               title="Refund Transaction"
+                             >
+                               <RotateCcw className="w-4 h-4" />
+                             </button>
+                           )}
                            <button 
-                             onClick={() => handleEditSale(sale)}
+                             onClick={(e) => { e.stopPropagation(); handleEditSale(sale); }}
                              className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-amber-500 hover:border-amber-500/20 transition-all shadow-sm btn-press"
                              title="Edit Transaction"
                            >
                              <Edit className="w-4 h-4" />
                            </button>
                            <button 
-                             onClick={() => handleDeleteSale(sale.id)}
+                             onClick={(e) => { e.stopPropagation(); handleDeleteSale(sale.id); }}
                              className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-destructive hover:border-destructive/20 transition-all shadow-sm btn-press"
                              title="Delete Transaction"
                            >
@@ -511,6 +568,34 @@ const TransactionsPage: React.FC = () => {
             className="w-full btn-primary !py-5 text-[10px] font-bold tracking-widest shadow-xl shadow-primary-500/20 capitalize"
           >
             Save changes
+          </button>
+        </div>
+      </Modal>
+
+      {/* Refund Modal */}
+      <Modal 
+        isOpen={isRefundOpen} 
+        onClose={() => setIsRefundOpen(false)} 
+        title="Refund Transaction"
+        maxWidth="max-w-md"
+      >
+        <div className="p-8 space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold tracking-widest text-surface-text/40 ml-1 capitalize">Refund Reason</label>
+              <textarea 
+                className="input-field w-full py-4 px-6 text-sm font-bold resize-none h-24"
+                placeholder="E.g., Customer returned item due to defect..."
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <button 
+            onClick={saveRefund}
+            className="w-full bg-red-500 hover:bg-red-600 text-white !py-5 text-[10px] font-bold tracking-widest shadow-xl shadow-red-500/20 capitalize rounded-2xl transition-all btn-press"
+          >
+            Confirm Refund
           </button>
         </div>
       </Modal>

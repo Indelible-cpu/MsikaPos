@@ -34,7 +34,7 @@ export class SyncService {
         // Reconciliation: Check if sale already exists by invoiceNo (Strong Match)
         const existingSale = await prisma.sale.findUnique({
           where: { invoiceNo: saleData.invoiceNo },
-          select: { id: true }
+          select: { id: true, status: true, items: true }
         });
 
         if (!existingSale) {
@@ -116,6 +116,40 @@ export class SyncService {
             entityType: 'SALE',
             entityId: saleData.invoiceNo
           });
+        } else {
+          // Check if status changed to REFUNDED or DELETED locally
+          if (saleData.status && existingSale.status !== saleData.status && 
+              (saleData.status === 'REFUNDED' || saleData.status === 'DELETED')) {
+            
+            await prisma.$transaction(async (tx) => {
+              await tx.sale.update({
+                where: { id: existingSale.id },
+                data: { 
+                  status: saleData.status,
+                  refundReason: saleData.refundReason
+                }
+              });
+
+              // Restock items
+              for (const item of existingSale.items) {
+                const isService = serviceStatusMap.get(item.productId);
+                if (!isService) {
+                  await tx.product.update({
+                    where: { id: item.productId },
+                    data: { quantity: { increment: item.quantity } }
+                  });
+                }
+              }
+            });
+
+            await AuditService.log({
+              userId,
+              action: 'SYNC_SALE_UPDATE',
+              entityType: 'SALE',
+              entityId: saleData.invoiceNo,
+              details: `Status updated to ${saleData.status} via sync`
+            });
+          }
         }
       }
     }

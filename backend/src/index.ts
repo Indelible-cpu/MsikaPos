@@ -22,6 +22,7 @@ import * as CustomerCtrl from './controllers/CustomerController';
 import * as ExpenseCtrl from './controllers/ExpenseController';
 import * as AiCtrl from './controllers/AiController';
 import * as FeatureCtrl from './controllers/FeatureController';
+import * as SaleCtrl from './controllers/SaleController';
 import * as Security from './middleware/security';
 
 import { authenticate, authorize } from './middleware/auth';
@@ -154,6 +155,8 @@ app.delete('/api/products/:id', adminOnly, ProductCtrl.deleteProduct);
 
 // Sales & Sync
 app.post('/api/sync', staffOnly, SyncCtrl.syncData);
+app.put('/api/sales/:id', staffOnly, SaleCtrl.updateSale);
+app.delete('/api/sales/:id', staffOnly, SaleCtrl.deleteSale);
 app.get('/api/reports/transactions', staffOnly, ReportCtrl.fetchTransactions);
 app.get('/api/reports/summary', adminOnly, ReportCtrl.getSummary);
 
