@@ -9,7 +9,7 @@ export const updateSale = async (req: Request, res: Response) => {
 
   try {
     const sale = await prisma.sale.findUnique({
-      where: { id },
+      where: { id: id as string },
       include: { items: true }
     });
 
@@ -27,7 +27,7 @@ export const updateSale = async (req: Request, res: Response) => {
 
     // Process refund stock return if transitioning from COMPLETED to REFUNDED or DELETED
     if ((status === 'REFUNDED' || status === 'DELETED') && sale.status !== 'REFUNDED' && sale.status !== 'DELETED') {
-      const allProductIds = Array.from(new Set(sale.items.map(i => i.productId)));
+      const allProductIds: number[] = Array.from(new Set((sale as any).items.map((i: any) => i.productId)));
       const productMeta = await prisma.product.findMany({
         where: { id: { in: allProductIds } },
         select: { id: true, isService: true }
@@ -35,7 +35,7 @@ export const updateSale = async (req: Request, res: Response) => {
       const serviceStatusMap = new Map(productMeta.map(p => [p.id, p.isService]));
 
       await prisma.$transaction(async (tx) => {
-        for (const item of sale.items) {
+        for (const item of (sale as any).items) {
           if (!serviceStatusMap.get(item.productId)) {
             await tx.product.update({
               where: { id: item.productId },
@@ -47,7 +47,7 @@ export const updateSale = async (req: Request, res: Response) => {
     }
 
     const updatedSale = await prisma.sale.update({
-      where: { id },
+      where: { id: id as string },
       data: {
         status: status || sale.status,
         refundReason: refundReason !== undefined ? refundReason : sale.refundReason,
@@ -61,7 +61,7 @@ export const updateSale = async (req: Request, res: Response) => {
       userId: user.id,
       action: 'UPDATE_SALE',
       entityType: 'SALE',
-      entityId: id,
+      entityId: id as string,
       details: `Status: ${status}, RefundReason: ${refundReason}`
     });
 
@@ -77,7 +77,7 @@ export const deleteSale = async (req: Request, res: Response) => {
 
   try {
     const sale = await prisma.sale.findUnique({
-      where: { id },
+      where: { id: id as string },
       include: { items: true }
     });
 
@@ -85,7 +85,7 @@ export const deleteSale = async (req: Request, res: Response) => {
 
     // Restock items if the sale was not already deleted or refunded
     if (sale.status !== 'DELETED' && sale.status !== 'REFUNDED') {
-      const allProductIds = Array.from(new Set(sale.items.map(i => i.productId)));
+      const allProductIds: number[] = Array.from(new Set((sale as any).items.map((i: any) => i.productId)));
       const productMeta = await prisma.product.findMany({
         where: { id: { in: allProductIds } },
         select: { id: true, isService: true }
@@ -93,7 +93,7 @@ export const deleteSale = async (req: Request, res: Response) => {
       const serviceStatusMap = new Map(productMeta.map(p => [p.id, p.isService]));
 
       await prisma.$transaction(async (tx) => {
-        for (const item of sale.items) {
+        for (const item of (sale as any).items) {
           if (!serviceStatusMap.get(item.productId)) {
             await tx.product.update({
               where: { id: item.productId },
@@ -105,7 +105,7 @@ export const deleteSale = async (req: Request, res: Response) => {
     }
 
     await prisma.sale.update({
-      where: { id },
+      where: { id: id as string },
       data: { status: 'DELETED', updatedAt: new Date() }
     });
 
@@ -113,7 +113,7 @@ export const deleteSale = async (req: Request, res: Response) => {
       userId: user.id,
       action: 'DELETE_SALE',
       entityType: 'SALE',
-      entityId: id,
+      entityId: id as string,
       details: 'Sale soft-deleted'
     });
 
