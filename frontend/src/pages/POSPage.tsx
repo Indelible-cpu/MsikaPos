@@ -58,7 +58,7 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
   };
 
   return (
-    <div onClick={() => addToCart(p)} className="bg-white rounded-2xl flex flex-col cursor-pointer hover:shadow-md active:scale-[0.98] transition-all relative group pb-2">
+    <div onClick={() => addToCart(p)} className="bg-card rounded-2xl flex flex-col cursor-pointer hover:shadow-md active:scale-[0.98] transition-all relative group pb-2">
       {/* Image Container */}
       <div className="w-full aspect-square relative flex items-center justify-center">
         {p.imageUrl ? (
@@ -81,23 +81,23 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
         </div>
         
         {/* Title */}
-        <div className="text-[10px] md:text-[11px] text-zinc-800 font-medium leading-tight line-clamp-2 min-h-[2.5em] tracking-tight">
+        <div className="text-[10px] md:text-[11px] text-foreground font-medium leading-tight line-clamp-2 min-h-[2.5em] tracking-tight">
           {p.name}
         </div>
         
         {/* Bottom tags/stock */}
         <div className="flex items-center justify-between mt-1">
-          <span className="text-[9px] text-zinc-400 font-medium tracking-tight">
+          <span className="text-[9px] text-muted-foreground font-medium tracking-tight">
             {p.isService ? 'Service' : `${p.quantity} in stock`}
           </span>
-          <div className="w-5 h-5 rounded-full bg-red-50 flex items-center justify-center text-[#ff4747] shadow-sm">
+          <div className="w-5 h-5 rounded-full bg-[#ff4747]/10 flex items-center justify-center text-[#ff4747] shadow-sm">
             <Plus className="w-3 h-3 stroke-[3]" />
           </div>
         </div>
       </div>
       
       {p.quantity <= 5 && !p.isService && (
-        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded text-[8px] font-bold text-[#ff4747] shadow-sm border border-[#ff4747]/20">
+        <div className="absolute top-2 right-2 bg-background/90 backdrop-blur px-1.5 py-0.5 rounded text-[8px] font-bold text-[#ff4747] shadow-sm border border-[#ff4747]/20">
           Low Stock
         </div>
       )}
