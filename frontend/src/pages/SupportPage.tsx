@@ -162,46 +162,42 @@ const SupportPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background transition-all w-full pb-24 md:pb-0 px-0 relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex-1"></div>
-        </div>
-
-        <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
-          <div className="flex flex-wrap gap-2">
-            {['ALL', 'NEW', 'VIEWED', 'RESPONDED', 'NEGOTIATING', 'CLOSED'].map(s => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={clsx(
-                  "px-4 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all border uppercase btn-press",
-                  statusFilter === s 
-                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20" 
-                    : "bg-card/50 border-border/50 text-muted-foreground hover:bg-muted/50"
-                )}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-          <div className="relative w-full md:w-64">
+      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+        <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
+          {/* Search */}
+          <div className="relative flex-[2] min-w-[140px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input 
               type="text" 
               placeholder="Search customers..."
               title="Search support requests"
               aria-label="Search support requests"
-              className="input-field w-full pl-11 text-xs font-black py-3 uppercase"
+              className="input-field w-full pl-11 text-[11px] h-10 font-bold shadow-inner"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          {/* Status filter as compact dropdown */}
+          <div className="relative flex-1 min-w-[110px] md:w-44 shrink-0">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="input-field w-full text-[10px] h-10 font-bold capitalize shadow-inner pr-8"
+            >
+              {['ALL', 'NEW', 'VIEWED', 'RESPONDED', 'NEGOTIATING', 'CLOSED'].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Clear all */}
           <button 
             onClick={handleDeleteAll}
-            className="p-3 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl hover:bg-destructive hover:text-destructive-foreground transition-all shadow-sm btn-press"
-            title="Clear all support history"
+            className="w-10 h-10 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-all shadow-sm btn-press shrink-0"
+            title="Clear all inquiries"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
