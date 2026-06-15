@@ -634,50 +634,78 @@ const InventoryPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-background transition-all pb-24 md:pb-0 px-0">
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex-1"></div>
-          <div className="flex flex-wrap items-center gap-3">
+      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+        <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
+          <div className="relative flex-[2] min-w-[150px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search by name or SKU..."
+              className="input-field w-full pl-11 text-[11px] h-10 font-bold shadow-inner"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="relative flex-1 min-w-[120px] md:w-44 shrink-0">
+            <select 
+              value={selectedCategory || ''} 
+              onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : null)}
+              className="input-field w-full text-[10px] h-10 font-bold capitalize shadow-inner pr-8"
+            >
+              <option value="">All Categories ({products?.length || 0})</option>
+              {categories?.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.title} ({analytics.categoryCounts[cat.id] || 0})</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
             <button 
               onClick={() => setIsCategoryModalOpen(true)}
-              className="btn-secondary btn-press !px-6 !py-4 uppercase text-[10px] font-black tracking-widest"
-              title="Open Category Manager"
-              aria-label="Open Category Manager"
+              className="btn-secondary h-10 !px-4 uppercase text-[10px] font-black tracking-widest shrink-0"
+              title="Categories"
             >
-              Categories
+              <span className="hidden md:inline">Categories</span>
+              <span className="md:hidden">Cats</span>
             </button>
             <button 
               onClick={() => setShowDeleted(!showDeleted)}
-              className={clsx("btn-secondary btn-press !px-6 !py-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2", showDeleted && "!bg-destructive/10 !text-destructive !border-destructive/20")}
-              title={showDeleted ? "View Active Items" : "View Trash"}
+              className={clsx("btn-secondary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shrink-0", showDeleted && "!bg-destructive/10 !text-destructive !border-destructive/20")}
+              title={showDeleted ? "Active Items" : "Trash"}
             >
-              <Trash2 className="w-4 h-4" /> {showDeleted ? 'Active' : 'Trash'}
+              <Trash2 className="w-4 h-4" /> <span className="hidden md:inline">{showDeleted ? 'Active' : 'Trash'}</span>
             </button>
             <button 
               onClick={handleExport}
-              className="btn-secondary btn-press !px-6 !py-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
+              className="btn-secondary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shrink-0"
               title="Export CSV"
-              aria-label="Export CSV"
             >
-              <Download className="w-4 h-4" /> Export CSV
+              <Download className="w-4 h-4" /> <span className="hidden md:inline">Export</span>
             </button>
             {!readOnly && (
               <button 
                 onClick={() => openAddModal()}
-                className="btn-primary btn-press hover-lift !px-6 !py-4 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-primary/20"
-                title="Add New Product"
-                aria-label="Add New Product"
+                className="btn-primary h-10 !px-4 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-primary/20 shrink-0"
+                title="Add product"
               >
-                <Plus className="w-4 h-4 mr-1 inline" /> Add product
+                <Plus className="w-4 h-4 inline md:mr-1" /> <span className="hidden md:inline">Add product</span>
               </button>
             )}
+            <button 
+              onClick={() => setIsScannerOpen(true)}
+              className="w-10 h-10 bg-card/50 backdrop-blur-md border border-border/50 rounded-xl flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all shadow-sm shrink-0"
+              title="Scanner"
+            >
+              <Barcode className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
         
-      <div className="px-6 md:px-12 py-8 stagger-children">
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-0 glass-panel border border-border/50 rounded-3xl overflow-hidden mb-8">
-          <div className="p-8 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
+      <div className="px-4 md:px-12 py-4 stagger-children">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-0 glass-panel border border-border/50 rounded-2xl overflow-hidden mb-6">
+          <div className="p-4 md:p-6 border-b md:border-b-0 md:border-r border-border/50 bg-card/50">
             <div className="card-label">Total stock cost</div>
             <div className="text-xl md:text-2xl font-black tracking-tighter">MK{analytics.totalCost.toLocaleString()}</div>
           </div>
@@ -699,56 +727,6 @@ const InventoryPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <div className="relative group flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 group-focus-within:text-primary transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search by name or SKU..."
-                title="Search products"
-                aria-label="Search products"
-                className="input-field w-full pl-14 shadow-sm py-4"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <button 
-              onClick={() => setIsScannerOpen(true)}
-              className="w-14 h-14 bg-card/50 backdrop-blur-md border border-border/50 rounded-2xl flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-all shadow-sm btn-press flex-shrink-0"
-              title="Open Barcode Scanner"
-            >
-              <Barcode className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar py-2">
-            <button 
-              onClick={() => setSelectedCategory(null)}
-              className={clsx(
-                "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2",
-                !selectedCategory ? "border-primary-500 text-primary-500" : "border-transparent text-surface-text/40 hover:text-surface-text"
-              )}
-              title="Show all categories"
-              aria-label="Show all categories"
-            >
-              All items ({products?.length || 0})
-            </button>
-            {categories?.map(cat => (
-              <button 
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={clsx(
-                  "px-8 py-3 text-[10px] font-black tracking-widest transition-all whitespace-nowrap border-b-2",
-                  selectedCategory === cat.id ? "border-primary-500 text-primary-500" : "border-transparent text-surface-text/40 hover:text-surface-text"
-                )}
-                title={`Filter by ${cat.title}`}
-                aria-label={`Filter by ${cat.title}`}
-              >
-                {cat.title} ({analytics.categoryCounts[cat.id] || 0})
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <AnimatePresence>

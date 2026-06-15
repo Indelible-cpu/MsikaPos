@@ -120,13 +120,15 @@ export class ProductService {
       return;
     }
 
-    // Check for sales history first
+    // Force delete associated sale items to allow product deletion
     const saleCount = await prisma.saleItem.count({
       where: { productId }
     });
 
     if (saleCount > 0) {
-      throw new Error(`Cannot permanently delete '${product.name}' because it has ${saleCount} recorded sales. Please keep it in 'Trash' to preserve financial history.`);
+      await prisma.saleItem.deleteMany({
+        where: { productId }
+      });
     }
 
     // Clean up ratings first (non-critical)
