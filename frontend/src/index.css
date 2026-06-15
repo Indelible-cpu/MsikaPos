@@ -136,7 +136,7 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-transparent border-transparent shadow-none;
+    @apply bg-background border-border/50 shadow-none;
   }
   .glass-card {
     @apply bg-transparent border-transparent shadow-none hover:bg-surface-text/5 hover:shadow-none transition-all duration-300 relative overflow-hidden;
