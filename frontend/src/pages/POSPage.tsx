@@ -58,16 +58,16 @@ const ProductCard = React.memo(({ p, addToCart }: { p: LocalProduct; addToCart: 
   };
 
   return (
-    <div onClick={() => addToCart(p)} className="bg-white rounded-2xl flex flex-col cursor-pointer hover:shadow-lg active:scale-[0.98] transition-all relative group overflow-hidden border border-border/40 pb-2">
+    <div onClick={() => addToCart(p)} className="bg-white rounded-2xl flex flex-col cursor-pointer hover:shadow-md active:scale-[0.98] transition-all relative group pb-2">
       {/* Image Container */}
-      <div className="w-full aspect-square relative overflow-hidden bg-gray-50 flex items-center justify-center">
+      <div className="w-full aspect-square relative flex items-center justify-center">
         {p.imageUrl ? (
-          <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <img src={p.imageUrl.split('|')[0]} alt={p.name} className="w-full h-full object-cover rounded-2xl group-hover:scale-[1.02] transition-transform duration-300" />
         ) : (
           <img 
             src={getPlaceholder()} 
             alt="placeholder" 
-            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300 drop-shadow-sm" 
+            className="w-full h-full object-cover rounded-2xl group-hover:scale-[1.02] transition-transform duration-300 drop-shadow-sm" 
           />
         )}
       </div>
