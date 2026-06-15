@@ -305,6 +305,8 @@ const POSPage: React.FC = () => {
   }, [products, searchTerm, showAll]);
 
   const addToCart = useCallback((product: LocalProduct) => {
+    // Auto-scroll to top so cart is visible on mobile
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     if (!product.isService && product.quantity <= 0) return toast.error('Out of stock');
     setCart(prev => {
