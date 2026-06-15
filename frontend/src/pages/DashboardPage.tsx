@@ -50,15 +50,16 @@ const DashboardPage: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0];
   
-  const todaySales = (localSales || []).filter(s => s.createdAt.startsWith(today));
+  const validSales = (localSales || []).filter(s => s.status !== 'DELETED' && s.status !== 'REFUNDED');
+  const todaySales = validSales.filter(s => s.createdAt.startsWith(today));
   const todayExpensesArr = (localExpenses || []).filter(e => e.date?.startsWith(today) || e.createdAt?.startsWith(today));
   
   const totalRevenueToday = todaySales.reduce((sum, s) => sum + Number(s.total || 0), 0);
   const totalProfitToday = todaySales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
   const totalExpensesToday = todayExpensesArr.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
-  const totalSalesAllTime = (localSales || []).reduce((sum, s) => sum + Number(s.total || 0), 0);
-  const totalProfitAllTime = (localSales || []).reduce((sum, s) => sum + Number(s.profit || 0), 0);
+  const totalSalesAllTime = validSales.reduce((sum, s) => sum + Number(s.total || 0), 0);
+  const totalProfitAllTime = validSales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
   const totalCostAllTime = (localProducts || []).reduce((sum, p) => sum + (Number(p.costPrice || 0) * Number(p.quantity || 0)), 0);
 
   const activeCredits = (localCustomers || []).filter(c => Number(c.balance || 0) > 0).map(c => ({
@@ -73,13 +74,14 @@ const DashboardPage: React.FC = () => {
   const expenses = localExpenses || [];
 
   const chartData = React.useMemo(() => {
-    if (!localSales) return [];
+    const valid = (localSales || []).filter(s => s.status !== 'DELETED' && s.status !== 'REFUNDED');
+    if (!valid.length) return [];
     const days = [];
     for(let i=6; i>=0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split('T')[0];
-      const salesOnDate = localSales.filter(s => s.createdAt.startsWith(dateStr));
+      const salesOnDate = valid.filter(s => s.createdAt.startsWith(dateStr));
       days.push({
         name: d.toLocaleDateString('en-US', { weekday: 'short' }),
         revenue: salesOnDate.reduce((sum, s) => sum + Number(s.total || 0), 0),
@@ -110,7 +112,7 @@ const DashboardPage: React.FC = () => {
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex-1">
-            <h1 className="text-2xl font-black uppercase tracking-tighter">Business Overview</h1>
+            <h1 className="text-lg font-black uppercase tracking-tighter">Business Overview</h1>
           </div>
         </div>
       </div>
