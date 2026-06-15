@@ -4,9 +4,7 @@ import { db, type LocalProduct, type LocalSale } from '../db/posDB';
 import api from '../api/client';
 import { 
   Search, 
-  ArrowLeftRight, 
   Download, 
-  ArrowRightCircle,
   Trash2,
   Edit,
   Printer,
@@ -14,7 +12,9 @@ import {
   Eye,
   FileText,
   Calendar,
-  RotateCcw
+  RotateCcw,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { format, startOfDay, startOfWeek, startOfMonth, startOfQuarter, startOfYear, isWithinInterval, endOfDay } from 'date-fns';
 import Modal from '../components/Modal';
@@ -47,11 +47,18 @@ const TransactionsPage: React.FC = () => {
   const [refundingSale, setRefundingSale] = useState<LocalSale | null>(null);
   const [refundReason, setRefundReason] = useState('');
 
+  // Bulk select
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
   const localSales = useLiveQuery(
     () => db.salesQueue
       .filter(s => {
-        const matchesSearch = s.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              (s.customerId || '').includes(searchTerm);
+        const term = searchTerm.toLowerCase();
+        const matchesSearch = !term ||
+          s.invoiceNo.toLowerCase().includes(term) ||
+          (s.customerId || '').toLowerCase().includes(term) ||
+          s.items.some(item => item.productName.toLowerCase().includes(term));
         
         // SKU Filter
         const matchesSku = !skuFilter || s.items.some(item => item.productName.toLowerCase().includes(skuFilter.toLowerCase()));
@@ -133,20 +140,49 @@ const TransactionsPage: React.FC = () => {
   const totalRevenue = sales.reduce((sum, s) => sum + (s.status === 'REFUNDED' ? 0 : Number(s.total)), 0);
 
   const handleDeleteSale = async (saleId: string) => {
-    if (!window.confirm('Are you sure you want to delete this transaction? This cannot be undone.')) return;
+    const toastId = toast.loading('Deleting transaction...');
     try {
-      // 1. Local Delete (Soft delete)
       await db.salesQueue.update(saleId, { status: 'DELETED' });
-      
-      // 2. Server Delete
-      try {
-        await api.delete(`/sales/${saleId}`);
-      } catch { /* Silent if not found on server */ }
-      
-      toast.success('Transaction deleted');
+      try { await api.delete(`/sales/${saleId}`); } catch { /* silent */ }
+      toast.success('Transaction deleted', { id: toastId });
       setServerSales(prev => prev.filter(s => s.id !== saleId));
     } catch {
-      toast.error('Failed to delete transaction');
+      toast.error('Failed to delete', { id: toastId });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const toastId = toast.loading(`Deleting ${selectedIds.size} transaction(s)...`);
+    setIsBulkDeleting(true);
+    try {
+      for (const id of selectedIds) {
+        await db.salesQueue.update(id, { status: 'DELETED' });
+        try { await api.delete(`/sales/${id}`); } catch { /* silent */ }
+      }
+      setServerSales(prev => prev.filter(s => !selectedIds.has(s.id)));
+      toast.success(`${selectedIds.size} transaction(s) deleted`, { id: toastId });
+      setSelectedIds(new Set());
+    } catch {
+      toast.error('Bulk delete failed', { id: toastId });
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sales.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sales.map(s => s.id)));
     }
   };
 
@@ -363,48 +399,72 @@ const TransactionsPage: React.FC = () => {
       </div>
 
       <div className="p-0 stagger-children">
+        {/* Bulk delete bar */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center justify-between px-6 md:px-12 py-3 bg-destructive/10 border-b border-destructive/20 animate-in slide-in-from-top-1">
+            <span className="text-[10px] font-bold text-destructive tracking-widest">{selectedIds.size} selected</span>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setSelectedIds(new Set())} className="text-[10px] font-bold text-muted-foreground hover:text-foreground tracking-widest capitalize">Cancel</button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="flex items-center gap-2 px-4 py-2 bg-destructive text-white text-[10px] font-bold tracking-widest rounded-xl shadow-sm btn-press disabled:opacity-50 capitalize"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete selected
+              </button>
+            </div>
+          </div>
+        )}
         <div className="glass-panel border-b border-border/50 overflow-hidden divide-y divide-border/30">
+          {/* Header row with select all */}
+          {!readOnly && sales?.length > 0 && (
+            <div className="px-4 md:px-8 py-2 flex items-center gap-3 bg-muted/5 border-b border-border/30">
+              <button onClick={toggleSelectAll} className="text-muted-foreground/40 hover:text-primary transition-colors">
+                {selectedIds.size === sales.length ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
+              </button>
+              <span className="text-[9px] font-bold tracking-widest text-muted-foreground/40 capitalize">{selectedIds.size === sales.length ? 'Deselect all' : 'Select all'}</span>
+            </div>
+          )}
           {sales?.length === 0 ? (
              <div className="p-20 text-center text-muted-foreground/20 font-bold text-[10px] tracking-widest capitalize">No transactions found matching your filters</div>
           ) : (
             sales?.map(sale => (
-              <div key={sale.id} className="px-6 md:px-12 py-6 flex justify-between items-center group hover:bg-primary/5 transition-all relative btn-press">
-                 <div className="flex items-center gap-6 cursor-pointer" onClick={() => { setSelectedSaleId(sale.id); setViewMode('receipt'); }}>
-                    <div className="w-12 h-12 bg-background border border-border/50 rounded-2xl flex items-center justify-center text-muted-foreground/20 group-hover:border-primary/20 group-hover:text-primary transition-all shadow-sm">
-                       <ArrowLeftRight className="w-6 h-6" />
-                    </div>
-                    <div>
-                       <div className="font-bold text-base tracking-tight group-hover:text-primary transition-colors capitalize">{sale.invoiceNo}</div>
-                       <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] text-muted-foreground font-bold tracking-widest capitalize">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')}</span>
-                          <span className="text-[10px] text-muted-foreground/10">•</span>
-                          <span className="text-[10px] text-muted-foreground font-bold tracking-widest capitalize">{sale.itemsCount} items</span>
-                          <span className="text-[10px] text-muted-foreground/10">•</span>
-                          <span className={clsx("px-2 py-0.5 rounded text-[8px] font-bold capitalize tracking-widest", sale.paymentMode === 'Credit' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary')}>
+              <div key={sale.id} className={clsx("px-4 md:px-8 py-4 flex justify-between items-center hover:bg-primary/5 transition-all", selectedIds.has(sale.id) && 'bg-primary/5')}>
+                 {/* Left: checkbox + info */}
+                 <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {!readOnly && (
+                      <button onClick={(e) => { e.stopPropagation(); toggleSelect(sale.id); }} className="shrink-0 text-muted-foreground/30 hover:text-primary transition-colors">
+                        {selectedIds.has(sale.id) ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4" />}
+                      </button>
+                    )}
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => { setSelectedSaleId(sale.id); setViewMode('receipt'); }}>
+                       <div className="font-bold text-sm tracking-tight hover:text-primary transition-colors">{sale.invoiceNo}</div>
+                       <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+                          <span className="text-[9px] text-muted-foreground font-bold tracking-widest">{format(new Date(sale.createdAt), 'MMM dd, HH:mm')}</span>
+                          <span className="text-muted-foreground/20">•</span>
+                          <span className="text-[9px] text-muted-foreground font-bold tracking-widest">{sale.itemsCount} items</span>
+                          <span className={clsx("px-1.5 py-0.5 rounded text-[8px] font-bold tracking-widest", sale.paymentMode === 'Credit' ? 'bg-amber-500/10 text-amber-500' : 'bg-primary/10 text-primary')}>
                              {sale.paymentMode}
                           </span>
                           {sale.status === 'REFUNDED' && (
-                            <>
-                              <span className="text-[10px] text-muted-foreground/10">•</span>
-                              <span className="px-2 py-0.5 rounded text-[8px] font-bold capitalize tracking-widest bg-red-500/10 text-red-500" title={sale.refundReason}>
-                                 Refunded
-                              </span>
-                            </>
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-widest bg-red-500/10 text-red-500" title={sale.refundReason}>Refunded</span>
                           )}
+                          {/* Product names hint */}
+                          <span className="text-[8px] text-muted-foreground/30 font-bold truncate max-w-[140px] hidden sm:inline">{sale.items?.map(i => i.productName).join(', ')}</span>
                        </div>
                     </div>
                  </div>
 
-                 <div className="flex items-center gap-8">
+                 {/* Right: amount + actions */}
+                 <div className="flex items-center gap-3 shrink-0">
                     <div className="text-right hidden sm:block">
-                        <div className="text-lg font-bold text-primary capitalize">MK {sale.total.toLocaleString()}</div>
-                        <div className="text-[9px] text-muted-foreground font-bold capitalize tracking-widest">{sale.customerId || 'Walk-in customer'}</div>
+                        <div className="text-base font-bold text-primary">MK {sale.total.toLocaleString()}</div>
+                        <div className="text-[9px] text-muted-foreground font-bold tracking-widest">{sale.customerId || 'Walk-in'}</div>
                     </div>
-
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                        <button 
                          onClick={(e) => { e.stopPropagation(); setSelectedSaleId(sale.id); setViewMode('receipt'); }}
-                         className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-primary hover:border-primary/20 transition-all shadow-sm btn-press"
+                         className="p-2 rounded-xl text-muted-foreground/40 hover:text-primary hover:bg-primary/10 transition-all btn-press"
                          title="View Receipt"
                        >
                          <Eye className="w-4 h-4" />
@@ -414,7 +474,7 @@ const TransactionsPage: React.FC = () => {
                            {sale.status !== 'REFUNDED' && (
                              <button 
                                onClick={(e) => { e.stopPropagation(); handleRefundSale(sale); }}
-                               className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-blue-500 hover:border-blue-500/20 transition-all shadow-sm btn-press"
+                               className="p-2 rounded-xl text-muted-foreground/40 hover:text-blue-500 hover:bg-blue-500/10 transition-all btn-press"
                                title="Refund Transaction"
                              >
                                <RotateCcw className="w-4 h-4" />
@@ -422,14 +482,14 @@ const TransactionsPage: React.FC = () => {
                            )}
                            <button 
                              onClick={(e) => { e.stopPropagation(); handleEditSale(sale); }}
-                             className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-amber-500 hover:border-amber-500/20 transition-all shadow-sm btn-press"
+                             className="p-2 rounded-xl text-muted-foreground/40 hover:text-amber-500 hover:bg-amber-500/10 transition-all btn-press"
                              title="Edit Transaction"
                            >
                              <Edit className="w-4 h-4" />
                            </button>
                            <button 
                              onClick={(e) => { e.stopPropagation(); handleDeleteSale(sale.id); }}
-                             className="p-3 bg-background border border-border/50 rounded-xl text-muted-foreground/40 hover:text-destructive hover:border-destructive/20 transition-all shadow-sm btn-press"
+                             className="p-2 rounded-xl text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all btn-press"
                              title="Delete Transaction"
                            >
                              <Trash2 className="w-4 h-4" />
@@ -437,7 +497,6 @@ const TransactionsPage: React.FC = () => {
                          </>
                        )}
                     </div>
-                    <ArrowRightCircle className="w-5 h-5 text-muted-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                  </div>
               </div>
             ))
@@ -474,7 +533,7 @@ const TransactionsPage: React.FC = () => {
               </button>
             </div>
 
-            <div id="print-container" className="bg-white overflow-hidden shadow-inner border border-zinc-100 max-h-[55vh] overflow-y-auto text-black w-full">
+            <div id="print-container" className="bg-white overflow-hidden border-y border-zinc-100 text-black w-full">
               {viewMode === 'invoice' ? (
                 <Invoice 
                   items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as unknown as LocalProduct, quantity: item.quantity }))}
