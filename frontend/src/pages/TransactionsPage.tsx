@@ -142,7 +142,7 @@ const TransactionsPage: React.FC = () => {
   const handleDeleteSale = async (saleId: string) => {
     const toastId = toast.loading('Deleting transaction...');
     try {
-      await db.salesQueue.update(saleId, { status: 'DELETED' });
+      await db.salesQueue.delete(saleId);
       try { await api.delete(`/sales/${saleId}`); } catch { /* silent */ }
       toast.success('Transaction deleted', { id: toastId });
       setServerSales(prev => prev.filter(s => s.id !== saleId));
@@ -157,7 +157,7 @@ const TransactionsPage: React.FC = () => {
     setIsBulkDeleting(true);
     try {
       for (const id of selectedIds) {
-        await db.salesQueue.update(id, { status: 'DELETED' });
+        await db.salesQueue.delete(id);
         try { await api.delete(`/sales/${id}`); } catch { /* silent */ }
       }
       setServerSales(prev => prev.filter(s => !selectedIds.has(s.id)));

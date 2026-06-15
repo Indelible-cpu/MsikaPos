@@ -104,9 +104,12 @@ export const deleteSale = async (req: Request, res: Response) => {
       });
     }
 
-    await prisma.sale.update({
-      where: { id: id as string },
-      data: { status: 'DELETED', updatedAt: new Date() }
+    await prisma.saleItem.deleteMany({
+      where: { saleId: id as string }
+    });
+
+    await prisma.sale.delete({
+      where: { id: id as string }
     });
 
     await AuditService.log({
@@ -114,7 +117,7 @@ export const deleteSale = async (req: Request, res: Response) => {
       action: 'DELETE_SALE',
       entityType: 'SALE',
       entityId: id as string,
-      details: 'Sale soft-deleted'
+      details: 'Sale hard-deleted'
     });
 
     return res.status(200).json({ success: true, message: 'Sale deleted' });
