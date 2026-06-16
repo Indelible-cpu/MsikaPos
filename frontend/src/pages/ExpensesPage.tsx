@@ -131,21 +131,30 @@ const ExpensesPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex-1"></div>
+      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+        <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
+          <div className="relative flex-[2] min-w-[150px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search expenses..."
+              className="input-field w-full pl-11 text-[11px] h-10 font-bold shadow-inner"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {!readOnly && (
-            <button 
+            <button
               onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
-              className="btn-primary !px-8 !py-4 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 w-full md:w-auto uppercase btn-press"
+              className="flex items-center gap-1.5 text-[11px] font-black text-primary hover:underline whitespace-nowrap shrink-0 px-2"
             >
-              <Plus className="w-4 h-4 mr-2 inline" /> Add expense
+              <Plus className="w-3.5 h-3.5" /> Add expense
             </button>
           )}
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto w-full p-6 md:p-12 space-y-8">
+      <div className="w-full px-4 md:px-12 py-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-8 glass-panel rounded-[2rem] border border-border/50 flex items-center gap-6 shadow-xl">
             <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center">

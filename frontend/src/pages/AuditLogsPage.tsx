@@ -84,50 +84,41 @@ const AuditLogsPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0 relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <div className="glass-panel border-b border-border/50 px-4 md:px-8 py-6 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex-1"></div>
-        {!readOnly && (
-          <button 
-            onClick={handleExport}
-            className="btn-secondary !px-6 !py-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase btn-press"
-          >
-            <FileSpreadsheet className="w-4 h-4" /> Export logs
-          </button>
-        )}
+      <div className="glass-panel border-b border-border/50 px-4 md:px-8 py-3 sticky top-0 z-30">
+        <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
+          <div className="relative flex-[2] min-w-[150px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <input 
+              type="text" 
+              placeholder="Search by action, user, or details..."
+              className="input-field w-full pl-11 text-[11px] h-10 font-bold shadow-inner"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="relative flex-1 min-w-[110px] shrink-0">
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="input-field w-full text-[10px] h-10 font-bold shadow-inner pr-8"
+            >
+              {['ALL', 'Info', 'Warning', 'Error'].map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+          {!readOnly && (
+            <button 
+              onClick={handleExport}
+              className="btn-secondary h-10 !px-4 flex items-center gap-2 text-[10px] font-black tracking-widest uppercase btn-press shrink-0"
+            >
+              <FileSpreadsheet className="w-4 h-4" /> <span className="hidden md:inline">Export</span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="px-0 md:px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-4 mb-8 stagger-children">
-           <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Search by action, user, or details..."
-                className="input-field w-full pl-12 text-xs font-black py-4 uppercase"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-           </div>
-           <div className="flex gap-2">
-              {['ALL', 'Info', 'Warning', 'Error'].map(t => (
-                <button
-                  key={t}
-                  onClick={() => setTypeFilter(t)}
-                  className={clsx(
-                    "px-6 py-2 rounded-xl text-[9px] font-black tracking-widest transition-all border uppercase btn-press",
-                    typeFilter === t 
-                      ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20" 
-                      : "bg-card/50 border-border/50 text-muted-foreground hover:bg-muted/50"
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
-           </div>
-        </div>
-
+      <div className="px-0 md:px-4 py-4">
         <div className="glass-panel border border-border/50 rounded-[2rem] shadow-sm overflow-hidden stagger-children">
            <div className="overflow-x-auto scrollbar-hide">
               <table className="w-full text-left border-collapse min-w-[800px]">

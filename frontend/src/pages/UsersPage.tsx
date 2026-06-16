@@ -230,19 +230,17 @@ const UsersPage: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0">
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="flex-1"></div>
-        <div className="flex flex-col md:flex-row md:items-center gap-6">
-          <div className="relative">
+    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
+      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+        <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
+          <div className="relative flex-[2] min-w-[150px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input 
               type="text" 
               placeholder="Search staff..."
               title="Search staff members"
               aria-label="Search staff members"
-              className="input-field w-full md:w-64 pl-11 text-xs font-bold"
+              className="input-field w-full pl-11 text-[11px] h-10 font-bold shadow-inner"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -250,12 +248,11 @@ const UsersPage: React.FC = () => {
           {!readOnly && (
             <button 
               onClick={() => { resetForm(); setEditingUser(null); setIsModalOpen(true); }}
-              className="btn-primary btn-press hover-lift !px-8 !py-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary/20 whitespace-nowrap"
+              className="btn-primary h-10 !px-4 text-[10px] font-black tracking-widest shadow-xl shadow-primary/20 whitespace-nowrap shrink-0"
             >
-              <Plus className="w-4 h-4 mr-2 inline" /> Add staff
+              <Plus className="w-4 h-4 inline md:mr-1" /> <span className="hidden md:inline">Add staff</span>
             </button>
           )}
-        </div>
         </div>
       </div>
 
