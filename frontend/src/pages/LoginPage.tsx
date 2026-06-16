@@ -210,11 +210,16 @@ const LoginPage: React.FC = () => {
     loadBranding();
   }, [handleBiometricLogin]);
 
-  // Biometric auto-trigger removed to ensure user manual interaction only
-  // per USER request: "it must start when user touch the biometric btn on the device"
+  const hasAutoTriggered = React.useRef(false);
+
   useEffect(() => {
-    // Mode tracking logic if needed in future
-  }, [loginMode]);
+    if (loginMode === 'biometric' && !hasAutoTriggered.current) {
+      hasAutoTriggered.current = true;
+      handleBiometricLogin();
+    } else if (loginMode === 'password') {
+      hasAutoTriggered.current = false;
+    }
+  }, [loginMode, handleBiometricLogin]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
