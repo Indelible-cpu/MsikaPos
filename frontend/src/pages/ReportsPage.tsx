@@ -325,16 +325,16 @@ const ReportsPage: React.FC = () => {
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-4 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
+      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+        <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
           {/* Tabs */}
-          <div className="flex gap-2 p-1 bg-muted/20 border border-border/50 rounded-2xl overflow-x-auto no-scrollbar w-full md:w-auto">
+          <div className="flex gap-2 p-1 bg-muted/20 border border-border/50 rounded-2xl shrink-0">
             {(['Financial', 'Staff', 'Payment'] as ReportTab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={clsx(
-                  'px-6 py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none uppercase btn-press',
+                  'px-4 md:px-6 py-2 md:py-3 rounded-xl text-[9px] font-black tracking-widest transition-all whitespace-nowrap uppercase btn-press',
                   activeTab === tab
                     ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
                     : 'text-muted-foreground hover:bg-muted/50'
@@ -345,7 +345,7 @@ const ReportsPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 ml-auto flex-wrap">
+          <div className="flex items-center gap-2 md:gap-3 ml-auto shrink-0">
 
             {/* Time filter (Financial only) */}
             {activeTab === 'Financial' && (
