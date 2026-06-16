@@ -17,6 +17,7 @@ interface UserData {
   fullname: string;
   mustChangePassword?: boolean;
   isVerified?: boolean;
+  hasBiometrics?: boolean;
 }
 
 const LoginPage: React.FC = () => {
