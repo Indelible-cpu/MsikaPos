@@ -65,26 +65,56 @@ const LoginPage: React.FC = () => {
         });
 
         const userDataStr = localStorage.getItem('user') || localStorage.getItem('biometricUser');
-        const token = localStorage.getItem('token') || localStorage.getItem('biometricToken');
+        const authData = localStorage.getItem('biometricAuth');
+        let token = localStorage.getItem('token') || localStorage.getItem('biometricToken');
         
-        if (userDataStr && token) {
-          try {
-            // Check if token is expired
-            const payloadBase64 = token.split('.')[1];
-            const decodedJson = atob(payloadBase64);
-            const decoded = JSON.parse(decodedJson);
-            if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-              localStorage.removeItem('biometricToken');
-              throw new Error('Your session has expired. Please login with password to re-enable biometrics.');
+        if (userDataStr) {
+          let userData = JSON.parse(userDataStr);
+          
+          if (authData) {
+            try {
+              const savedPassword = atob(authData);
+              if (navigator.onLine) {
+                const res = await api.post('/auth/login', { username: userData.username, password: savedPassword });
+                token = res.data.token;
+                userData = res.data.user;
+                
+                const passwordHash = await hashPassword(savedPassword);
+                await db.offlineAuth.put({
+                  username: userData.username,
+                  passwordHash,
+                  userData,
+                  token: token!
+                });
+              } else {
+                const offlineUser = await db.offlineAuth.get(userData.username);
+                if (offlineUser) token = offlineUser.token;
+              }
+            } catch (err) {
+              localStorage.removeItem('biometricAuth');
+              throw new Error('Your biometric credentials are out of date. Please login with password to update.');
             }
-          } catch (e) {
-            if (e instanceof Error && e.message.includes('expired')) throw e;
-            // Ignore parse errors, let backend handle invalid tokens if offline doesn't catch it
+          } else {
+            if (!token) throw new Error('Please login with password first to enable biometrics.');
+            try {
+              // Check if token is expired (legacy fallback)
+              const payloadBase64 = token.split('.')[1];
+              const decodedJson = atob(payloadBase64);
+              const decoded = JSON.parse(decodedJson);
+              if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+                localStorage.removeItem('biometricToken');
+                throw new Error('Your session has expired. Please login with password to re-enable biometrics.');
+              }
+            } catch (e) {
+              if (e instanceof Error && e.message.includes('expired')) throw e;
+              // Ignore parse errors, let backend handle invalid tokens if offline doesn't catch it
+            }
           }
+          
+          if (!token) throw new Error('Please login with password first to enable biometrics.');
 
-          const userData = JSON.parse(userDataStr);
           // Restore session
-          localStorage.setItem('user', userDataStr);
+          localStorage.setItem('user', JSON.stringify(userData));
           localStorage.setItem('token', token);
           
           await AuditService.log('BIOMETRIC_LOGIN', 'User signed in using biometrics');
@@ -158,6 +188,7 @@ const LoginPage: React.FC = () => {
         localStorage.setItem('biometricCredentialId', idBase64);
         localStorage.setItem('biometricRegistered', 'true');
         localStorage.setItem('biometricUser', JSON.stringify(user));
+        localStorage.setItem('biometricAuth', btoa(password));
         localStorage.setItem('biometricToken', localStorage.getItem('token') || '');
         
         setIsBiometricAvailable(true);
@@ -302,6 +333,11 @@ const LoginPage: React.FC = () => {
           window.PublicKeyCredential && 
           await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         const alreadyRegistered = localStorage.getItem('biometricRegistered') === 'true';
+        
+        if (alreadyRegistered) {
+          localStorage.setItem('biometricUser', JSON.stringify(userData));
+          localStorage.setItem('biometricAuth', btoa(password));
+        }
         
         if (canRegister && !alreadyRegistered) {
           setShowBiometricPrompt(true);
