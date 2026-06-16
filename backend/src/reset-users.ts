@@ -53,14 +53,6 @@ async function main() {
   const roles = await prisma.role.findMany();
   const getRoleId = (roleName: RoleName) => roles.find(r => r.name === roleName)?.id || 1;
 
-  // Ensure a branch exists
-  let branch = await prisma.branch.findFirst();
-  if (!branch) {
-    branch = await prisma.branch.create({
-      data: { name: 'Jeff Investment', location: 'Headquarters' }
-    });
-  }
-
   for (const user of demoUsers) {
     const hashedPassword = await bcrypt.hash(user.password, 10);
     await prisma.user.create({
@@ -68,7 +60,6 @@ async function main() {
         username: user.username,
         password: hashedPassword,
         roleId: getRoleId(user.role),
-        branchId: branch.id,
       }
     });
     console.log(`✅ Created user: ${user.username} (Password: ${user.password})`);
