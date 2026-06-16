@@ -27,8 +27,8 @@ const FeatureAccessPage = React.lazy(() => import('./pages/FeatureAccessPage'));
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-surface-bg">
     <div className="flex flex-col items-center gap-4">
-      <div className="w-12 h-12 border-4 border-surface-border border-t-primary-500 rounded-full animate-spin"></div>
-      <p className="text-[10px] font-black tracking-widest text-surface-text/40 uppercase animate-pulse">Loading Module...</p>
+      <div className="w-10 h-10 border-4 border-surface-border border-t-primary-500 rounded-full animate-spin"></div>
+      <p className="text-[10px] font-black tracking-widest text-surface-text/40 uppercase">Loading</p>
     </div>
   </div>
 );

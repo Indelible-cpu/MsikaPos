@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import MobileNav from './MobileNav';
 import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
+import AppFooter from './AppFooter';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
@@ -70,13 +71,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           onTouchEnd={handleTouchEnd}
           className={clsx(
             "flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out",
-            !hideNav ? "pb-24 md:pb-6" : "pb-0",
+            !hideNav ? "pb-24 md:pb-0" : "pb-0",
             "px-0 max-w-full"
           )}
         >
           <div className={clsx("w-full mx-auto py-0", "min-h-full")}>
             {children}
           </div>
+          {!hideNav && <AppFooter />}
         </main>
 
         {!hideNav && <MobileNav />}

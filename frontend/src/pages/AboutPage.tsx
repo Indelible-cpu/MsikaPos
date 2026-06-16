@@ -44,14 +44,25 @@ const AboutPage: React.FC = () => {
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       <main className="w-full p-0 md:p-0 space-y-10">
-        {/* Brand Hero */}
-        <section className="text-center space-y-4 py-10">
+        {/* Brand Hero / About System */}
+        <section className="text-center space-y-4 py-10 px-6">
           <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mx-auto border border-primary/20 overflow-hidden shadow-md">
             <img src="/icon.png?v=2" alt="Logo" className="w-full h-full object-cover" />
           </div>
-          <div>
+          <div className="space-y-1">
             <h2 className="text-3xl font-black tracking-tight text-foreground"><BrandName /></h2>
-            <p className="text-muted-foreground/60 text-xs font-black tracking-widest uppercase">Version 2.4.0 • Cloud Powered</p>
+            <p className="text-muted-foreground/60 text-xs font-black tracking-widest uppercase">Version 2.4.0 · Cloud Powered</p>
+          </div>
+          <div className="max-w-xs mx-auto pt-2 space-y-1 border-t border-border/20">
+            <p className="text-[11px] font-bold text-muted-foreground/70 leading-relaxed">
+              A Point of Sale and Business Management System
+            </p>
+            <p className="text-[10px] font-bold text-muted-foreground/50 leading-relaxed">
+              Developed and maintained by Indelible Technologies.
+            </p>
+            <p className="text-[9px] font-bold text-muted-foreground/40 tracking-widest uppercase pt-1">
+              © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
+            </p>
           </div>
         </section>
 
@@ -92,9 +103,16 @@ const AboutPage: React.FC = () => {
         ))}
 
         <footer className="text-center pt-10 space-y-8">
-          <div className="space-y-2">
-            <p className="text-[10px] font-black text-surface-text/60 tracking-[0.3em]">Technical Support</p>
-            <div className="flex justify-center gap-4 mt-4">
+          <div className="space-y-1 pt-2">
+            <p className="text-[10px] font-black text-muted-foreground/60 tracking-[0.3em] uppercase">System Developer</p>
+            <p className="text-sm font-black tracking-tight text-primary">Indelible Technologies</p>
+          </div>
+          
+          <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.3em] pb-10 uppercase">
+            Powered by <BrandName /> · © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
+          </p>
+
+          <div className="flex justify-center gap-4 mt-4">
               {/* WhatsApp Support */}
               <a href="https://wa.me/265993732694" title="WhatsApp Support" aria-label="WhatsApp Support" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-emerald-500/30 transition-all group">
                 <div className="w-10 h-10 bg-[#25D366] rounded-none flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
