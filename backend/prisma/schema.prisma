@@ -38,6 +38,7 @@ model User {
   magicTokenExpires  DateTime?
   nextOfKinName      String?
   status             UserStatus @default(ACTIVE)
+  hasBiometrics      Boolean    @default(false)
   customer           Customer?
   expenses           Expense[]
   sales              Sale[]

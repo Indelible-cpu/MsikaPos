@@ -51,7 +51,8 @@ export const loginUser = async (req: Request, res: Response) => {
         role: user.role.name,
         mustChangePassword: user.mustChangePassword,
         isVerified: user.isVerified,
-        profilePic: user.profilePic
+        profilePic: user.profilePic,
+        hasBiometrics: user.hasBiometrics
       },
     });
   } catch (error: any) {
@@ -399,6 +400,26 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     return res.status(200).json({ success: true, message: `User ${status.toLowerCase()} successfully` });
   } catch (error: any) {
     return res.status(500).json({ success: false, message: 'Status update failed', error: error.message });
+  }
+};
+
+export const enableBiometrics = async (req: Request, res: Response) => {
+  try {
+    // Assuming req.user is set by auth middleware, or we pass userId in body
+    const { userId, hasBiometrics } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID is required' });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: Number(userId) },
+      data: { hasBiometrics: Boolean(hasBiometrics) },
+    });
+
+    return res.status(200).json({ success: true, message: 'Biometrics status updated', hasBiometrics: updatedUser.hasBiometrics });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: 'Failed to update biometrics', error: error.message });
   }
 };
 

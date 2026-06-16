@@ -191,6 +191,14 @@ const LoginPage: React.FC = () => {
         localStorage.setItem('biometricAuth', btoa(password));
         localStorage.setItem('biometricToken', localStorage.getItem('token') || '');
         
+        try {
+          if (navigator.onLine) {
+            await api.post('/auth/biometrics', { userId: user.id, hasBiometrics: true });
+          }
+        } catch (e) {
+          console.warn('Failed to sync biometric status to backend', e);
+        }
+
         setIsBiometricAvailable(true);
         setShowBiometricPrompt(false);
         toast.success('Biometric login enabled for this device!');
@@ -332,11 +340,17 @@ const LoginPage: React.FC = () => {
         const canRegister = isMobile && 
           window.PublicKeyCredential && 
           await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        const alreadyRegistered = localStorage.getItem('biometricRegistered') === 'true';
+          
+        const alreadyRegistered = localStorage.getItem('biometricRegistered') === 'true' || userData.hasBiometrics === true;
         
         if (alreadyRegistered) {
+          localStorage.setItem('biometricRegistered', 'true');
           localStorage.setItem('biometricUser', JSON.stringify(userData));
           localStorage.setItem('biometricAuth', btoa(password));
+          // If it was cleared, but backend says they have it, tell them we restored it!
+          if (localStorage.getItem('biometricRegistered') !== 'true' && userData.hasBiometrics) {
+            toast.success('Biometric login automatically restored!');
+          }
         }
         
         if (canRegister && !alreadyRegistered) {
