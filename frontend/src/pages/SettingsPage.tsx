@@ -242,9 +242,9 @@ const SettingsPage: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
       
 
-      <div className="max-w-6xl mx-auto w-full px-6 py-12 space-y-12">
+      <div className="w-full px-4 md:px-12 py-8 space-y-8">
         {/* Profile Section */}
-        <div className="flex flex-col md:flex-row items-center gap-10 p-10 glass-panel rounded-[2.5rem] border border-border/50 shadow-2xl relative overflow-hidden group">
+        <div className="flex flex-col md:flex-row items-center gap-8 p-6 md:p-10 glass-panel rounded-2xl border border-border/50 shadow-lg relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="relative">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-background shadow-2xl bg-muted flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -498,8 +498,8 @@ const SettingsPage: React.FC = () => {
                     </div>
 
                     <div className="pt-4">
-                      <button onClick={saveBrandingConfig} className="btn-primary w-full !py-4 text-[10px] font-black tracking-[0.2em] shadow-xl shadow-primary-500/20">
-                        Update brand identity
+                      <button onClick={saveBrandingConfig} className="h-11 btn-primary w-full text-[10px] font-black tracking-widest shadow-lg shadow-primary/20 rounded-xl">
+                        Save brand identity
                       </button>
                     </div>
                   </div>
@@ -540,8 +540,8 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="w-full md:w-auto">
-                    <button onClick={savePaymentConfig} className="btn-primary !px-8 !py-3 text-[10px] font-black tracking-widest w-full md:w-auto shadow-lg shadow-primary-500/20">
-                      Save config
+                  <button onClick={savePaymentConfig} className="h-11 btn-primary !px-6 text-[10px] font-black tracking-widest w-full md:w-auto shadow-lg shadow-primary/20 rounded-xl shrink-0">
+                      Save
                     </button>
                   </div>
                 </div>
@@ -586,8 +586,8 @@ const SettingsPage: React.FC = () => {
                     </label>
                   </div>
                   <div className="w-full md:w-auto">
-                    <button onClick={saveTaxConfig} className="btn-primary !px-8 !py-3 text-[10px] font-black tracking-widest w-full md:w-auto shadow-lg shadow-primary-500/20">
-                      Update tax policy
+                  <button onClick={saveTaxConfig} className="h-11 btn-primary !px-6 text-[10px] font-black tracking-widest w-full md:w-auto shadow-lg shadow-primary/20 rounded-xl shrink-0">
+                      Save
                     </button>
                   </div>
                 </div>
@@ -613,9 +613,9 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => toggleSystemLock(true)}
-                  className="btn-primary !bg-red-500 hover:!bg-red-600 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-red-900/20"
+                  className="h-11 px-6 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg shadow-red-500/30 transition-all btn-press shrink-0"
                 >
-                  Lock access
+                  Lock now
                 </button>
               </div>
 
@@ -631,9 +631,9 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => navigate('/staff/feature-access')}
-                  className="btn-primary !bg-primary-600 hover:!bg-primary-700 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-900/20"
+                  className="h-11 px-6 btn-primary text-[10px] font-black tracking-widest shadow-lg shadow-primary/20 rounded-xl shrink-0"
                 >
-                  Manage access
+                  Manage
                 </button>
               </div>
 
@@ -669,7 +669,7 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="w-full md:w-auto">
-                    <button onClick={saveHours} className="btn-primary !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20">
+                  <button onClick={saveHours} className="h-11 btn-primary !px-6 text-[10px] font-black tracking-widest rounded-xl shadow-lg shadow-primary/20 shrink-0">
                       Save
                     </button>
                   </div>
@@ -712,9 +712,9 @@ const SettingsPage: React.FC = () => {
                       }
                     });
                   }}
-                  className="btn-primary !bg-zinc-900 hover:!bg-black !px-8 !py-3 text-[10px] font-black tracking-widest shadow-lg"
+                  className="h-11 px-6 bg-zinc-900 hover:bg-black text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg transition-all btn-press shrink-0"
                 >
-                  Reset local data
+                  Reset data
                 </button>
               </div>
 
@@ -730,7 +730,7 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={handleResetTransactions}
-                  className="btn-primary !bg-rose-600 hover:!bg-rose-700 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-xl shadow-rose-500/20"
+                  className="h-11 px-6 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg shadow-rose-500/20 transition-all btn-press shrink-0"
                 >
                   Reset transactions
                 </button>
@@ -748,7 +748,7 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={handleResetSettings}
-                  className="btn-primary !bg-amber-500 hover:!bg-amber-600 !px-8 !py-3 text-[10px] font-black tracking-widest shadow-xl shadow-amber-500/20"
+                  className="h-11 px-6 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg shadow-amber-500/20 transition-all btn-press shrink-0"
                 >
                   Reset settings
                 </button>
