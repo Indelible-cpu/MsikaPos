@@ -15,7 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import {
-  startOfDay, startOfWeek, startOfMonth, startOfQuarter,
+  startOfWeek, startOfMonth, startOfQuarter,
   startOfYear, endOfDay, isWithinInterval
 } from 'date-fns';
 
