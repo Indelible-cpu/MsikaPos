@@ -240,16 +240,7 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
-      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-10 sticky top-0 z-30">
-        <div className="flex items-center justify-between">
-          <div className="flex-1"></div>
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Active session</span>
-          </div>
-        </div>
-      </div>
+      
 
       <div className="max-w-6xl mx-auto w-full px-6 py-12 space-y-12">
         {/* Profile Section */}
