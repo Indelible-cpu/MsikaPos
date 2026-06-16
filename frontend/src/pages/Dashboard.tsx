@@ -6,11 +6,13 @@ import { useAuthStore } from '../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
 import { useSettingsStore } from '../hooks/useSettings';
+import { useLiveStatus } from '../hooks/useLiveStatus';
 import { 
   Bell, LogOut, Menu, 
   ChevronRight, TrendingUp, Monitor, Package, 
   History, Receipt, Users, LayoutDashboard, 
-  CreditCard as CreditCardIcon, PlusCircle, AlertCircle
+  CreditCard as CreditCardIcon, PlusCircle, AlertCircle,
+  Wifi, WifiOff, RefreshCw
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -73,6 +75,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('pos');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { isOnline, isFetching, lastSynced } = useLiveStatus();
 
   // Sync tab with URL
   useEffect(() => {
@@ -188,10 +191,34 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-3">
-             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
-               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-               <span className="text-[10px] font-black uppercase tracking-tighter">System Live</span>
-             </div>
+            {/* ── Global Live Indicator ── */}
+            <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+              !isOnline
+                ? 'bg-red-50 text-red-500 border-red-100'
+                : isFetching
+                ? 'bg-amber-50 text-amber-600 border-amber-100'
+                : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+            }`}>
+              {!isOnline ? (
+                <WifiOff className="w-3 h-3" />
+              ) : isFetching ? (
+                <RefreshCw className="w-3 h-3 animate-spin" />
+              ) : (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <Wifi className="w-3 h-3" />
+                </>
+              )}
+              <span className="text-[10px] font-black uppercase tracking-tighter whitespace-nowrap">
+                {!isOnline
+                  ? 'Offline'
+                  : isFetching
+                  ? 'Syncing…'
+                  : lastSynced
+                  ? `Live · ${lastSynced.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+                  : 'Live'}
+              </span>
+            </div>
              <button className="p-2 hover:bg-zinc-100 rounded-full relative">
                <Bell className="w-5 h-5 text-zinc-500" />
                {(stats?.credit_reminders || 0) > 0 && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />}

@@ -8,9 +8,7 @@ import {
   Users,
   DollarSign,
   ArrowUpRight,
-  BarChart3,
-  RefreshCw,
-  Wifi
+  BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -102,8 +100,6 @@ const ReportsPage: React.FC = () => {
   const {
     data: serverSalesRaw,
     dataUpdatedAt,
-    isFetching,
-    refetch,
   } = useQuery({
     queryKey: ['reports-transactions', timeFilter],
     queryFn: async () => {
@@ -264,7 +260,6 @@ const ReportsPage: React.FC = () => {
     return { financial: financialData, staff, payment };
   }, [activeSales, serverStats, timeFilter]);
 
-  // ── 8. Last updated label ─────────────────────────────────────────────────
   const lastUpdatedLabel = dataUpdatedAt
     ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : '—';
@@ -356,24 +351,6 @@ const ReportsPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 ml-auto flex-wrap">
-            {/* Live indicator */}
-            <div className="flex items-center gap-2 text-[8px] font-black tracking-widest uppercase text-muted-foreground">
-              <span className="relative flex h-2 w-2">
-                <span className={clsx('animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', isFetching ? 'bg-amber-400' : 'bg-emerald-400')} />
-                <span className={clsx('relative inline-flex rounded-full h-2 w-2', isFetching ? 'bg-amber-400' : 'bg-emerald-500')} />
-              </span>
-              <Wifi className="w-3 h-3" />
-              {isFetching ? 'Syncing...' : `Live · ${lastUpdatedLabel}`}
-            </div>
-
-            {/* Manual refresh */}
-            <button
-              onClick={() => void refetch()}
-              title="Refresh data"
-              className={clsx('p-2 rounded-xl border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40 transition-all btn-press', isFetching && 'pointer-events-none opacity-50')}
-            >
-              <RefreshCw className={clsx('w-4 h-4', isFetching && 'animate-spin')} />
-            </button>
 
             {/* Time filter (Financial only) */}
             {activeTab === 'Financial' && (
