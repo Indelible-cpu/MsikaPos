@@ -102,17 +102,10 @@ const AboutPage: React.FC = () => {
           </motion.section>
         ))}
 
-        <footer className="text-center pt-10 space-y-8">
-          <div className="space-y-1 pt-2">
-            <p className="text-[10px] font-black text-muted-foreground/60 tracking-[0.3em] uppercase">System Developer</p>
-            <p className="text-sm font-black tracking-tight text-primary">Indelible Technologies</p>
-          </div>
-          
-          <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.3em] pb-10 uppercase">
-            Powered by <BrandName /> · © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
-          </p>
-
-          <div className="flex justify-center gap-4 mt-4">
+        <footer className="text-center pt-10 space-y-8 pb-10">
+          <div className="space-y-2">
+            <p className="text-[10px] font-black text-surface-text/60 tracking-[0.3em] uppercase">Technical Support</p>
+            <div className="flex justify-center gap-4 mt-4">
               {/* WhatsApp Support */}
               <a href="https://wa.me/265993732694" title="WhatsApp Support" aria-label="WhatsApp Support" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-emerald-500/30 transition-all group">
                 <div className="w-10 h-10 bg-[#25D366] rounded-none flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
@@ -146,13 +139,15 @@ const AboutPage: React.FC = () => {
               </a>
             </div>
           </div>
-          
-          <div className="space-y-1">
+
+          <div className="space-y-1 pt-6">
             <p className="text-[10px] font-black text-muted-foreground/60 tracking-[0.3em] uppercase">System Developer</p>
-            <p className="text-sm font-black tracking-tight text-primary">Indelible</p>
+            <p className="text-sm font-black tracking-tight text-primary">Indelible Technologies</p>
           </div>
           
-          <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.4em] pb-10 uppercase">© 2026 <BrandName /> • Indelible-cpu</p>
+          <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.3em] uppercase">
+            Powered by <BrandName /> · © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
+          </p>
         </footer>
       </main>
     </div>
