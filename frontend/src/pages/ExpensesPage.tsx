@@ -80,7 +80,7 @@ const ExpensesPage: React.FC = () => {
     e.preventDefault();
     try {
       if (editingExpense) {
-        await db.expenses.update(editingExpense.id, { ...formData });
+        await db.expenses.update(editingExpense.id, { ...formData, amount: Number(formData.amount) || 0 });
         toast.success('Expense updated');
       } else {
         const expenseId = crypto.randomUUID();

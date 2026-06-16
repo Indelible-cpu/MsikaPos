@@ -337,7 +337,7 @@ const POSPage: React.FC = () => {
   }, []);
 
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.product.sellPrice * item.quantity), 0);
-  const discountedSubtotal = Math.max(0, cartSubtotal - discount);
+  const discountedSubtotal = Math.max(0, cartSubtotal - (Number(discount) || 0));
   let finalTotal = discountedSubtotal;
   let taxAmount = 0;
 
@@ -377,7 +377,7 @@ const POSPage: React.FC = () => {
       });
 
       const totalItemProfit = saleItems.reduce((s, i) => s + i.profit, 0);
-      const finalProfit = totalItemProfit - discount;
+      const finalProfit = totalItemProfit - (Number(discount) || 0);
 
       const saleData: LocalSale = {
         id: crypto.randomUUID(),
@@ -385,7 +385,7 @@ const POSPage: React.FC = () => {
         userId: Number(user.id),
         items: saleItems,
         subtotal: cartSubtotal,
-        discount,
+        discount: Number(discount) || 0,
         tax: Number(taxAmount || 0),
         total: Number(finalTotal || 0),
         paid: Number(parseFloat(amountReceived) || finalTotal || 0),
@@ -416,7 +416,7 @@ const POSPage: React.FC = () => {
         items: cart,
         total: finalTotal,
         subtotal: cartSubtotal,
-        discount,
+        discount: Number(discount) || 0,
         tax: taxAmount,
         invoiceNo,
         date: new Date().toISOString(),
@@ -494,7 +494,7 @@ const POSPage: React.FC = () => {
         profit: (item.product.sellPrice - (item.product.costPrice || 0)) * item.quantity
       }));
 
-      const finalProfit = saleItems.reduce((s, i) => s + i.profit, 0) - discount;
+      const finalProfit = saleItems.reduce((s, i) => s + i.profit, 0) - (Number(discount) || 0);
 
       const saleData: LocalSale = {
         id: crypto.randomUUID(),
@@ -502,7 +502,7 @@ const POSPage: React.FC = () => {
         userId: Number(user.id),
         items: saleItems,
         subtotal: cartSubtotal,
-        discount,
+        discount: Number(discount) || 0,
         tax: Number(taxAmount || 0),
         total: Number(finalTotal || 0),
         paid: Number(paidAmt || 0),
