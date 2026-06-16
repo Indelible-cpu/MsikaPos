@@ -23,7 +23,7 @@ const SettingsPage: React.FC = () => {
 
   const [lockTime, setLockTime] = React.useState('20:00');
   const [unlockTime, setUnlockTime] = React.useState('06:00');
-  const [taxRate, setTaxRate] = React.useState(0);
+  const [taxRate, setTaxRate] = React.useState<number | ''>(0);
   const [taxInclusive, setTaxInclusive] = React.useState(true);
   const [companyName, setCompanyName] = React.useState('');
   const [slogan, setSlogan] = React.useState('');
@@ -568,7 +568,7 @@ const SettingsPage: React.FC = () => {
                         title="Tax rate percentage"
                         type="number"
                         value={taxRate}
-                        onChange={(e) => setTaxRate(Number(e.target.value))}
+                        onChange={(e) => setTaxRate(e.target.value === '' ? '' : Number(e.target.value))}
                         className="input-field w-full py-3 pl-10 pr-4 text-sm font-black shadow-inner"
                         placeholder="0"
                       />

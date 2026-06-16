@@ -119,7 +119,7 @@ const POSPage: React.FC = () => {
     return [];
   });
   const [showScanner, setShowScanner] = useState(false);
-  const [discount, setDiscount] = useState<number>(() => {
+  const [discount, setDiscount] = useState<number | ''>(() => {
     const saved = localStorage.getItem('posDiscount');
     return parseFloat(saved || '0') || 0;
   });
@@ -937,8 +937,8 @@ const POSPage: React.FC = () => {
                     placeholder="0"
                     type="number" 
                     className="w-full bg-background border border-border/50 rounded-xl pl-10 pr-3 py-2 text-right text-[11px] font-black focus:ring-2 focus:ring-primary/20 outline-none"
-                    value={discount || ''} 
-                    onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} 
+                    value={discount === 0 ? '' : discount} 
+                    onChange={(e) => setDiscount(e.target.value === '' ? '' : parseFloat(e.target.value) || 0)} 
                   />
                 </div>
               </div>

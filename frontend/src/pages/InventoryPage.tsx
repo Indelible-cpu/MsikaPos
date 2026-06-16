@@ -183,7 +183,21 @@ const InventoryPage: React.FC = () => {
   const [newCategoryTitle, setNewCategoryTitle] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    sku: string;
+    costPrice: number | '';
+    sellPrice: number | '';
+    quantity: number | '';
+    categoryId: number;
+    isService: boolean;
+    imageUrl: string;
+    discount: number | '';
+    discountType: 'Percentage' | 'Fixed';
+    discountValue: number | '';
+    discountStartDate: string;
+    discountEndDate: string;
+  }>({
     name: '',
     sku: '',
     costPrice: 0,
@@ -193,10 +207,10 @@ const InventoryPage: React.FC = () => {
     isService: false,
     imageUrl: '',
     discount: 0,
-    discountType: 'Percentage' as 'Percentage' | 'Fixed',
+    discountType: 'Percentage',
     discountValue: 0,
     discountStartDate: '',
-    discountEndDate: '',
+    discountEndDate: ''
   });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
@@ -273,15 +287,15 @@ const InventoryPage: React.FC = () => {
     setFormData({
       name: editingProduct?.name || '',
       sku: initialSku || editingProduct?.sku || '',
-      costPrice: editingProduct?.costPrice || 0,
-      sellPrice: editingProduct?.sellPrice || 0,
-      quantity: editingProduct?.quantity || 0,
+      costPrice: editingProduct?.costPrice ?? 0,
+      sellPrice: editingProduct?.sellPrice ?? 0,
+      quantity: editingProduct?.quantity ?? 0,
       categoryId: editingProduct?.categoryId || defaultCatId,
       isService: editingProduct?.isService || false,
       imageUrl: editingProduct?.imageUrl || '',
-      discount: editingProduct?.discount || 0,
+      discount: editingProduct?.discount ?? 0,
       discountType: (editingProduct?.discountType || 'Percentage') as 'Percentage' | 'Fixed',
-      discountValue: editingProduct?.discountValue || 0,
+      discountValue: editingProduct?.discountValue ?? 0,
       discountStartDate: editingProduct?.discountStartDate || '',
       discountEndDate: editingProduct?.discountEndDate || '',
     });
@@ -318,15 +332,15 @@ const InventoryPage: React.FC = () => {
     setFormData({
       name: p?.name || '',
       sku: p?.sku || '',
-      costPrice: p?.costPrice || 0,
-      sellPrice: p?.sellPrice || 0,
-      quantity: p?.quantity || 0,
+      costPrice: p?.costPrice ?? 0,
+      sellPrice: p?.sellPrice ?? 0,
+      quantity: p?.quantity ?? 0,
       categoryId: p?.categoryId || (categories?.[0]?.id || 0),
       isService: p?.isService || false,
       imageUrl: p?.imageUrl || '',
-      discount: p?.discount || 0,
+      discount: p?.discount ?? 0,
       discountType: (p?.discountType || 'Percentage') as 'Percentage' | 'Fixed',
-      discountValue: p?.discountValue || 0,
+      discountValue: p?.discountValue ?? 0,
       discountStartDate: p?.discountStartDate || '',
       discountEndDate: p?.discountEndDate || '',
     });
@@ -483,8 +497,12 @@ const InventoryPage: React.FC = () => {
       const newId = generateNumericId();
       const productData = {
         ...formData,
+        costPrice: Number(formData.costPrice) || 0,
+        sellPrice: Number(formData.sellPrice) || 0,
+        quantity: formData.isService ? 1 : (Number(formData.quantity) || 0),
+        discount: Number(formData.discount) || 0,
+        discountValue: Number(formData.discountValue) || 0,
         discountType: formData.discountType as 'Percentage' | 'Fixed' | undefined,
-        quantity: formData.isService ? 1 : formData.quantity,
         updatedAt: new Date().toISOString()
       };
 
@@ -847,7 +865,7 @@ const InventoryPage: React.FC = () => {
                   title="Cost price" 
                   aria-label="Cost price" 
                   value={formData.costPrice} 
-                  onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})} 
+                  onChange={(e) => setFormData({...formData, costPrice: e.target.value === '' ? '' : Number(e.target.value)})} 
                   onFocus={(e) => e.target.select()} 
                   readOnly={!isSuperAdmin}
                 />
@@ -857,7 +875,7 @@ const InventoryPage: React.FC = () => {
               <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="product-sell">Sell price</label>
               <div className="relative group">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary-500 opacity-40 group-focus-within:opacity-100 transition-opacity">MK</span>
-                <input required id="product-sell" type="number" className="input-field w-full py-3 pl-10 pr-4 font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+                <input required id="product-sell" type="number" className="input-field w-full py-3 pl-10 pr-4 font-black text-primary-500" title="Sell price" aria-label="Sell price" value={formData.sellPrice} onChange={(e) => setFormData({...formData, sellPrice: e.target.value === '' ? '' : Number(e.target.value)})} onFocus={(e) => e.target.select()} />
               </div>
             </div>
             <div className="space-y-1 col-span-2 p-4 bg-surface-bg/50 border border-surface-border rounded-2xl">
@@ -873,8 +891,7 @@ const InventoryPage: React.FC = () => {
                 <div className="space-y-1">
                   <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="discount-value">Discount Value</label>
                   <input id="discount-value" title="Discount Value" aria-label="Discount Value" placeholder="0" type="number" className="input-field w-full py-3 px-4 font-black text-rose-500 bg-rose-500/5 border-rose-500/20" value={formData.discountValue} onChange={(e) => {
-                    let val = Math.max(0, Number(e.target.value));
-                    if (formData.discountType === 'Percentage') val = Math.min(100, val);
+                    const val = e.target.value === '' ? '' : Number(e.target.value);
                     setFormData({...formData, discountValue: val, discount: formData.discountType === 'Percentage' ? val : 0});
                   }} onFocus={(e) => e.target.select()} />
                 </div>
@@ -893,7 +910,7 @@ const InventoryPage: React.FC = () => {
                 <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="product-qty">Opening stock quantity</label>
                 <div className="relative group">
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground opacity-40 group-focus-within:opacity-100 transition-opacity">UNITS</span>
-                  <input required id="product-qty" type="number" className="input-field w-full py-3 pl-4 pr-16 font-black" title="Opening stock quantity" aria-label="Opening stock quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+                  <input required id="product-qty" type="number" className="input-field w-full py-3 pl-4 pr-16 font-black" title="Opening stock quantity" aria-label="Opening stock quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: e.target.value === '' ? '' : Number(e.target.value)})} onFocus={(e) => e.target.select()} />
                 </div>
               </div>
             )}

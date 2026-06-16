@@ -182,7 +182,7 @@ app.post('/api/ai/suggestions', staffOnly, AiCtrl.getAiSuggestions as any);
 app.post('/api/settings', adminOnly, SettingsCtrl.saveSettings);
 
 // Feature Access Control
-app.get('/api/feature-configs', adminOnly, FeatureCtrl.getFeatureConfigs);
+app.get('/api/feature-configs', authenticate, FeatureCtrl.getFeatureConfigs);
 app.post('/api/feature-configs', adminOnly, FeatureCtrl.updateFeatureConfig);
 
 // Role Initialization

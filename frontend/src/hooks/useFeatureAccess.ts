@@ -29,7 +29,7 @@ export const useFeatureAccess = () => {
 
       try {
         const res = await api.get('/feature-configs', {
-          params: { branchId: resolvedUser.branch_id, role: resolvedUser.role }
+          params: { role: resolvedUser.role }
         });
         const configMap = res.data.data.reduce((acc: Record<string, string>, curr: { featureKey: string; accessLevel: string }) => {
           acc[curr.featureKey] = curr.accessLevel;
@@ -44,7 +44,7 @@ export const useFeatureAccess = () => {
     };
 
     fetchAccess();
-  }, [resolvedUser?.role, resolvedUser?.branch_id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [resolvedUser?.role]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canAccess = (featureKey: string) => {
     if (!resolvedUser) return false;

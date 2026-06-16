@@ -25,7 +25,13 @@ const ExpensesPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<LocalExpense | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    category: string;
+    amount: number | '';
+    description: string;
+    date: string;
+    paymentMethod: string;
+  }>({
     category: 'Utilities',
     amount: 0,
     description: '',
@@ -80,6 +86,7 @@ const ExpensesPage: React.FC = () => {
         const expenseId = crypto.randomUUID();
         const expenseData = {
           ...formData,
+          amount: Number(formData.amount) || 0,
           id: expenseId,
           createdAt: new Date().toISOString(),
           synced: 0
@@ -87,15 +94,15 @@ const ExpensesPage: React.FC = () => {
         await db.expenses.add(expenseData);
         
         setExpenseReceipt({
-          items: [{ product: { name: `Expense: ${formData.description}`, sellPrice: formData.amount } as unknown as LocalProduct, quantity: 1 }],
-          total: formData.amount,
-          subtotal: formData.amount,
+          items: [{ product: { name: `Expense: ${formData.description}`, sellPrice: Number(formData.amount) || 0 } as unknown as LocalProduct, quantity: 1 }],
+          total: Number(formData.amount) || 0,
+          subtotal: Number(formData.amount) || 0,
           tax: 0,
           discount: 0,
           invoiceNo: `EXP-${expenseId.substring(0, 6).toUpperCase()}`,
           date: formData.date,
           mode: formData.paymentMethod,
-          paid: formData.amount,
+          paid: Number(formData.amount) || 0,
           change: 0
         });
 
@@ -278,8 +285,8 @@ const ExpensesPage: React.FC = () => {
                 type="number" 
                 className="input-field w-full py-8 pl-20 pr-8 text-4xl font-black text-destructive text-right" 
                 placeholder="0.00" 
-                value={formData.amount || ''} 
-                onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})} 
+                value={formData.amount === '' ? '' : formData.amount} 
+                onChange={(e) => setFormData({...formData, amount: e.target.value === '' ? '' : parseFloat(e.target.value)})} 
                 onFocus={(e) => e.target.select()} 
               />
             </div>
