@@ -57,9 +57,6 @@ const AboutPage: React.FC = () => {
             <p className="text-[11px] font-bold text-muted-foreground/70 leading-relaxed">
               A Point of Sale and Business Management System
             </p>
-            <p className="text-[10px] font-bold text-muted-foreground/50 leading-relaxed">
-              Developed and maintained by Indelible Technologies.
-            </p>
             <p className="text-[9px] font-bold text-muted-foreground/40 tracking-widest uppercase pt-1">
               © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
             </p>
@@ -138,11 +135,6 @@ const AboutPage: React.FC = () => {
                 </div>
               </a>
             </div>
-          </div>
-
-          <div className="space-y-1 pt-6">
-            <p className="text-[10px] font-black text-muted-foreground/60 tracking-[0.3em] uppercase">System Developer</p>
-            <p className="text-sm font-black tracking-tight text-primary">Indelible Technologies</p>
           </div>
           
           <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.3em] uppercase">

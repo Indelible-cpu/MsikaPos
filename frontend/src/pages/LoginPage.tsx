@@ -558,9 +558,6 @@ const LoginPage: React.FC = () => {
             Support
           </Link>
 
-          <div className="pt-4 text-center">
-            <p className="text-[8px] font-black tracking-[0.3em] text-surface-text/10 ">Developed by Indelible</p>
-          </div>
         </div>
 
         {/* Biometric Registration Prompt */}

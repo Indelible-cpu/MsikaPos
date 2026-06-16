@@ -1161,7 +1161,6 @@ export const PublicStorefront: React.FC = () => {
         </div>
         <div className="text-center space-y-1">
           <p className="text-[10px] font-black text-muted-foreground/40 capitalize">© {new Date().getFullYear()} {shopName}. All Rights Reserved.</p>
-          <p className="text-[8px] font-black text-muted-foreground/30 capitalize">Developed By Indelible</p>
         </div>
       </footer>
     </div>
