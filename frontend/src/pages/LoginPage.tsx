@@ -68,6 +68,20 @@ const LoginPage: React.FC = () => {
         const token = localStorage.getItem('token') || localStorage.getItem('biometricToken');
         
         if (userDataStr && token) {
+          try {
+            // Check if token is expired
+            const payloadBase64 = token.split('.')[1];
+            const decodedJson = atob(payloadBase64);
+            const decoded = JSON.parse(decodedJson);
+            if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+              localStorage.removeItem('biometricToken');
+              throw new Error('Your session has expired. Please login with password to re-enable biometrics.');
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message.includes('expired')) throw e;
+            // Ignore parse errors, let backend handle invalid tokens if offline doesn't catch it
+          }
+
           const userData = JSON.parse(userDataStr);
           // Restore session
           localStorage.setItem('user', userDataStr);
@@ -92,7 +106,10 @@ const LoginPage: React.FC = () => {
       console.warn('Biometric error:', err);
       const error = err as Error;
       if (error.name !== 'NotAllowedError') {
-        toast.error('Biometric verification failed.', { id: 'biometric-auth' });
+        toast.error(error.message || 'Biometric verification failed.', { id: 'biometric-auth' });
+        if (error.message.includes('expired') || error.message.includes('password first')) {
+          setLoginMode('password');
+        }
       } else {
         toast.dismiss('biometric-auth');
       }
