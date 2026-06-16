@@ -242,9 +242,9 @@ const SettingsPage: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
       
 
-      <div className="w-full px-4 md:px-12 py-8 space-y-8">
+      <div className="w-full px-0 py-0 space-y-px">
         {/* Profile Section */}
-        <div className="flex flex-col md:flex-row items-center gap-8 p-6 md:p-10 glass-panel rounded-2xl border border-border/50 shadow-lg relative overflow-hidden group">
+        <div className="flex flex-col md:flex-row items-center gap-8 p-6 md:p-12 glass-panel border-b border-border/50 shadow-sm relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="relative">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-background shadow-2xl bg-muted flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -291,7 +291,7 @@ const SettingsPage: React.FC = () => {
         </div>
 
         <div className="space-y-px stagger-children">
-          <div className="glass-panel border border-border/50 rounded-[2.5rem] overflow-hidden">
+          <div className="glass-panel border-b border-border/50 overflow-hidden">
             <div className="px-6 md:px-12 py-5 bg-muted/30 border-b border-border/50">
               <div className="text-[10px] font-black text-primary uppercase tracking-widest">System preferences</div>
             </div>
@@ -311,7 +311,7 @@ const SettingsPage: React.FC = () => {
                     <div className="text-xs text-muted-foreground font-bold">Recommended size: 512x512px</div>
                   </div>
                 </div>
-                <label title="Choose Logo File" className="btn-primary btn-press hover-lift !px-6 !py-3 text-[10px] font-black tracking-widest cursor-pointer w-full md:w-auto text-center shadow-lg shadow-primary/20">
+                <label title="Choose Logo File" className="btn-primary btn-press hover-lift !px-8 !py-4 text-[11px] font-black tracking-widest cursor-pointer w-full md:w-auto text-center shadow-xl shadow-primary/20 rounded-2xl">
                   Choose file
                   <input
                     type="file"
@@ -498,7 +498,7 @@ const SettingsPage: React.FC = () => {
                     </div>
 
                     <div className="pt-4">
-                      <button onClick={saveBrandingConfig} className="h-11 btn-primary w-full text-[10px] font-black tracking-widest shadow-lg shadow-primary/20 rounded-xl">
+                      <button onClick={saveBrandingConfig} className="h-14 btn-primary w-full text-[11px] font-black tracking-widest shadow-xl shadow-primary/20 rounded-2xl">
                         Save brand identity
                       </button>
                     </div>
@@ -540,7 +540,7 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="w-full md:w-auto">
-                  <button onClick={savePaymentConfig} className="h-11 btn-primary !px-6 text-[10px] font-black tracking-widest w-full md:w-auto shadow-lg shadow-primary/20 rounded-xl shrink-0">
+                  <button onClick={savePaymentConfig} className="h-14 btn-primary !px-8 text-[11px] font-black tracking-widest w-full md:w-auto shadow-xl shadow-primary/20 rounded-2xl shrink-0">
                       Save
                     </button>
                   </div>
@@ -586,7 +586,7 @@ const SettingsPage: React.FC = () => {
                     </label>
                   </div>
                   <div className="w-full md:w-auto">
-                  <button onClick={saveTaxConfig} className="h-11 btn-primary !px-6 text-[10px] font-black tracking-widest w-full md:w-auto shadow-lg shadow-primary/20 rounded-xl shrink-0">
+                  <button onClick={saveTaxConfig} className="h-14 btn-primary !px-8 text-[11px] font-black tracking-widest w-full md:w-auto shadow-xl shadow-primary/20 rounded-2xl shrink-0">
                       Save
                     </button>
                   </div>
@@ -596,7 +596,7 @@ const SettingsPage: React.FC = () => {
           </div>
 
           {isSuperAdmin && (
-            <div className="glass-panel border border-border/50 rounded-[2.5rem] overflow-hidden">
+            <div className="glass-panel border-b border-border/50 overflow-hidden">
               <div className="px-6 md:px-12 py-5 bg-red-500/5 border-b border-border/50">
                 <h3 className="text-[10px] font-black text-red-500 tracking-widest uppercase">System security & control</h3>
               </div>
@@ -613,7 +613,7 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => toggleSystemLock(true)}
-                  className="h-11 px-6 bg-red-500 hover:bg-red-600 text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg shadow-red-500/30 transition-all btn-press shrink-0"
+                  className="h-14 px-8 bg-red-500 hover:bg-red-600 text-white rounded-2xl text-[11px] font-black tracking-widest shadow-xl shadow-red-500/30 transition-all btn-press shrink-0"
                 >
                   Lock now
                 </button>
@@ -631,7 +631,7 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => navigate('/staff/feature-access')}
-                  className="h-11 px-6 btn-primary text-[10px] font-black tracking-widest shadow-lg shadow-primary/20 rounded-xl shrink-0"
+                  className="h-14 px-8 btn-primary text-[11px] font-black tracking-widest shadow-xl shadow-primary/20 rounded-2xl shrink-0"
                 >
                   Manage
                 </button>
@@ -669,7 +669,7 @@ const SettingsPage: React.FC = () => {
                     />
                   </div>
                   <div className="w-full md:w-auto">
-                  <button onClick={saveHours} className="h-11 btn-primary !px-6 text-[10px] font-black tracking-widest rounded-xl shadow-lg shadow-primary/20 shrink-0">
+                  <button onClick={saveHours} className="h-14 btn-primary !px-8 text-[11px] font-black tracking-widest rounded-2xl shadow-xl shadow-primary/20 shrink-0">
                       Save
                     </button>
                   </div>
@@ -712,7 +712,7 @@ const SettingsPage: React.FC = () => {
                       }
                     });
                   }}
-                  className="h-11 px-6 bg-zinc-900 hover:bg-black text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg transition-all btn-press shrink-0"
+                  className="h-14 px-8 bg-zinc-900 hover:bg-black text-white rounded-2xl text-[11px] font-black tracking-widest shadow-xl transition-all btn-press shrink-0"
                 >
                   Reset data
                 </button>
@@ -730,7 +730,7 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={handleResetTransactions}
-                  className="h-11 px-6 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg shadow-rose-500/20 transition-all btn-press shrink-0"
+                  className="h-14 px-8 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-[11px] font-black tracking-widest shadow-xl shadow-rose-500/20 transition-all btn-press shrink-0"
                 >
                   Reset transactions
                 </button>
@@ -748,7 +748,7 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={handleResetSettings}
-                  className="h-11 px-6 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black tracking-widest shadow-lg shadow-amber-500/20 transition-all btn-press shrink-0"
+                  className="h-14 px-8 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl text-[11px] font-black tracking-widest shadow-xl shadow-amber-500/20 transition-all btn-press shrink-0"
                 >
                   Reset settings
                 </button>
