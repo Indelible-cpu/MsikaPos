@@ -97,10 +97,7 @@ const ReportsPage: React.FC = () => {
   const localSales = useLiveQuery(() => db.salesQueue.toArray(), []) ?? [];
 
   // ── 2. Server transactions — polls every 30 s ─────────────────────────────
-  const {
-    data: serverSalesRaw,
-    dataUpdatedAt,
-  } = useQuery({
+  const { data: serverSalesRaw } = useQuery({
     queryKey: ['reports-transactions', timeFilter],
     queryFn: async () => {
       const scopeMap: Record<TimeFilter, string> = {
@@ -260,9 +257,7 @@ const ReportsPage: React.FC = () => {
     return { financial: financialData, staff, payment };
   }, [activeSales, serverStats, timeFilter]);
 
-  const lastUpdatedLabel = dataUpdatedAt
-    ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    : '—';
+
 
   // ── 9. Print report ───────────────────────────────────────────────────────
   const handlePrint = () => {
