@@ -51,15 +51,6 @@ const AboutPage: React.FC = () => {
           </div>
           <div className="space-y-1">
             <h2 className="text-3xl font-black tracking-tight text-foreground"><BrandName /></h2>
-            <p className="text-muted-foreground/60 text-xs font-black tracking-widest uppercase">Version 2.4.0 · Cloud Powered</p>
-          </div>
-          <div className="max-w-xs mx-auto pt-2 space-y-1 border-t border-border/20">
-            <p className="text-[11px] font-bold text-muted-foreground/70 leading-relaxed">
-              A Point of Sale and Business Management System
-            </p>
-            <p className="text-[9px] font-bold text-muted-foreground/40 tracking-widest uppercase pt-1">
-              © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
-            </p>
           </div>
         </section>
 
@@ -138,7 +129,7 @@ const AboutPage: React.FC = () => {
           </div>
           
           <p className="text-[9px] font-black text-muted-foreground/50 tracking-[0.3em] uppercase">
-            Powered by <BrandName /> · © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
+            Powered by <BrandName /> · © {new Date().getFullYear()} indelible technologies. all rights reserved.
           </p>
         </footer>
       </main>

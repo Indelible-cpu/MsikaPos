@@ -13,7 +13,7 @@ const AppFooter: React.FC = () => {
         <span className="text-foreground/50">Msika</span>
         <span className="text-green-500/70">Pos</span>
         {'  ·  '}
-        © {year} Indelible Technologies. All Rights Reserved.
+        © {year} indelible technologies. all rights reserved.
       </p>
     </footer>
   );
