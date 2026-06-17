@@ -69,12 +69,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="flex-1 flex flex-col w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out px-0 max-w-full pb-0"
+          className={clsx(
+            "flex-1 flex flex-col w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out px-0 max-w-full",
+            !hideNav ? "pb-20 md:pb-0" : "pb-0"
+          )}
         >
-          <div className={clsx("w-full mx-auto py-0 flex-1", !hideNav ? "pb-24 md:pb-0" : "pb-0")}>
+          <div className="w-full mx-auto py-0 flex-1">
             {children}
           </div>
-          {!hideNav && <AppFooter />}
+          <AppFooter />
         </main>
 
         {!hideNav && <MobileNav />}
