@@ -5,8 +5,10 @@ import {
   Phone,
   Mail,
   Wrench,
-  ChevronDown
+  ChevronDown,
+  ArrowLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import BrandName from '../components/BrandName';
 
@@ -52,6 +54,8 @@ const AccordionItem: React.FC<{ item: FaqItem; index: number }> = ({ item, index
 };
 
 const AboutPage: React.FC = () => {
+  const navigate = useNavigate();
+
   const sections = [
     {
       id: 'faq',
@@ -84,10 +88,20 @@ const AboutPage: React.FC = () => {
   ];
 
   return (
-    <div className="w-full bg-background text-foreground selection:bg-primary/30 relative flex flex-col min-h-screen">
+    <div className="w-full bg-background text-foreground selection:bg-primary/30 relative flex flex-col min-h-screen overflow-x-hidden">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
-      <main className="w-full p-0 md:p-0 space-y-10">
+      <div className="w-full max-w-2xl mx-auto pt-6 px-6 z-10 relative flex justify-start">
+        <button 
+          onClick={() => navigate(-1)}
+          className="w-10 h-10 flex items-center justify-center bg-surface-card border border-border/50 rounded-xl text-foreground hover:bg-primary/10 transition-colors shadow-sm"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        </button>
+      </div>
+
+      <main className="w-full max-w-2xl mx-auto p-0 md:p-0 space-y-10 relative flex-1 mt-2">
         {/* Brand hero */}
         <section className="text-center space-y-4 py-10 px-6">
           <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mx-auto border border-primary/20 overflow-hidden shadow-md">
@@ -163,16 +177,17 @@ const AboutPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full border-t border-border/20 bg-background/60 mt-0">
-            <p className="text-[10px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
-              Powered by <BrandName />
-            </p>
-            <p className="text-[10px] font-medium text-muted-foreground/50 text-center w-full px-0 py-1 select-none border-t border-border/10">
-              © {new Date().getFullYear()} Indelible Technologies. All rights reserved
-            </p>
-          </div>
         </footer>
       </main>
+      
+      <div className="w-full border-t border-border/20 bg-background/60 mt-0">
+        <p className="text-[10px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
+          Powered by <BrandName />
+        </p>
+        <p className="text-[10px] font-medium text-muted-foreground/50 text-center w-full px-0 py-1 select-none border-t border-border/10">
+          © {new Date().getFullYear()} Indelible Technologies. All rights reserved
+        </p>
+      </div>
     </div>
   );
 };
