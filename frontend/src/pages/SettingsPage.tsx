@@ -762,7 +762,7 @@ const SettingsPage: React.FC = () => {
               <Info className="w-5 h-5 text-primary" />
             </div>
             <div className="flex flex-col gap-2">
-              <div className="text-[10px] font-black text-surface-text/30 tracking-[0.3em] uppercase mb-1">System information</div>
+              <div className="text-[10px] font-black text-surface-text/30 tracking-[0.3em] mb-1">System information</div>
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Product: <BrandName /></p>
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Tagline: — Run Your Shop. Grow Your Business —</p>
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Version: 2.1.0</p>
