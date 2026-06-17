@@ -511,7 +511,7 @@ const LoginPage: React.FC = () => {
               <div className="mt-12 space-y-4 w-full">
                 <button 
                   onClick={() => setLoginMode('password')}
-                  className="w-full h-14 flex items-center justify-center font-medium tracking-wide text-[10px] text-muted-foreground/60 hover:text-primary hover:underline underline-offset-4 transition-all"
+                  className="w-full h-14 flex items-center justify-center font-medium tracking-wide text-[10px] text-blue-500 hover:text-blue-600 hover:underline underline-offset-4 transition-all"
                 >
                   Use password instead
                 </button>
