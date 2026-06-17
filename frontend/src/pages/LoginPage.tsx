@@ -511,7 +511,7 @@ const LoginPage: React.FC = () => {
               <div className="mt-12 space-y-4 w-full">
                 <button 
                   onClick={() => setLoginMode('password')}
-                  className="w-full h-14 bg-surface-card border border-surface-border rounded-2xl font-black tracking-widest text-[10px] text-surface-text/40 hover:text-surface-text active:scale-95 transition-all"
+                  className="w-full h-14 flex items-center justify-center font-medium tracking-wide text-[10px] text-muted-foreground/60 hover:text-primary hover:underline underline-offset-4 transition-all"
                 >
                   Use password instead
                 </button>
@@ -529,13 +529,14 @@ const LoginPage: React.FC = () => {
             </div>
           )}
 
-          <Link to="/about" className="md:hidden w-full h-14 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black tracking-widest text-surface-text/60 active:scale-95 transition-all">
-            <Info className="w-4 h-4" />
+          <Link to="/about" className="md:hidden flex items-center justify-center gap-2 text-[10px] font-medium tracking-wide text-muted-foreground/60 hover:text-primary hover:underline underline-offset-4 transition-all">
+            <Info className="w-3 h-3" />
             About MsikaPos
           </Link>
 
 
-          <Link to="/about" className="hidden md:block text-[10px] font-black tracking-widest text-surface-text/60 hover:text-primary-500 transition-colors">
+          <Link to="/about" className="hidden md:flex items-center gap-1.5 text-[10px] font-medium tracking-wide text-muted-foreground/60 hover:text-primary hover:underline underline-offset-4 transition-colors">
+            <Info className="w-3 h-3" />
             About MsikaPos
           </Link>
 
