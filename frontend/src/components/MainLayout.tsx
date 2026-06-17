@@ -78,8 +78,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <div className={clsx("w-full mx-auto py-0 flex-1")}>
             {children}
           </div>
-          {!hideNav && <AppFooter />}
         </main>
+
+        {!hideNav && <AppFooter />}
 
         {!hideNav && <MobileNav />}
       </div>
