@@ -194,7 +194,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="w-full border-t border-border/20 bg-background/60 mt-auto">
+      <footer className="w-full border-t border-border/20 bg-background/60 mt-auto pb-4 pt-1">
         <p className="text-[11px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
           Powered by <BrandName />
         </p>

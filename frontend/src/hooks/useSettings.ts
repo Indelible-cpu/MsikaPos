@@ -18,7 +18,7 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'auto',
       setShopName: (shopName) => set({ shopName }),
       setShopLogo: (shopLogo) => set({ shopLogo }),
-      setTheme: (theme) => {
+      setTheme: () => {
         set({ theme: 'auto' }); // Force auto for OS theme reliance
       },
     }),

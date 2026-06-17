@@ -76,6 +76,7 @@ const AboutPage: React.FC = () => {
     {
       id: 'privacy',
       title: 'Terms & privacy',
+      icon: <ShieldCheck className="w-5 h-5 text-emerald-500" />,
       items: [
         { q: "Data privacy & terms of service", a: "MsikaPos values your privacy. We encrypt all sensitive data and never share your business metrics with third parties. Your data is stored securely on cloud servers with daily backups. By using this system, you agree to follow the operational guidelines set by your business administrator." }
       ] as FaqItem[]
@@ -115,19 +116,11 @@ const AboutPage: React.FC = () => {
             </div>
 
             <div className="bg-transparent border-t border-border/30 overflow-hidden">
-              {'items' in section && section.items ? (
-                <div className="divide-y divide-border/20">
-                  {section.items.map((item, i) => (
-                    <AccordionItem key={i} item={item} index={i} />
-                  ))}
-                </div>
-              ) : (
-                <div className="px-6 py-5">
-                  <p className="text-[12px] font-medium text-muted-foreground leading-relaxed">
-                    {section.content}
-                  </p>
-                </div>
-              )}
+              <div className="divide-y divide-border/20">
+                {section.items.map((item, i) => (
+                  <AccordionItem key={i} item={item} index={i} />
+                ))}
+              </div>
             </div>
           </motion.section>
         ))}
