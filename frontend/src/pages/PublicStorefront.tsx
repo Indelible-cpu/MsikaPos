@@ -1155,13 +1155,10 @@ export const PublicStorefront: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <footer className="glass-panel border-t border-border/50 py-6 px-6 flex flex-col items-center gap-3">
-        <div className="flex items-center gap-2 opacity-30">
-          <span className="text-[8px] font-black tracking-[0.3em]">Powered By MsikaPos</span>
-        </div>
-        <div className="text-center space-y-1">
-          <p className="text-[10px] font-black text-muted-foreground/40 capitalize">© {new Date().getFullYear()} {shopName}. All Rights Reserved.</p>
-        </div>
+      <footer className="border-t border-border/20 py-2 px-6 text-center">
+        <p className="text-[7px] font-medium text-muted-foreground/25 select-none">
+          Powered by MsikaPos · © {new Date().getFullYear()} Indelible Technologies. All rights reserved.
+        </p>
       </footer>
     </div>
 

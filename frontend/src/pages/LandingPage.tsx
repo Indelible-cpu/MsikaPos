@@ -194,9 +194,9 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-border/50 text-center space-y-4">
-        <p className="text-[10px] font-black tracking-widest text-muted-foreground/40 uppercase leading-relaxed select-none">
-          Powered by <BrandName /> · © {new Date().getFullYear()} indelible technologies. all rights reserved.
+      <footer className="py-3 px-6 border-t border-border/20 text-center">
+        <p className="text-[8px] font-medium text-muted-foreground/30 select-none">
+          Powered by <BrandName /> · © {new Date().getFullYear()} Indelible Technologies. All rights reserved.
         </p>
       </footer>
     </div>

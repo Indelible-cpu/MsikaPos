@@ -7,13 +7,11 @@ import React from 'react';
 const AppFooter: React.FC = () => {
   const year = new Date().getFullYear();
   return (
-    <footer className="w-full py-3 px-4 text-center border-t border-border/20 bg-background/50 backdrop-blur-sm shrink-0">
-      <p className="text-[9px] font-bold tracking-widest text-muted-foreground/40 uppercase leading-relaxed select-none">
-        Powered by{' '}
-        <span className="text-foreground/50">Msika</span>
-        <span className="text-green-500/70">Pos</span>
-        {'  ·  '}
-        © {year} indelible technologies. all rights reserved.
+    <footer className="w-full py-1 px-4 text-center border-t border-border/10 bg-background/30 shrink-0">
+      <p className="text-[7px] font-medium text-muted-foreground/25 select-none leading-none">
+        Powered by <span className="text-foreground/30">Msika</span><span className="text-green-500/40">Pos</span>
+        {' · '}
+        © {year} Indelible Technologies. All rights reserved.
       </p>
     </footer>
   );
