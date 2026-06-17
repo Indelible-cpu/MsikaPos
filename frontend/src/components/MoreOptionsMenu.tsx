@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import ThemeToggle from './ThemeToggle';
-import BrandName from './BrandName';
+
 
 interface MoreOptionsMenuProps {
   isOpen: boolean;
