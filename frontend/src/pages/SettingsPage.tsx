@@ -761,6 +761,7 @@ const SettingsPage: React.FC = () => {
             <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] mb-4">System information</p>
             <div className="flex flex-col items-center gap-2">
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Product: <BrandName /></p>
+              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Tagline: — Run Your Shop. Grow Your Business —</p>
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Version: 2.1.0</p>
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Developer: Indelible Technologies</p>
             </div>
