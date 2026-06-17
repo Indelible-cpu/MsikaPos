@@ -1155,9 +1155,12 @@ export const PublicStorefront: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <footer className="border-t border-border/30 py-3 px-6 text-center">
-        <p className="text-[9px] font-medium text-muted-foreground/50 select-none">
-          Powered by MsikaPos · © {new Date().getFullYear()} Indelible Technologies. All rights reserved.
+      <footer className="w-full border-t border-border/20 bg-background/60 mt-auto">
+        <p className="text-[10px] font-semibold text-muted-foreground/60 text-center py-0.5 select-none">
+          Powered by MsikaPos
+        </p>
+        <p className="text-[9px] font-medium text-muted-foreground/50 text-center w-full px-0 py-0.5 select-none border-t border-border/10">
+          © {new Date().getFullYear()} Indelible Technologies. All rights reserved
         </p>
       </footer>
     </div>
