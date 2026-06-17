@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Store, Building2, ShieldAlert, History, TrendingUp, Wallet, Video, X, Lock, DollarSign } from 'lucide-react';
+import { User, Store, Building2, ShieldAlert, History, TrendingUp, Wallet, Video, X, Lock, DollarSign, Info } from 'lucide-react';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -757,9 +757,12 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
 
-          <div className="mt-12 text-left pb-8 border-t border-surface-border/50 pt-8 px-6 md:px-12">
-            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] mb-4">System information</p>
-            <div className="flex flex-col items-start gap-2">
+          <div className="mt-4 border-t border-border/50 px-6 md:px-12 py-8 flex items-start gap-4">
+            <div className="w-10 h-10 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shrink-0 mt-0.5">
+              <Info className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="text-[10px] font-black text-surface-text/30 tracking-[0.3em] uppercase mb-1">System information</div>
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Product: <BrandName /></p>
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Tagline: — Run Your Shop. Grow Your Business —</p>
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Version: 2.1.0</p>
