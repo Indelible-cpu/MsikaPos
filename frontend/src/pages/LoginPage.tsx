@@ -387,6 +387,7 @@ const LoginPage: React.FC = () => {
             <div className="text-base font-black tracking-[0.2em] opacity-80">
               <BrandName />
             </div>
+            <p className="text-[10px] font-medium text-muted-foreground/50 tracking-wide">— Run Your Shop. Grow Your Business —</p>
             <div className="w-16 h-1 bg-primary-500/10 mx-auto rounded-full mt-2"></div>
           </div>
         </div>
