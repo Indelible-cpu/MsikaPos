@@ -531,13 +531,13 @@ const LoginPage: React.FC = () => {
 
           <Link to="/about" className="md:hidden flex items-center justify-center gap-2 text-[10px] font-medium tracking-wide text-muted-foreground/60 hover:text-primary hover:underline underline-offset-4 transition-all">
             <Info className="w-3 h-3" />
-            About MsikaPos
+            About <BrandName />
           </Link>
 
 
           <Link to="/about" className="hidden md:flex items-center gap-1.5 text-[10px] font-medium tracking-wide text-muted-foreground/60 hover:text-primary hover:underline underline-offset-4 transition-colors">
             <Info className="w-3 h-3" />
-            About MsikaPos
+            About <BrandName />
           </Link>
 
         </div>
