@@ -51,6 +51,7 @@ const AboutPage: React.FC = () => {
           </div>
           <div className="space-y-1">
             <h2 className="text-3xl font-black tracking-tight text-foreground"><BrandName /></h2>
+            <p className="text-[10px] font-black tracking-widest text-muted-foreground/50 lowercase">build your shop. grow your business</p>
           </div>
         </section>
 
