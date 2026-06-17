@@ -757,7 +757,7 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
 
-          <div className="mt-12 text-left pb-8 border-t border-surface-border/50 pt-8 pl-1">
+          <div className="mt-12 text-left pb-8 border-t border-surface-border/50 pt-8 px-6 md:px-12">
             <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] mb-4">System information</p>
             <div className="flex flex-col items-start gap-2">
               <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Product: <BrandName /></p>
