@@ -82,7 +82,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
 
             </div>
 
-            <div className="mt-8 px-4 flex flex-row flex-nowrap justify-center items-stretch gap-2 max-w-sm mx-auto">
+            <div className="mt-12 px-4 flex flex-row flex-nowrap justify-center items-stretch gap-2 max-w-sm mx-auto">
               <div className="flex-1 flex flex-col items-center justify-center gap-1 bg-surface-bg border border-surface-border rounded-3xl min-w-0">
                 <span className="text-[8px] font-black text-surface-text/40 uppercase tracking-widest text-center">Appearance</span>
                 <div className="scale-75 origin-top">
@@ -111,9 +111,6 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
               </button>
             </div>
 
-            <div className="mt-8 text-center">
-              <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em]"><BrandName /> v2.4.0</p>
-            </div>
           </motion.div>
         </>
       )}
