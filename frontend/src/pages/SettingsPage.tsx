@@ -9,6 +9,7 @@ import api from '../api/client';
 import { restrictPhone } from '../utils/phoneUtils';
 import { SyncService } from '../services/SyncService';
 import Modal from '../components/Modal';
+import BrandName from '../components/BrandName';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -755,6 +756,15 @@ const SettingsPage: React.FC = () => {
               </div>
             </div>
           )}
+
+          <div className="mt-12 text-center pb-8 border-t border-surface-border/50 pt-8">
+            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] uppercase mb-4">System Information</p>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest uppercase">Product: <BrandName /></p>
+              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest uppercase">Version: 2.1.0</p>
+              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest uppercase">Developer: Indelible Technologies</p>
+            </div>
+          </div>
         </div>
       </div>
 
