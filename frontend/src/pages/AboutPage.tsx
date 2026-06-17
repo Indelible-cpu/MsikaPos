@@ -76,13 +76,14 @@ const AboutPage: React.FC = () => {
     {
       id: 'privacy',
       title: 'Terms & privacy',
-      icon: <ShieldCheck className="w-5 h-5 text-emerald-500" />,
-      content: "MsikaPos values your privacy. We encrypt all sensitive data and never share your business metrics with third parties. Your data is stored securely on cloud servers with daily backups. By using this system, you agree to follow the operational guidelines set by your business administrator."
+      items: [
+        { q: "Data privacy & terms of service", a: "MsikaPos values your privacy. We encrypt all sensitive data and never share your business metrics with third parties. Your data is stored securely on cloud servers with daily backups. By using this system, you agree to follow the operational guidelines set by your business administrator." }
+      ] as FaqItem[]
     }
   ];
 
   return (
-    <div className="w-full bg-background text-foreground selection:bg-primary/30 pb-20 relative">
+    <div className="w-full bg-background text-foreground selection:bg-primary/30 relative flex flex-col min-h-screen">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       <main className="w-full p-0 md:p-0 space-y-10">
@@ -131,8 +132,8 @@ const AboutPage: React.FC = () => {
           </motion.section>
         ))}
 
-        <footer className="text-center pt-10 space-y-8 pb-10">
-          <div className="space-y-2">
+        <footer className="text-center pt-10 mt-auto">
+          <div className="space-y-2 mb-8">
             <p className="text-[10px] font-semibold text-surface-text/60 tracking-[0.2em] px-6">Technical support</p>
             <div className="flex justify-center gap-4 mt-4">
               {/* WhatsApp */}
@@ -169,8 +170,8 @@ const AboutPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full border-t border-border/20 bg-background/60 mt-4">
-            <p className="text-[11px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
+          <div className="w-full border-t border-border/20 bg-background/60 mt-0">
+            <p className="text-[10px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
               Powered by <BrandName />
             </p>
             <p className="text-[10px] font-medium text-muted-foreground/50 text-center w-full px-0 py-1 select-none border-t border-border/10">

@@ -54,7 +54,7 @@ const LandingPage: React.FC = () => {
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors uppercase">Features</a>
-          <Link to="/about" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors uppercase">Support</Link>
+          <Link to="/about" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors">About MsikaPos</Link>
           <Link to="/staff/login" className="px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-primary hover:text-white transition-all btn-press">
             Sign In
           </Link>

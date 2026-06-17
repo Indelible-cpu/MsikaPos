@@ -531,12 +531,12 @@ const LoginPage: React.FC = () => {
 
           <Link to="/about" className="md:hidden w-full h-14 bg-surface-card border border-surface-border rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black tracking-widest text-surface-text/60 active:scale-95 transition-all">
             <Info className="w-4 h-4" />
-            Support
+            About MsikaPos
           </Link>
 
 
           <Link to="/about" className="hidden md:block text-[10px] font-black tracking-widest text-surface-text/60 hover:text-primary-500 transition-colors">
-            Support
+            About MsikaPos
           </Link>
 
         </div>
