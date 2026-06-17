@@ -7,9 +7,9 @@ import React from 'react';
 const AppFooter: React.FC = () => {
   const year = new Date().getFullYear();
   return (
-    <footer className="w-full py-1 px-4 text-center border-t border-border/10 bg-background/30 shrink-0">
-      <p className="text-[7px] font-medium text-muted-foreground/25 select-none leading-none">
-        Powered by <span className="text-foreground/30">Msika</span><span className="text-green-500/40">Pos</span>
+    <footer className="w-full py-2 px-4 text-center border-t border-border/20 bg-background/50 shrink-0">
+      <p className="text-[9px] font-medium text-muted-foreground/50 select-none">
+        Powered by <span className="text-foreground/60">Msika</span><span className="text-green-500/70">Pos</span>
         {' · '}
         © {year} Indelible Technologies. All rights reserved.
       </p>

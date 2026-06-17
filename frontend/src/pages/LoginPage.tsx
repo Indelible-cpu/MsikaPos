@@ -401,11 +401,6 @@ const LoginPage: React.FC = () => {
             <div className="text-base font-black tracking-[0.2em] opacity-80">
               <BrandName />
             </div>
-            {branding.name !== 'MsikaPos' && (
-              <div className="text-[8px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-1 opacity-40">
-                {branding.name} Portal
-              </div>
-            )}
             <div className="w-16 h-1 bg-primary-500/10 mx-auto rounded-full mt-2"></div>
           </div>
         </div>

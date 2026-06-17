@@ -51,7 +51,7 @@ const AboutPage: React.FC = () => {
           </div>
           <div className="space-y-1">
             <h2 className="text-3xl font-black tracking-tight text-foreground"><BrandName /></h2>
-            <p className="text-[10px] font-medium text-muted-foreground/40 tracking-wide">Build your shop. Grow your business</p>
+            <p className="text-[10px] font-medium text-muted-foreground/50 tracking-wide">— Run Your Shop. Grow Your Business —</p>
           </div>
         </section>
 
@@ -129,7 +129,7 @@ const AboutPage: React.FC = () => {
             </div>
           </div>
           
-          <p className="text-[7px] font-medium text-muted-foreground/25 select-none">
+          <p className="text-[9px] font-medium text-muted-foreground/50 select-none">
             Powered by <BrandName /> · © {new Date().getFullYear()} Indelible Technologies. All rights reserved.
           </p>
         </footer>
