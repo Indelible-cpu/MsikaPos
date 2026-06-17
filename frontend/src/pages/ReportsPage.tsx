@@ -305,7 +305,7 @@ const ReportsPage: React.FC = () => {
             Total: ${activeTab !== 'Payment' ? 'MK ' : ''}${data.reduce((s, d) => s + d.value, 0).toLocaleString()}
           </div>
           <div class="footer">
-            Powered by MsikaPos &nbsp;·&nbsp; © ${new Date().getFullYear()} Indelible Technologies. All rights reserved.<br/>
+            Powered by MsikaPos &nbsp;·&nbsp; © ${new Date().getFullYear()} Indelible Technologies. All Rights Reserved.<br/>
             Generated on ${new Date().toLocaleString()}
           </div>
           <script>window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); }</script>

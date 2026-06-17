@@ -226,8 +226,8 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
         </div>
 
         <div className="mt-4 flex flex-col items-center gap-0.5 opacity-30">
-          <div className="text-[7px] font-bold tracking-widest">Powered by MsikaPos</div>
-          <div className="text-[6px] font-bold tracking-wider">© {new Date().getFullYear()} Indelible Technologies. All rights reserved.</div>
+          <div className="text-[6px] font-bold tracking-widest">Powered by MsikaPos</div>
+          <div className="text-[7px] font-bold tracking-wider">© {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.</div>
         </div>
       </div>
       

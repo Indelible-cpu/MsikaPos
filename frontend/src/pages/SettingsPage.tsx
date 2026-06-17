@@ -758,11 +758,11 @@ const SettingsPage: React.FC = () => {
           )}
 
           <div className="mt-12 text-center pb-8 border-t border-surface-border/50 pt-8">
-            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] uppercase mb-4">System Information</p>
+            <p className="text-[10px] font-black text-surface-text/20 tracking-[0.3em] mb-4">System information</p>
             <div className="flex flex-col items-center gap-2">
-              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest uppercase">Product: <BrandName /></p>
-              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest uppercase">Version: 2.1.0</p>
-              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest uppercase">Developer: Indelible Technologies</p>
+              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Product: <BrandName /></p>
+              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Version: 2.1.0</p>
+              <p className="text-[10px] font-bold text-surface-text/60 tracking-widest">Developer: Indelible Technologies</p>
             </div>
           </div>
         </div>

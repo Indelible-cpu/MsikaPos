@@ -195,11 +195,11 @@ const LandingPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="w-full border-t border-border/20 bg-background/60 mt-auto pb-4 pt-1">
-        <p className="text-[11px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
+        <p className="text-[9px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
           Powered by <BrandName />
         </p>
-        <p className="text-[10px] font-medium text-muted-foreground/50 text-center w-full px-0 py-1 select-none border-t border-border/10">
-          © {new Date().getFullYear()} Indelible Technologies. All rights reserved
+        <p className="text-[11px] font-medium text-muted-foreground/50 text-center w-full px-0 py-1 select-none border-t border-border/10">
+          © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
         </p>
       </footer>
     </div>

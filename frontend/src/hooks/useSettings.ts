@@ -18,18 +18,8 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'auto',
       setShopName: (shopName) => set({ shopName }),
       setShopLogo: (shopLogo) => set({ shopLogo }),
-      setTheme: (theme) => {
-        set({ theme });
-        const root = document.documentElement;
-        if (theme === 'dark') {
-          root.classList.add('dark');
-        } else if (theme === 'light') {
-          root.classList.remove('dark');
-        } else {
-          // 'auto' - follow system preference
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          prefersDark ? root.classList.add('dark') : root.classList.remove('dark');
-        }
+      setTheme: () => {
+        set({ theme: 'auto' }); // Force auto for OS theme reliance
       },
     }),
     {
