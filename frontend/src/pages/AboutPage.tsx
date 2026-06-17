@@ -1,39 +1,81 @@
-import React from 'react';
-import { 
-  HelpCircle, 
-  ShieldCheck, 
+import React, { useState } from 'react';
+import {
+  HelpCircle,
+  ShieldCheck,
   Phone,
   Mail,
-  Wrench
+  Wrench,
+  ChevronDown
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import BrandName from '../components/BrandName';
+
+interface FaqItem {
+  q: string;
+  a: string;
+}
+
+const AccordionItem: React.FC<{ item: FaqItem; index: number }> = ({ item, index }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-border/30 last:border-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between gap-4 px-6 py-4 hover:bg-primary/5 transition-all text-left"
+        aria-expanded={open}
+      >
+        <span className="text-sm font-semibold text-foreground">
+          {index + 1}. {item.q}
+        </span>
+        <ChevronDown
+          className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="answer"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <p className="px-6 pb-5 text-[12px] font-medium text-muted-foreground leading-relaxed">
+              {item.a}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const AboutPage: React.FC = () => {
   const sections = [
     {
       id: 'faq',
-      title: 'Frequently Asked Questions',
+      title: 'Frequently asked questions',
       icon: <HelpCircle className="w-5 h-5 text-primary" />,
       items: [
-        { q: "What is MsikaPos?", a: "MsikaPos is a next-generation cloud-based Point of Sale system designed for Malawian businesses to track sales, manage inventory, and monitor staff performance in real-time." },
+        { q: "What is MsikaPos?", a: "MsikaPos is a next-generation cloud-based point of sale system designed for businesses to track sales, manage inventory, and monitor staff performance in real-time." },
         { q: "Can I use it offline?", a: "Yes! MsikaPos is built with offline-first technology. You can continue making sales even when the internet is down, and it will sync automatically once you're back online." },
-        { q: "How do I add new staff?", a: "Only SuperAdmins can add staff. Go to the 'Team' section, click 'Add Staff', and you can even generate a Magic Link to send them via WhatsApp." }
-      ]
+        { q: "How do I add new staff?", a: "Only super admins can add staff. Go to the 'Team' section, click 'Add staff', and you can even generate a magic link to send them via WhatsApp." }
+      ] as FaqItem[]
     },
     {
       id: 'troubleshooting',
-      title: 'Troubleshooting Guide',
+      title: 'Troubleshooting guide',
       icon: <Wrench className="w-5 h-5 text-orange-500" />,
       items: [
         { q: "Sync is stuck?", a: "Ensure your internet connection is active. You can force a manual sync by clicking the 'Sync' icon in the top header." },
-        { q: "Receipt printer not working?", a: "Check if the printer is connected via USB or Bluetooth. MsikaPos uses standard browser printing; ensure the correct printer is selected in the print dialog." },
+        { q: "Receipt printer not working?", a: "Check if the printer is connected via USB or Bluetooth. MsikaPos uses standard browser printing — ensure the correct printer is selected in the print dialog." },
         { q: "Login failed?", a: "Check your username and password. If your account was recently suspended by an admin, you will need to contact them to reactivate it." }
-      ]
+      ] as FaqItem[]
     },
     {
       id: 'privacy',
-      title: 'Terms & Privacy',
+      title: 'Terms & privacy',
       icon: <ShieldCheck className="w-5 h-5 text-emerald-500" />,
       content: "MsikaPos values your privacy. We encrypt all sensitive data and never share your business metrics with third parties. Your data is stored securely on cloud servers with daily backups. By using this system, you agree to follow the operational guidelines set by your business administrator."
     }
@@ -44,7 +86,7 @@ const AboutPage: React.FC = () => {
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       <main className="w-full p-0 md:p-0 space-y-10">
-        {/* Brand Hero / About System */}
+        {/* Brand hero */}
         <section className="text-center space-y-4 py-10 px-6">
           <div className="w-20 h-20 bg-background rounded-full flex items-center justify-center mx-auto border border-primary/20 overflow-hidden shadow-md">
             <img src="/icon.png?v=2" alt="Logo" className="w-full h-full object-cover" />
@@ -56,33 +98,31 @@ const AboutPage: React.FC = () => {
         </section>
 
         {sections.map((section) => (
-          <motion.section 
+          <motion.section
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            key={section.id} 
-            className="space-y-6"
+            key={section.id}
+            className="space-y-4 px-0"
           >
-            <div className="flex items-center gap-3">
+            {/* Section header */}
+            <div className="flex items-center gap-3 px-6">
               <div className="p-2 bg-transparent border border-border/50 rounded-none">
                 {section.icon}
               </div>
-              <h3 className="text-lg font-black tracking-tight text-foreground uppercase">{section.title}</h3>
+              <h3 className="text-base font-bold tracking-tight text-foreground">{section.title}</h3>
             </div>
 
             <div className="bg-transparent border-t border-border/30 overflow-hidden">
-              {section.items ? (
-                <div className="divide-y divide-border/30">
+              {'items' in section && section.items ? (
+                <div className="divide-y divide-border/20">
                   {section.items.map((item, i) => (
-                    <div key={i} className="p-6 space-y-2 hover:bg-primary/5 transition-all">
-                      <h4 className="text-sm font-black text-primary uppercase">Q: {item.q}</h4>
-                      <p className="text-[11px] font-black text-muted-foreground leading-relaxed tracking-wide">{item.a}</p>
-                    </div>
+                    <AccordionItem key={i} item={item} index={i} />
                   ))}
                 </div>
               ) : (
-                <div className="p-8">
-                  <p className="text-[11px] font-black text-muted-foreground leading-relaxed tracking-wide">
+                <div className="px-6 py-5">
+                  <p className="text-[12px] font-medium text-muted-foreground leading-relaxed">
                     {section.content}
                   </p>
                 </div>
@@ -93,9 +133,9 @@ const AboutPage: React.FC = () => {
 
         <footer className="text-center pt-10 space-y-8 pb-10">
           <div className="space-y-2">
-            <p className="text-[10px] font-black text-surface-text/60 tracking-[0.3em] uppercase">Technical Support</p>
+            <p className="text-[10px] font-semibold text-surface-text/60 tracking-[0.2em] px-6">Technical support</p>
             <div className="flex justify-center gap-4 mt-4">
-              {/* WhatsApp Support */}
+              {/* WhatsApp */}
               <a href="https://wa.me/265993732694" title="WhatsApp Support" aria-label="WhatsApp Support" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-emerald-500/30 transition-all group">
                 <div className="w-10 h-10 bg-[#25D366] rounded-none flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
                   <svg className="w-6 h-6 text-white fill-current" viewBox="0 0 24 24">
@@ -104,7 +144,7 @@ const AboutPage: React.FC = () => {
                 </div>
               </a>
 
-              {/* Facebook Support */}
+              {/* Facebook */}
               <a href="https://www.facebook.com/JEFInvestment" target="_blank" rel="noreferrer noopener" title="Facebook Support" aria-label="Facebook Support" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-blue-500/30 transition-all group">
                 <div className="w-10 h-10 bg-[#1877F2] rounded-none flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform">
                   <svg className="w-6 h-6 text-white fill-current" viewBox="0 0 24 24">
@@ -113,14 +153,14 @@ const AboutPage: React.FC = () => {
                 </div>
               </a>
 
-              {/* Direct Call */}
+              {/* Call */}
               <a href="tel:+265885892269" title="Direct Call" aria-label="Direct Call" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-primary/30 transition-all group">
                 <div className="w-10 h-10 bg-primary rounded-none flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
                   <Phone className="w-5 h-5 text-white" />
                 </div>
               </a>
 
-              {/* Email Support */}
+              {/* Email */}
               <a href="mailto:msikaposmw@gmail.com" title="Email Support" aria-label="Email Support" className="w-16 h-16 bg-transparent border-b border-surface-border flex items-center justify-center hover:border-orange-500/30 transition-all group">
                 <div className="w-10 h-10 bg-orange-500 rounded-none flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform">
                   <Mail className="w-5 h-5 text-white" />
@@ -128,6 +168,7 @@ const AboutPage: React.FC = () => {
               </a>
             </div>
           </div>
+
           <div className="w-full border-t border-border/20 bg-background/60 mt-4">
             <p className="text-[10px] font-semibold text-muted-foreground/60 text-center py-0.5 select-none">
               Powered by <BrandName />
