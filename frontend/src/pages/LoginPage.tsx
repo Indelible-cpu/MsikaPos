@@ -29,10 +29,6 @@ const LoginPage: React.FC = () => {
   const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
   const [loginMode, setLoginMode] = useState<'biometric' | 'password'>('password');
-  const [branding, setBranding] = useState({ 
-    logo: localStorage.getItem('companyLogo') || sessionStorage.getItem('companyLogo') || '/icon.png?v=2',
-    name: localStorage.getItem('companyName') || sessionStorage.getItem('companyName') || 'MsikaPos'
-  });
 
   const handleBiometricLogin = useCallback(async () => {
     try {
@@ -255,16 +251,6 @@ const LoginPage: React.FC = () => {
       // Keep biometric data as it's device-linked, but clear auth
     }
 
-    const loadBranding = async () => {
-      const nameSetting = await db.settings.get('company_config');
-      const logoSetting = await db.settings.get('company_logo');
-      
-      setBranding(prev => ({
-        name: (nameSetting?.value as { name: string })?.name || prev.name,
-        logo: (logoSetting?.value as string) || prev.logo
-      }));
-    };
-    loadBranding();
   }, [handleBiometricLogin]);
 
   const hasAutoTriggered = React.useRef(false);
