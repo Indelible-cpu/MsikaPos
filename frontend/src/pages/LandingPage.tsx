@@ -53,10 +53,10 @@ const LandingPage: React.FC = () => {
           <span className="font-black text-xl tracking-tighter"><BrandName /></span>
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors uppercase">Features</a>
+          <a href="#features" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors">Features</a>
           <Link to="/about" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors">About <BrandName /></Link>
-          <Link to="/staff/login" className="px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-primary hover:text-white transition-all btn-press">
-            Sign In
+          <Link to="/staff/login" className="px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl text-[10px] font-black tracking-widest hover:bg-primary hover:text-white transition-all btn-press">
+            Sign in
           </Link>
         </div>
         <Link to="/staff/login" className="md:hidden w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
