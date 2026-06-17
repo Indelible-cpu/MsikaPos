@@ -8,6 +8,7 @@ import { db } from '../db/posDB';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
+import BrandName from '../components/BrandName';
 import { toSentenceCase } from '../utils/stringUtils';
 import { calculateEffectiveDiscount } from '../utils/discountUtils';
 
@@ -1157,7 +1158,7 @@ export const PublicStorefront: React.FC = () => {
 
       <footer className="w-full border-t border-border/20 bg-background/60 mt-auto">
         <p className="text-[11px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
-          Powered by MsikaPos
+          Powered by <BrandName />
         </p>
         <p className="text-[10px] font-medium text-muted-foreground/50 text-center w-full px-0 py-1 select-none border-t border-border/10">
           © {new Date().getFullYear()} Indelible Technologies. All rights reserved
