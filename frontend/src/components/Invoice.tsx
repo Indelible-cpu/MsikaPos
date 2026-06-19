@@ -143,7 +143,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
         
         {/* Barcode Section */}
         <div className="mt-6 flex flex-col items-center">
-           <img src={`https://barcodeapi.org/api/128/${invoiceNo}?height=40&width=150`} alt="barcode" className="h-10 grayscale invert brightness-0" />
+           <img src={`https://barcodeapi.org/api/128/${encodeURIComponent(invoiceNo)}?height=40&width=150`} alt="barcode" className="h-10" crossOrigin="anonymous" />
            <span className="text-[8px] font-bold tracking-[0.3em] mt-1">{invoiceNo}</span>
         </div>
       </div>

@@ -199,8 +199,8 @@ const SalesPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Print Container for Reprints */}
-            <div id="print-container" className="hidden">
+            {/* Print Container for Reprints – rendered off-screen so html2canvas captures full layout */}
+            <div id="print-container" style={{ position: 'fixed', top: '-9999px', left: '-9999px', width: '360px', background: '#fff', zIndex: -1 }}>
               {selectedSale.paymentMode === 'Credit' ? (
                 <Invoice 
                   items={selectedSale.items.map(item => ({ product: { name: item.productName, sellPrice: item.unitPrice } as unknown as LocalProduct, quantity: item.quantity }))}
@@ -238,15 +238,22 @@ const SalesPage: React.FC = () => {
                   onClick={async () => {
                     const el = document.getElementById('print-container');
                     if (!el) return;
-                    el.classList.remove('hidden');
                     toast.loading('Preparing sharing file...', { id: 'share' });
                     try {
-                      const canvas = await html2canvas(el);
-                      el.classList.add('hidden');
+                      // Wait a moment for barcode images to load
+                      await new Promise(r => setTimeout(r, 800));
+                      const canvas = await html2canvas(el, {
+                        scale: 3,
+                        backgroundColor: '#ffffff',
+                        useCORS: true,
+                        allowTaint: false,
+                        logging: false,
+                        width: 360
+                      });
                       const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
                       if (blob) {
                         const file = new File([blob], `receipt-${selectedSale.invoiceNo}.png`, { type: 'image/png' });
-                        if (navigator.share) {
+                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                           await navigator.share({ files: [file], title: 'Transaction Receipt', text: `Receipt for ${selectedSale.invoiceNo}` });
                           toast.success('Shared successfully', { id: 'share' });
                         } else {
@@ -256,7 +263,6 @@ const SalesPage: React.FC = () => {
                         }
                       }
                     } catch { 
-                      el.classList.add('hidden');
                       toast.error('Failed to share', { id: 'share' }); 
                     }
                   }}

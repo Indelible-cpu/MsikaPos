@@ -9,7 +9,7 @@ import {
   FileText,
   MessageSquare,
   X,
-  Edit2
+  Pencil
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
@@ -207,7 +207,7 @@ const ExpensesPage: React.FC = () => {
                   <div className="h-px bg-primary/10 flex-1" />
                 </div>
                 <div className="glass-panel border border-border/50 rounded-[2.5rem] overflow-hidden shadow-2xl divide-y divide-border/30">
-                  {items.map(exp => (
+                   {items.map(exp => (
                     <div key={exp.id} className="p-8 flex justify-between items-center group hover:bg-destructive/5 transition-all">
                        <div className="flex items-center gap-6">
                           <div className="w-14 h-14 bg-background border border-border rounded-2xl flex items-center justify-center text-muted-foreground/20 group-hover:text-destructive group-hover:border-destructive/20 transition-all shadow-inner">
@@ -228,7 +228,7 @@ const ExpensesPage: React.FC = () => {
                              <div className="text-[9px] text-muted-foreground/40 font-black tracking-widest uppercase">{exp.paymentMethod}</div>
                           </div>
                           {!readOnly && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                               <button 
                                 title="Edit expense"
                                 onClick={() => {
@@ -236,20 +236,20 @@ const ExpensesPage: React.FC = () => {
                                   setFormData({
                                     category: exp.category,
                                     amount: exp.amount,
-                                    description: exp.description || '',
+                                    description: exp.description,
                                     date: exp.date,
-                                    paymentMethod: exp.paymentMethod || 'Cash'
+                                    paymentMethod: exp.paymentMethod
                                   });
                                   setIsModalOpen(true);
                                 }} 
-                                className="p-3 text-muted-foreground/40 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all"
+                                className="p-4 text-muted-foreground/20 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all"
                               >
-                               <Edit2 className="w-5 h-5" />
+                               <Pencil className="w-5 h-5" />
                               </button>
                               <button 
                                 title="Delete expense"
                                 onClick={() => handleDelete(exp.id)} 
-                                className="p-3 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all"
+                                className="p-4 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all"
                               >
                                <Trash2 className="w-5 h-5" />
                               </button>
@@ -275,7 +275,7 @@ const ExpensesPage: React.FC = () => {
 
       <Modal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => { setIsModalOpen(false); setEditingExpense(null); resetForm(); }} 
         title={editingExpense ? 'Edit expense' : 'New expense'}
       >
         <form onSubmit={handleSave} className="p-10 space-y-8">
@@ -293,6 +293,12 @@ const ExpensesPage: React.FC = () => {
             <div className="space-y-2">
               <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1">Date</label>
               <input title="Expense date" type="date" className="input-field w-full py-4 px-6 text-sm font-black" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+            </div>
+            <div className="space-y-2 col-span-full">
+              <label className="text-[10px] font-black tracking-widest text-muted-foreground ml-1">Payment method</label>
+              <select title="Payment method" className="input-field w-full py-4 px-6 text-sm font-black appearance-none bg-background" value={formData.paymentMethod} onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})}>
+                {['Cash', 'Mobile Money', 'Bank Transfer', 'Cheque', 'Other'].map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
             </div>
           </div>
           <div className="space-y-2">
@@ -312,7 +318,7 @@ const ExpensesPage: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-4 pt-6">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-5 bg-muted/20 border border-border/50 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase transition-all hover:bg-muted/30">Cancel</button>
+            <button type="button" onClick={() => { setIsModalOpen(false); setEditingExpense(null); resetForm(); }} className="flex-1 py-5 bg-muted/20 border border-border/50 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase transition-all hover:bg-muted/30">Cancel</button>
             <button type="submit" className="flex-1 btn-primary !py-5 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 uppercase transition-all">Save expense</button>
           </div>
         </form>
