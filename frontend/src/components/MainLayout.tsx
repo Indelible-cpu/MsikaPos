@@ -70,15 +70,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           className={clsx(
-            "flex-1 flex flex-col w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out px-0 max-w-full",
+            "flex-1 w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out px-0 max-w-full",
             !hideNav ? "pb-20 md:pb-0" : "pb-0"
           )}
         >
-          <div className="w-full mx-auto py-0 flex-1">
-            {children}
-          </div>
-          <AppFooter />
+          {children}
         </main>
+
+        {/* Footer — always visible at the bottom, outside the scrollable area */}
+        <AppFooter />
 
         {!hideNav && <MobileNav />}
       </div>
