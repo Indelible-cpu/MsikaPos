@@ -33,7 +33,7 @@ interface User {
   phone: string;
   role: string;
   isVerified: boolean;
-  status: 'Active' | 'Suspended' | 'Deactivated';
+  status: 'Active' | 'Suspended' | 'Deactivated' | 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
   createdAt: string;
 }
 
@@ -285,8 +285,8 @@ const UsersPage: React.FC = () => {
                       <div className="px-3 py-1 bg-primary-600/10 text-primary-400 border border-primary-500/20 rounded-full text-[8px] font-black tracking-widest">
                          {u.role}
                       </div>
-                      {u.status !== 'Active' && (
-                        <div className={`px-3 py-1 ${u.status === 'Suspended' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'} border rounded-full text-[8px] font-black tracking-widest`}>
+                      {u.status !== 'ACTIVE' && u.status !== 'Active' && (
+                        <div className={`px-3 py-1 ${u.status === 'SUSPENDED' || u.status === 'Suspended' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'} border rounded-full text-[8px] font-black tracking-widest`}>
                            {(u.status || 'Active').length > 0 ? (u.status || 'Active').charAt(0) + (u.status || 'Active').slice(1).toLowerCase() : ''}
                         </div>
                       )}
@@ -324,7 +324,7 @@ const UsersPage: React.FC = () => {
                     </button>
                     {!readOnly && (
                       <>
-                        {u.status === 'Active' ? (
+                        {u.status === 'ACTIVE' || u.status === 'Active' ? (
                           <>
                             <button 
                               onClick={() => setActionModal({ isOpen: true, type: 'SUSPEND', user: u, reason: '' })} 
@@ -428,23 +428,7 @@ const UsersPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-1 text-left">
-                <label className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Temporary Password</label>
-                <div className="p-4 bg-surface-bg rounded-2xl border border-surface-border flex items-center justify-between">
-                  <span className="font-black tracking-widest text-primary-500">{tempPassword}</span>
-                  <button 
-                    title="Copy Password"
-                    aria-label="Copy Password"
-                    onClick={() => {
-                      navigator.clipboard.writeText(tempPassword || '');
-                      toast.success('Password copied');
-                    }}
-                    className="p-2 text-surface-text/20 hover:text-primary-500 transition-all"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              {/* Temporary Password intentionally hidden as requested by user to avoid confusion */}
 
               {magicToken && (
                 <div className="space-y-1 text-left">

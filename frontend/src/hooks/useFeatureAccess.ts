@@ -46,18 +46,30 @@ export const useFeatureAccess = () => {
     fetchAccess();
   }, [resolvedUser?.role]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getDefaultAccess = (role: string, featureKey: string) => {
+    if (role === 'ADMIN') return 'FULL';
+    if (role === 'CASHIER') {
+      if (featureKey === 'POS_TERMINAL') return 'FULL';
+      if (featureKey === 'SALES_HISTORY') return 'READ_ONLY';
+      return 'HIDDEN';
+    }
+    return 'HIDDEN';
+  };
+
   const canAccess = (featureKey: string) => {
     if (!resolvedUser) return false;
     if (resolvedUser.role === 'SUPER_ADMIN') return true;
     // While loading, default to showing (permissive) — hide only explicit HIDDEN after load
     if (loading) return true;
-    return access[featureKey] !== 'HIDDEN';
+    const current = access[featureKey] || getDefaultAccess(resolvedUser.role, featureKey);
+    return current !== 'HIDDEN';
   };
 
   const isReadOnly = (featureKey: string) => {
     if (!resolvedUser) return true;
     if (resolvedUser.role === 'SUPER_ADMIN') return false;
-    return access[featureKey] === 'READ_ONLY';
+    const current = access[featureKey] || getDefaultAccess(resolvedUser.role, featureKey);
+    return current === 'READ_ONLY';
   };
 
   return { canAccess, isReadOnly, loading };

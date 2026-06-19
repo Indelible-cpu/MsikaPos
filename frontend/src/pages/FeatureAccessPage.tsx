@@ -79,14 +79,24 @@ const FeatureAccessPage: React.FC = () => {
     }
   };
 
+  const getDefaultAccess = (roleName: string, featureKey: string) => {
+    if (roleName === 'ADMIN') return 'FULL';
+    if (roleName === 'CASHIER') {
+      if (featureKey === 'POS_TERMINAL') return 'FULL';
+      if (featureKey === 'SALES_HISTORY') return 'READ_ONLY';
+      return 'HIDDEN';
+    }
+    return 'HIDDEN';
+  };
+
   const getAccess = (featureKey: string, roleName: string) => {
     const config = configs.find(c => c.featureKey === featureKey && c.roleName === roleName);
-    return config?.accessLevel || 'FULL';
+    return config?.accessLevel || getDefaultAccess(roleName, featureKey);
   };
 
   return (
     <div className="flex flex-col transition-all relative">
-      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex items-center justify-between">
           <div className="flex-1"></div>
