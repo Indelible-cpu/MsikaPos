@@ -305,8 +305,10 @@ const POSPage: React.FC = () => {
   }, [products, searchTerm, showAll]);
 
   const addToCart = useCallback((product: LocalProduct) => {
-    // Auto-scroll to top so cart is visible on mobile
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Auto-scroll to cart section so it is visible on mobile
+    setTimeout(() => {
+      document.getElementById('cart-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
 
     if (!product.isService && product.quantity <= 0) return toast.error('Out of stock');
     setCart(prev => {
@@ -853,7 +855,9 @@ const POSPage: React.FC = () => {
       </div>
 
       {/* Right Pane: Cart & Checkout - Hidden on mobile if empty */}
-      <div className={clsx(
+      <div 
+        id="cart-section"
+        className={clsx(
         "w-full lg:w-[380px] xl:w-[420px] flex flex-col bg-card border-l border-border/50 shadow-2xl z-20 min-h-0 transition-all",
         cart.length === 0 ? "hidden lg:flex" : "flex"
       )}>
