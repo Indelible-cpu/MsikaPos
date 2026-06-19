@@ -7,7 +7,7 @@ import React from 'react';
 const AppFooter: React.FC = () => {
   const year = new Date().getFullYear();
   return (
-    <footer className="w-full border-t border-border/20 py-2 shrink-0">
+    <footer className="w-full border-t border-border/20 pt-2 pb-16 md:pb-1 shrink-0">
       <p className="text-[9px] font-semibold text-muted-foreground/60 text-center py-0.5 select-none">
         Powered by <span className="text-foreground/70">Msika</span><span className="text-green-500/80">Pos</span>
       </p>
