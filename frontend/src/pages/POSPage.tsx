@@ -562,14 +562,14 @@ const POSPage: React.FC = () => {
     const balance = Math.max(0, finalTotal - paidAmt);
 
     return (
-      <div className="flex flex-col h-full bg-background overflow-y-auto w-full relative stagger-children">
+      <div className="flex flex-col h-full overflow-y-auto w-full relative stagger-children">
 
         <div className="bg-primary text-primary-foreground flex items-center px-6 py-5 sticky top-0 z-10 shadow-lg">
            <button title="Go back" aria-label="Go back" onClick={() => setCreditMode(false)} className="mr-4 active:scale-90 transition-transform"><ChevronLeft className="w-6 h-6" /></button>
            <h2 className="text-lg font-bold tracking-tight">Register credit sale</h2>
         </div>
         
-        <div className="p-6 space-y-8 pb-24">
+        <div className="p-6 space-y-8">
            <div className="space-y-4">
              <h3 className="font-bold text-foreground tracking-widest text-[10px] ml-1 opacity-50">Customer verification</h3>
              <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm bg-card">
@@ -695,7 +695,7 @@ const POSPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-background overflow-hidden w-full relative">
+    <div className="flex flex-col lg:flex-row h-full overflow-hidden w-full relative">
       {/* Modals & Overlays */}
       {showScanner && (
         <BarcodeScanner onScan={async (sku) => {

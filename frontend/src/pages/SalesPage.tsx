@@ -65,7 +65,7 @@ const SalesPage: React.FC = () => {
   }, 0);
 
   return (
-    <div className="flex flex-col w-full bg-surface-bg transition-all pb-24 md:pb-0">
+    <div className="flex flex-col w-full transition-all">
       <div className="p-6 md:p-10">
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
           <div className="bg-surface-card border border-surface-border p-5 rounded-2xl shadow-sm">

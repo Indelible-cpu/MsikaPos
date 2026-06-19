@@ -407,8 +407,7 @@ const DebtPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full bg-background transition-all md:pb-0 relative stagger-children">
-      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+    <div className="flex flex-col w-full transition-all relative stagger-children">
 
       <div className="flex flex-1 flex-col md:flex-row overflow-hidden relative">
         <aside className={clsx(
