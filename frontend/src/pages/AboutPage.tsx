@@ -88,7 +88,7 @@ const AboutPage: React.FC = () => {
   ];
 
   return (
-    <div className="w-full bg-background text-foreground selection:bg-primary/30 relative flex flex-col min-h-screen overflow-x-hidden">
+    <div className="w-full text-foreground selection:bg-primary/30 relative flex flex-col overflow-x-hidden">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       <div className="w-full max-w-2xl mx-auto pt-6 px-6 z-10 relative flex justify-start">

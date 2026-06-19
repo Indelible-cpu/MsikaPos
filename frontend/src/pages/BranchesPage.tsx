@@ -201,7 +201,7 @@ const BranchesPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
+    <div className="flex flex-col transition-all px-0">
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div className="flex-1"></div>

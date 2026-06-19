@@ -85,7 +85,7 @@ const FeatureAccessPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 relative">
+    <div className="flex flex-col transition-all relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
       <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
         <div className="flex items-center justify-between">

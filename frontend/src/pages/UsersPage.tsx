@@ -230,7 +230,7 @@ const UsersPage: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
+    <div className="flex flex-col transition-all px-0">
       <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
         <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
           <div className="relative flex-[2] min-w-[150px]">

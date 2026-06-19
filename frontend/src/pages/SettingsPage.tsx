@@ -240,7 +240,7 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background transition-all pb-24 md:pb-0 px-0">
+    <div className="flex flex-col transition-all px-0">
       
 
       <div className="w-full px-0 py-0 space-y-px">

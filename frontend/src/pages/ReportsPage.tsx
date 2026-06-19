@@ -324,7 +324,7 @@ const ReportsPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-background transition-all pb-24 md:pb-0 px-0 relative">
+    <div className="flex flex-col w-full transition-all px-0 relative">
       <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
