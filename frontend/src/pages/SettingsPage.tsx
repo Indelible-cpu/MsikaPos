@@ -15,10 +15,7 @@ const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const [isCameraOpen, setIsCameraOpen] = React.useState(false);
   const [confirmModal, setConfirmModal] = React.useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
-  const videoRef = React.useRef<HTMLVideoElement>(null);
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
 
@@ -193,25 +190,7 @@ const SettingsPage: React.FC = () => {
     loadSettings();
   }, []);
 
-  const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-    }
-    setIsCameraOpen(false);
-  };
 
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext('2d');
-      if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0);
-        const base64 = canvasRef.current.toDataURL('image/jpeg');
-        updateProfilePic(base64);
-      }
-    }
-  };
 
   const updateProfilePic = async (base64: string) => {
     try {
@@ -220,22 +199,11 @@ const SettingsPage: React.FC = () => {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       await api.put(`/users/${user.id}`, { profilePic: base64 });
       toast.success('Profile photo updated');
-      stopCamera();
+      toast.success('Profile photo updated');
       window.dispatchEvent(new Event('storage'));
       setTimeout(() => window.location.reload(), 500);
     } catch {
       toast.error('Failed to update profile photo');
-    }
-  };
-
-  const startCamera = async () => {
-    try {
-      setIsCameraOpen(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch {
-      toast.error('Could not access camera');
-      setIsCameraOpen(false);
     }
   };
 
@@ -256,10 +224,10 @@ const SettingsPage: React.FC = () => {
               )}
             </div>
             <div className="absolute -bottom-1 -right-1 flex gap-2">
-              <label title="Upload Profile Photo" className="p-3 bg-primary text-primary-foreground rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all cursor-pointer btn-press">
+              <label title="Update Profile Photo" className="p-3 bg-primary text-primary-foreground rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all cursor-pointer btn-press">
                 <Video className="w-4 h-4" />
                 <input
-                  title="Choose Profile Image"
+                  title="Take Photo or Choose File"
                   type="file"
                   accept="image/*"
                   className="hidden"
@@ -273,13 +241,6 @@ const SettingsPage: React.FC = () => {
                   }}
                 />
               </label>
-              <button
-                title="Start Camera"
-                onClick={startCamera}
-                className="p-3 bg-emerald-500 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all btn-press"
-              >
-                <Video className="w-4 h-4" />
-              </button>
             </div>
           </div>
           <div className="text-center md:text-left flex-1 relative">
@@ -772,34 +733,7 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Camera Modal */}
-      {isCameraOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
-          <div className="w-full max-w-lg bg-surface-card rounded-[2.5rem] overflow-hidden border border-surface-border shadow-2xl relative">
-            <button
-              title="Close camera"
-              onClick={stopCamera}
-              className="absolute top-6 right-6 z-10 w-10 h-10 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center backdrop-blur-md transition-all"
-            >
-              <X className="w-5 h-5" />
-            </button>
 
-            <div className="relative aspect-square bg-black">
-              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-              <canvas ref={canvasRef} className="hidden" />
-            </div>
-
-            <div className="p-8 flex flex-col gap-4">
-              <button onClick={capturePhoto} className="btn-primary w-full !py-5 text-xs font-black tracking-widest shadow-xl shadow-primary-500/20">
-                Capture & set profile photo
-              </button>
-              <button onClick={stopCamera} className="w-full py-4 text-surface-text/40 text-[10px] font-black tracking-widest hover:text-surface-text transition-colors">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Themed Confirmation Modal */}
       <Modal isOpen={!!confirmModal} onClose={() => setConfirmModal(null)} title="Security confirmation">

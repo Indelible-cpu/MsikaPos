@@ -8,7 +8,8 @@ import {
   ArrowDownCircle,
   FileText,
   MessageSquare,
-  X
+  X,
+  Edit2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
@@ -137,7 +138,7 @@ const ExpensesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col transition-all relative">
-      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
+
       <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
         <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
           <div className="relative flex-[2] min-w-[150px]">
@@ -227,13 +228,32 @@ const ExpensesPage: React.FC = () => {
                              <div className="text-[9px] text-muted-foreground/40 font-black tracking-widest uppercase">{exp.paymentMethod}</div>
                           </div>
                           {!readOnly && (
-                            <button 
-                              title="Delete expense"
-                              onClick={() => handleDelete(exp.id)} 
-                              className="p-4 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all opacity-0 group-hover:opacity-100"
-                            >
-                             <Trash2 className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button 
+                                title="Edit expense"
+                                onClick={() => {
+                                  setEditingExpense(exp);
+                                  setFormData({
+                                    category: exp.category,
+                                    amount: exp.amount,
+                                    description: exp.description || '',
+                                    date: exp.date,
+                                    paymentMethod: exp.paymentMethod || 'Cash'
+                                  });
+                                  setIsModalOpen(true);
+                                }} 
+                                className="p-3 text-muted-foreground/40 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all"
+                              >
+                               <Edit2 className="w-5 h-5" />
+                              </button>
+                              <button 
+                                title="Delete expense"
+                                onClick={() => handleDelete(exp.id)} 
+                                className="p-3 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all"
+                              >
+                               <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
                           )}
                        </div>
                     </div>
