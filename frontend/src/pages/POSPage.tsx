@@ -562,7 +562,7 @@ const POSPage: React.FC = () => {
     const balance = Math.max(0, finalTotal - paidAmt);
 
     return (
-      <div className="flex flex-col h-full overflow-y-auto w-full relative stagger-children">
+      <div className="flex flex-col overflow-y-auto w-full relative stagger-children">
 
         <div className="bg-primary text-primary-foreground flex items-center px-6 py-5 sticky top-0 z-10 shadow-lg">
            <button title="Go back" aria-label="Go back" onClick={() => setCreditMode(false)} className="mr-4 active:scale-90 transition-transform"><ChevronLeft className="w-6 h-6" /></button>
@@ -695,7 +695,7 @@ const POSPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-full overflow-hidden w-full relative">
+    <div className="flex flex-col lg:flex-row w-full relative">
       {/* Modals & Overlays */}
       {showScanner && (
         <BarcodeScanner onScan={async (sku) => {
@@ -758,7 +758,7 @@ const POSPage: React.FC = () => {
       )}
 
       {/* Left Pane: Products & Search */}
-      <div className="flex-1 flex flex-col min-h-0 border-r border-border/10 overflow-hidden bg-muted/5">
+      <div className="flex-1 flex flex-col border-r border-border/10 bg-muted/5">
         {/* Sticky Header for Search */}
         <div className="flex gap-2 p-3 md:p-4 bg-card/80 backdrop-blur-md z-10 shadow-sm border-b border-border/50">
           <div className="relative flex-1 group">
@@ -810,11 +810,8 @@ const POSPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Product Grid Area - Adaptive height on mobile */}
-        <div className={clsx(
-          "lg:h-auto lg:flex-1 overflow-y-auto p-2 md:p-6 custom-scrollbar bg-card/20",
-          cart.length === 0 ? "flex-1" : "h-[280px]"
-        )}>
+        {/* Product Grid Area */}
+        <div className="overflow-y-auto p-2 md:p-6 custom-scrollbar bg-card/20">
           <div className="flex justify-between items-center mb-2 px-1">
             <h3 className="font-bold text-foreground capitalize tracking-widest text-[9px] md:text-[11px]">Stock</h3>
 
