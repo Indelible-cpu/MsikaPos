@@ -71,7 +71,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           onTouchEnd={handleTouchEnd}
           className={clsx(
             "flex-1 flex flex-col w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out px-0 max-w-full",
-            !hideNav ? "pb-20 md:pb-0" : "pb-0"
+            !hideNav ? "pb-16 md:pb-0" : "pb-0"
           )}
         >
           <div className="flex-1">
