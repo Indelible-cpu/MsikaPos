@@ -311,7 +311,7 @@ const InventoryPage: React.FC = () => {
   const generateSmartOrder = useCallback(() => {
     if (!products) return;
     const items = products
-      .filter(p => !p.isService && p.quantity <= 5 && (p.soldCount || 0) > 0)
+      .filter(p => !p.isService && p.quantity <= 2 && (p.soldCount || 0) > 0)
       .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
       .map(p => ({
         product: p,
@@ -1063,7 +1063,7 @@ const InventoryPage: React.FC = () => {
              <ShoppingCart className="w-5 h-5 shrink-0" />
              <div>
                <div>Suggested restock for fast-moving items.</div>
-               <div className="text-primary/70 normal-case tracking-normal font-bold mt-1">Includes products with stock ≤ 5 that have a positive sales history. Items that never sold are excluded.</div>
+               <div className="text-primary/70 normal-case tracking-normal font-bold mt-1">Includes products with stock ≤ 2 that have a positive sales history. Items that never sold are excluded.</div>
              </div>
           </div>
           
