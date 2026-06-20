@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import AppFooter from '../components/AppFooter';
+import Modal from '../components/Modal';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { 
@@ -28,14 +29,9 @@ const OrdersPage: React.FC = () => {
   const products = useLiveQuery(() => db.products.filter(p => !p.deleted).toArray());
   const sales = useLiveQuery(() => db.salesQueue.toArray());
 
-  // Store user-edited quantities. Key is productId, Value is edited orderQty.
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [overrideQuantities, setOverrideQuantities] = useState<Record<number, number>>({});
-  
-  // Excluded items that the user decided to manually remove from this session
   const [excludedProducts, setExcludedProducts] = useState<Set<number>>(new Set());
-
-  // Print Preview state
-  const [showPrintView, setShowPrintView] = useState(false);
 
   // Generate the live working list
   const workingList = useMemo<WorkingListItem[]>(() => {
@@ -120,13 +116,13 @@ const OrdersPage: React.FC = () => {
     });
   };
 
-  const receiveStockToInventory = async () => {
+  const receiveStockToInventory = () => {
     if (workingList.length === 0) return;
-    
-    if(!confirm('Are you sure you want to receive this order? This will ADD the requested quantities directly into your active inventory stock and clear them from this list.')) {
-      return;
-    }
+    setShowConfirmModal(true);
+  };
 
+  const confirmReceiveStockToInventory = async () => {
+    setShowConfirmModal(false);
     try {
       const promises = workingList.map(async (item) => {
         const product = await db.products.get(item.productId);
@@ -205,11 +201,18 @@ const OrdersPage: React.FC = () => {
       <div className="glass-panel border-b border-border/50 px-2 md:px-12 py-3 sticky top-0 z-30">
         <div className="flex overflow-x-auto no-scrollbar gap-2 w-full">
              <button 
-               onClick={() => setShowPrintView(true)}
+               onClick={sharePDF}
                disabled={workingList.length === 0}
                className="btn-secondary h-10 px-3 uppercase text-[9px] md:text-[10px] font-black tracking-widest flex items-center gap-1.5 disabled:opacity-50 shrink-0"
              >
-               <Printer className="w-4 h-4" /> <span>Share (PDF)</span>
+               <Share2 className="w-4 h-4" /> <span>Share PDF</span>
+             </button>
+             <button 
+               onClick={() => window.print()}
+               disabled={workingList.length === 0}
+               className="btn-secondary h-10 px-3 uppercase text-[9px] md:text-[10px] font-black tracking-widest flex items-center gap-1.5 disabled:opacity-50 shrink-0"
+             >
+               <Printer className="w-4 h-4" /> <span>Print</span>
              </button>
              <button 
                onClick={receiveStockToInventory}
@@ -303,54 +306,45 @@ const OrdersPage: React.FC = () => {
           </div>
       </div>
 
-      {/* ── Document View Overlay (Print/Share) ─────────────────────────────────────────────────────────── */}
-      {showPrintView && (
-         <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-50 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between p-4 md:p-8 border-b border-border/50 bg-surface-bg/50 print:hidden">
-               <h2 className="text-xl font-black tracking-tighter">Restocking Document</h2>
-               <div className="flex gap-2">
-                 <button 
-                   onClick={sharePDF}
-                   className="btn-primary !px-4 py-2 md:py-3 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
-                 >
-                   <Share2 className="w-4 h-4" /> Share PDF
-                 </button>
-                 <button 
-                   onClick={() => window.print()}
-                   className="btn-secondary !px-4 py-2 md:py-3 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
-                 >
-                   <Printer className="w-4 h-4" /> Print via Printer
-                 </button>
-                 <button onClick={() => setShowPrintView(false)} className="btn-secondary !px-4 py-3 uppercase text-[10px] font-black tracking-widest ml-4">
-                   Close
-                 </button>
-               </div>
-            </div>
-            
-            {/* Document sheet */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-muted/20">
-               <style dangerouslySetInnerHTML={{__html: `
-                 @media print {
-                   body * {
-                     visibility: hidden !important;
-                   }
-                   #supplier-doc-print-area, #supplier-doc-print-area * {
-                     visibility: visible !important;
-                   }
-                   #supplier-doc-print-area {
-                     position: absolute !important;
-                     left: 0 !important;
-                     top: 0 !important;
-                     width: 100% !important;
-                     margin: 0 !important;
-                     padding: 0 !important;
-                     box-shadow: none !important;
-                     background: white !important;
-                     color: black !important;
-                   }
-                 }
-               `}} />
-               <div id="supplier-doc-print-area" className="bg-white text-black p-8 md:p-12 max-w-4xl w-full shadow-2xl print:shadow-none print:w-full print:p-0 min-h-[1056px] flex flex-col relative">
+      <div className="mt-8 opacity-50 px-4 md:px-12 print:hidden">
+         <AppFooter />
+      </div>
+
+      <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Receive Stock">
+        <div className="p-6">
+          <p className="text-sm font-bold text-surface-text mb-6">
+            Are you sure you want to receive this order? This will ADD the requested quantities directly into your active inventory stock and clear them from this list.
+          </p>
+          <div className="flex gap-3">
+             <button onClick={() => setShowConfirmModal(false)} className="flex-1 btn-secondary py-3 text-[10px] font-black uppercase tracking-widest">Cancel</button>
+             <button onClick={confirmReceiveStockToInventory} className="flex-1 btn-primary py-3 bg-emerald-500 shadow-emerald-500/20 text-white text-[10px] font-black uppercase tracking-widest">Yes, Receive Stock</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Document View For PDF/Print ─────────────────────────────────────────────────────────── */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #supplier-doc-print-area, #supplier-doc-print-area * {
+            visibility: visible !important;
+          }
+          #supplier-doc-print-area {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            background: white !important;
+            color: black !important;
+          }
+        }
+      `}} />
+      <div id="supplier-doc-print-area" className="bg-white text-black p-8 max-w-[800px] w-[800px] flex flex-col fixed top-[-9999px] left-[-9999px] z-[-1] min-h-[1056px]">
                   <div className="flex justify-between items-start mb-8 border-b-2 border-black/10 pb-6">
                      <div>
                        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Purchase Order</h1>
@@ -395,14 +389,10 @@ const OrdersPage: React.FC = () => {
                      </div>
                   </div>
 
-                  <div className="mt-auto pt-16 print:absolute print:bottom-0 print:w-full">
-                     <AppFooter />
-                  </div>
-               </div>
+            <div className="mt-auto pt-16 print:absolute print:bottom-0 print:w-full">
+               <AppFooter />
             </div>
          </div>
-      )}
-
     </div>
   );
 };
