@@ -2,28 +2,49 @@ import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 
-const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
-const POSPage = React.lazy(() => import('./pages/POSPage'));
-const LoginPage = React.lazy(() => import('./pages/LoginPage'));
-const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
-const InventoryPage = React.lazy(() => import('./pages/InventoryPage'));
-const OrdersPage = React.lazy(() => import('./pages/OrdersPage'));
-const SalesPage = React.lazy(() => import('./pages/SalesPage'));
-const DebtPage = React.lazy(() => import('./pages/DebtPage'));
-const ExpensesPage = React.lazy(() => import('./pages/ExpensesPage'));
-const TransactionsPage = React.lazy(() => import('./pages/TransactionsPage'));
-const UsersPage = React.lazy(() => import('./pages/UsersPage'));
-const ForgotPasswordPage = React.lazy(() => import('./pages/ForgotPasswordPage'));
-const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));
-const LockedPage = React.lazy(() => import('./pages/LockedPage'));
-const ReportsPage = React.lazy(() => import('./pages/ReportsPage'));
-const BranchesPage = React.lazy(() => import('./pages/BranchesPage'));
-const AboutPage = React.lazy(() => import('./pages/AboutPage'));
-const PublicStorefront = React.lazy(() => import('./pages/PublicStorefront'));
-const LandingPage = React.lazy(() => import('./pages/LandingPage'));
-const SupportPage = React.lazy(() => import('./pages/SupportPage'));
-const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
-const FeatureAccessPage = React.lazy(() => import('./pages/FeatureAccessPage'));
+// Wrapper to catch chunk load errors (MIME type text/html) and force a reload
+const lazyWithReload = (componentImport: () => Promise<any>) =>
+  React.lazy(async () => {
+    const pageHasAlreadyBeenForceRefreshed = JSON.parse(
+      window.sessionStorage.getItem('page-has-been-force-refreshed') || 'false'
+    );
+    try {
+      const component = await componentImport();
+      window.sessionStorage.setItem('page-has-been-force-refreshed', 'false');
+      return component;
+    } catch (error) {
+      if (!pageHasAlreadyBeenForceRefreshed) {
+        window.sessionStorage.setItem('page-has-been-force-refreshed', 'true');
+        window.location.reload();
+        // Return a promise that never resolves while reloading
+        return new Promise(() => {});
+      }
+      throw error;
+    }
+  });
+
+const DashboardPage = lazyWithReload(() => import('./pages/DashboardPage'));
+const POSPage = lazyWithReload(() => import('./pages/POSPage'));
+const LoginPage = lazyWithReload(() => import('./pages/LoginPage'));
+const SettingsPage = lazyWithReload(() => import('./pages/SettingsPage'));
+const InventoryPage = lazyWithReload(() => import('./pages/InventoryPage'));
+const OrdersPage = lazyWithReload(() => import('./pages/OrdersPage'));
+const SalesPage = lazyWithReload(() => import('./pages/SalesPage'));
+const DebtPage = lazyWithReload(() => import('./pages/DebtPage'));
+const ExpensesPage = lazyWithReload(() => import('./pages/ExpensesPage'));
+const TransactionsPage = lazyWithReload(() => import('./pages/TransactionsPage'));
+const UsersPage = lazyWithReload(() => import('./pages/UsersPage'));
+const ForgotPasswordPage = lazyWithReload(() => import('./pages/ForgotPasswordPage'));
+const OnboardingPage = lazyWithReload(() => import('./pages/OnboardingPage'));
+const LockedPage = lazyWithReload(() => import('./pages/LockedPage'));
+const ReportsPage = lazyWithReload(() => import('./pages/ReportsPage'));
+const BranchesPage = lazyWithReload(() => import('./pages/BranchesPage'));
+const AboutPage = lazyWithReload(() => import('./pages/AboutPage'));
+const PublicStorefront = lazyWithReload(() => import('./pages/PublicStorefront'));
+const LandingPage = lazyWithReload(() => import('./pages/LandingPage'));
+const SupportPage = lazyWithReload(() => import('./pages/SupportPage'));
+const AuditLogsPage = lazyWithReload(() => import('./pages/AuditLogsPage'));
+const FeatureAccessPage = lazyWithReload(() => import('./pages/FeatureAccessPage'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-surface-bg">
