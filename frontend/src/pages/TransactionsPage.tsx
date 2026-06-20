@@ -21,6 +21,7 @@ import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
+import { useAuthStore } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
 import { clsx } from 'clsx';
@@ -29,7 +30,8 @@ type TimeFilter = 'Today' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
 
 const TransactionsPage: React.FC = () => {
   const { isReadOnly } = useFeatureAccess();
-  const readOnly = isReadOnly('SALES_HISTORY');
+  const user = useAuthStore(state => state.user);
+  const readOnly = isReadOnly('SALES_HISTORY') || user?.role === 'CASHIER';
   const [searchTerm, setSearchTerm] = useState('');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('Today');
   const [dateFilter, setDateFilter] = useState('');
@@ -87,6 +89,24 @@ const TransactionsPage: React.FC = () => {
       .toArray(),
     [searchTerm, timeFilter, dateFilter, skuFilter]
   );
+
+  useEffect(() => {
+    const clearOldLocalTransactions = async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      try {
+        const oldSales = await db.salesQueue.where('createdAt').below(thirtyDaysAgo.toISOString()).toArray();
+        if (oldSales.length > 0) {
+          const ids = oldSales.map(s => s.id);
+          await db.salesQueue.bulkDelete(ids);
+          console.log(`Auto-cleared ${ids.length} transactions older than 30 days`);
+        }
+      } catch (err) {
+        console.error('Failed to auto-clear old transactions', err);
+      }
+    };
+    clearOldLocalTransactions();
+  }, []);
 
   useEffect(() => {
     const loadServerSales = async () => {
