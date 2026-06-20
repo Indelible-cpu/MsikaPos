@@ -124,7 +124,7 @@ app.post('/api/public/products/:id/rate', ProductCtrl.rateProduct as any);
 app.get('/api/public/products/:id/ratings', ProductCtrl.getProductRatings as any);
 
 // Protected Routes (Require Authentication)
-app.use('/api', authenticate as any, (req: any, res: any, next: any) => {
+app.use('/api', authenticate as any, (req: any, _res: any, next: any) => {
   if (req.user && req.user.businessId) {
     tenantContext.run({ businessId: req.user.businessId }, next);
   } else {
