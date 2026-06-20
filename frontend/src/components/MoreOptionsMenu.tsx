@@ -9,8 +9,7 @@ import {
   LogOut,
   ChevronDown,
   BarChart3,
-  History,
-  Truck
+  History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';

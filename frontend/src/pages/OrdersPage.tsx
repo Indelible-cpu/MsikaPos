@@ -3,7 +3,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import { 
   Printer, 
-  MessageSquare,
   CheckCircle,
   PackageOpen,
   X
