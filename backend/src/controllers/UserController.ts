@@ -35,7 +35,7 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role.name },
+      { id: user.id, username: user.username, role: user.role.name, businessId: user.businessId },
       process.env.JWT_SECRET || 'secret',
       { expiresIn: '24h' }
     );
@@ -49,6 +49,7 @@ export const loginUser = async (req: Request, res: Response) => {
         username: user.username,
         fullname: user.fullname,
         role: user.role.name,
+        businessId: user.businessId,
         mustChangePassword: user.mustChangePassword,
         isVerified: user.isVerified,
         profilePic: user.profilePic,

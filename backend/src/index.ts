@@ -26,7 +26,7 @@ import * as SaleCtrl from './controllers/SaleController';
 import * as Security from './middleware/security';
 
 import { authenticate, authorize } from './middleware/auth';
-import { prisma } from './lib/prisma';
+import { prisma, tenantContext } from './lib/prisma';
 
 dotenv.config();
 
@@ -124,7 +124,13 @@ app.post('/api/public/products/:id/rate', ProductCtrl.rateProduct as any);
 app.get('/api/public/products/:id/ratings', ProductCtrl.getProductRatings as any);
 
 // Protected Routes (Require Authentication)
-app.use('/api', authenticate as any);
+app.use('/api', authenticate as any, (req: any, res: any, next: any) => {
+  if (req.user && req.user.businessId) {
+    tenantContext.run({ businessId: req.user.businessId }, next);
+  } else {
+    next();
+  }
+});
 
 // Staff-Only Middleware
 const staffOnly = authorize(['SUPER_ADMIN', 'ADMIN', 'CASHIER']);
