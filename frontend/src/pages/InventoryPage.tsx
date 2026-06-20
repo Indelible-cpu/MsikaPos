@@ -311,7 +311,7 @@ const InventoryPage: React.FC = () => {
   const generateSmartOrder = useCallback(() => {
     if (!products) return;
     const items = products
-      .filter(p => !p.isService && p.quantity <= 2 && (p.soldCount || 0) > 0)
+      .filter(p => !p.isService && Number(p.quantity) <= 2)
       .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
       .map(p => ({
         product: p,
@@ -319,7 +319,7 @@ const InventoryPage: React.FC = () => {
       }));
     
     if (items.length === 0) {
-      toast.error('No items currently need auto-restocking (must be low stock & have sales history).');
+      toast.error('No items currently need auto-restocking (all stock > 2).');
       return;
     }
     setSmartOrderItems(items);
@@ -1063,7 +1063,7 @@ const InventoryPage: React.FC = () => {
              <ShoppingCart className="w-5 h-5 shrink-0" />
              <div>
                <div>Suggested restock for fast-moving items.</div>
-               <div className="text-primary/70 normal-case tracking-normal font-bold mt-1">Includes products with stock ≤ 2 that have a positive sales history. Items that never sold are excluded.</div>
+               <div className="text-primary/70 normal-case tracking-normal font-bold mt-1">Includes products with stock ≤ 2. Ranked by best sales.</div>
              </div>
           </div>
           
