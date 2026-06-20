@@ -1,11 +1,12 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, MessageSquare, History, Truck } from 'lucide-react';
+import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, MessageSquare, History } from 'lucide-react';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import BrandName from './BrandName';
+import { db } from '../db/posDB';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -39,11 +40,19 @@ const Sidebar: React.FC = () => {
     } catch { /* silent */ }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+  const handleLogout = async () => {
+    try {
+      const unsynced = await db.salesQueue.where('synced').equals(0).count();
+      if (unsynced > 0) {
+        toast.error('Cannot logout: You have unsynced sales. Please sync first.');
+        return;
+      }
+      await db.delete();
+    } catch (e) {
+      console.warn('Error clearing DB during logout', e);
+    }
+    localStorage.clear();
+    sessionStorage.clear();
     toast.success('Signed out successfully');
     navigate('/');
   };

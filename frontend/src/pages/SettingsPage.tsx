@@ -27,6 +27,7 @@ const SettingsPage: React.FC = () => {
   const [taxRate, setTaxRate] = React.useState<number | ''>(0);
   const [taxInclusive, setTaxInclusive] = React.useState(true);
   const [companyName, setCompanyName] = React.useState('');
+  const [businessType, setBusinessType] = React.useState('GENERAL');
   const [slogan, setSlogan] = React.useState('');
   const [address, setAddress] = React.useState('');
   const [companyPhone, setCompanyPhone] = React.useState('');
@@ -86,6 +87,7 @@ const SettingsPage: React.FC = () => {
     try {
       await api.post('/settings', {
         companyName,
+        businessType,
         slogan,
         address,
         phone: companyPhone,
@@ -159,11 +161,13 @@ const SettingsPage: React.FC = () => {
         setTaxRate(val.rate);
         setTaxInclusive(val.inclusive);
       }
+      if (localStorage.getItem('businessType')) setBusinessType(localStorage.getItem('businessType')!);
       try {
         const res = await api.get('/public/settings');
         if (res.data.success && res.data.data) {
           const s = res.data.data;
           setCompanyName(s.companyName || '');
+          setBusinessType(s.businessType || 'GENERAL');
           setSlogan(s.slogan || '');
           setAddress(s.address || '');
           setCompanyPhone(s.phone || '');
@@ -446,6 +450,23 @@ const SettingsPage: React.FC = () => {
                           placeholder="info@msikapos.com"
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-muted-foreground ml-1 tracking-widest">Business / Industry Type</label>
+                      <select 
+                        title="Select business industry"
+                        value={businessType}
+                        onChange={(e) => setBusinessType(e.target.value)}
+                        className="input-field w-full py-3 px-4 text-sm font-black shadow-inner bg-surface-bg border-surface-border"
+                      >
+                        <option value="GENERAL">General Retail</option>
+                        <option value="GROCERY">Grocery / Supermarket</option>
+                        <option value="PHARMACY">Pharmacy / Clinic</option>
+                        <option value="HARDWARE">Hardware / Construction</option>
+                        <option value="CLOTHING">Clothing & Boutique</option>
+                        <option value="ELECTRONICS">Electronics & Mobile</option>
+                      </select>
                     </div>
 
                     <div className="space-y-2">

@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import ThemeToggle from './ThemeToggle';
+import { db } from '../db/posDB';
 
 
 interface MoreOptionsMenuProps {
@@ -38,11 +39,19 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
     ...(isSuperAdmin ? [{ id: 'audit', label: 'Audit Logs', icon: History, path: '/staff/audit-logs', color: 'bg-amber-600' }] : []),
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+  const handleLogout = async () => {
+    try {
+      const unsynced = await db.salesQueue.where('synced').equals(0).count();
+      if (unsynced > 0) {
+        toast.error('Cannot logout: You have unsynced sales. Please sync first.');
+        return;
+      }
+      await db.delete();
+    } catch (e) {
+      console.warn('Error clearing DB during logout', e);
+    }
+    localStorage.clear();
+    sessionStorage.clear();
     toast.success('Signed out');
     window.location.href = '/';
   };
