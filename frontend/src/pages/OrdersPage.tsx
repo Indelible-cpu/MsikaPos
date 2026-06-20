@@ -146,7 +146,9 @@ const OrdersPage: React.FC = () => {
         amount: orderTotal,
         category: 'Inventory Restock',
         description: `Order ${poRef}`,
+        paymentMethod: 'Cash',
         date: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         synced: 0
       });
 
@@ -308,7 +310,7 @@ const OrdersPage: React.FC = () => {
                <h2 className="text-xl font-black tracking-tighter">Restocking Document</h2>
                <div className="flex gap-2">
                  <button 
-                   onClick={shareAsPDF}
+                   onClick={sharePDF}
                    className="btn-primary !px-4 py-2 md:py-3 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
                  >
                    <Share2 className="w-4 h-4" /> Share PDF
