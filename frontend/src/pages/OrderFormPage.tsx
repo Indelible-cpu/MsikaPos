@@ -24,11 +24,9 @@ const OrderFormPage: React.FC = () => {
   const isSmart = searchParams.get('type') === 'smart';
   
   // Database Queries
-  const suppliers = useLiveQuery(() => db.suppliers.toArray());
   const products = useLiveQuery(() => db.products.filter(p => !p.deleted).toArray());
 
   // Form State
-  const [supplierId, setSupplierId] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<LocalPurchaseOrder['status']>('Draft');
   const [items, setItems] = useState<LocalPurchaseOrderItem[]>([]);
@@ -36,7 +34,6 @@ const OrderFormPage: React.FC = () => {
   
   // Selection/Filters
   const [selectedProductToAdd, setSelectedProductToAdd] = useState('');
-  const [excludeSlowMoving, setExcludeSlowMoving] = useState(true);
 
   // Print Preview state
   const [showPrintView, setShowPrintView] = useState(false);
@@ -48,7 +45,6 @@ const OrderFormPage: React.FC = () => {
     const loadOrder = async () => {
       const order = await db.purchaseOrders.get(id);
       if (order) {
-        setSupplierId(order.supplierId || '');
         setNotes(order.notes || '');
         setStatus(order.status);
         setItems(order.items);
@@ -96,28 +92,23 @@ const OrderFormPage: React.FC = () => {
     const lowStockItems = products.filter(p => {
       if (p.isService) return false;
 
-      // Reorder Level defaults to 2 if not set (or is 0/empty)
+      // Rule: ONLY include if Current Stock <= Reorder Level OR Current Stock == 0
       const reorderLimit = p.reorderLevel !== undefined ? p.reorderLevel : 2;
-      const isLowStock = p.quantity <= reorderLimit;
-      if (!isLowStock) return false;
-
-      if (!excludeSlowMoving) return true;
-
-      const salesInfo = productSalesMap[p.id];
-      const productCreatedDate = p.createdAt ? new Date(p.createdAt) : new Date();
-
-      if (salesInfo) {
-        return salesInfo.lastSaleDate >= thirtyDaysAgo;
-      } else {
-        return productCreatedDate >= thirtyDaysAgo;
-      }
+      const isLowStock = p.quantity <= reorderLimit || p.quantity === 0;
+      return isLowStock;
     });
 
     const orderItems: LocalPurchaseOrderItem[] = lowStockItems.map(p => {
       const reorderLimit = p.reorderLevel !== undefined ? p.reorderLevel : 2;
-      const suggestedQty = Math.max(0, reorderLimit - p.quantity);
-      const finalQty = suggestedQty > 0 ? suggestedQty : 1;
+      const baseQty = Math.max(0, reorderLimit - p.quantity);
       
+      const salesInfo = productSalesMap[p.id];
+      const salesLast30Days = salesInfo && salesInfo.lastSaleDate >= thirtyDaysAgo ? salesInfo.totalSold : 0;
+      
+      // Smart Qty: Boost quantity based on recent sales. Fast moving gets more, slow gets base.
+      let finalQty = Math.max(baseQty, salesLast30Days);
+      if (finalQty <= 0) finalQty = 1;
+
       return {
         productId: p.id,
         productName: p.name,
@@ -190,13 +181,10 @@ const OrderFormPage: React.FC = () => {
       return;
     }
 
-    const supplier = suppliers?.find(s => s.id === supplierId);
     const finalStatus = targetStatus || status;
 
     const fullOrder: LocalPurchaseOrder = {
       id: id || generateId(),
-      supplierId,
-      supplierName: supplier?.name,
       status: finalStatus,
       items,
       total: orderTotal,
@@ -235,7 +223,6 @@ const OrderFormPage: React.FC = () => {
     toast.success('Inventory stock updated from order', { icon: '📦' });
   };
 
-  const currentSupplier = suppliers?.find(s => s.id === supplierId);
 
   return (
     <div className="flex flex-col w-full px-4 md:px-12 py-6 relative pb-20">
@@ -263,19 +250,6 @@ const OrderFormPage: React.FC = () => {
           <div className="glass-panel p-6 border border-border/50 rounded-3xl space-y-4">
              <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground border-b border-border/20 pb-2 flex items-center gap-2"><Truck className="w-4 h-4 text-primary" /> Order Metadata</h2>
              
-             <div className="space-y-1">
-               <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="order-sup-select">Supplier</label>
-               <select 
-                 id="order-sup-select" 
-                 className="input-field w-full py-3 px-4 font-black"
-                 value={supplierId}
-                 onChange={e => setSupplierId(e.target.value)}
-                 disabled={status === 'Received'}
-               >
-                 <option value="">-- Choose Supplier --</option>
-                 {suppliers?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-               </select>
-             </div>
 
              <div className="space-y-1">
                <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="order-notes-input">Notes</label>
@@ -306,17 +280,7 @@ const OrderFormPage: React.FC = () => {
 
           {!id && (
              <div className="glass-panel p-6 border border-border/50 rounded-3xl space-y-4">
-                <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground border-b border-border/20 pb-2">Smart Generation</h2>
-                <div className="flex items-center gap-2 cursor-pointer select-none">
-                  <input 
-                    id="exclude-slow"
-                    type="checkbox" 
-                    checked={excludeSlowMoving} 
-                    onChange={(e) => setExcludeSlowMoving(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary w-4 h-4 bg-transparent"
-                  />
-                  <label htmlFor="exclude-slow" className="text-xs font-black uppercase tracking-wider text-muted-foreground cursor-pointer">Exclude slow stock</label>
-                </div>
+                 <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground border-b border-border/20 pb-2 mb-4">Smart Generation</h2>
                 <button 
                   onClick={generateSmartOrderItems}
                   className="w-full btn-secondary py-3 text-[10px] font-black tracking-widest uppercase flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary border-primary/10"
@@ -497,7 +461,7 @@ const OrderFormPage: React.FC = () => {
                  </button>
                  <button 
                    onClick={() => {
-                     const text = `*PURCHASE ORDER REQUEST*\nOrder No: ${id?.slice(0,8).toUpperCase()}\nDate: ${new Date(createdAt).toLocaleDateString()}\nSupplier: ${currentSupplier?.name || 'General Supplier'}\n\n` + 
+                     const text = `*PURCHASE ORDER REQUEST*\nOrder No: ${id?.slice(0,8).toUpperCase()}\nDate: ${new Date(createdAt).toLocaleDateString()}\n\n` + 
                        items.map(i => `- ${i.productName} (Qty: ${i.orderQty})`).join('\n') + 
                        `\n\n*Total Estimated Cost:* MK${orderTotal.toLocaleString()}`;
                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
@@ -541,10 +505,6 @@ const OrderFormPage: React.FC = () => {
                        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Purchase Order</h1>
                        <div className="text-sm font-bold opacity-60">Order No: {id?.slice(0,8).toUpperCase()}</div>
                        <div className="text-sm font-bold opacity-60">Date: {new Date(createdAt).toLocaleDateString()}</div>
-                     </div>
-                     <div className="text-right">
-                       <div className="font-bold text-sm uppercase tracking-widest opacity-60 mb-1">To Supplier:</div>
-                       <div className="text-xl font-black">{currentSupplier?.name || 'General Supplier'}</div>
                      </div>
                   </div>
 
