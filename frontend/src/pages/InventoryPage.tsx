@@ -18,7 +18,10 @@ import {
   Image as ImageIcon,
   Upload,
   Download,
-  X
+  X,
+  ShoppingCart,
+  Printer,
+  MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -215,6 +218,10 @@ const InventoryPage: React.FC = () => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
   const [wasScanned, setWasScanned] = useState(false);
+  
+  // Smart Order State
+  const [isSmartOrderOpen, setIsSmartOrderOpen] = useState(false);
+  const [smartOrderItems, setSmartOrderItems] = useState<{product: LocalProduct, orderQty: number}[]>([]);
 
   const products = useLiveQuery(
     async () => {
@@ -300,6 +307,24 @@ const InventoryPage: React.FC = () => {
       discountEndDate: editingProduct?.discountEndDate || '',
     });
   }, [categories, editingProduct]);
+
+  const generateSmartOrder = useCallback(() => {
+    if (!products) return;
+    const items = products
+      .filter(p => !p.isService && p.quantity <= 5 && (p.soldCount || 0) > 0)
+      .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
+      .map(p => ({
+        product: p,
+        orderQty: Math.max(10, 20 - p.quantity)
+      }));
+    
+    if (items.length === 0) {
+      toast.error('No items currently need auto-restocking (must be low stock & have sales history).');
+      return;
+    }
+    setSmartOrderItems(items);
+    setIsSmartOrderOpen(true);
+  }, [products]);
 
   const handleExport = async () => {
     if (!products || products.length === 0) {
@@ -703,6 +728,15 @@ const InventoryPage: React.FC = () => {
             </button>
             {!readOnly && (
               <button 
+                onClick={generateSmartOrder}
+                className="btn-secondary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shrink-0 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                title="Smart Auto-Order"
+              >
+                <ShoppingCart className="w-4 h-4" /> <span className="hidden lg:inline">Auto-Order</span>
+              </button>
+            )}
+            {!readOnly && (
+              <button 
                 onClick={() => openAddModal()}
                 className="btn-primary h-10 !px-4 uppercase text-[10px] font-black tracking-widest shadow-lg shadow-primary/20 shrink-0"
                 title="Add product"
@@ -1017,6 +1051,115 @@ const InventoryPage: React.FC = () => {
           timeoutDuration={10000}
         />
       )}
+
+      {/* Smart Order Modal */}
+      <Modal 
+        isOpen={isSmartOrderOpen} 
+        onClose={() => setIsSmartOrderOpen(false)} 
+        title="Smart Auto-Order List"
+      >
+        <div className="p-6 md:p-10 flex flex-col max-h-[85vh]">
+          <div className="mb-6 bg-primary/10 text-primary p-4 rounded-2xl text-[10px] font-black tracking-widest uppercase flex items-start gap-3 border border-primary/20">
+             <ShoppingCart className="w-5 h-5 shrink-0" />
+             <div>
+               <div>Suggested restock for fast-moving items.</div>
+               <div className="text-primary/70 normal-case tracking-normal font-bold mt-1">Includes products with stock ≤ 5 that have a positive sales history. Items that never sold are excluded.</div>
+             </div>
+          </div>
+          
+          <div id="smart-order-print-area" className="flex-1 overflow-y-auto no-scrollbar bg-surface-card border border-surface-border rounded-3xl overflow-hidden mb-6 p-1">
+             <div className="hidden print:block text-center pb-4 mb-4 border-b border-black">
+                <h2 className="text-xl font-black">Purchase Order Request</h2>
+                <div className="text-sm">Date: {new Date().toLocaleDateString()}</div>
+             </div>
+             <table className="w-full text-left border-collapse">
+               <thead>
+                 <tr className="border-b border-border/50 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                   <th className="p-4">Product</th>
+                   <th className="p-4 text-center">In Stock</th>
+                   <th className="p-4 text-center print:hidden">Sold</th>
+                   <th className="p-4 text-right">Cost (MK)</th>
+                   <th className="p-4 text-center w-32">Order Qty</th>
+                   <th className="p-4 text-right">Total (MK)</th>
+                   <th className="p-4 w-12 print:hidden"></th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {smartOrderItems.map((item, index) => (
+                   <tr key={item.product.id} className="border-b border-border/20 hover:bg-muted/10 transition-colors">
+                     <td className="p-4 font-bold text-sm">{item.product.name}</td>
+                     <td className="p-4 text-center text-xs font-black text-destructive">{item.product.quantity}</td>
+                     <td className="p-4 text-center text-xs font-black text-primary print:hidden">{item.product.soldCount}</td>
+                     <td className="p-4 text-right text-xs font-black">{item.product.costPrice.toLocaleString()}</td>
+                     <td className="p-4 text-center print:text-right">
+                       <input 
+                         type="number" 
+                         className="input-field w-20 text-center py-2 text-sm font-black print:hidden"
+                         value={item.orderQty === 0 ? '' : item.orderQty}
+                         onChange={(e) => {
+                           const newQty = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                           setSmartOrderItems(prev => prev.map((i, idx) => idx === index ? { ...i, orderQty: newQty } : i));
+                         }}
+                         min="1"
+                       />
+                       <span className="hidden print:inline font-black">{item.orderQty}</span>
+                     </td>
+                     <td className="p-4 text-right text-sm font-black text-primary">
+                       {(item.product.costPrice * item.orderQty).toLocaleString()}
+                     </td>
+                     <td className="p-4 text-center print:hidden">
+                       <button 
+                         onClick={() => setSmartOrderItems(prev => prev.filter((_, idx) => idx !== index))}
+                         className="p-2 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
+                         title="Remove from order"
+                       >
+                         <X className="w-4 h-4" />
+                       </button>
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-auto">
+             <div className="text-xl font-black">
+               <span className="text-muted-foreground text-sm uppercase tracking-widest block mb-1">Est. Order Total</span>
+               MK{smartOrderItems.reduce((acc, item) => acc + (item.product.costPrice * item.orderQty), 0).toLocaleString()}
+             </div>
+             
+             <div className="flex gap-3 w-full md:w-auto">
+               <button 
+                 onClick={() => {
+                   const text = `*Purchase Order Request*\nDate: ${new Date().toLocaleDateString()}\n\n` + 
+                     smartOrderItems.filter(i => i.orderQty > 0).map(i => `- ${i.product.name} x${i.orderQty}`).join('\n') + 
+                     `\n\n*Total Est:* MK${smartOrderItems.reduce((acc, item) => acc + (item.product.costPrice * item.orderQty), 0).toLocaleString()}`;
+                   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                 }}
+                 className="flex-1 md:flex-none btn-primary !py-4 !px-6 text-[10px] font-black tracking-widest uppercase flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+               >
+                 <MessageSquare className="w-4 h-4" /> Share
+               </button>
+               <button 
+                 onClick={() => {
+                    const printContent = document.getElementById('smart-order-print-area');
+                    if (printContent) {
+                      const originalContents = document.body.innerHTML;
+                      document.body.innerHTML = printContent.innerHTML;
+                      window.print();
+                      document.body.innerHTML = originalContents;
+                      window.location.reload();
+                    }
+                 }}
+                 className="flex-1 md:flex-none btn-primary !py-4 !px-6 text-[10px] font-black tracking-widest uppercase flex items-center justify-center gap-2"
+               >
+                 <Printer className="w-4 h-4" /> Print
+               </button>
+             </div>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 };
