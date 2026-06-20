@@ -4,7 +4,6 @@ import { db } from '../db/posDB';
 import AppFooter from '../components/AppFooter';
 import Modal from '../components/Modal';
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { 
   Printer, 
   CheckCircle,
@@ -158,28 +157,20 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  const sharePDF = async () => {
+  const shareOrderList = async () => {
     const printElement = document.getElementById('supplier-doc-print-area');
     if (!printElement) return;
 
-    const toastId = toast.loading('Generating PDF...');
+    const toastId = toast.loading('Generating shareable document...');
     try {
-      const canvas = await html2canvas(printElement, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const canvas = await html2canvas(printElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Failed to generate image');
       
-      const pdfBlob = pdf.output('blob');
       const poRef = `PO-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-      const file = new File([pdfBlob], `Restocking-List-${poRef}.pdf`, { type: 'application/pdf' });
+      const file = new File([blob], `Restocking-List-${poRef}.png`, { type: 'image/png' });
 
-      if (navigator.share && navigator.canShare({ files: [file] })) {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: `Restocking List - ${poRef}`,
@@ -187,11 +178,17 @@ const OrdersPage: React.FC = () => {
         });
         toast.success('Shared successfully', { id: toastId });
       } else {
-        pdf.save(`Restocking-List-${poRef}.pdf`);
-        toast.success('Downloaded PDF', { id: toastId });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Restocking-List-${poRef}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Downloaded document', { id: toastId });
       }
     } catch (e) {
-      toast.error('Failed to generate PDF', { id: toastId });
+      toast.error('Failed to generate document', { id: toastId });
     }
   };
 
@@ -201,11 +198,11 @@ const OrdersPage: React.FC = () => {
       <div className="bg-background border-b border-border/50 px-2 md:px-12 py-3 sticky top-0 z-40">
         <div className="flex overflow-x-auto no-scrollbar gap-2 w-full">
              <button 
-               onClick={sharePDF}
+               onClick={shareOrderList}
                disabled={workingList.length === 0}
                className="btn-secondary h-10 px-3 uppercase text-[9px] md:text-[10px] font-black tracking-widest flex items-center gap-1.5 disabled:opacity-50 shrink-0"
              >
-               <Share2 className="w-4 h-4" /> <span>Share PDF</span>
+               <Share2 className="w-4 h-4" /> <span>Share</span>
              </button>
              <button 
                onClick={() => window.print()}
@@ -306,10 +303,6 @@ const OrdersPage: React.FC = () => {
           </div>
       </div>
 
-      <div className="mt-8 opacity-50 px-4 md:px-12 print:hidden">
-         <AppFooter />
-      </div>
-
       <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Receive Stock">
         <div className="p-6">
           <p className="text-sm font-bold text-surface-text mb-6">
@@ -344,7 +337,7 @@ const OrdersPage: React.FC = () => {
           }
         }
       `}} />
-      <div id="supplier-doc-print-area" className="bg-white text-black p-8 max-w-[800px] w-[800px] flex flex-col fixed top-[-9999px] left-[-9999px] z-[-1] min-h-[1056px]">
+      <div id="supplier-doc-print-area" className="bg-white text-black p-16 max-w-[800px] w-[800px] flex flex-col fixed top-[-9999px] left-[-9999px] z-[-1] min-h-[1056px]">
                   <div className="flex justify-between items-start mb-8 border-b-2 border-black/10 pb-6">
                      <div>
                        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Purchase Order</h1>

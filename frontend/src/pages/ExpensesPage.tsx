@@ -8,7 +8,6 @@ import {
   ArrowDownCircle,
   FileText,
   MessageSquare,
-  X,
   Pencil
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -163,72 +162,50 @@ const ExpensesPage: React.FC = () => {
       </div>
 
       <div className="w-full px-4 md:px-12 py-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-8 glass-panel rounded-[2rem] border border-border/50 flex items-center gap-6 shadow-xl">
-            <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-2xl flex items-center justify-center">
-               <ArrowDownCircle className="w-8 h-8" />
+        <div className="glass-panel rounded-2xl border border-border/50 p-4 flex items-center justify-between shadow-lg max-w-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-destructive/10 text-destructive rounded-xl flex items-center justify-center shrink-0">
+               <ArrowDownCircle className="w-5 h-5" />
             </div>
             <div>
-               <div className="text-[10px] font-black tracking-widest text-muted-foreground uppercase mb-1">Total outflow</div>
-               <div className="text-3xl font-black text-foreground tracking-tighter">MK {totalSpent.toLocaleString()}</div>
-            </div>
-          </div>
-
-          <div className="p-2 glass-panel rounded-[2rem] border border-border/50 flex items-center shadow-xl">
-            <div className="relative flex-1">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-              <input 
-                 type="text" 
-                 placeholder="Search expenses..."
-                 className="w-full pl-16 pr-12 py-6 text-sm font-bold bg-transparent outline-none"
-                 value={searchTerm}
-                 onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <button 
-                  title="Clear search"
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors bg-muted/20 rounded-xl"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+               <div className="text-[9px] font-black tracking-widest text-muted-foreground uppercase">Total outflow</div>
+               <div className="text-xl font-black text-foreground tracking-tighter">MK {totalSpent.toLocaleString()}</div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-12 pb-20">
+        <div className="space-y-6 pb-20">
           {Object.entries(groupedExpenses).map(([groupName, items]) => {
             if (items.length === 0) return null;
             return (
-              <div key={groupName} className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <h3 className="text-[10px] font-black tracking-[0.3em] text-primary uppercase whitespace-nowrap">{groupName}</h3>
+              <div key={groupName} className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-[9px] font-black tracking-[0.2em] text-primary uppercase whitespace-nowrap">{groupName}</h3>
                   <div className="h-px bg-primary/10 flex-1" />
                 </div>
-                <div className="glass-panel border border-border/50 rounded-[2.5rem] overflow-hidden shadow-2xl divide-y divide-border/30">
+                <div className="divide-y divide-border/20 border-b border-border/10">
                    {items.map(exp => (
-                    <div key={exp.id} className="p-8 flex justify-between items-center group hover:bg-destructive/5 transition-all">
-                       <div className="flex items-center gap-6">
-                          <div className="w-12 h-12 md:w-14 md:h-14 bg-background border border-border rounded-2xl flex items-center justify-center text-muted-foreground/20 group-hover:text-destructive group-hover:border-destructive/20 transition-all shadow-inner">
-                             <FileText className="w-5 h-5 md:w-6 md:h-6" />
+                    <div key={exp.id} className="py-3 px-1 flex justify-between items-center group hover:bg-muted/5 transition-all gap-2">
+                       <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="hidden sm:flex w-9 h-9 bg-muted/10 text-muted-foreground/60 rounded-xl items-center justify-center shrink-0">
+                             <FileText className="w-4.5 h-4.5" />
                           </div>
-                          <div>
-                             <div className="font-black text-base md:text-lg tracking-tight">{exp.description || 'No description'}</div>
-                             <div className="text-[10px] text-muted-foreground font-black tracking-widest uppercase flex items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                             <div className="font-bold text-xs md:text-sm tracking-tight text-foreground truncate lowercase first-letter:uppercase">{exp.description || 'No description'}</div>
+                             <div className="text-[9px] md:text-[10px] text-muted-foreground font-semibold flex items-center gap-1.5 mt-0.5 flex-wrap">
                                 <span>{exp.category}</span>
-                                <span className="w-1 h-1 bg-border rounded-full" />
+                                <span className="w-1 h-1 bg-muted-foreground/30 rounded-full" />
                                 <span>{exp.date}</span>
                               </div>
                           </div>
                        </div>
-                        <div className="flex items-center gap-4 md:gap-8">
-                          <div className="text-right">
-                             <div className="text-lg md:text-xl font-black text-destructive tracking-tighter">MK {exp.amount.toLocaleString()}</div>
-                             <div className="text-[9px] text-muted-foreground/40 font-black tracking-widest uppercase">{exp.paymentMethod}</div>
+                        <div className="flex items-center gap-3 md:gap-6 shrink-0">
+                          <div className="text-right flex flex-col justify-center">
+                             <div className="text-sm md:text-base font-black text-destructive tracking-tight">MK {exp.amount.toLocaleString()}</div>
+                             <div className="text-[8px] md:text-[9px] text-muted-foreground/50 font-bold uppercase tracking-wider">{exp.paymentMethod}</div>
                           </div>
                           {!readOnly && (
-                            <div className="flex items-center gap-1 transition-all">
+                            <div className="flex items-center gap-0.5">
                               <button 
                                 title="Edit expense"
                                 onClick={() => {
@@ -242,16 +219,16 @@ const ExpensesPage: React.FC = () => {
                                   });
                                   setIsModalOpen(true);
                                 }} 
-                                className="p-3 text-muted-foreground/50 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all"
+                                className="p-1.5 text-muted-foreground/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
                               >
-                               <Pencil className="w-4 h-4" />
+                               <Pencil className="w-3.5 h-3.5" />
                               </button>
                               <button 
                                 title="Delete expense"
                                 onClick={() => handleDelete(exp.id)} 
-                                className="p-3 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all"
+                                className="p-1.5 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                               >
-                               <Trash2 className="w-4 h-4" />
+                               <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           )}
