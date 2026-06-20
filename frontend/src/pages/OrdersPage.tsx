@@ -2,11 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import AppFooter from '../components/AppFooter';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { 
   Printer, 
   CheckCircle,
   PackageOpen,
-  X
+  X,
+  Share2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -136,7 +139,18 @@ const OrdersPage: React.FC = () => {
         }
       });
       await Promise.all(promises);
-      toast.success('Inventory stock updated! Items removed from restocking list.', { icon: '📦' });
+      
+      const poRef = `PO-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+      await db.expenses.add({
+        id: crypto.randomUUID(),
+        amount: orderTotal,
+        category: 'Inventory Restock',
+        description: `Order ${poRef}`,
+        date: new Date().toISOString(),
+        synced: 0
+      });
+
+      toast.success('Inventory stock updated and expense recorded!', { icon: '📦' });
       
       // Clear manual overrides/exclusions for these items since they are processed
       setOverrideQuantities({});
@@ -146,6 +160,42 @@ const OrdersPage: React.FC = () => {
     }
   };
 
+  const sharePDF = async () => {
+    const printElement = document.getElementById('supplier-doc-print-area');
+    if (!printElement) return;
+
+    const toastId = toast.loading('Generating PDF...');
+    try {
+      const canvas = await html2canvas(printElement, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      const pdfBlob = pdf.output('blob');
+      const poRef = `PO-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+      const file = new File([pdfBlob], `Restocking-List-${poRef}.pdf`, { type: 'application/pdf' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `Restocking List - ${poRef}`,
+          text: 'Please find the attached restocking order list.'
+        });
+        toast.success('Shared successfully', { id: toastId });
+      } else {
+        pdf.save(`Restocking-List-${poRef}.pdf`);
+        toast.success('Downloaded PDF', { id: toastId });
+      }
+    } catch (e) {
+      toast.error('Failed to generate PDF', { id: toastId });
+    }
+  };
 
   return (
     <div className="flex flex-col w-full px-0 relative pb-20">
@@ -170,50 +220,50 @@ const OrdersPage: React.FC = () => {
       </div>
 
       <div className="px-1 md:px-12 py-6">
-          {/* Table Container */}
-          <div className="glass-panel border border-border/50 rounded-xl overflow-hidden p-0 relative">
-             <div className="w-full">
-               <table className="w-full text-left table-fixed">
-                 <thead>
-                   <tr className="border-b border-border/50 text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-tight bg-surface-bg/50">
-                     <th className="p-1 md:p-4 w-[30%]">Product Name</th>
-                     <th className="p-1 md:p-4 text-center">Stock</th>
-                     <th className="p-1 md:p-4 text-center">Reorder</th>
-                     <th className="p-1 md:p-4 text-center">Sugg.</th>
-                     <th className="p-1 md:p-4 text-center w-12 md:w-24">Order Qty</th>
-                     <th className="p-1 md:p-4 text-right">Cost</th>
-                     <th className="p-1 md:p-4 text-right">Total</th>
-                     <th className="p-1 w-6 md:w-12 text-center"></th>
-                   </tr>
-                 </thead>
+           {/* Table Container */}
+           <div className="glass-panel border border-border/50 rounded-xl overflow-x-auto p-0 relative">
+              <div className="w-full">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-border/50 text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-tight bg-surface-bg/50">
+                      <th className="px-2 py-3 md:p-4 w-[35%]">Product Name</th>
+                      <th className="px-2 py-3 md:p-4 text-center">Stock</th>
+                      <th className="px-2 py-3 md:p-4 text-center">Reorder</th>
+                      <th className="px-2 py-3 md:p-4 text-center">Sugg.</th>
+                      <th className="px-2 py-3 md:p-4 text-center w-24">Order Qty</th>
+                      <th className="px-2 py-3 md:p-4 text-right">Cost</th>
+                      <th className="px-2 py-3 md:p-4 text-right">Total</th>
+                      <th className="px-2 w-8 md:w-12 text-center"></th>
+                    </tr>
+                  </thead>
                  <tbody className="divide-y divide-border/20">
                    {workingList.map(item => (
                      <tr key={item.productId} className="hover:bg-muted/10 transition-colors lowercase first-letter:uppercase">
-                       <td className="p-1 md:p-4 font-bold text-[9px] md:text-sm truncate">
+                       <td className="px-2 py-2 md:p-4 font-bold text-[10px] md:text-sm whitespace-normal break-words">
                          {item.productName}
                        </td>
-                       <td className="p-1 md:p-4 text-center text-[9px] md:text-xs font-black text-destructive">
+                       <td className="px-2 py-2 md:p-4 text-center text-[10px] md:text-xs font-black text-destructive">
                          {item.currentStock}
                        </td>
-                       <td className="p-1 md:p-4 text-center text-[9px] md:text-xs font-black text-amber-500">
+                       <td className="px-2 py-2 md:p-4 text-center text-[10px] md:text-xs font-black text-amber-500">
                          {item.reorderLevel}
                        </td>
-                       <td className="p-1 md:p-4 text-center text-[9px] md:text-xs font-black text-blue-500">
+                       <td className="px-2 py-2 md:p-4 text-center text-[10px] md:text-xs font-black text-blue-500">
                          {item.suggestedQty}
                        </td>
-                       <td className="p-1 md:p-4 text-center">
+                       <td className="px-2 py-2 md:p-4 text-center">
                          <input 
                            type="number" 
-                           className="input-field w-8 md:w-16 text-center py-1 md:py-1.5 px-0 text-[9px] md:text-xs font-black mx-auto"
+                           className="input-field w-12 md:w-16 text-center py-1 md:py-1.5 px-0 text-[10px] md:text-xs font-black mx-auto"
                            value={item.orderQty}
                            onChange={(e) => handleUpdateOrderItem(item.productId, Number(e.target.value))}
                            min="1"
                          />
                        </td>
-                       <td className="p-1 md:p-4 text-right text-[9px] md:text-xs font-black text-muted-foreground truncate">
+                       <td className="px-2 py-2 md:p-4 text-right text-[10px] md:text-xs font-black text-muted-foreground whitespace-nowrap">
                          {item.unitCost.toLocaleString()}
                        </td>
-                       <td className="p-1 md:p-4 text-right text-[9px] md:text-sm font-black text-primary truncate">
+                       <td className="px-2 py-2 md:p-4 text-right text-[10px] md:text-sm font-black text-primary whitespace-nowrap">
                          {item.lineTotal.toLocaleString()}
                        </td>
                        <td className="p-1 md:p-4 text-center">
@@ -256,12 +306,18 @@ const OrdersPage: React.FC = () => {
          <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-50 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between p-4 md:p-8 border-b border-border/50 bg-surface-bg/50 print:hidden">
                <h2 className="text-xl font-black tracking-tighter">Restocking Document</h2>
-               <div className="flex gap-3">
+               <div className="flex gap-2">
+                 <button 
+                   onClick={shareAsPDF}
+                   className="btn-primary !px-4 py-2 md:py-3 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
+                 >
+                   <Share2 className="w-4 h-4" /> Share PDF
+                 </button>
                  <button 
                    onClick={() => window.print()}
-                   className="btn-secondary !px-4 py-3 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
+                   className="btn-secondary !px-4 py-2 md:py-3 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
                  >
-                   <Printer className="w-4 h-4" /> Print PDF
+                   <Printer className="w-4 h-4" /> Print via Printer
                  </button>
                  <button onClick={() => setShowPrintView(false)} className="btn-secondary !px-4 py-3 uppercase text-[10px] font-black tracking-widest ml-4">
                    Close
