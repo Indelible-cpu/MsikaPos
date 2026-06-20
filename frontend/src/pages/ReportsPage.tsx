@@ -327,7 +327,7 @@ const ReportsPage: React.FC = () => {
     <div className="flex flex-col w-full transition-all px-0 relative">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+      <div className="bg-background border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-40">
         <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
           {/* Tabs */}
           <div className="flex gap-2 p-1 bg-muted/20 border border-border/50 rounded-2xl shrink-0">

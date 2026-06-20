@@ -139,7 +139,7 @@ const ExpensesPage: React.FC = () => {
   return (
     <div className="flex flex-col transition-all relative">
 
-      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+      <div className="bg-background border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-40">
         <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
           <div className="relative flex-[2] min-w-[150px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -210,11 +210,11 @@ const ExpensesPage: React.FC = () => {
                    {items.map(exp => (
                     <div key={exp.id} className="p-8 flex justify-between items-center group hover:bg-destructive/5 transition-all">
                        <div className="flex items-center gap-6">
-                          <div className="w-14 h-14 bg-background border border-border rounded-2xl flex items-center justify-center text-muted-foreground/20 group-hover:text-destructive group-hover:border-destructive/20 transition-all shadow-inner">
-                             <FileText className="w-6 h-6" />
+                          <div className="w-12 h-12 md:w-14 md:h-14 bg-background border border-border rounded-2xl flex items-center justify-center text-muted-foreground/20 group-hover:text-destructive group-hover:border-destructive/20 transition-all shadow-inner">
+                             <FileText className="w-5 h-5 md:w-6 md:h-6" />
                           </div>
                           <div>
-                             <div className="font-black text-lg tracking-tight">{exp.description || 'No description'}</div>
+                             <div className="font-black text-base md:text-lg tracking-tight">{exp.description || 'No description'}</div>
                              <div className="text-[10px] text-muted-foreground font-black tracking-widest uppercase flex items-center gap-2">
                                 <span>{exp.category}</span>
                                 <span className="w-1 h-1 bg-border rounded-full" />
@@ -222,13 +222,13 @@ const ExpensesPage: React.FC = () => {
                               </div>
                           </div>
                        </div>
-                       <div className="flex items-center gap-8">
+                        <div className="flex items-center gap-4 md:gap-8">
                           <div className="text-right">
-                             <div className="text-xl font-black text-destructive tracking-tighter">MK {exp.amount.toLocaleString()}</div>
+                             <div className="text-lg md:text-xl font-black text-destructive tracking-tighter">MK {exp.amount.toLocaleString()}</div>
                              <div className="text-[9px] text-muted-foreground/40 font-black tracking-widest uppercase">{exp.paymentMethod}</div>
                           </div>
                           {!readOnly && (
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <div className="flex items-center gap-1 transition-all">
                               <button 
                                 title="Edit expense"
                                 onClick={() => {
@@ -242,16 +242,16 @@ const ExpensesPage: React.FC = () => {
                                   });
                                   setIsModalOpen(true);
                                 }} 
-                                className="p-4 text-muted-foreground/20 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all"
+                                className="p-3 text-muted-foreground/50 hover:text-primary hover:bg-primary/10 rounded-2xl transition-all"
                               >
-                               <Pencil className="w-5 h-5" />
+                               <Pencil className="w-4 h-4" />
                               </button>
                               <button 
                                 title="Delete expense"
                                 onClick={() => handleDelete(exp.id)} 
-                                className="p-4 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all"
+                                className="p-3 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all"
                               >
-                               <Trash2 className="w-5 h-5" />
+                               <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
                           )}

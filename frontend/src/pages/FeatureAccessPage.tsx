@@ -97,7 +97,7 @@ const FeatureAccessPage: React.FC = () => {
   return (
     <div className="flex flex-col transition-all relative">
 
-      <div className="glass-panel border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-30">
+      <div className="bg-background border-b border-border/50 px-6 md:px-12 py-6 sticky top-0 z-40">
         <div className="flex items-center justify-between">
           <div className="flex-1"></div>
         </div>

@@ -198,7 +198,7 @@ const OrdersPage: React.FC = () => {
   return (
     <div className="flex flex-col w-full px-0 relative pb-20">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="glass-panel border-b border-border/50 px-2 md:px-12 py-3 sticky top-0 z-30">
+      <div className="bg-background border-b border-border/50 px-2 md:px-12 py-3 sticky top-0 z-40">
         <div className="flex overflow-x-auto no-scrollbar gap-2 w-full">
              <button 
                onClick={sharePDF}

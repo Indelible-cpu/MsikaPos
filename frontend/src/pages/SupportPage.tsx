@@ -162,7 +162,7 @@ const SupportPage: React.FC = () => {
   return (
     <div className="flex flex-col transition-all w-full px-0 relative">
 
-      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
+      <div className="bg-background border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-40">
         <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-1">
           {/* Search */}
           <div className="relative flex-[2] min-w-[140px]">
