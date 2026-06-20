@@ -76,9 +76,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           <div className="flex-1">
             {children}
           </div>
-          {/* Footer — inside scroll so it is never sticky */}
-          <AppFooter />
+          {/* Mobile Footer (inside scroll) */}
+          <div className="md:hidden">
+            <AppFooter />
+          </div>
         </main>
+
+        {/* Desktop Footer (fixed at bottom of layout) */}
+        <div className="hidden md:block">
+          <AppFooter />
+        </div>
 
         {!hideNav && <MobileNav />}
       </div>
