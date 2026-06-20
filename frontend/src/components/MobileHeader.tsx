@@ -71,6 +71,7 @@ export default function MobileHeader() {
       case '/dashboard': return 'Dashboard';
       case '/pos': return 'Pos';
       case '/inventory': return 'Inventory';
+      case '/orders': return 'Purchase orders';
       case '/sales': return 'Sales history';
       case '/reports': return 'Business reports';
       case '/settings': return 'System settings';

@@ -17,6 +17,8 @@ export interface LocalProduct {
   discountValue?: number;
   discountStartDate?: string;
   discountEndDate?: string;
+  reorderLevel?: number; // Added for Smart Ordering
+  supplierId?: string; // Added for Smart Ordering
   createdAt: string;
   updatedAt: string;
   deleted?: boolean;
@@ -127,6 +129,39 @@ export interface LocalOfflineAuth {
   token: string;
 }
 
+export interface LocalSupplier {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  createdAt: string;
+  synced: number;
+}
+
+export interface LocalPurchaseOrderItem {
+  productId: number;
+  productName: string;
+  currentStock: number;
+  reorderLevel: number;
+  orderQty: number;
+  unitCost: number;
+  lineTotal: number;
+}
+
+export interface LocalPurchaseOrder {
+  id: string;
+  supplierId?: string;
+  supplierName?: string;
+  status: 'Draft' | 'Sent' | 'Received' | 'Cancelled';
+  items: LocalPurchaseOrderItem[];
+  total: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  synced: number;
+}
+
 export class POSDatabase extends Dexie {
   products!: Table<LocalProduct>;
   categories!: Table<{ id: number; title: string; slug: string }>;
@@ -138,11 +173,13 @@ export class POSDatabase extends Dexie {
   users!: Table<LocalUser>;
   auditLogs!: Table<LocalAuditLog>;
   offlineAuth!: Table<LocalOfflineAuth>;
+  suppliers!: Table<LocalSupplier>;
+  purchaseOrders!: Table<LocalPurchaseOrder>;
 
   constructor() {
     super('JEF_POS_DB');
-    this.version(14).stores({
-      products: 'id, categoryId, sku, name, status, updatedAt',
+    this.version(15).stores({
+      products: 'id, categoryId, sku, name, status, supplierId, updatedAt',
       categories: 'id, slug',
       salesQueue: 'id, customerId, status, synced, createdAt',
       settings: 'key',
@@ -151,7 +188,9 @@ export class POSDatabase extends Dexie {
       expenses: 'id, category, date, synced',
       users: 'id, username, role',
       auditLogs: 'id, userId, action, createdAt',
-      offlineAuth: 'username'
+      offlineAuth: 'username',
+      suppliers: 'id, name, synced',
+      purchaseOrders: 'id, supplierId, status, synced, createdAt'
     });
   }
 }

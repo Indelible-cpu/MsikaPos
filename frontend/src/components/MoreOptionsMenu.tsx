@@ -9,7 +9,8 @@ import {
   LogOut,
   ChevronDown,
   BarChart3,
-  History
+  History,
+  Truck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -28,6 +29,7 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
 
   const options = [
     { id: 'inventory', label: 'Inventory', icon: Package, path: '/staff/inventory', color: 'bg-emerald-500' },
+    { id: 'orders', label: 'Purchase Orders', icon: Truck, path: '/staff/orders', color: 'bg-indigo-500' },
     { id: 'debt', label: 'Credit Center', icon: Users, path: '/staff/debt', color: 'bg-orange-500' },
     { id: 'expenses', label: 'Expenses', icon: Wallet, path: '/staff/expenses', color: 'bg-rose-500' },
     { id: 'team', label: 'Staff', icon: Users, path: '/staff/users', color: 'bg-primary' },

@@ -325,7 +325,6 @@ const ReportsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full transition-all px-0 relative">
-      <div className="fixed inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">

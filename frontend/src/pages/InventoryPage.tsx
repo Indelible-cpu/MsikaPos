@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import api from '../api/client';
@@ -171,6 +172,7 @@ const InventoryProductCard = React.memo(({
 });
 
 const InventoryPage: React.FC = () => {
+  const navigate = useNavigate();
   const currentUser = useAuthStore(state => state.user);
   const isSuperAdmin = currentUser?.role?.toUpperCase() === 'SUPER_ADMIN';
   const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN' || isSuperAdmin;
@@ -200,6 +202,8 @@ const InventoryPage: React.FC = () => {
     discountValue: number | '';
     discountStartDate: string;
     discountEndDate: string;
+    reorderLevel: number | '';
+    supplierId: string;
   }>({
     name: '',
     sku: '',
@@ -213,7 +217,9 @@ const InventoryPage: React.FC = () => {
     discountType: 'Percentage',
     discountValue: 0,
     discountStartDate: '',
-    discountEndDate: ''
+    discountEndDate: '',
+    reorderLevel: 5,
+    supplierId: '',
   });
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
@@ -239,6 +245,7 @@ const InventoryPage: React.FC = () => {
     [searchTerm, showDeleted]
   );
   const categories = useLiveQuery(() => db.categories.toArray());
+  const suppliers = useLiveQuery(() => db.suppliers.toArray());
 
   const filteredProducts = selectedCategory
     ? products?.filter(p => p.categoryId === selectedCategory)
@@ -305,26 +312,14 @@ const InventoryPage: React.FC = () => {
       discountValue: editingProduct?.discountValue ?? 0,
       discountStartDate: editingProduct?.discountStartDate || '',
       discountEndDate: editingProduct?.discountEndDate || '',
+      reorderLevel: editingProduct?.reorderLevel ?? 5,
+      supplierId: editingProduct?.supplierId || '',
     });
   }, [categories, editingProduct]);
 
   const generateSmartOrder = useCallback(() => {
-    if (!products) return;
-    const items = products
-      .filter(p => !p.isService && Number(p.quantity) <= 2)
-      .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
-      .map(p => ({
-        product: p,
-        orderQty: Math.max(10, 20 - p.quantity)
-      }));
-    
-    if (items.length === 0) {
-      toast.error('No items currently need auto-restocking (all stock > 2).');
-      return;
-    }
-    setSmartOrderItems(items);
-    setIsSmartOrderOpen(true);
-  }, [products]);
+    navigate('/staff/orders');
+  }, [navigate]);
 
   const handleExport = async () => {
     if (!products || products.length === 0) {
@@ -368,6 +363,8 @@ const InventoryPage: React.FC = () => {
       discountValue: p?.discountValue ?? 0,
       discountStartDate: p?.discountStartDate || '',
       discountEndDate: p?.discountEndDate || '',
+      reorderLevel: p?.reorderLevel ?? 5,
+      supplierId: p?.supplierId || '',
     });
     setIsAddModalOpen(true);
   }, [categories]);
@@ -528,6 +525,8 @@ const InventoryPage: React.FC = () => {
         discount: Number(formData.discount) || 0,
         discountValue: Number(formData.discountValue) || 0,
         discountType: formData.discountType as 'Percentage' | 'Fixed' | undefined,
+        reorderLevel: formData.reorderLevel === '' ? 0 : Number(formData.reorderLevel),
+        supplierId: formData.supplierId,
         updatedAt: new Date().toISOString()
       };
 
@@ -730,9 +729,9 @@ const InventoryPage: React.FC = () => {
               <button 
                 onClick={generateSmartOrder}
                 className="btn-secondary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shrink-0 bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
-                title="Smart Auto-Order"
+                title="Smart Orders"
               >
-                <ShoppingCart className="w-4 h-4" /> <span className="hidden lg:inline">Auto-Order</span>
+                <ShoppingCart className="w-4 h-4" /> <span className="hidden lg:inline">Smart Orders</span>
               </button>
             )}
             {!readOnly && (
@@ -940,13 +939,29 @@ const InventoryPage: React.FC = () => {
               </div>
             </div>
             {!formData.isService && (
-              <div className="space-y-1 col-span-2">
-                <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="product-qty">Opening stock quantity</label>
-                <div className="relative group">
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground opacity-40 group-focus-within:opacity-100 transition-opacity">UNITS</span>
-                  <input required id="product-qty" type="number" className="input-field w-full py-3 pl-4 pr-16 font-black" title="Opening stock quantity" aria-label="Opening stock quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: e.target.value === '' ? '' : Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+              <>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="product-qty">Opening stock quantity</label>
+                  <div className="relative group">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground opacity-40 group-focus-within:opacity-100 transition-opacity">UNITS</span>
+                    <input required id="product-qty" type="number" className="input-field w-full py-3 pl-4 pr-16 font-black" title="Opening stock quantity" aria-label="Opening stock quantity" value={formData.quantity} onChange={(e) => setFormData({...formData, quantity: e.target.value === '' ? '' : Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+                  </div>
                 </div>
-              </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1" htmlFor="reorder-level">Min. Reorder Level</label>
+                  <div className="relative group">
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-muted-foreground opacity-40 group-focus-within:opacity-100 transition-opacity">UNITS</span>
+                    <input required id="reorder-level" type="number" className="input-field w-full py-3 pl-4 pr-16 font-black text-destructive" title="Reorder level" aria-label="Reorder level" value={formData.reorderLevel} onChange={(e) => setFormData({...formData, reorderLevel: e.target.value === '' ? '' : Number(e.target.value)})} onFocus={(e) => e.target.select()} />
+                  </div>
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="supplier-id">Preferred Supplier (Optional)</label>
+                  <select id="supplier-id" className="input-field w-full py-3 px-4 font-black" title="Supplier" aria-label="Supplier" value={formData.supplierId} onChange={(e) => setFormData({...formData, supplierId: e.target.value})}>
+                    <option value="">-- No Supplier Assigned --</option>
+                    {suppliers?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+              </>
             )}
             <div className="space-y-1 col-span-2">
               <label className="flex items-center gap-3 p-4 bg-surface-bg border border-surface-border rounded-2xl cursor-pointer group hover:border-primary-500/20 transition-all">
