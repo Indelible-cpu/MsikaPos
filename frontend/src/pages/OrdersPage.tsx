@@ -1,63 +1,150 @@
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
-import type { LocalPurchaseOrder } from '../db/posDB';
 import { 
-  ShoppingCart, 
-  Plus, 
-  Search, 
-  Trash2, 
-  Edit, 
   Printer, 
   MessageSquare,
-  FileText,
-  PackageOpen
+  CheckCircle,
+  PackageOpen,
+  X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
 
+interface WorkingListItem {
+  productId: number;
+  productName: string;
+  currentStock: number;
+  reorderLevel: number;
+  suggestedQty: number;
+  orderQty: number;
+  unitCost: number;
+  lineTotal: number;
+}
 
 const OrdersPage: React.FC = () => {
-  const navigate = useNavigate();
+  const products = useLiveQuery(() => db.products.filter(p => !p.deleted).toArray());
+  const sales = useLiveQuery(() => db.salesQueue.toArray());
 
-
-  // Orders State
-  const orders = useLiveQuery(() => db.purchaseOrders.orderBy('createdAt').reverse().toArray());
-  const [searchTerm, setSearchTerm] = useState('');
+  // Store user-edited quantities. Key is productId, Value is edited orderQty.
+  const [overrideQuantities, setOverrideQuantities] = useState<Record<number, number>>({});
   
-  // Printing/Sharing View State
-  const [viewDocumentOrder, setViewDocumentOrder] = useState<LocalPurchaseOrder | null>(null);
+  // Excluded items that the user decided to manually remove from this session
+  const [excludedProducts, setExcludedProducts] = useState<Set<number>>(new Set());
 
-  const orderStats = useMemo(() => {
-    if (!orders) return { productsOrdered: 0, unitsOrdered: 0, totalCost: 0 };
-    return orders.reduce((acc, order) => {
-      // Exclude cancelled from stats
-      if (order.status !== 'Cancelled') {
-        acc.totalCost += order.total;
-        acc.productsOrdered += order.items.length;
-        acc.unitsOrdered += order.items.reduce((sum, item) => sum + item.orderQty, 0);
-      }
-      return acc;
-    }, { productsOrdered: 0, unitsOrdered: 0, totalCost: 0 });
-  }, [orders]);
+  // Print Preview state
+  const [showPrintView, setShowPrintView] = useState(false);
 
+  // Generate the live working list
+  const workingList = useMemo<WorkingListItem[]>(() => {
+    if (!products) return [];
 
-
-  // --- Order Methods ---
-  const handleDeleteOrder = async (id: string) => {
-    if (confirm('Are you sure you want to delete this order?')) {
-      await db.purchaseOrders.delete(id);
-      toast.success('Order deleted');
+    const productSalesMap: Record<number, { lastSaleDate: Date; totalSold: number }> = {};
+    if (sales) {
+      sales.forEach(sale => {
+        const saleDate = new Date(sale.createdAt);
+        sale.items.forEach(item => {
+          const prev = productSalesMap[item.productId];
+          if (!prev || saleDate > prev.lastSaleDate) {
+            productSalesMap[item.productId] = {
+              lastSaleDate: saleDate,
+              totalSold: (prev?.totalSold || 0) + item.quantity
+            };
+          } else {
+            prev.totalSold += item.quantity;
+          }
+        });
+      });
     }
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const lowStockItems = products.filter(p => {
+      if (p.isService) return false;
+      if (excludedProducts.has(p.id)) return false;
+
+      // Rule: ONLY include if Current Stock <= Reorder Level OR Current Stock == 0
+      const reorderLimit = p.reorderLevel !== undefined ? p.reorderLevel : 2;
+      return p.quantity <= reorderLimit || p.quantity === 0;
+    });
+
+    return lowStockItems.map(p => {
+      const reorderLimit = p.reorderLevel !== undefined ? p.reorderLevel : 2;
+      const baseQty = Math.max(0, reorderLimit - p.quantity);
+      
+      const salesInfo = productSalesMap[p.id];
+      const salesLast30Days = salesInfo && salesInfo.lastSaleDate >= thirtyDaysAgo ? salesInfo.totalSold : 0;
+      
+      // Smart Qty: Boost quantity based on recent sales. Fast moving gets more, slow gets base.
+      let suggestedQty = Math.max(baseQty, salesLast30Days);
+      if (suggestedQty <= 0) suggestedQty = 1;
+
+      // Apply manual override if exists
+      const finalQty = overrideQuantities[p.id] !== undefined ? overrideQuantities[p.id] : suggestedQty;
+
+      return {
+        productId: p.id,
+        productName: p.name,
+        currentStock: p.quantity,
+        reorderLevel: reorderLimit,
+        suggestedQty: suggestedQty,
+        orderQty: finalQty,
+        unitCost: p.costPrice || 0,
+        lineTotal: finalQty * (p.costPrice || 0)
+      };
+    });
+  }, [products, sales, overrideQuantities, excludedProducts]);
+
+  const orderTotal = useMemo(() => {
+    return workingList.reduce((sum, item) => sum + item.lineTotal, 0);
+  }, [workingList]);
+
+  const handleUpdateOrderItem = (productId: number, value: number) => {
+    setOverrideQuantities(prev => ({ ...prev, [productId]: value }));
   };
 
+  const handleRemoveOrderItem = (productId: number) => {
+    setExcludedProducts(prev => {
+      const newSet = new Set(prev);
+      newSet.add(productId);
+      return newSet;
+    });
+    // also clear override if exists
+    setOverrideQuantities(prev => {
+      const copy = { ...prev };
+      delete copy[productId];
+      return copy;
+    });
+  };
 
-  const filteredOrders = useMemo(() => {
-    if (!orders) return [];
-    return orders.filter(o => 
-      o.id.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [orders, searchTerm]);
+  const receiveStockToInventory = async () => {
+    if (workingList.length === 0) return;
+    
+    if(!confirm('Are you sure you want to receive this order? This will ADD the requested quantities directly into your active inventory stock and clear them from this list.')) {
+      return;
+    }
+
+    try {
+      const promises = workingList.map(async (item) => {
+        const product = await db.products.get(item.productId);
+        if (product) {
+          await db.products.update(item.productId, {
+            quantity: Number(product.quantity) + Number(item.orderQty),
+            costPrice: Number(item.unitCost), // update cost to latest
+            updatedAt: new Date().toISOString()
+          });
+        }
+      });
+      await Promise.all(promises);
+      toast.success('Inventory stock updated! Items removed from restocking list.', { icon: '📦' });
+      
+      // Clear manual overrides/exclusions for these items since they are processed
+      setOverrideQuantities({});
+      setExcludedProducts(new Set());
+    } catch (err) {
+      toast.error('Failed to update inventory.');
+    }
+  };
 
 
   return (
@@ -65,188 +152,170 @@ const OrdersPage: React.FC = () => {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-xl font-black tracking-tight uppercase">Smart Orders</h1>
-
-          <div className="flex items-center gap-2">
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Search orders by ID..."
-                className="input-field w-full pl-10 text-xs h-10 font-bold"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <button 
-                  onClick={() => navigate('/staff/orders/new')}
-                  className="btn-secondary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" /> <span className="hidden md:inline">New Order</span>
-                </button>
-                <button 
-                  onClick={() => navigate('/staff/orders/new?type=smart')}
-                  className="btn-primary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shadow-lg shadow-primary/20"
-                >
-                  <ShoppingCart className="w-4 h-4" /> <span className="hidden md:inline">Smart Auto-Order</span>
-                </button>
-              </div>
+          <div>
+            <h1 className="text-xl font-black tracking-tight uppercase">Live Restocking List</h1>
+            <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Auto-prepared based on current stock levels</p>
+          </div>
+          
+          <div className="flex items-center gap-3 shrink-0">
+             <button 
+               onClick={() => setShowPrintView(true)}
+               disabled={workingList.length === 0}
+               className="btn-secondary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 disabled:opacity-50"
+             >
+               <Printer className="w-4 h-4" /> <span className="hidden md:inline">Print Document</span>
+             </button>
+             <button 
+               onClick={() => {
+                 const text = `*RESTOCKING LIST*\nDate: ${new Date().toLocaleDateString()}\n\n` + 
+                   workingList.map(i => `- ${i.productName} (Qty: ${i.orderQty})`).join('\n') + 
+                   `\n\n*Total Estimated Cost:* MK${orderTotal.toLocaleString()}`;
+                 window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+               }}
+               disabled={workingList.length === 0}
+               className="btn-primary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 border-emerald-500/20 disabled:opacity-50"
+             >
+               <MessageSquare className="w-4 h-4" /> <span className="hidden md:inline">WhatsApp Share</span>
+             </button>
+             <button 
+               onClick={receiveStockToInventory}
+               disabled={workingList.length === 0}
+               className="btn-primary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+             >
+               <CheckCircle className="w-4 h-4" /> <span className="hidden md:inline">Receive Stock</span>
+             </button>
           </div>
         </div>
       </div>
 
-      {/* ── Dashboard Summary (Orders Tab) ─────────────────────────────────────────────────────────── */}
-        <div className="px-4 md:px-12 py-6 stagger-children">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="p-6 glass-panel border border-border/50 rounded-2xl flex items-center justify-between">
-              <div>
-                <div className="card-label">Total Unique Products</div>
-                <div className="text-2xl font-black">{orderStats.productsOrdered}</div>
-              </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                <PackageOpen className="w-6 h-6" />
-              </div>
-            </div>
-            <div className="p-6 glass-panel border border-border/50 rounded-2xl flex items-center justify-between">
-              <div>
-                <div className="card-label">Total Units Ordered</div>
-                <div className="text-2xl font-black">{orderStats.unitsOrdered}</div>
-              </div>
-              <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500">
-                <ShoppingCart className="w-6 h-6" />
-              </div>
-            </div>
-            <div className="p-6 glass-panel border border-border/50 rounded-2xl flex items-center justify-between">
-              <div>
-                <div className="card-label">Est. Purchase Cost</div>
-                <div className="text-2xl font-black text-rose-500">MK{orderStats.totalCost.toLocaleString()}</div>
-              </div>
-              <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500">
-                <FileText className="w-6 h-6" />
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-panel border border-border/50 rounded-2xl overflow-hidden">
-             <table className="w-full text-left border-collapse">
-               <thead>
-                 <tr className="border-b border-border/50 text-[10px] font-black text-muted-foreground uppercase tracking-widest bg-surface-bg/50">
-                   <th className="p-4">Order ID / Date</th>
-                   <th className="p-4 text-center">Items</th>
-                   <th className="p-4 text-right">Total Cost</th>
-                   <th className="p-4 text-center">Status</th>
-                   <th className="p-4 text-center">Actions</th>
-                 </tr>
-               </thead>
-               <tbody className="divide-y divide-border/20">
-                 {filteredOrders.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground font-bold">No orders found. Generate a smart order to get started!</td>
-                    </tr>
-                 ) : filteredOrders.map(order => (
-                   <tr key={order.id} className="hover:bg-muted/5 transition-colors">
-                     <td className="p-4">
-                       <div className="font-bold text-sm">#{order.id.slice(0,8).toUpperCase()}</div>
-                       <div className="text-[10px] text-muted-foreground font-bold uppercase">{new Date(order.createdAt).toLocaleDateString()}</div>
-                     </td>
-                     <td className="p-4 text-center font-black">{order.items.length}</td>
-                     <td className="p-4 text-right font-black text-primary">MK{order.total.toLocaleString()}</td>
-                     <td className="p-4 text-center">
-                       <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase ${
-                         order.status === 'Draft' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
-                         order.status === 'Sent' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
-                         order.status === 'Received' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
-                         'bg-red-500/10 text-red-500 border border-red-500/20'
-                       }`}>
-                         {order.status}
-                       </span>
-                     </td>
-                     <td className="p-4">
-                        <div className="flex items-center justify-center gap-2">
-                           {order.status !== 'Cancelled' && (
-                             <button onClick={() => setViewDocumentOrder(order)} className="p-2 text-primary hover:bg-primary/10 rounded-xl transition-colors" title="Print/Share Document">
-                               <Printer className="w-4 h-4" />
-                             </button>
-                           )}
-                           <button onClick={() => navigate(`/staff/orders/${order.id}`)} className="p-2 text-surface-text/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-colors" title="View/Edit Order">
-                             <Edit className="w-4 h-4" />
-                           </button>
-                           <button onClick={() => handleDeleteOrder(order.id)} className="p-2 text-surface-text/40 hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors" title="Delete Order">
-                             <Trash2 className="w-4 h-4" />
-                           </button>
-                        </div>
-                     </td>
+      <div className="px-4 md:px-12 py-6">
+          {/* Table Container */}
+          <div className="glass-panel border border-border/50 rounded-3xl overflow-hidden p-1 relative">
+             <div className="overflow-x-auto">
+               <table className="w-full text-left border-collapse min-w-[600px]">
+                 <thead>
+                   <tr className="border-b border-border/50 text-[10px] font-black text-muted-foreground uppercase tracking-widest bg-surface-bg/50">
+                     <th className="p-4">Product Name</th>
+                     <th className="p-4 text-center">Current Stock</th>
+                     <th className="p-4 text-center">Reorder Lvl</th>
+                     <th className="p-4 text-center">Suggested</th>
+                     <th className="p-4 text-center w-32">Order Qty</th>
+                     <th className="p-4 text-right w-32">Unit Cost</th>
+                     <th className="p-4 text-right">Line Total (MK)</th>
+                     <th className="p-4 w-12 text-center"></th>
                    </tr>
-                 ))}
-               </tbody>
-             </table>
+                 </thead>
+                 <tbody className="divide-y divide-border/20">
+                   {workingList.map(item => (
+                     <tr key={item.productId} className="hover:bg-muted/10 transition-colors">
+                       <td className="p-4 font-bold text-sm">
+                         {item.productName}
+                       </td>
+                       <td className="p-4 text-center text-xs font-black text-destructive">
+                         {item.currentStock}
+                       </td>
+                       <td className="p-4 text-center text-xs font-black text-amber-500">
+                         {item.reorderLevel}
+                       </td>
+                       <td className="p-4 text-center text-xs font-black text-blue-500">
+                         {item.suggestedQty}
+                       </td>
+                       <td className="p-4 text-center">
+                         <input 
+                           type="number" 
+                           className="input-field w-20 text-center py-1.5 text-xs font-black"
+                           value={item.orderQty}
+                           onChange={(e) => handleUpdateOrderItem(item.productId, Number(e.target.value))}
+                           min="1"
+                         />
+                       </td>
+                       <td className="p-4 text-right text-xs font-black text-muted-foreground">
+                         {item.unitCost.toLocaleString()}
+                       </td>
+                       <td className="p-4 text-right text-sm font-black text-primary">
+                         {item.lineTotal.toLocaleString()}
+                       </td>
+                       <td className="p-4 text-center">
+                         <button 
+                           onClick={() => handleRemoveOrderItem(item.productId)}
+                           className="p-2 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
+                           title="Exclude from list"
+                         >
+                           <X className="w-4 h-4" />
+                         </button>
+                       </td>
+                     </tr>
+                   ))}
+                   {workingList.length === 0 && (
+                     <tr>
+                       <td colSpan={8} className="p-16 text-center text-muted-foreground">
+                         <PackageOpen className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                         <div className="font-black text-lg">Inventory is looking healthy!</div>
+                         <div className="text-sm font-bold opacity-60">No items are currently below their reorder levels.</div>
+                       </td>
+                     </tr>
+                   )}
+                 </tbody>
+               </table>
+             </div>
+             
+             {workingList.length > 0 && (
+                <div className="bg-surface-bg/50 border-t border-border/50 p-6 flex justify-end">
+                   <div className="text-right">
+                     <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Estimated Grand Total</div>
+                     <div className="text-2xl font-black text-primary">MK{orderTotal.toLocaleString()}</div>
+                   </div>
+                </div>
+             )}
           </div>
-        </div>
+      </div>
 
-
-
-
-      {/* Supplier Document Overlay (Print/Share View) */}
-      {viewDocumentOrder && (
+      {/* ── Document View Overlay (Print/Share) ─────────────────────────────────────────────────────────── */}
+      {showPrintView && (
          <div className="fixed inset-0 bg-background/95 backdrop-blur-md z-50 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between p-4 md:p-8 border-b border-border/50 bg-surface-bg/50 print:hidden">
-               <h2 className="text-xl font-black tracking-tighter">Purchase Order Document</h2>
+               <h2 className="text-xl font-black tracking-tighter">Restocking Document</h2>
                <div className="flex gap-3">
                  <button 
-                   onClick={() => {
-                     window.print();
-                   }}
+                   onClick={() => window.print()}
                    className="btn-secondary !px-4 py-3 uppercase text-[10px] font-black tracking-widest flex items-center gap-2"
                  >
                    <Printer className="w-4 h-4" /> Print PDF
                  </button>
-                 <button 
-                   onClick={() => {
-                     const text = `*PURCHASE ORDER REQUEST*\nOrder No: ${viewDocumentOrder.id.slice(0,8).toUpperCase()}\nDate: ${new Date(viewDocumentOrder.createdAt).toLocaleDateString()}\n\n` + 
-                       viewDocumentOrder.items.map(i => `- ${i.productName} (Qty: ${i.orderQty})`).join('\n') + 
-                       `\n\n*Total Estimated Cost:* MK${viewDocumentOrder.total.toLocaleString()}`;
-                     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-                   }}
-                   className="btn-primary !px-4 py-3 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
-                 >
-                   <MessageSquare className="w-4 h-4" /> WhatsApp
-                 </button>
-                 <button onClick={() => setViewDocumentOrder(null)} className="btn-secondary !px-4 py-3 uppercase text-[10px] font-black tracking-widest ml-4">
+                 <button onClick={() => setShowPrintView(false)} className="btn-secondary !px-4 py-3 uppercase text-[10px] font-black tracking-widest ml-4">
                    Close
                  </button>
                </div>
             </div>
             
-            {/* The Document Area */}
+            {/* Document sheet */}
             <div className="flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-muted/20">
                <style dangerouslySetInnerHTML={{__html: `
-                  @media print {
-                    body * {
-                      visibility: hidden !important;
-                    }
-                    #supplier-doc-print-area, #supplier-doc-print-area * {
-                      visibility: visible !important;
-                    }
-                    #supplier-doc-print-area {
-                      position: absolute !important;
-                      left: 0 !important;
-                      top: 0 !important;
-                      width: 100% !important;
-                      margin: 0 !important;
-                      padding: 0 !important;
-                      box-shadow: none !important;
-                      background: white !important;
-                      color: black !important;
-                    }
-                  }
-                `}} />
+                 @media print {
+                   body * {
+                     visibility: hidden !important;
+                   }
+                   #supplier-doc-print-area, #supplier-doc-print-area * {
+                     visibility: visible !important;
+                   }
+                   #supplier-doc-print-area {
+                     position: absolute !important;
+                     left: 0 !important;
+                     top: 0 !important;
+                     width: 100% !important;
+                     margin: 0 !important;
+                     padding: 0 !important;
+                     box-shadow: none !important;
+                     background: white !important;
+                     color: black !important;
+                   }
+                 }
+               `}} />
                <div id="supplier-doc-print-area" className="bg-white text-black p-8 md:p-12 max-w-4xl w-full shadow-2xl print:shadow-none print:w-full print:p-0">
                   <div className="flex justify-between items-start mb-12 border-b-2 border-black/10 pb-8">
                      <div>
-                       <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Purchase Order</h1>
-                       <div className="text-sm font-bold opacity-60">Order No: {viewDocumentOrder.id.slice(0,8).toUpperCase()}</div>
-                       <div className="text-sm font-bold opacity-60">Date: {new Date(viewDocumentOrder.createdAt).toLocaleDateString()}</div>
+                       <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Restocking List</h1>
+                       <div className="text-sm font-bold opacity-60">Date: {new Date().toLocaleDateString()}</div>
                      </div>
                   </div>
 
@@ -260,7 +329,7 @@ const OrdersPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-black/10">
-                      {viewDocumentOrder.items.map(item => (
+                      {workingList.map(item => (
                         <tr key={item.productId}>
                           <td className="py-4 pr-4 font-bold">{item.productName}</td>
                           <td className="py-4 px-4 text-center font-black">{item.orderQty}</td>
@@ -273,14 +342,15 @@ const OrdersPage: React.FC = () => {
 
                   <div className="flex justify-end border-t-2 border-black/80 pt-6">
                      <div className="text-right">
-                       <div className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Grand Total</div>
-                       <div className="text-3xl font-black tracking-tighter">MK{viewDocumentOrder.total.toLocaleString()}</div>
+                       <div className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Estimated Grand Total</div>
+                       <div className="text-3xl font-black tracking-tighter">MK{orderTotal.toLocaleString()}</div>
                      </div>
                   </div>
                </div>
             </div>
          </div>
       )}
+
     </div>
   );
 };

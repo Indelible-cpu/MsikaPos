@@ -24,7 +24,6 @@ const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const SupportPage = React.lazy(() => import('./pages/SupportPage'));
 const AuditLogsPage = React.lazy(() => import('./pages/AuditLogsPage'));
 const FeatureAccessPage = React.lazy(() => import('./pages/FeatureAccessPage'));
-const OrderFormPage = React.lazy(() => import('./pages/OrderFormPage'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-surface-bg">
@@ -376,8 +375,6 @@ const App: React.FC = () => {
                           <Route path="inquiries" element={<SupportPage />} />
                           <Route path="inventory" element={<InventoryPage />} />
                           <Route path="orders" element={<OrdersPage />} />
-                          <Route path="orders/new" element={<OrderFormPage />} />
-                          <Route path="orders/:id" element={<OrderFormPage />} />
                           <Route path="sales" element={<SalesPage />} />
                           <Route path="debt" element={<DebtPage />} />
                           <Route path="expenses" element={<ExpensesPage />} />
