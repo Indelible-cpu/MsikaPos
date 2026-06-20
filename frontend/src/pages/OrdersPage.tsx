@@ -150,20 +150,14 @@ const OrdersPage: React.FC = () => {
   return (
     <div className="flex flex-col w-full px-0 relative pb-20">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="glass-panel border-b border-border/50 px-4 md:px-12 py-3 sticky top-0 z-30">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-black tracking-tight uppercase">Live Restocking List</h1>
-            <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase">Auto-prepared based on current stock levels</p>
-          </div>
-          
-          <div className="flex items-center gap-3 shrink-0">
+      <div className="glass-panel border-b border-border/50 px-2 md:px-12 py-3 sticky top-0 z-30">
+        <div className="flex overflow-x-auto no-scrollbar gap-2 w-full">
              <button 
                onClick={() => setShowPrintView(true)}
                disabled={workingList.length === 0}
-               className="btn-secondary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 disabled:opacity-50"
+               className="btn-secondary h-10 px-3 uppercase text-[9px] md:text-[10px] font-black tracking-widest flex items-center gap-1.5 disabled:opacity-50 shrink-0"
              >
-               <Printer className="w-4 h-4" /> <span className="hidden md:inline">Print Document</span>
+               <Printer className="w-4 h-4" /> <span>Print</span>
              </button>
              <button 
                onClick={() => {
@@ -173,75 +167,74 @@ const OrdersPage: React.FC = () => {
                  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
                }}
                disabled={workingList.length === 0}
-               className="btn-primary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 border-emerald-500/20 disabled:opacity-50"
+               className="btn-primary h-10 px-3 uppercase text-[9px] md:text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 border-emerald-500/20 disabled:opacity-50 shrink-0"
              >
-               <MessageSquare className="w-4 h-4" /> <span className="hidden md:inline">WhatsApp Share</span>
+               <MessageSquare className="w-4 h-4" /> <span>WhatsApp</span>
              </button>
              <button 
                onClick={receiveStockToInventory}
                disabled={workingList.length === 0}
-               className="btn-primary h-10 !px-4 uppercase text-[10px] font-black tracking-widest flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
+               className="btn-primary h-10 px-3 uppercase text-[9px] md:text-[10px] font-black tracking-widest flex items-center gap-1.5 shadow-lg shadow-primary/20 disabled:opacity-50 shrink-0"
              >
-               <CheckCircle className="w-4 h-4" /> <span className="hidden md:inline">Receive Stock</span>
+               <CheckCircle className="w-4 h-4" /> <span>Receive Stock</span>
              </button>
-          </div>
         </div>
       </div>
 
-      <div className="px-4 md:px-12 py-6">
+      <div className="px-1 md:px-12 py-6">
           {/* Table Container */}
-          <div className="glass-panel border border-border/50 rounded-3xl overflow-hidden p-1 relative">
-             <div className="overflow-x-auto">
-               <table className="w-full text-left border-collapse min-w-[600px]">
+          <div className="glass-panel border border-border/50 rounded-xl overflow-hidden p-0 relative">
+             <div className="w-full">
+               <table className="w-full text-left table-fixed">
                  <thead>
-                   <tr className="border-b border-border/50 text-[10px] font-black text-muted-foreground uppercase tracking-widest bg-surface-bg/50">
-                     <th className="p-4">Product Name</th>
-                     <th className="p-4 text-center">Current Stock</th>
-                     <th className="p-4 text-center">Reorder Lvl</th>
-                     <th className="p-4 text-center">Suggested</th>
-                     <th className="p-4 text-center w-32">Order Qty</th>
-                     <th className="p-4 text-right w-32">Unit Cost</th>
-                     <th className="p-4 text-right">Line Total (MK)</th>
-                     <th className="p-4 w-12 text-center"></th>
+                   <tr className="border-b border-border/50 text-[8px] md:text-[10px] font-black text-muted-foreground uppercase tracking-tight bg-surface-bg/50">
+                     <th className="p-1 md:p-4 w-[30%]">Product Name</th>
+                     <th className="p-1 md:p-4 text-center">Stock</th>
+                     <th className="p-1 md:p-4 text-center">Reorder</th>
+                     <th className="p-1 md:p-4 text-center">Sugg.</th>
+                     <th className="p-1 md:p-4 text-center w-12 md:w-24">Order Qty</th>
+                     <th className="p-1 md:p-4 text-right">Cost</th>
+                     <th className="p-1 md:p-4 text-right">Total</th>
+                     <th className="p-1 w-6 md:w-12 text-center"></th>
                    </tr>
                  </thead>
                  <tbody className="divide-y divide-border/20">
                    {workingList.map(item => (
-                     <tr key={item.productId} className="hover:bg-muted/10 transition-colors">
-                       <td className="p-4 font-bold text-sm">
+                     <tr key={item.productId} className="hover:bg-muted/10 transition-colors lowercase first-letter:uppercase">
+                       <td className="p-1 md:p-4 font-bold text-[9px] md:text-sm truncate">
                          {item.productName}
                        </td>
-                       <td className="p-4 text-center text-xs font-black text-destructive">
+                       <td className="p-1 md:p-4 text-center text-[9px] md:text-xs font-black text-destructive">
                          {item.currentStock}
                        </td>
-                       <td className="p-4 text-center text-xs font-black text-amber-500">
+                       <td className="p-1 md:p-4 text-center text-[9px] md:text-xs font-black text-amber-500">
                          {item.reorderLevel}
                        </td>
-                       <td className="p-4 text-center text-xs font-black text-blue-500">
+                       <td className="p-1 md:p-4 text-center text-[9px] md:text-xs font-black text-blue-500">
                          {item.suggestedQty}
                        </td>
-                       <td className="p-4 text-center">
+                       <td className="p-1 md:p-4 text-center">
                          <input 
                            type="number" 
-                           className="input-field w-20 text-center py-1.5 text-xs font-black"
+                           className="input-field w-8 md:w-16 text-center py-1 md:py-1.5 px-0 text-[9px] md:text-xs font-black mx-auto"
                            value={item.orderQty}
                            onChange={(e) => handleUpdateOrderItem(item.productId, Number(e.target.value))}
                            min="1"
                          />
                        </td>
-                       <td className="p-4 text-right text-xs font-black text-muted-foreground">
+                       <td className="p-1 md:p-4 text-right text-[9px] md:text-xs font-black text-muted-foreground truncate">
                          {item.unitCost.toLocaleString()}
                        </td>
-                       <td className="p-4 text-right text-sm font-black text-primary">
+                       <td className="p-1 md:p-4 text-right text-[9px] md:text-sm font-black text-primary truncate">
                          {item.lineTotal.toLocaleString()}
                        </td>
-                       <td className="p-4 text-center">
+                       <td className="p-1 md:p-4 text-center">
                          <button 
                            onClick={() => handleRemoveOrderItem(item.productId)}
-                           className="p-2 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
+                           className="p-1 md:p-2 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded-xl transition-colors"
                            title="Exclude from list"
                          >
-                           <X className="w-4 h-4" />
+                           <X className="w-3 h-3 md:w-4 md:h-4" />
                          </button>
                        </td>
                      </tr>
@@ -312,10 +305,16 @@ const OrdersPage: React.FC = () => {
                  }
                `}} />
                <div id="supplier-doc-print-area" className="bg-white text-black p-8 md:p-12 max-w-4xl w-full shadow-2xl print:shadow-none print:w-full print:p-0">
-                  <div className="flex justify-between items-start mb-12 border-b-2 border-black/10 pb-8">
+                  <div className="flex justify-between items-start mb-8 border-b-2 border-black/10 pb-6">
                      <div>
                        <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Restocking List</h1>
                        <div className="text-sm font-bold opacity-60">Date: {new Date().toLocaleDateString()}</div>
+                     </div>
+                     <div className="text-right">
+                       {localStorage.getItem('companyLogo') && (
+                         <img src={localStorage.getItem('companyLogo') || ''} alt="Logo" className="h-12 object-contain mb-2 inline-block" />
+                       )}
+                       <div className="font-black text-xl tracking-tight">{localStorage.getItem('companyName') || 'MsikaPOS'}</div>
                      </div>
                   </div>
 
