@@ -132,13 +132,18 @@ const LoginPage: React.FC = () => {
     } catch (err: unknown) {
       console.warn('Biometric error:', err);
       const error = err as Error;
-      if (error.name !== 'NotAllowedError') {
+      // NotAllowedError = user cancelled, AbortError = dismissed — show nothing
+      if (error.name === 'NotAllowedError' || error.name === 'AbortError') {
+        toast.dismiss('biometric-auth');
+      } else if (error.name === 'UnknownError' || error.message?.toLowerCase().includes('credential manager')) {
+        // Generic browser credential manager error — guide user to password
+        toast.error('Biometric login unavailable. Please use your password.', { id: 'biometric-auth' });
+        setLoginMode('password');
+      } else {
         toast.error(error.message || 'Biometric verification failed.', { id: 'biometric-auth' });
-        if (error.message.includes('expired') || error.message.includes('password first')) {
+        if (error.message?.includes('expired') || error.message?.includes('password first')) {
           setLoginMode('password');
         }
-      } else {
-        toast.dismiss('biometric-auth');
       }
     } finally {
       setLoading(false);
@@ -242,13 +247,32 @@ const LoginPage: React.FC = () => {
     };
     checkBiometrics();
     
-    // Session Awareness: No more than 1 session must exist. 
-    // If exist, destroy session first before starting a new one.
+    // Session Awareness: Only clear the token if it has actually expired.
+    // Do NOT clear a valid token - the user may have been redirected back here
+    // by the app (e.g. sync failure) and still have a valid session.
     const existingToken = localStorage.getItem('token');
     if (existingToken) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      // Keep biometric data as it's device-linked, but clear auth
+      try {
+        const payloadBase64 = existingToken.split('.')[1];
+        const decoded = JSON.parse(atob(payloadBase64));
+        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+          // Token is genuinely expired - clear it
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        } else {
+          // Token is still valid - redirect back to dashboard instead of showing login
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          if (user.role === 'CASHIER') {
+            window.location.href = '/staff/pos';
+          } else if (user.role) {
+            window.location.href = '/staff/dashboard';
+          }
+        }
+      } catch {
+        // Malformed token - clear it
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
 
   }, [handleBiometricLogin]);
