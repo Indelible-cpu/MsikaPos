@@ -57,7 +57,7 @@ const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 overflow-x-hidden">
+    <div className="h-screen flex flex-col bg-background text-foreground selection:bg-primary/30 overflow-hidden">
       {/* Dynamic Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full animate-pulse" />
@@ -84,8 +84,10 @@ const LandingPage: React.FC = () => {
         </Link>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-40 pb-20 px-6 max-w-7xl mx-auto text-center overflow-hidden">
+      {/* Main scrollable content area */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
+        {/* Hero Section */}
+        <section className="relative pt-32 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -212,9 +214,10 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-border/20 mt-auto py-2">
+      <footer className="w-full shrink-0 border-t border-border/20 py-2 bg-background">
         <p className="text-[9px] font-semibold text-muted-foreground/60 text-center py-0.5 select-none">
           Powered by <BrandName />
         </p>

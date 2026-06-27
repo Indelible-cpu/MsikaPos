@@ -397,7 +397,7 @@ export const PublicStorefront: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 overflow-x-hidden"
+      className="h-screen flex flex-col bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -577,7 +577,7 @@ export const PublicStorefront: React.FC = () => {
       </div>
     </div>
 
-    <main className="flex-1 w-full pt-[130px] md:pt-[150px]">
+    <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[130px] md:pt-[150px]">
       <div className="w-full glass-panel border-b border-border/30 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
@@ -1115,7 +1115,7 @@ export const PublicStorefront: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <footer className="w-full border-t border-border/20 bg-background/60 mt-auto">
+      <footer className="w-full shrink-0 border-t border-border/20 bg-background">
         <p className="text-[9px] font-semibold text-muted-foreground/60 text-center py-1 select-none">
           Powered by <BrandName />
         </p>
