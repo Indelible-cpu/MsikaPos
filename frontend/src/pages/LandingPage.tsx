@@ -23,6 +23,26 @@ const LandingPage: React.FC = () => {
   });
 
   useEffect(() => {
+    // If the user is already logged in, bypass the landing page entirely
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payloadBase64 = token.split('.')[1];
+        const decoded = JSON.parse(atob(payloadBase64));
+        if (decoded.exp && decoded.exp * 1000 > Date.now()) {
+          const userStr = localStorage.getItem('user');
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user.role === 'CASHIER') window.location.href = '/staff/pos';
+            else window.location.href = '/staff/dashboard';
+            return;
+          }
+        }
+      } catch (e) {
+        // Invalid token, stay on landing page
+      }
+    }
+
     const loadBranding = async () => {
       const nameSetting = await db.settings.get('company_config');
       const logoSetting = await db.settings.get('company_logo');
