@@ -40,6 +40,7 @@ interface Credit {
 
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
+import { isSameDay } from 'date-fns';
 
 const DashboardPage: React.FC = () => {
   const localSales = useLiveQuery(() => db.salesQueue.toArray());
@@ -47,11 +48,11 @@ const DashboardPage: React.FC = () => {
   const localProducts = useLiveQuery(() => db.products.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active')).toArray());
   const localCustomers = useLiveQuery(() => db.customers.toArray());
 
-  const today = new Date().toISOString().split('T')[0];
+  const todayDate = new Date();
   
   const validSales = (localSales || []).filter(s => s.status !== 'DELETED' && s.status !== 'REFUNDED');
-  const todaySales = validSales.filter(s => s.createdAt.startsWith(today));
-  const todayExpensesArr = (localExpenses || []).filter(e => e.date?.startsWith(today) || e.createdAt?.startsWith(today));
+  const todaySales = validSales.filter(s => isSameDay(new Date(s.createdAt), todayDate));
+  const todayExpensesArr = (localExpenses || []).filter(e => isSameDay(new Date(e.date || e.createdAt), todayDate));
   
   const totalRevenueToday = todaySales.reduce((sum, s) => sum + Number(s.total || 0), 0);
   const totalExpensesToday = todayExpensesArr.reduce((sum, e) => sum + Number(e.amount || 0), 0);
