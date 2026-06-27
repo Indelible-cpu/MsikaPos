@@ -731,30 +731,41 @@ const POSPage: React.FC = () => {
             </div>
 
             <div className="p-6 bg-muted/30 border-t border-border/50 flex gap-4">
+              {/* Share via WhatsApp */}
               <button 
                 onClick={async () => {
                   const receiptElement = document.getElementById('receipt-print');
                   if (!receiptElement) return;
-                  toast.loading('Generating shareable receipt...', { id: 'share' });
+                  toast.loading('Generating receipt image...', { id: 'share' });
                   try {
+                    const isA4 = printSize === 'print-a4';
                     const canvas = await html2canvas(receiptElement, { 
                       scale: 3, 
                       backgroundColor: '#ffffff',
                       useCORS: true,
                       logging: false,
-                      windowWidth: 400 
+                      windowWidth: isA4 ? 900 : 400
                     });
 
                     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
                     if (!blob) throw new Error('Blob error');
                     const file = new File([blob], `Receipt-${showReceipt.invoiceNo}.png`, { type: 'image/png' });
+                    
+                    // Try native share (Android/iOS)
                     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                       await navigator.share({ files: [file], title: 'Receipt', text: `Receipt from ${localStorage.getItem('companyName') || 'MsikaPos'}` });
-                      toast.success('Shared successfully', { id: 'share' });
+                      toast.success('Shared!', { id: 'share' });
                     } else {
-                      const text = encodeURIComponent(`Receipt from ${localStorage.getItem('companyName') || 'MsikaPos'}\nInvoice: ${showReceipt.invoiceNo}\nTotal: MK ${showReceipt.total.toLocaleString()}\nThank you!`);
-                      window.open(`https://wa.me/?text=${text}`, '_blank');
-                      toast.success('WhatsApp opened', { id: 'share' });
+                      // Fallback: Download image + open WhatsApp with text
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `Receipt-${showReceipt.invoiceNo}.png`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      const text = encodeURIComponent(`Receipt: ${showReceipt.invoiceNo}\nTotal: MK ${showReceipt.total.toLocaleString()}\n(Image saved to Downloads — attach it to this chat)`);
+                      setTimeout(() => window.open(`https://wa.me/?text=${text}`, '_blank'), 500);
+                      toast.success('Image saved! Attach it to WhatsApp.', { id: 'share', duration: 5000 });
                     }
                   } catch {
                     toast.error('Failed to share', { id: 'share' });
@@ -763,6 +774,33 @@ const POSPage: React.FC = () => {
                 className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-bold tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 capitalize"
               >
                 <MessageSquare className="w-4 h-4" /> Share WhatsApp
+              </button>
+              {/* Print Button */}
+              <button 
+                onClick={() => {
+                  if (printSize === 'print-a4') {
+                    // Open a new window for A4 with proper margins
+                    const receiptEl = document.getElementById('receipt-print');
+                    if (!receiptEl) return;
+                    const pw = window.open('', '_blank', 'width=900,height=1200');
+                    if (!pw) return;
+                    pw.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+                      <style>
+                        @page { size: A4; margin: 15mm; }
+                        body { margin: 0; padding: 0; font-family: sans-serif; }
+                        * { box-sizing: border-box; }
+                        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+                      </style>
+                      <link rel="stylesheet" href="${window.location.origin}/index.css">
+                      </head><body>${receiptEl.innerHTML}<script>window.onload = function(){ window.print(); setTimeout(function(){ window.close(); }, 500); }<\/script></body></html>`);
+                    pw.document.close();
+                  } else {
+                    window.print();
+                  }
+                }}
+                className="flex-1 py-4 bg-primary/10 text-primary border border-primary/20 rounded-2xl text-[10px] font-bold tracking-widest flex items-center justify-center gap-2 capitalize"
+              >
+                🖨 Print
               </button>
               <button onClick={() => setShowReceipt(null)} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-bold capitalize tracking-widest text-[11px] btn-press">New Sale</button>
             </div>

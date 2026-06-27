@@ -189,15 +189,6 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-zinc-100 rounded-xl" title="Open menu" aria-label="Open menu"><Menu className="w-5 h-5" /></button>
             <h2 className="text-sm font-black uppercase tracking-widest text-zinc-400">{activeTab}</h2>
-            {activeTab === 'dashboard' && (
-              <button 
-                onClick={() => setShowSensitive(!showSensitive)} 
-                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-full transition-colors text-[10px] font-bold uppercase tracking-widest"
-              >
-                {showSensitive ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                {showSensitive ? 'Hide Values' : 'Show Values'}
-              </button>
-            )}
           </div>
           
           <div className="flex items-center gap-3">
@@ -250,6 +241,16 @@ export default function Dashboard() {
               )}
 
               {/* Stat Cards */}
+              <div className="flex justify-between items-end mb-2">
+                <h3 className="text-lg font-black tracking-tight text-zinc-800">Overview</h3>
+                <button 
+                  onClick={() => setShowSensitive(!showSensitive)} 
+                  className="flex items-center gap-2 px-4 py-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl transition-all text-xs font-bold shadow-sm"
+                >
+                  {showSensitive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showSensitive ? 'Hide Sensitive Data' : 'Show Sensitive Data'}
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard 
                   title="Total Revenue" 

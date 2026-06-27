@@ -202,33 +202,17 @@
   /* A4 Invoice Mode */
   #print-container.print-a4, #printable-receipt.print-a4, #receipt-print.print-a4, #printable-repayment-receipt.print-a4, .print-container.print-a4 {
     width: 100%;
-    padding: 20mm;
+    padding: 0;
     justify-content: flex-start !important;
   }
-  
-  .print-a4 .receipt, .print-a4 .invoice {
+
+  .print-a4 .a4-invoice {
     width: 100% !important;
     max-width: 100% !important;
-    font-size: 14px !important;
-  }
-  
-  .print-a4 .text-\\[8px\\], .print-a4 .text-\\[9px\\], .print-a4 .text-\\[10px\\], .print-a4 .text-\\[11px\\] {
-    font-size: 14px !important;
-    line-height: 1.5 !important;
-  }
-
-  .print-a4 h1.text-xl {
-    font-size: 28px !important;
-  }
-
-  .print-a4 th, .print-a4 td {
-    padding: 12px 8px !important;
-    font-size: 14px !important;
-  }
-  
-  .print-a4 .w-14.h-14 {
-    width: 5rem !important;
-    height: 5rem !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 18mm 20mm !important;
+    min-height: auto !important;
   }
 
   /* Compact Thermal 80mm Mode */
@@ -249,5 +233,9 @@
 
   @page {
     margin: 0;
+  }
+
+  @page.print-a4 {
+    margin: 12mm;
   }
 }
