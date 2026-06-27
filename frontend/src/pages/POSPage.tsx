@@ -807,7 +807,7 @@ const POSPage: React.FC = () => {
                         @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
                       </style>
                       <link rel="stylesheet" href="${window.location.origin}/index.css">
-                      </head><body>${receiptEl.innerHTML}<script>window.onload = function(){ window.print(); setTimeout(function(){ window.close(); }, 500); }<\/script></body></html>`);
+                      </head><body><div class="print-a4" style="width: 100%; display: flex; justify-content: center;">${receiptEl.innerHTML}</div><script>window.onload = function(){ window.print(); setTimeout(function(){ window.close(); }, 500); }<\/script></body></html>`);
                     pw.document.close();
                   } else {
                     window.print();

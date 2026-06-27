@@ -234,8 +234,4 @@
   @page {
     margin: 0;
   }
-
-  @page.print-a4 {
-    margin: 12mm;
-  }
 }
