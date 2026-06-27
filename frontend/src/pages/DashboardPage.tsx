@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  TrendingUp, 
   Users, 
   Package, 
   DollarSign, 
@@ -55,12 +54,9 @@ const DashboardPage: React.FC = () => {
   const todayExpensesArr = (localExpenses || []).filter(e => e.date?.startsWith(today) || e.createdAt?.startsWith(today));
   
   const totalRevenueToday = todaySales.reduce((sum, s) => sum + Number(s.total || 0), 0);
-  const totalProfitToday = todaySales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
   const totalExpensesToday = todayExpensesArr.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   const totalSalesAllTime = validSales.reduce((sum, s) => sum + Number(s.total || 0), 0);
-  const totalProfitAllTime = validSales.reduce((sum, s) => sum + Number(s.profit || 0), 0);
-  const totalCostAllTime = (localProducts || []).reduce((sum, p) => sum + (Number(p.costPrice || 0) * Number(p.quantity || 0)), 0);
 
   const activeCredits = (localCustomers || []).filter(c => Number(c.balance || 0) > 0).map(c => ({
     status: 'Pending',
