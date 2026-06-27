@@ -441,71 +441,6 @@ export const PublicStorefront: React.FC = () => {
               </div>
             )}
             <div className="flex items-center gap-2">
-              <div className="relative" ref={settingsRef}>
-                <button 
-                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                  className="w-8 h-8 glass-card border border-border/50 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary transition-all btn-press"
-                  title="Settings & Accessibility"
-                >
-                  <Settings className="w-4 h-4" />
-                </button>
-                {isSettingsOpen && (
-                  <div className="absolute top-12 right-0 w-56 glass-panel border border-border/50 rounded-2xl shadow-2xl p-6 z-50 animate-in fade-in zoom-in-95 duration-200">
-                    <h4 className="text-[10px] font-black tracking-widest uppercase text-primary mb-5">Personalization</h4>
-                    <div className="space-y-6">
-                      <div>
-                        <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">Theme</p>
-                        <button 
-                          onClick={() => { toggleTheme(); setIsSettingsOpen(false); }} 
-                          className="w-full py-3 glass-card border border-border/50 rounded-xl text-[10px] font-black hover:bg-primary hover:text-primary-foreground transition-all uppercase tracking-widest btn-press"
-                        >
-                          {theme === 'light' ? '☀️ Light' : theme === 'dark' ? '🌙 Dark' : '💻 System'}
-                        </button>
-                      </div>
-
-                      {/* PWA Install Guide */}
-                      <div className="pt-2">
-                        <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">App Access</p>
-                        <div className="p-3 bg-primary/5 border border-primary/10 rounded-xl">
-                          <p className="text-[9px] font-black text-primary leading-relaxed">
-                            For the best experience, add this store to your home screen via your browser menu (Install App or Add to Home Screen).
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">Font size</p>
-                        <div className="flex gap-2">
-                          {['small', 'medium', 'large'].map(s => (
-                            <button 
-                              key={s}
-                              onClick={() => { handleFontSize(s); setIsSettingsOpen(false); }}
-                              className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all btn-press ${fontSize === s ? 'bg-primary text-primary-foreground shadow-lg' : 'glass-card border border-border/50 text-muted-foreground hover:bg-muted/50'}`}
-                            >
-                              {s.charAt(0).toUpperCase() + s.slice(1)}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      {customer && (
-                        <div className="pt-4 border-t border-border/50">
-                          <button 
-                            onClick={async () => {
-                              if (confirm("Are you sure you want to PERMANENTLY DELETE your account? This action cannot be undone.")) {
-                                try {
-                                  await api.delete('/customer/account');
-                                  handleLogout();
-                                  toast.success("Account deleted successfully");
-                                } catch {
-                                  toast.error("Failed to delete account");
-                                }
-                              }
-                            }}
-                            className="w-full py-3 text-destructive text-[9px] font-black tracking-widest uppercase hover:bg-destructive/5 rounded-xl transition-all btn-press"
-                          >
-                            Delete account
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
@@ -1111,6 +1046,108 @@ export const PublicStorefront: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+      </AnimatePresence>
+
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSettingsOpen(false)}
+              className="absolute inset-0 bg-background/95 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-md bg-surface-card border border-border/50 rounded-3xl shadow-2xl relative z-10 p-8"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-black tracking-tighter text-primary">Settings</h3>
+                <button 
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-all btn-press"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-8">
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">Theme</p>
+                  <div className="flex gap-3">
+                    {['light', 'dark', 'system'].map(t => (
+                      <button 
+                        key={t}
+                        onClick={() => {
+                          setTheme(t as any);
+                          localStorage.setItem('theme', t);
+                          if (t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                            document.documentElement.classList.add('dark');
+                          } else {
+                            document.documentElement.classList.remove('dark');
+                          }
+                          setIsSettingsOpen(false);
+                        }} 
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all btn-press ${theme === t ? 'bg-primary text-primary-foreground shadow-lg' : 'glass-card border border-border/50 text-muted-foreground hover:bg-muted/50'}`}
+                      >
+                        {t === 'light' ? '☀️ Light' : t === 'dark' ? '🌙 Dark' : '💻 System'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">Font size</p>
+                  <div className="flex gap-3">
+                    {['small', 'medium', 'large'].map(s => (
+                      <button 
+                        key={s}
+                        onClick={() => { handleFontSize(s); setIsSettingsOpen(false); }}
+                        className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all btn-press ${fontSize === s ? 'bg-primary text-primary-foreground shadow-lg' : 'glass-card border border-border/50 text-muted-foreground hover:bg-muted/50'}`}
+                      >
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <p className="text-[10px] font-black text-muted-foreground/60 mb-3 ml-1 uppercase">App Access</p>
+                  <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl">
+                    <p className="text-xs font-bold text-primary leading-relaxed">
+                      For the best experience, add this store to your home screen via your browser menu (Install App or Add to Home Screen).
+                    </p>
+                  </div>
+                </div>
+
+                {customer && (
+                  <div className="pt-6 border-t border-border/20">
+                    <button 
+                      onClick={async () => {
+                        if (confirm("Are you sure you want to PERMANENTLY DELETE your account? This action cannot be undone.")) {
+                          try {
+                            await api.delete('/customer/account');
+                            handleLogout();
+                            setIsSettingsOpen(false);
+                            toast.success("Account deleted successfully");
+                          } catch {
+                            toast.error("Failed to delete account");
+                          }
+                        }
+                      }}
+                      className="w-full py-4 bg-rose-500/10 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all btn-press"
+                    >
+                      Delete Account
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>
