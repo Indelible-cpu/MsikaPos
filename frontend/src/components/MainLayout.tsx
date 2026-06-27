@@ -63,27 +63,29 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         {/* Dynamic Global Header */}
         {!hideNav && <MobileHeader />}
 
-        {/* Main Content Area */}
+        {/* Main Content Area — flex-1 so footer stays at bottom on desktop */}
         <main 
           ref={mainRef}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           className={clsx(
-            "flex-1 flex flex-col w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out px-0 max-w-full pb-0"
+            "flex-1 flex flex-col w-full overflow-y-auto overflow-x-hidden scroll-smooth transition-transform duration-300 ease-out px-0 max-w-full"
           )}
         >
+          {/* Page content grows to fill available space */}
           <div className="flex-1">
             {children}
           </div>
-          {/* Mobile Footer (inside scroll) */}
+          {/* Mobile Footer — sits after page content, padded above mobile nav bar */}
           <div className="md:hidden">
             <AppFooter />
+            <div className="h-20" /> {/* spacer above mobile nav */}
           </div>
         </main>
 
-        {/* Desktop Footer (fixed at bottom of layout) */}
-        <div className="hidden md:block">
+        {/* Desktop Footer — always pinned at bottom of the right column, never overlaps content */}
+        <div className="hidden md:block shrink-0">
           <AppFooter />
         </div>
 
