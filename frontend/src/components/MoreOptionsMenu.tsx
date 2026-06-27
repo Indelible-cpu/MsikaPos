@@ -48,8 +48,23 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
         unsynced = await db.salesQueue.where('synced').equals(0).count();
         if (unsynced > 0) {
           toast.dismiss('logout-sync');
-          const force = window.confirm(`Warning: You have ${unsynced} unsynced sales. Logging out now will permanently delete them. Are you sure you want to force logout?`);
-          if (!force) return;
+          toast((t) => (
+            <div className="flex flex-col gap-3">
+              <span className="text-[11px] font-black tracking-wide text-rose-500 uppercase">Logout Blocked</span>
+              <span className="text-[10px] font-bold text-muted-foreground leading-relaxed">
+                You have {unsynced} unsynced sales. Please connect to the internet to sync them before logging out to prevent data loss.
+              </span>
+              <div className="flex justify-end mt-1">
+                <button 
+                  className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                  onClick={() => toast.dismiss(t.id)}
+                >
+                  Understood
+                </button>
+              </div>
+            </div>
+          ), { duration: 5000 });
+          return;
         } else {
           toast.success('Sync complete.', { id: 'logout-sync' });
         }
