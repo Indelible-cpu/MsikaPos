@@ -21,7 +21,6 @@ import BranchesPage from './pages/BranchesPage';
 import AboutPage from './pages/AboutPage';
 import PublicStorefront from './pages/PublicStorefront';
 import LandingPage from './pages/LandingPage';
-import SupportPage from './pages/SupportPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import FeatureAccessPage from './pages/FeatureAccessPage';
 
@@ -372,7 +371,6 @@ const App: React.FC = () => {
                         <Routes>
                           <Route path="dashboard" element={<DashboardPage />} />
                           <Route path="pos" element={<POSPage />} />
-                          <Route path="inquiries" element={<SupportPage />} />
                           <Route path="inventory" element={<InventoryPage />} />
                           <Route path="orders" element={<OrdersPage />} />
                           <Route path="sales" element={<SalesPage />} />

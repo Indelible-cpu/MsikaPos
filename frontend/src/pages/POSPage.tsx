@@ -914,6 +914,18 @@ const POSPage: React.FC = () => {
               </div>
             )}
           </div>
+          {/* Show Less - mobile only, visible only when full catalog is shown */}
+          {showAll && (
+            <div className="md:hidden mt-4 flex justify-center pb-4">
+              <button
+                onClick={() => { setShowAll(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                className="flex items-center gap-2 px-6 py-3 bg-muted/30 border border-border/50 rounded-2xl text-[10px] font-black tracking-widest text-muted-foreground hover:bg-muted/50 transition-all btn-press"
+              >
+                <ChevronLeft className="w-4 h-4 rotate-90" />
+                Show Less
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

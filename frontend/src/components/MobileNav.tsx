@@ -1,34 +1,19 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Receipt, ShoppingCart, MoreHorizontal, MessageSquare } from 'lucide-react';
+import { Home, Receipt, ShoppingCart, MoreHorizontal, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
 import MoreOptionsMenu from './MoreOptionsMenu';
-import api from '../api/client';
 
 const MobileNav: React.FC = () => {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
-
-  const fetchPending = React.useCallback(async () => {
-    try {
-      const res = await api.get('/inquiries');
-      const pending = res.data.data.filter((i: any) => i.status === 'NEW').length;
-      setPendingCount(pending);
-    } catch { /* silent */ }
-  }, []);
-
-  React.useEffect(() => {
-    fetchPending();
-    const interval = setInterval(fetchPending, 15000);
-    return () => clearInterval(interval);
-  }, [fetchPending]);
 
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: Home, path: '/staff/dashboard' },
     { id: 'sales', label: 'Sales', icon: Receipt, path: '/staff/transactions' },
     { id: 'pos', label: 'Pos', icon: ShoppingCart, path: '/staff/pos' },
-    { id: 'inquiries', label: 'Inquiry', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
+    { id: 'expenses', label: 'Finance', icon: Wallet, path: '/staff/expenses' },
   ];
+
 
   return (
     <>
@@ -50,11 +35,6 @@ const MobileNav: React.FC = () => {
                     isActive ? "scale-110 opacity-100" : "opacity-60"
                   )}>
                     <tab.icon className={clsx("w-6 h-6")} strokeWidth={isActive ? 3 : 2} />
-                    {tab.badge ? (
-                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-rose-500 text-white rounded-full flex items-center justify-center text-[7px] font-black border border-surface-card animate-pulse shadow-lg shadow-rose-500/20">
-                        {tab.badge}
-                      </span>
-                    ) : null}
                   </div>
                   <span className={clsx(
                     "text-[9px] font-black tracking-[0.2em] mt-1.5 transition-all",

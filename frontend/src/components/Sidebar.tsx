@@ -1,9 +1,8 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, MessageSquare, History } from 'lucide-react';
+import { Home, BarChart3, Receipt, Settings, ShoppingCart, LogOut, Users, Wallet, Package, UserCheck, Building2, History } from 'lucide-react';
 import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
-import api from '../api/client';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { db } from '../db/posDB';
 import { SyncService } from '../services/SyncService';
@@ -11,7 +10,6 @@ import ThemeToggle from './ThemeToggle';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
-  const [pendingCount, setPendingCount] = React.useState(0);
   const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
   const isSuperAdmin = user.role === 'SUPER_ADMIN';
   const { canAccess } = useFeatureAccess();
@@ -22,7 +20,6 @@ const Sidebar: React.FC = () => {
     { id: 'transactions', key: 'SALES_HISTORY', label: 'Sales history', icon: Receipt, path: '/staff/transactions' },
     { id: 'debt', key: 'CUSTOMERS', label: 'Credit center', icon: Users, path: '/staff/debt' },
     { id: 'inventory', key: 'INVENTORY', label: 'Stock management', icon: Package, path: '/staff/inventory' },
-    { id: 'inquiries', key: 'INQUIRIES', label: 'Inquiry', icon: MessageSquare, path: '/staff/inquiries', badge: pendingCount },
     { id: 'expenses', key: 'FINANCE', label: 'Finance & expenses', icon: Wallet, path: '/staff/expenses' },
     { id: 'team', key: 'STAFF', label: 'Staff management', icon: UserCheck, path: '/staff/users' },
     { id: 'branches', key: 'BRANCHES', label: 'Branch management', icon: Building2, path: '/staff/branches' },
@@ -32,14 +29,6 @@ const Sidebar: React.FC = () => {
   ];
 
   const filteredTabs = tabs.filter(tab => canAccess(tab.key));
-
-  const fetchPending = React.useCallback(async () => {
-    try {
-      const res = await api.get('/inquiries');
-      const pending = res.data.data.filter((i: { status: string }) => i.status === 'NEW').length;
-      setPendingCount(pending);
-    } catch { /* silent */ }
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -64,15 +53,6 @@ const Sidebar: React.FC = () => {
     navigate('/');
   };
 
-  React.useEffect(() => {
-    const loadSidebar = async () => {
-      fetchPending();
-    };
-    loadSidebar();
-    const interval = setInterval(fetchPending, 15000); // Poll every 15s
-    return () => clearInterval(interval);
-  }, [fetchPending]);
-
 
   return (
     <aside className="hidden md:flex flex-col w-72 bg-card/50 backdrop-blur-xl border-r border-border/50 h-screen sticky top-0 z-40">
@@ -93,11 +73,6 @@ const Sidebar: React.FC = () => {
               <>
                 <tab.icon className={clsx("w-6 h-6 transition-transform group-hover:scale-110")} strokeWidth={isActive ? 3 : 2} />
                 <span className="truncate">{tab.label.charAt(0).toUpperCase() + tab.label.slice(1).toLowerCase()}</span>
-                {tab.badge ? (
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[8px] font-black border-2 border-surface-card animate-pulse shadow-lg shadow-rose-500/20">
-                    {tab.badge}
-                  </span>
-                ) : null}
               </>
             )}
           </NavLink>
