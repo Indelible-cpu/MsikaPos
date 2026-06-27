@@ -116,11 +116,30 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Delete this expense record?')) {
-      await db.expenses.delete(id);
-      toast.success('Record deleted');
-    }
+  const handleDelete = (id: string) => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <span className="text-[11px] font-black tracking-wide text-foreground uppercase">Delete this expense record?</span>
+        <div className="flex gap-2 justify-end mt-1">
+          <button 
+            className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-muted/50 text-muted-foreground hover:bg-muted/80 transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button 
+            className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await db.expenses.delete(id);
+              toast.success('Record deleted');
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
   };
 
   const resetForm = () => {
