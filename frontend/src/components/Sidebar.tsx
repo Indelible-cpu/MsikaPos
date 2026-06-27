@@ -105,21 +105,17 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* Footer - Fixed */}
-      <div className="p-4 border-t border-surface-border shrink-0 space-y-2">
-        {/* Appearance */}
-        <div className="px-2 pb-2">
-          <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-widest block mb-2 px-2">Appearance</span>
-          <div className="flex justify-center">
-            <ThemeToggle />
-          </div>
-        </div>
+      <div className="p-4 border-t border-surface-border shrink-0 flex items-center justify-between gap-2">
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-4 px-4 h-14 w-full rounded-2xl font-black tracking-widest text-[13px] text-red-500 hover:text-red-600 hover:bg-red-500/5 transition-all group border border-transparent hover:border-red-500/10 shrink-0"
+          className="flex-1 flex items-center justify-center gap-3 h-12 rounded-2xl font-black tracking-widest text-[12px] text-red-500 hover:text-red-600 hover:bg-red-500/5 transition-all group border border-transparent hover:border-red-500/10 shrink-0"
         >
-          <LogOut className="w-6 h-6 transition-transform group-hover:scale-110" strokeWidth={2.5} />
+          <LogOut className="w-5 h-5 transition-transform group-hover:scale-110" strokeWidth={2.5} />
           Sign Out
         </button>
+        <div className="shrink-0 scale-90 origin-right">
+          <ThemeToggle />
+        </div>
       </div>
     </aside>
   );

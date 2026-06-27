@@ -95,15 +95,12 @@ const DashboardPage: React.FC = () => {
 
   const statCards = [
     { label: "Today's sales", value: `MK ${totalRevenueToday.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
-    { label: "Today's profit", value: `MK ${totalProfitToday.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-400', trend: 'Net margin' },
     { label: "Today's expenses", value: `MK ${totalExpensesToday.toLocaleString()}`, icon: Wallet, color: 'text-rose-500', trend: 'Daily outflow' },
     { label: 'Active credits', value: `MK ${totalCreditAmount.toLocaleString()}`, icon: Users, color: 'text-amber-500', trend: `${activeCredits.length} Customers` },
   ];
 
   const historicalCards = [
     { label: "Total Sales", value: `MK ${totalSalesAllTime.toLocaleString()}`, icon: Receipt, color: 'text-emerald-500' },
-    { label: "Total Cost Price", value: `MK ${totalCostAllTime.toLocaleString()}`, icon: Package, color: 'text-rose-500' },
-    { label: "Total Profit Made", value: `MK ${totalProfitAllTime.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-500' },
   ];
 
   return (
@@ -113,7 +110,7 @@ const DashboardPage: React.FC = () => {
       <div className="px-0 py-0 md:px-0 md:py-0">
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 stagger-children">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 stagger-children">
           {statCards.map((stat, i) => (
             <motion.div
               key={i}
@@ -142,7 +139,7 @@ const DashboardPage: React.FC = () => {
           <div className="px-12 py-4 border-b border-border/50">
             <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Cumulative Financial Performance</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 stagger-children">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-0 stagger-children">
             {historicalCards.map((stat, i) => (
               <div key={i} className="p-10 border-r border-border/50 last:border-r-0 hover:bg-muted/5 transition-colors">
                 <div className="flex items-center gap-4 mb-4">
@@ -161,7 +158,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 border-t border-border/50">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 stagger-children border-b border-border/50">
            {/* Revenue & Customer Flow Chart */}
            <div className="lg:col-span-2 p-6 md:p-12 relative overflow-hidden md:border-r border-border/50 glass-panel">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
