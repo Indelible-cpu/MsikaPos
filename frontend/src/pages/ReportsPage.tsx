@@ -8,7 +8,8 @@ import {
   Users,
   DollarSign,
   ArrowUpRight,
-  BarChart3
+  BarChart3,
+  Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -96,6 +97,7 @@ const ReportsPage: React.FC = () => {
 
   // ── 1. Local live DB (instant on any change) ─────────────────────────────
   const localSales = useLiveQuery(() => db.salesQueue.toArray(), []) ?? [];
+  const localProducts = useLiveQuery(() => db.products.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active')).toArray(), []) ?? [];
 
   // ── 2. Server transactions — polls every 30 s ─────────────────────────────
   const { data: serverSalesRaw } = useQuery({
@@ -164,6 +166,10 @@ const ReportsPage: React.FC = () => {
   const totalProfit = useMemo(
     () => activeSales.reduce((sum, s) => sum + Number(s.profit || 0), 0),
     [activeSales]
+  );
+  const totalCostValue = useMemo(
+    () => localProducts.reduce((sum, p) => sum + (Number(p.costPrice || 0) * Number(p.quantity || 0)), 0),
+    [localProducts]
   );
   const avgSale = totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0;
   const refundCount = scopedSales.filter((s) => s.status === 'REFUNDED').length;
@@ -335,6 +341,7 @@ const ReportsPage: React.FC = () => {
     { label: 'Transactions', value: totalSalesCount.toString(), icon: TrendingUp, color: 'text-primary-500', sub: `${refundCount} refunded` },
     { label: 'Total Profit', value: `MK ${totalProfit.toLocaleString()}`, icon: ArrowUpRight, color: 'text-blue-500', sub: 'excl. refunds' },
     { label: 'Avg Sale', value: `MK ${avgSale.toLocaleString()}`, icon: Users, color: 'text-amber-500', sub: 'per transaction' },
+    { label: 'Total Cost Value', value: `MK ${totalCostValue.toLocaleString()}`, icon: Package, color: 'text-rose-500', sub: 'active inventory value' },
   ];
 
   return (
@@ -393,7 +400,7 @@ const ReportsPage: React.FC = () => {
 
       <div className="px-6 md:px-12 pt-6">
         {/* ── Stats Grid ─────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-children">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8 stagger-children">
           {stats.map((stat, i) => (
             <motion.div
               key={i}
