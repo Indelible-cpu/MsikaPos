@@ -108,7 +108,7 @@ const LandingPage: React.FC = () => {
               Launch Staff Portal <ChevronRight className="w-5 h-5" />
             </Link>
             <Link to="/store" className="w-full md:w-auto h-16 px-10 bg-surface-card border border-border rounded-2xl font-black tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-surface-bg transition-all">
-              <ShoppingBag className="w-5 h-5" /> Visit Shop
+              <ShoppingBag className="w-5 h-5" /> Live Demo Store
             </Link>
           </div>
         </motion.div>
