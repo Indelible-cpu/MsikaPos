@@ -183,23 +183,71 @@
 
 @media print {
   body * { visibility: hidden !important; }
-  #print-container, #print-container *, #printable-receipt, #printable-receipt * { 
+  #print-container, #print-container *, #printable-receipt, #printable-receipt *, #receipt-print, #receipt-print *, #printable-repayment-receipt, #printable-repayment-receipt *, .print-container, .print-container * { 
     visibility: visible !important; 
   }
-  #print-container, #printable-receipt {
-    position: fixed;
+  
+  #print-container, #printable-receipt, #receipt-print, #printable-repayment-receipt, .print-container {
+    position: absolute;
     left: 0;
     top: 0;
-    width: 80mm;
     margin: 0;
-    padding: 0;
     display: flex !important;
     justify-content: center !important;
     background: white;
     z-index: 9999;
+    color: black !important;
   }
+
+  /* A4 Invoice Mode */
+  #print-container.print-a4, #printable-receipt.print-a4, #receipt-print.print-a4, #printable-repayment-receipt.print-a4, .print-container.print-a4 {
+    width: 100%;
+    padding: 20mm;
+    justify-content: flex-start !important;
+  }
+  
+  .print-a4 .receipt, .print-a4 .invoice {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 14px !important;
+  }
+  
+  .print-a4 .text-\\[8px\\], .print-a4 .text-\\[9px\\], .print-a4 .text-\\[10px\\], .print-a4 .text-\\[11px\\] {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  .print-a4 h1.text-xl {
+    font-size: 28px !important;
+  }
+
+  .print-a4 th, .print-a4 td {
+    padding: 12px 8px !important;
+    font-size: 14px !important;
+  }
+  
+  .print-a4 .w-14.h-14 {
+    width: 5rem !important;
+    height: 5rem !important;
+  }
+
+  /* Compact Thermal 80mm Mode */
+  #print-container.print-thermal-80, #printable-receipt.print-thermal-80, #receipt-print.print-thermal-80, #printable-repayment-receipt.print-thermal-80, .print-container.print-thermal-80 {
+    width: 80mm;
+    padding: 12px 16px;
+  }
+
+  /* Compact Thermal 58mm Mode */
+  #print-container.print-thermal-58, #printable-receipt.print-thermal-58, #receipt-print.print-thermal-58, #printable-repayment-receipt.print-thermal-58, .print-container.print-thermal-58 {
+    width: 58mm;
+    padding: 8px 12px;
+  }
+  
+  .print-thermal-58 .text-\\[8px\\], .print-thermal-58 .text-\\[9px\\], .print-thermal-58 .text-\\[10px\\], .print-thermal-58 .text-\\[11px\\] {
+    font-size: 10px !important;
+  }
+
   @page {
-    size: 80mm auto;
     margin: 0;
   }
 }

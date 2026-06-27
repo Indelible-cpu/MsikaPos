@@ -272,14 +272,39 @@ const LoginPage: React.FC = () => {
       let userData: UserData | null = null;
       let userToken: string | null = null;
 
-      // Try Online First
-      if (navigator.onLine) {
+      // Fast Local/Offline Login First
+      const offlineUser = await db.offlineAuth.get(username);
+      if (offlineUser) {
+        const passwordHash = await hashPassword(password);
+        if (passwordHash === offlineUser.passwordHash) {
+          userData = offlineUser.userData;
+          userToken = offlineUser.token;
+          
+          // Trigger background fetch to refresh token if online
+          if (navigator.onLine) {
+            api.post('/auth/login', { username, password }).then(async (response) => {
+               const freshUserData = response.data.user;
+               const freshToken = response.data.token;
+               await db.offlineAuth.put({
+                 username,
+                 passwordHash,
+                 userData: freshUserData,
+                 token: freshToken
+               });
+               localStorage.setItem('token', freshToken);
+               localStorage.setItem('user', JSON.stringify(freshUserData));
+            }).catch(e => console.warn('Background login refresh failed:', e));
+          }
+        }
+      }
+
+      // If local login failed or user not found locally, try online
+      if (!userData && navigator.onLine) {
         try {
           const response = await api.post('/auth/login', { username, password });
           userData = response.data.user;
           userToken = response.data.token;
 
-          // Cache for offline use
           const passwordHash = await hashPassword(password);
           await db.offlineAuth.put({
             username,
@@ -290,30 +315,15 @@ const LoginPage: React.FC = () => {
         } catch (err: unknown) {
           const loginError = err as { response?: { data?: { message?: string } } };
           if (loginError.response) {
-            const msg = loginError.response?.data?.message || 'Invalid credentials';
-            throw new Error(msg);
+            throw new Error(loginError.response?.data?.message || 'Invalid credentials');
           }
-          // If no response, maybe network is flaky but navigator.onLine is true
           throw err;
         }
       }
 
-      // Offline Fallback or Network Error
       if (!userData) {
-        const offlineUser = await db.offlineAuth.get(username);
-        if (offlineUser) {
-          const passwordHash = await hashPassword(password);
-          if (passwordHash === offlineUser.passwordHash) {
-            userData = offlineUser.userData;
-            userToken = offlineUser.token;
-            toast.success('Logged in offline mode');
-          } else {
-            throw new Error('Invalid credentials (Offline)');
-          }
-        } else {
-          if (!navigator.onLine) throw new Error('No offline credentials found. Please login online first.');
-          else throw new Error('Invalid credentials');
-        }
+        if (!navigator.onLine) throw new Error('No offline credentials found. Please login online first.');
+        else throw new Error('Invalid credentials');
       }
       
       if (userToken && userData) {

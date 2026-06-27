@@ -129,6 +129,7 @@ const POSPage: React.FC = () => {
 
   // Receipt Options
   const [printReceipt] = useState(false);
+  const [printSize, setPrintSize] = useState<'print-thermal-80' | 'print-thermal-58' | 'print-a4'>('print-thermal-80');
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
 
   // Credit Sale Flow
@@ -433,7 +434,6 @@ const POSPage: React.FC = () => {
       localStorage.removeItem('posDiscount');
       setCurrentInvoiceNo(generateInvoiceNo());
       toast.success('Sale Completed!');
-      if (printReceipt) setTimeout(() => window.print(), 800);
       
     } catch {
       toast.error('Checkout failed.');
@@ -653,7 +653,18 @@ const POSPage: React.FC = () => {
              <div className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm bg-card">
                 <label className="flex items-center justify-between px-6 py-4 border-b border-border/50 cursor-pointer hover:bg-muted/10 transition-colors">
                    <div className="flex items-center gap-4 text-[11px] text-foreground font-bold capitalize tracking-widest"><Printer className="w-4 h-4 text-muted-foreground" /> Print Official Invoice</div>
-                   <input title="Print Invoice" type="checkbox" className="w-5 h-5 accent-primary rounded-lg" checked={printInvoice} onChange={e => setPrintInvoice(e.target.checked)} />
+                   <div className="flex items-center gap-2">
+                     <select 
+                       className="bg-transparent border border-border/50 text-foreground text-[10px] font-bold outline-none rounded p-1 cursor-pointer"
+                       value={printSize}
+                       onChange={(e) => setPrintSize(e.target.value as any)}
+                     >
+                       <option value="print-thermal-80">80mm Thermal</option>
+                       <option value="print-thermal-58">58mm Thermal</option>
+                       <option value="print-a4">A4 Size</option>
+                     </select>
+                     <input title="Print Invoice" type="checkbox" className="w-5 h-5 accent-primary rounded-lg" checked={printInvoice} onChange={e => setPrintInvoice(e.target.checked)} />
+                   </div>
                 </label>
                 <label className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-muted/10 transition-colors">
                    <div className="flex items-center gap-4 text-[11px] text-foreground font-bold capitalize tracking-widest"><WhatsAppIcon className="w-4 h-4 text-emerald-500 fill-emerald-500/10" /> Send Copy Via WhatsApp</div>
@@ -712,7 +723,7 @@ const POSPage: React.FC = () => {
               <h2 className="text-xl font-black text-foreground uppercase tracking-tighter">Payment Successful</h2>
             </div>
             <div className="max-h-[60vh] overflow-y-auto bg-card p-4 custom-scrollbar">
-              <div id="receipt-print" className="bg-white p-4 rounded-xl">
+              <div id="receipt-print" className={`bg-white p-4 rounded-xl ${printSize}`}>
                 <Receipt {...showReceipt} />
               </div>
             </div>

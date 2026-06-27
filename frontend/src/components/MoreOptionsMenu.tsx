@@ -16,6 +16,7 @@ import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import ThemeToggle from './ThemeToggle';
 import { db } from '../db/posDB';
+import { SyncService } from '../services/SyncService';
 
 
 interface MoreOptionsMenuProps {
@@ -40,10 +41,16 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
 
   const handleLogout = async () => {
     try {
-      const unsynced = await db.salesQueue.where('synced').equals(0).count();
+      let unsynced = await db.salesQueue.where('synced').equals(0).count();
       if (unsynced > 0) {
-        toast.error('Cannot logout: You have unsynced sales. Please sync first.');
-        return;
+        toast.loading('Syncing pending sales...', { id: 'logout-sync' });
+        await SyncService.pushSales();
+        unsynced = await db.salesQueue.where('synced').equals(0).count();
+        if (unsynced > 0) {
+          toast.error(`Cannot logout: ${unsynced} sales unsynced. Check your connection.`, { id: 'logout-sync' });
+          return;
+        }
+        toast.success('Sync complete.', { id: 'logout-sync' });
       }
       await db.delete();
     } catch (e) {
