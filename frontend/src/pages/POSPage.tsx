@@ -726,7 +726,7 @@ const POSPage: React.FC = () => {
             </div>
             <div className="max-h-[60vh] overflow-y-auto bg-card p-4 custom-scrollbar">
               <div id="receipt-print" className={`bg-white p-4 rounded-xl ${printSize}`}>
-                <Receipt {...showReceipt} />
+                <Receipt {...showReceipt} isA4={printSize === 'print-a4'} />
               </div>
             </div>
 

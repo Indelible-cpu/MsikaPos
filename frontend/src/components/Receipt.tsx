@@ -20,9 +20,10 @@ interface ReceiptProps {
   customerId?: string;
   signature?: string;
   paymentHistory?: { date: string; amount: number; method: string }[];
+  isA4?: boolean;
 }
 
-export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, paid, change, mode, bankName, accountNumber, customerName, customerId, signature }) => {
+export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, paid, change, mode, bankName, accountNumber, customerName, customerId, signature, isA4 }) => {
   const currentBranchStr = localStorage.getItem('currentBranch');
   const branch = currentBranchStr ? JSON.parse(currentBranchStr) : null;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -51,6 +52,160 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
     }
   }, [customerId]);
 
+  const displayDate = (() => {
+    if (!date) return new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+    const d = new Date(date);
+    return isNaN(d.getTime()) ? new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+  })();
+
+  if (isA4) {
+    return (
+      <div className="receipt a4-invoice bg-white text-black p-8 font-sans w-full max-w-[800px] mx-auto min-h-[1000px] flex flex-col box-border shadow-sm border border-gray-100">
+        {/* Header */}
+        <div className="flex justify-between items-start border-b-2 border-gray-800 pb-6 mb-8">
+          <div className="flex items-center gap-4">
+            <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="h-20 w-auto object-contain" />
+            <div>
+              <h1 className="text-3xl font-black uppercase tracking-tight text-gray-900">{shopName}</h1>
+              {shopSlogan && <p className="text-sm font-medium text-gray-500 italic mt-1">"{shopSlogan}"</p>}
+            </div>
+          </div>
+          <div className="text-right text-sm text-gray-600">
+            <h2 className="text-3xl font-black text-gray-200 uppercase tracking-widest mb-2">{mode === 'Cash' ? 'RECEIPT' : 'INVOICE'}</h2>
+            <p className="font-bold text-gray-900">{shopAddress}</p>
+            <p>Tel: {shopTel}</p>
+            {shopEmail && <p>{shopEmail}</p>}
+            {shopFB && <p>FB: {shopFB}</p>}
+          </div>
+        </div>
+
+        {/* Info Grid */}
+        <div className="grid grid-cols-2 gap-8 mb-8">
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Bill To</h3>
+            {customerName ? (
+              <div className="text-sm font-semibold text-gray-900">
+                <p className="text-lg font-black mb-1">{customerName}</p>
+                {customer?.phone && <p>Tel: {customer.phone}</p>}
+                {customer?.village && <p>Address: {customer.village}</p>}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 italic">Walk-in Customer</p>
+            )}
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col justify-center">
+            <div className="grid grid-cols-2 gap-y-3 text-sm">
+              <span className="text-gray-500 font-medium">Invoice No:</span>
+              <span className="font-bold text-gray-900 text-right">{invoiceNo}</span>
+              
+              <span className="text-gray-500 font-medium">Date:</span>
+              <span className="font-bold text-gray-900 text-right">{displayDate}</span>
+              
+              <span className="text-gray-500 font-medium">Branch:</span>
+              <span className="font-bold text-gray-900 text-right">{branch?.name || 'Main HQ'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Items Table */}
+        <div className="flex-1">
+          <table className="w-full text-sm mb-8 border-collapse">
+            <thead>
+              <tr className="bg-gray-900 text-white uppercase tracking-wider">
+                <th className="text-left py-3 px-4 rounded-tl-lg font-bold">Item Description</th>
+                <th className="text-center py-3 px-4 font-bold">Qty</th>
+                <th className="text-right py-3 px-4 font-bold">Unit Price</th>
+                <th className="text-right py-3 px-4 rounded-tr-lg font-bold">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => {
+                const { finalPrice } = calculateEffectiveDiscount(item.product as LocalProduct);
+                return (
+                  <tr key={idx} className="border-b border-gray-100 last:border-b-2 last:border-gray-900">
+                    <td className="py-4 px-4">
+                      <div className="font-bold text-gray-900">{toSentenceCase(item.product.name)}</div>
+                    </td>
+                    <td className="text-center py-4 px-4 font-semibold text-gray-700">{item.quantity}</td>
+                    <td className="text-right py-4 px-4 font-medium text-gray-600">Mk {finalPrice.toLocaleString()}</td>
+                    <td className="text-right py-4 px-4 font-bold text-gray-900">Mk {(finalPrice * item.quantity).toLocaleString()}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Totals Section */}
+        <div className="flex justify-end mb-12">
+          <div className="w-80 bg-gray-50 p-6 rounded-2xl border border-gray-200">
+            <div className="space-y-3 text-sm font-medium text-gray-600">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>Mk {subtotal.toLocaleString()}</span>
+              </div>
+              {tax > 0 && (
+                <div className="flex justify-between">
+                  <span>Tax (VAT)</span>
+                  <span>Mk {tax.toLocaleString()}</span>
+                </div>
+              )}
+              {discount > 0 && (
+                <div className="flex justify-between text-red-500">
+                  <span>Discount</span>
+                  <span>- Mk {discount.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xl font-black text-gray-900 border-t-2 border-gray-900 pt-3 mt-3">
+                <span>Total Due</span>
+                <span>Mk {total.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Info */}
+        <div className="mt-auto grid grid-cols-2 gap-8 pt-8 border-t border-gray-200">
+          <div>
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</h4>
+            <div className="space-y-1 text-sm font-medium text-gray-700">
+              <p>Method: <span className="font-bold text-gray-900">{mode}</span></p>
+              <p>Amount Paid: <span className="font-bold text-gray-900">Mk {paid.toLocaleString()}</span></p>
+              {mode === 'Cash' ? (
+                <p>Change: <span className="font-bold text-gray-900">Mk {change.toLocaleString()}</span></p>
+              ) : (
+                (bankName || accountNumber) && (
+                  <>
+                    <p>{mode === 'Momo' ? 'Provider' : 'Bank'}: <span className="font-bold">{bankName}</span></p>
+                    <p>Reference: <span className="font-bold">{accountNumber}</span></p>
+                  </>
+                )
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-center">
+            {signature && (
+              <div className="mb-2">
+                <img src={signature} alt="Signature" className="h-16 object-contain filter grayscale" />
+              </div>
+            )}
+            <div className="w-48 border-t border-gray-400 pt-2 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
+              Authorized Signature
+            </div>
+          </div>
+        </div>
+        
+        <div className="text-center mt-12 text-xs text-gray-400">
+          <p className="font-bold text-gray-500 mb-1">Thank you for your business!</p>
+          <p>Goods once sold are not returnable.</p>
+          <p className="mt-2 text-[10px] opacity-50">Powered by MsikaPos © {new Date().getFullYear()}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="receipt p-0 bg-white text-black font-mono w-full text-[11px] leading-tight shadow-sm flex flex-col items-center">
       <div className="text-center w-full border-b-2 border-black pb-4 mb-4">
@@ -67,11 +222,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
         <div className="flex justify-between">
           <span>{mode === 'Cash' ? 'Receipt:' : 'Invoice:'} {invoiceNo}</span>
 
-          <span>{(() => {
-            if (!date) return new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-            const d = new Date(date);
-            return isNaN(d.getTime()) ? new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-          })()}</span>
+          <span>{displayDate}</span>
         </div>
         <div className="flex justify-between uppercase">
           <span>Branch: {branch?.name || 'Main HQ'}</span>
