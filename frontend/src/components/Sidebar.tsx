@@ -38,10 +38,12 @@ const Sidebar: React.FC = () => {
         await SyncService.pushSales();
         unsynced = await db.salesQueue.where('synced').equals(0).count();
         if (unsynced > 0) {
-          toast.error(`Cannot logout: ${unsynced} sales unsynced. Check your connection.`, { id: 'logout-sync' });
-          return;
+          toast.dismiss('logout-sync');
+          const force = window.confirm(`Warning: You have ${unsynced} unsynced sales. Logging out now will permanently delete them. Are you sure you want to force logout?`);
+          if (!force) return;
+        } else {
+          toast.success('Sync complete.', { id: 'logout-sync' });
         }
-        toast.success('Sync complete.', { id: 'logout-sync' });
       }
       await db.delete();
     } catch (e) {
