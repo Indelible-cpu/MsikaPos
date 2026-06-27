@@ -172,19 +172,23 @@ export class SyncService {
     // 2. Process Incoming Expenses
     if (expenses && expenses.length > 0) {
       for (const exp of expenses) {
-        const existing = await prisma.expense.findUnique({ where: { id: exp.id } });
-        if (!existing) {
-          await prisma.expense.create({
-            data: {
-              id: exp.id,
-              category: exp.category,
-              amount: exp.amount,
-              description: exp.description,
-              paymentMethod: exp.paymentMethod,
-              expenseDate: new Date(exp.date),
-              userId: userId
-            }
-          });
+        try {
+          const existing = await prisma.expense.findUnique({ where: { id: exp.id } });
+          if (!existing) {
+            await prisma.expense.create({
+              data: {
+                id: exp.id,
+                category: exp.category,
+                amount: exp.amount,
+                description: exp.description,
+                paymentMethod: exp.paymentMethod,
+                expenseDate: new Date(exp.date),
+                userId: userId
+              }
+            });
+          }
+        } catch (err: any) {
+          console.error(`[Sync] Failed to process expense ${exp.id}:`, err.message);
         }
       }
     }
@@ -192,21 +196,25 @@ export class SyncService {
     // 3. Process Incoming Customers
     if (customers && customers.length > 0) {
       for (const cust of customers) {
-        const existing = await prisma.customer.findUnique({ where: { id: cust.id } });
-        if (!existing) {
-          await prisma.customer.create({
-            data: {
-              id: cust.id,
-              fullname: cust.name,
-              phone: cust.phone,
-              idNumber: cust.idNumber,
-              village: cust.village,
-              livePhoto: cust.livePhoto,
-              balance: cust.balance || 0,
-              totalDebt: cust.totalCreditAmount || 0,
-              createdAt: new Date(cust.createdAt)
-            }
-          });
+        try {
+          const existing = await prisma.customer.findUnique({ where: { id: cust.id } });
+          if (!existing) {
+            await prisma.customer.create({
+              data: {
+                id: cust.id,
+                fullname: cust.name,
+                phone: cust.phone,
+                idNumber: cust.idNumber,
+                village: cust.village,
+                livePhoto: cust.livePhoto,
+                balance: cust.balance || 0,
+                totalDebt: cust.totalCreditAmount || 0,
+                createdAt: new Date(cust.createdAt)
+              }
+            });
+          }
+        } catch (err: any) {
+          console.error(`[Sync] Failed to process customer ${cust.id}:`, err.message);
         }
       }
     }
@@ -214,26 +222,24 @@ export class SyncService {
     // 4. Process Incoming Debt Payments
     if (debtPayments && debtPayments.length > 0 && prisma.debtPayment) {
       for (const pay of debtPayments) {
-        const existing = await (prisma as any).debtPayment.findUnique({ where: { id: pay.id } });
-        if (!existing) {
-          await prisma.$transaction(async (tx) => {
-            await (tx as any).debtPayment.create({
-              data: {
-                id: pay.id,
-                customerId: pay.customerId,
-                amount: pay.amount,
-                paymentMethod: pay.paymentMethod,
-                reference: pay.reference,
-                createdAt: new Date(pay.createdAt)
-              }
+        try {
+          const existing = await (prisma as any).debtPayment.findUnique({ where: { id: pay.id } });
+          if (!existing) {
+            await prisma.$transaction(async (tx) => {
+              await (tx as any).debtPayment.create({
+                data: {
+                  id: pay.id,
+                  customerId: pay.customerId,
+                  amount: pay.amount,
+                  paymentMethod: pay.paymentMethod,
+                  reference: pay.reference,
+                  createdAt: new Date(pay.createdAt)
+                }
+              });
             });
-            /*
-            await tx.customer.update({
-              where: { id: pay.customerId },
-              data: { balance: { decrement: pay.amount } }
-            });
-            */
-          });
+          }
+        } catch (err: any) {
+          console.error(`[Sync] Failed to process debt payment ${pay.id}:`, err.message);
         }
       }
     }
