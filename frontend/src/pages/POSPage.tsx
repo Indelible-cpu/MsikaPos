@@ -298,17 +298,20 @@ const POSPage: React.FC = () => {
 
   const displayedProducts = useMemo(() => {
     if (!products) return [];
-    if (searchTerm.length >= 1 || showAll || products.length <= 48) return products;
+    if (searchTerm.length >= 1 || showAll || products.length <= 6) return products;
     
-    // Pick 48 items to show initially on desktop/large screens
-    return products.slice(0, 48);
+    // Pick 6 items to show initially to form 1 row and prevent pushing cart down
+    return products.slice(0, 6);
   }, [products, searchTerm, showAll]);
 
   const addToCart = useCallback((product: LocalProduct) => {
+    // Auto-collapse catalog to 1 row when an item is selected
+    setShowAll(false);
+    
     // Auto-scroll to cart section so it is visible on mobile
     setTimeout(() => {
       document.getElementById('cart-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
+    }, 100);
 
     if (!product.isService && product.quantity <= 0) return toast.error('Out of stock');
     setCart(prev => {
@@ -842,7 +845,7 @@ const POSPage: React.FC = () => {
             {displayedProducts.map((p: LocalProduct) => (
               <ProductCard key={p.id} p={p} addToCart={addToCart} />
             ))}
-            {!showAll && products && products.length > 24 && (
+            {!showAll && products && products.length > 6 && (
               <div 
                 onClick={() => setShowAll(true)}
                 className="glass-card bg-primary/10 border border-primary/20 rounded-3xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer text-primary btn-press hover:bg-primary/20 transition-all shadow-sm aspect-square"

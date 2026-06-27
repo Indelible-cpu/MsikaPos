@@ -12,7 +12,7 @@ import {
   ChevronRight, TrendingUp, Monitor, Package, 
   History, Receipt, Users, LayoutDashboard, 
   CreditCard as CreditCardIcon, PlusCircle, AlertCircle,
-  Wifi, WifiOff, RefreshCw
+  Wifi, WifiOff, RefreshCw, Eye, EyeOff
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -75,6 +75,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('pos');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showSensitive, setShowSensitive] = useState(false);
   const { isOnline, isFetching, lastSynced } = useLiveStatus();
 
   // Sync tab with URL
@@ -188,6 +189,15 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 hover:bg-zinc-100 rounded-xl" title="Open menu" aria-label="Open menu"><Menu className="w-5 h-5" /></button>
             <h2 className="text-sm font-black uppercase tracking-widest text-zinc-400">{activeTab}</h2>
+            {activeTab === 'dashboard' && (
+              <button 
+                onClick={() => setShowSensitive(!showSensitive)} 
+                className="flex items-center gap-2 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 rounded-full transition-colors text-[10px] font-bold uppercase tracking-widest"
+              >
+                {showSensitive ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                {showSensitive ? 'Hide Values' : 'Show Values'}
+              </button>
+            )}
           </div>
           
           <div className="flex items-center gap-3">
@@ -251,8 +261,8 @@ export default function Dashboard() {
                 />
                 <StatCard 
                   title="Net Profit" 
-                  value={`MK ${stats?.net_profit?.toLocaleString() || '0'}`} 
-                  subtext={`Gross: MK ${stats?.total_profit?.toLocaleString() || '0'}`}
+                  value={showSensitive ? `MK ${stats?.net_profit?.toLocaleString() || '0'}` : '****'} 
+                  subtext={showSensitive ? `Gross: MK ${stats?.total_profit?.toLocaleString() || '0'}` : '****'}
                   icon={TrendingUp}
                   color="bg-blue-50 text-blue-600"
                   loading={isLoading}
