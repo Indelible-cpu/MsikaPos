@@ -55,11 +55,12 @@ const MoreOptionsMenu: React.FC<MoreOptionsMenuProps> = ({ isOpen, onClose }) =>
       await db.delete();
     } catch (e) {
       console.warn('Error clearing DB during logout', e);
+      toast.dismiss('logout-sync');
     }
     localStorage.clear();
     sessionStorage.clear();
     toast.success('Signed out');
-    window.location.href = '/';
+    window.location.href = '/staff/login';
   };
 
   return (

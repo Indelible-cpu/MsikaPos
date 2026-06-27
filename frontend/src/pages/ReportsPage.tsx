@@ -19,7 +19,7 @@ import {
 } from 'date-fns';
 
 type ReportTab = 'Financial' | 'Staff' | 'Payment';
-type TimeFilter = 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
+type TimeFilter = 'All' | 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
 
 // ─── Bar Chart ───────────────────────────────────────────────────────────────
 const BarChart = ({
@@ -83,6 +83,7 @@ const isActiveTransaction = (s: LocalSale) =>
 const getScopeInterval = (timeFilter: TimeFilter) => {
   const now = new Date();
   const end = endOfDay(now);
+  if (timeFilter === 'All') return { start: new Date(0), end };
   if (timeFilter === 'Daily') return { start: new Date(now.setHours(0, 0, 0, 0)), end };
   if (timeFilter === 'Weekly') return { start: startOfWeek(now), end };
   if (timeFilter === 'Monthly') return { start: startOfMonth(now), end };
@@ -98,12 +99,14 @@ const ReportsPage: React.FC = () => {
   // ── 1. Local live DB (instant on any change) ─────────────────────────────
   const localSales = useLiveQuery(() => db.salesQueue.toArray(), []) ?? [];
   const localProducts = useLiveQuery(() => db.products.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active')).toArray(), []) ?? [];
+  const localExpenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
 
   // ── 2. Server transactions — polls every 30 s ─────────────────────────────
   const { data: serverSalesRaw } = useQuery({
     queryKey: ['reports-transactions', timeFilter],
     queryFn: async () => {
       const scopeMap: Record<TimeFilter, string> = {
+        All: 'all',
         Daily: 'daily',
         Weekly: 'weekly',
         Monthly: 'monthly',
@@ -132,6 +135,17 @@ const ReportsPage: React.FC = () => {
     staleTime: 20_000,
   });
 
+  const { data: serverExpensesRaw } = useQuery({
+    queryKey: ['reports-expenses'],
+    queryFn: async () => {
+      const res = await api.get('/expenses');
+      return (res.data.success ? res.data.data : []);
+    },
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: true,
+    staleTime: 20_000,
+  });
+
   // ── 4. Merge local + server, dedupe by invoiceNo ─────────────────────────
   const allSales: LocalSale[] = useMemo(() => {
     const merged = [...localSales];
@@ -151,6 +165,27 @@ const ReportsPage: React.FC = () => {
       isWithinInterval(new Date(s.createdAt), interval)
     );
   }, [allSales, timeFilter]);
+
+  const allExpenses = useMemo(() => {
+    const merged = [...localExpenses];
+    const localIds = new Set(merged.map(e => e.id));
+    (serverExpensesRaw ?? []).forEach((se: any) => {
+      if (!localIds.has(se.id)) merged.push(se);
+    });
+    return merged;
+  }, [localExpenses, serverExpensesRaw]);
+
+  const scopedExpenses = useMemo(() => {
+    const interval = getScopeInterval(timeFilter);
+    return allExpenses.filter((e) =>
+      isWithinInterval(new Date(e.date || e.createdAt), interval)
+    );
+  }, [allExpenses, timeFilter]);
+
+  const totalExpenses = useMemo(
+    () => scopedExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0),
+    [scopedExpenses]
+  );
 
   // ── 6. Stats (exclude DELETED & REFUNDED) ────────────────────────────────
   const activeSales = useMemo(
@@ -173,6 +208,8 @@ const ReportsPage: React.FC = () => {
   );
   const avgSale = totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0;
   const refundCount = scopedSales.filter((s) => s.status === 'REFUNDED').length;
+  
+  const netRevenue = totalRevenue - totalExpenses;
 
   // ── 7. Chart analytics ────────────────────────────────────────────────────
   const analyticsData = useMemo(() => {
@@ -240,7 +277,7 @@ const ReportsPage: React.FC = () => {
         if (diff < 3) map[d.getMonth()] = (map[d.getMonth()] || 0) + Number(s.total || 0);
       });
       financialData = last3.map((m) => ({ label: m.label, value: map[m.key] || 0 }));
-    } else {
+    } else if (timeFilter === 'Annual') {
       const map: Record<number, number> = {};
       const last12 = Array.from({ length: 12 }, (_, i) => {
         const d = new Date();
@@ -253,6 +290,15 @@ const ReportsPage: React.FC = () => {
         if (diff < 12) map[d.getMonth()] = (map[d.getMonth()] || 0) + Number(s.total || 0);
       });
       financialData = last12.map((m) => ({ label: m.label, value: map[m.key] || 0 }));
+    } else { // All
+      const map: Record<number, number> = {};
+      const years = Array.from(new Set(activeSales.map((s) => new Date(s.createdAt).getFullYear()))).sort();
+      activeSales.forEach((s) => {
+        const y = new Date(s.createdAt).getFullYear();
+        map[y] = (map[y] || 0) + Number(s.total || 0);
+      });
+      financialData = years.map((y) => ({ label: y.toString(), value: map[y] || 0 }));
+      if (financialData.length === 0) financialData = [{ label: now.getFullYear().toString(), value: 0 }];
     }
 
     // Staff performance
@@ -337,8 +383,8 @@ const ReportsPage: React.FC = () => {
   };
 
   const stats = [
-    { label: 'Revenue', value: `MK ${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', sub: `${totalSalesCount} transaction${totalSalesCount !== 1 ? 's' : ''}` },
-    { label: 'Transactions', value: totalSalesCount.toString(), icon: TrendingUp, color: 'text-primary-500', sub: `${refundCount} refunded` },
+    { label: 'Available Revenue', value: `MK ${netRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', sub: `Gross: MK ${totalRevenue.toLocaleString()} - Exp: MK ${totalExpenses.toLocaleString()}` },
+    { label: 'Gross Sales', value: `MK ${totalRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-500', sub: `${totalSalesCount} transaction${totalSalesCount !== 1 ? 's' : ''}` },
     { label: 'Total Profit', value: `MK ${totalProfit.toLocaleString()}`, icon: ArrowUpRight, color: 'text-blue-500', sub: 'excl. refunds' },
     { label: 'Avg Sale', value: `MK ${avgSale.toLocaleString()}`, icon: Users, color: 'text-amber-500', sub: 'per transaction' },
     { label: 'Total Cost Value', value: `MK ${totalCostValue.toLocaleString()}`, icon: Package, color: 'text-rose-500', sub: 'active inventory value' },
@@ -379,6 +425,7 @@ const ReportsPage: React.FC = () => {
                 aria-label="Filter by time period"
                 className="px-4 py-2 bg-card/50 border border-border/50 rounded-xl text-[10px] font-black tracking-widest uppercase text-primary outline-none cursor-pointer btn-press"
               >
+                <option value="All">All</option>
                 <option value="Daily">Daily</option>
                 <option value="Weekly">Weekly</option>
                 <option value="Monthly">Monthly</option>

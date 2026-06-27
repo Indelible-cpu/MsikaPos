@@ -46,11 +46,12 @@ const Sidebar: React.FC = () => {
       await db.delete();
     } catch (e) {
       console.warn('Error clearing DB during logout', e);
+      toast.dismiss('logout-sync');
     }
     localStorage.clear();
     sessionStorage.clear();
     toast.success('Signed out successfully');
-    navigate('/');
+    navigate('/staff/login');
   };
 
 

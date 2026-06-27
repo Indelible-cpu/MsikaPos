@@ -18,6 +18,7 @@ import * as ReportCtrl from './controllers/ReportController';
 import * as SettingsCtrl from './controllers/SettingsController';
 import * as DashboardCtrl from './controllers/DashboardController';
 import * as CreditCtrl from './controllers/CreditController';
+import { BranchController } from './controllers/BranchController';
 import * as CustomerCtrl from './controllers/CustomerController';
 import * as ExpenseCtrl from './controllers/ExpenseController';
 import * as AiCtrl from './controllers/AiController';
@@ -138,6 +139,12 @@ const adminOnly = authorize(['SUPER_ADMIN', 'ADMIN']);
 
 // Dashboard
 app.get('/api/dashboard/stats', staffOnly, DashboardCtrl.getDashboardStats);
+
+// Branches
+app.get('/api/branches', authenticate as any, BranchController.getBranches as any);
+app.post('/api/branches', adminOnly, BranchController.createBranch as any);
+app.put('/api/branches/:id', adminOnly, BranchController.updateBranch as any);
+app.delete('/api/branches/:id', adminOnly, BranchController.deleteBranch as any);
 
 // Users
 app.get('/api/users', adminOnly, UserCtrl.fetchUsers);
