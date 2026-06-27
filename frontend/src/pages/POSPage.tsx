@@ -128,7 +128,6 @@ const POSPage: React.FC = () => {
   const [selectedSubMethod, setSelectedSubMethod] = useState<string>('');
 
   // Receipt Options
-  const [printReceipt] = useState(false);
   const [printSize, setPrintSize] = useState<'print-thermal-80' | 'print-thermal-58' | 'print-a4'>('print-thermal-80');
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
 
