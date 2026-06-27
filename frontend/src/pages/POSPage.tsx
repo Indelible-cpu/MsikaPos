@@ -739,13 +739,25 @@ const POSPage: React.FC = () => {
                   toast.loading('Generating receipt image...', { id: 'share' });
                   try {
                     const isA4 = printSize === 'print-a4';
-                    const canvas = await html2canvas(receiptElement, { 
-                      scale: 3, 
+                    
+                    // Clone element to body so html2canvas can capture it fully (avoids overflow:hidden clipping)
+                    const clone = receiptElement.cloneNode(true) as HTMLElement;
+                    clone.style.position = 'fixed';
+                    clone.style.top = '-9999px';
+                    clone.style.left = '0';
+                    clone.style.zIndex = '-1';
+                    clone.style.width = isA4 ? '900px' : '400px';
+                    clone.style.background = '#ffffff';
+                    document.body.appendChild(clone);
+
+                    const canvas = await html2canvas(clone, { 
+                      scale: 2.5, 
                       backgroundColor: '#ffffff',
                       useCORS: true,
                       logging: false,
-                      windowWidth: isA4 ? 900 : 400
+                      width: isA4 ? 900 : 400,
                     });
+                    document.body.removeChild(clone);
 
                     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
                     if (!blob) throw new Error('Blob error');
@@ -761,14 +773,17 @@ const POSPage: React.FC = () => {
                       const a = document.createElement('a');
                       a.href = url;
                       a.download = `Receipt-${showReceipt.invoiceNo}.png`;
+                      document.body.appendChild(a);
                       a.click();
+                      document.body.removeChild(a);
                       URL.revokeObjectURL(url);
-                      const text = encodeURIComponent(`Receipt: ${showReceipt.invoiceNo}\nTotal: MK ${showReceipt.total.toLocaleString()}\n(Image saved to Downloads — attach it to this chat)`);
-                      setTimeout(() => window.open(`https://wa.me/?text=${text}`, '_blank'), 500);
+                      const text = encodeURIComponent(`Receipt: ${showReceipt.invoiceNo}\nTotal: MK ${showReceipt.total.toLocaleString()}\n(Image saved — attach it to this WhatsApp chat)`);
+                      setTimeout(() => window.open(`https://wa.me/?text=${text}`, '_blank'), 600);
                       toast.success('Image saved! Attach it to WhatsApp.', { id: 'share', duration: 5000 });
                     }
-                  } catch {
-                    toast.error('Failed to share', { id: 'share' });
+                  } catch (err) {
+                    console.error('Share error:', err);
+                    toast.error('Failed to generate image. Try again.', { id: 'share' });
                   }
                 }}
                 className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-bold tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 capitalize"

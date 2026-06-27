@@ -9,7 +9,7 @@ import { useSettingsStore } from '../hooks/useSettings';
 import { useLiveStatus } from '../hooks/useLiveStatus';
 import { 
   Bell, LogOut, Menu, 
-  ChevronRight, TrendingUp, Monitor, Package, 
+  ChevronRight, Monitor, Package, 
   History, Receipt, Users, LayoutDashboard, 
   CreditCard as CreditCardIcon, PlusCircle, AlertCircle,
   Wifi, WifiOff, RefreshCw, Eye, EyeOff
@@ -251,21 +251,13 @@ export default function Dashboard() {
                   {showSensitive ? 'Hide Sensitive Data' : 'Show Sensitive Data'}
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard 
                   title="Total Revenue" 
                   value={`MK ${stats?.total_sales?.toLocaleString() || '0'}`} 
                   subtext={`Today: MK ${stats?.today_sales?.toLocaleString() || '0'}`}
                   icon={CreditCardIcon}
                   color="bg-emerald-50 text-emerald-600"
-                  loading={isLoading}
-                />
-                <StatCard 
-                  title="Net Profit" 
-                  value={showSensitive ? `MK ${stats?.net_profit?.toLocaleString() || '0'}` : '****'} 
-                  subtext={showSensitive ? `Gross: MK ${stats?.total_profit?.toLocaleString() || '0'}` : '****'}
-                  icon={TrendingUp}
-                  color="bg-blue-50 text-blue-600"
                   loading={isLoading}
                 />
                 <StatCard 

@@ -5,9 +5,9 @@ import { clsx } from 'clsx';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
-import BrandName from './BrandName';
 import { db } from '../db/posDB';
 import { SyncService } from '../services/SyncService';
+import ThemeToggle from './ThemeToggle';
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -105,7 +105,14 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* Footer - Fixed */}
-      <div className="p-4 border-t border-surface-border shrink-0">
+      <div className="p-4 border-t border-surface-border shrink-0 space-y-2">
+        {/* Appearance */}
+        <div className="px-2 pb-2">
+          <span className="text-[9px] font-black text-muted-foreground/50 uppercase tracking-widest block mb-2 px-2">Appearance</span>
+          <div className="flex justify-center">
+            <ThemeToggle />
+          </div>
+        </div>
         <button 
           onClick={handleLogout}
           className="flex items-center gap-4 px-4 h-14 w-full rounded-2xl font-black tracking-widest text-[13px] text-red-500 hover:text-red-600 hover:bg-red-500/5 transition-all group border border-transparent hover:border-red-500/10 shrink-0"
@@ -113,13 +120,6 @@ const Sidebar: React.FC = () => {
           <LogOut className="w-6 h-6 transition-transform group-hover:scale-110" strokeWidth={2.5} />
           Sign Out
         </button>
-        <div className="mt-4 px-4 flex items-center justify-between opacity-30">
-           <span className="text-[7px] font-black tracking-[0.2em]">Powered By <BrandName /></span>
-           <div className={clsx(
-             "w-1.5 h-1.5 rounded-full",
-             navigator.onLine ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
-           )}></div>
-        </div>
       </div>
     </aside>
   );
