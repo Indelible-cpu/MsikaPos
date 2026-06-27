@@ -60,6 +60,15 @@ export const SyncService = {
     if (navigator.onLine) {
       this.pushSales().catch(console.error);
     }
+
+    // Automatic recurring sync (every 30 seconds)
+    setInterval(() => {
+      if (navigator.onLine && !this.isSyncing) {
+        this.pushSales().catch((err) => {
+          console.error('Automatic sync interval failed:', err);
+        });
+      }
+    }, 30000);
   },
 
   async pushSales() {
