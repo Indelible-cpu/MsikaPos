@@ -4,6 +4,7 @@ import { Bell, ChevronLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db } from '../db/posDB';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { isSameDay } from 'date-fns';
 
 
 export default function MobileHeader() {
@@ -12,9 +13,8 @@ export default function MobileHeader() {
   const [shopLogo, setShopLogo] = useState('/icon.png?v=2');
 
   const localSales = useLiveQuery(() => db.salesQueue.toArray());
-  const today = new Date().toISOString().split('T')[0];
   const transactionsToday = (localSales || []).filter(s => 
-    s.createdAt.startsWith(today) && 
+    isSameDay(new Date(s.createdAt), new Date()) && 
     s.status !== 'DELETED' && 
     s.status !== 'REFUNDED'
   ).length;
