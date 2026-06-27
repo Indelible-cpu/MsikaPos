@@ -66,8 +66,8 @@ app.use(cors({
 
 app.options(/.*/, cors() as any); // Enable pre-flight for all routes (Express 5 compatible)
 
-app.use(express.json({ limit: '1mb' })); 
-app.use(express.urlencoded({ limit: '1mb', extended: true }));
+app.use(express.json({ limit: '10mb' })); 
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(morgan('dev'));
 
 // Health Check (Must be before any middleware that touches DB)

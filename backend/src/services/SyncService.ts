@@ -18,9 +18,10 @@ export class SyncService {
     const userId = user.id;
 
     // 1. Process Incoming Sales (Reconciliation Logic)
+    const syncedSaleIds: string[] = [];
     if (sales && sales.length > 0) {
       const allProductIds = Array.from(new Set(
-        sales.flatMap((s: any) => s.items.map((i: any) => i.productId))
+        sales.flatMap((s: any) => (s.items || []).map((i: any) => i.productId))
       ));
       
       const productMeta = await prisma.product.findMany({
@@ -29,127 +30,141 @@ export class SyncService {
       });
       
       const serviceStatusMap = new Map(productMeta.map(p => [p.id, p.isService]));
+      const validProductIds = new Set(productMeta.map(p => p.id));
 
       for (const saleData of sales) {
-        // Reconciliation: Check if sale already exists by invoiceNo (Strong Match)
-        const existingSale = await prisma.sale.findUnique({
-          where: { invoiceNo: saleData.invoiceNo },
-          select: { id: true, status: true, items: true }
-        });
-
-        if (!existingSale) {
-          await prisma.$transaction(async (tx) => {
-            let finalCustomerId: number | null = null;
-            if (saleData.customerId) {
-              const parsed = parseInt(saleData.customerId, 10);
-              if (!isNaN(parsed) && parsed.toString() === saleData.customerId.toString()) {
-                finalCustomerId = parsed;
-              } else {
-                let cust = await tx.customer.findUnique({ where: { offlineId: saleData.customerId } });
-                if (!cust) {
-                  cust = await tx.customer.create({
-                    data: {
-                      fullname: saleData.customerName || 'Offline Customer',
-                      phone: '000000000',
-                      offlineId: saleData.customerId
-                    }
-                  });
-                }
-                finalCustomerId = cust.id;
-              }
-            }
-
-            // Create Sale
-            await tx.sale.create({
-              data: {
-                id: saleData.id,
-                invoiceNo: saleData.invoiceNo,
-                receiptNo: saleData.receiptNo,
-                userId: userId,
-                customerId: finalCustomerId,
-                subtotal: saleData.subtotal,
-                discount: saleData.discount,
-                total: saleData.total,
-                paid: saleData.paid,
-                changeDue: saleData.changeDue,
-                profit: saleData.profit || saleData.items.reduce((acc: number, item: any) => acc + (item.profit || 0), 0),
-                paymentMode: saleData.paymentMode === 'Momo' ? 'MOBILE_MONEY' : 
-                             saleData.paymentMode === 'Card' ? 'CARD' : 
-                             saleData.paymentMode === 'Credit' ? 'CREDIT' : 'CASH',
-                status: saleData.status || 'COMPLETED',
-                taxAmount: saleData.tax || 0,
-                taxRate: saleData.taxRate || 0,
-                isCredit: saleData.paymentMode === 'Credit',
-                itemsCount: saleData.itemsCount,
-                synced: true,
-                deviceId: deviceId,
-                createdAt: new Date(saleData.createdAt),
-                items: {
-                  create: saleData.items.map((item: any) => ({
-                    productId: item.productId,
-                    productName: item.productName,
-                    unitPrice: item.unitPrice,
-                    quantity: item.quantity,
-                    discount: item.discount,
-                    lineTotal: item.lineTotal,
-                    profit: item.profit,
-                  })),
-                },
-              },
-            });
-
-            // Update Inventory (only for non-services)
-            for (const item of saleData.items) {
-              const isService = serviceStatusMap.get(item.productId);
-              if (!isService) {
-                await tx.product.update({
-                  where: { id: item.productId },
-                  data: { quantity: { decrement: item.quantity } },
-                });
-              }
-            }
+        try {
+          // Reconciliation: Check if sale already exists by invoiceNo (Strong Match)
+          const existingSale = await prisma.sale.findUnique({
+            where: { invoiceNo: saleData.invoiceNo },
+            select: { id: true, status: true, items: true }
           });
 
-          await AuditService.log({
-            userId,
-            action: 'SYNC_SALE',
-            entityType: 'SALE',
-            entityId: saleData.invoiceNo
-          });
-        } else {
-          // Check if status changed to REFUNDED or DELETED locally
-          if (saleData.status && existingSale.status !== saleData.status && 
-              (saleData.status === 'REFUNDED' || saleData.status === 'DELETED')) {
-            
+          if (!existingSale) {
+            // Filter out items with invalid/deleted productIds so the sale doesn't fail
+            const validItems = (saleData.items || []).filter((item: any) => validProductIds.has(item.productId));
+
             await prisma.$transaction(async (tx) => {
-              await tx.sale.update({
-                where: { id: existingSale.id },
-                data: { 
-                  status: saleData.status,
-                  refundReason: saleData.refundReason
+              let finalCustomerId: number | null = null;
+              if (saleData.customerId) {
+                const parsed = parseInt(saleData.customerId, 10);
+                if (!isNaN(parsed) && parsed.toString() === saleData.customerId.toString()) {
+                  finalCustomerId = parsed;
+                } else {
+                  let cust = await tx.customer.findUnique({ where: { offlineId: saleData.customerId } });
+                  if (!cust) {
+                    cust = await tx.customer.create({
+                      data: {
+                        fullname: saleData.customerName || 'Offline Customer',
+                        phone: '000000000',
+                        offlineId: saleData.customerId
+                      }
+                    });
+                  }
+                  finalCustomerId = cust.id;
                 }
+              }
+
+              // Create Sale
+              await tx.sale.create({
+                data: {
+                  id: saleData.id,
+                  invoiceNo: saleData.invoiceNo,
+                  receiptNo: saleData.receiptNo,
+                  userId: userId,
+                  customerId: finalCustomerId,
+                  subtotal: saleData.subtotal,
+                  discount: saleData.discount,
+                  total: saleData.total,
+                  paid: saleData.paid,
+                  changeDue: saleData.changeDue,
+                  profit: saleData.profit || validItems.reduce((acc: number, item: any) => acc + (item.profit || 0), 0),
+                  paymentMode: saleData.paymentMode === 'Momo' ? 'MOBILE_MONEY' : 
+                               saleData.paymentMode === 'Card' ? 'CARD' : 
+                               saleData.paymentMode === 'Credit' ? 'CREDIT' : 'CASH',
+                  status: saleData.status || 'COMPLETED',
+                  taxAmount: saleData.tax || 0,
+                  taxRate: saleData.taxRate || 0,
+                  isCredit: saleData.paymentMode === 'Credit',
+                  itemsCount: saleData.itemsCount,
+                  synced: true,
+                  deviceId: deviceId,
+                  createdAt: new Date(saleData.createdAt),
+                  items: {
+                    create: validItems.map((item: any) => ({
+                      productId: item.productId,
+                      productName: item.productName,
+                      unitPrice: item.unitPrice,
+                      quantity: item.quantity,
+                      discount: item.discount,
+                      lineTotal: item.lineTotal,
+                      profit: item.profit,
+                    })),
+                  },
+                },
               });
 
-              // Restock items
-              for (const item of existingSale.items) {
+              // Update Inventory only for valid non-service products
+              for (const item of validItems) {
                 const isService = serviceStatusMap.get(item.productId);
                 if (!isService) {
                   await tx.product.update({
                     where: { id: item.productId },
-                    data: { quantity: { increment: item.quantity } }
+                    data: { quantity: { decrement: item.quantity } },
                   });
                 }
               }
             });
 
+            syncedSaleIds.push(saleData.id);
+
             await AuditService.log({
               userId,
-              action: 'SYNC_SALE_UPDATE',
+              action: 'SYNC_SALE',
               entityType: 'SALE',
-              entityId: saleData.invoiceNo,
-              details: `Status updated to ${saleData.status} via sync`
+              entityId: saleData.invoiceNo
             });
+          } else {
+            // Already exists — mark as synced on client
+            syncedSaleIds.push(saleData.id);
+
+            // Check if status changed to REFUNDED or DELETED locally
+            if (saleData.status && existingSale.status !== saleData.status && 
+                (saleData.status === 'REFUNDED' || saleData.status === 'DELETED')) {
+              
+              await prisma.$transaction(async (tx) => {
+                await tx.sale.update({
+                  where: { id: existingSale.id },
+                  data: { 
+                    status: saleData.status,
+                    refundReason: saleData.refundReason
+                  }
+                });
+
+                // Restock items
+                for (const item of existingSale.items) {
+                  const isService = serviceStatusMap.get(item.productId);
+                  if (!isService && validProductIds.has(item.productId)) {
+                    await tx.product.update({
+                      where: { id: item.productId },
+                      data: { quantity: { increment: item.quantity } }
+                    });
+                  }
+                }
+              });
+
+              await AuditService.log({
+                userId,
+                action: 'SYNC_SALE_UPDATE',
+                entityType: 'SALE',
+                entityId: saleData.invoiceNo,
+                details: `Status updated to ${saleData.status} via sync`
+              });
+            }
           }
+        } catch (saleErr: any) {
+          // Log and skip this sale — do NOT fail the entire sync
+          console.error(`[Sync] Failed to process sale ${saleData.invoiceNo}:`, saleErr.message);
         }
       }
     }
@@ -281,6 +296,7 @@ export class SyncService {
 
     return {
       serverTime: new Date().toISOString(),
+      syncedSaleIds,
       updates: {
         products: mappedProducts,
         categories: updatedCategories,

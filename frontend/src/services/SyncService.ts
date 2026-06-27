@@ -224,8 +224,16 @@ export const SyncService = {
           }
         };
 
-        if (unsyncedSales.length > 0) {
-          await markAsSynced(db.salesQueue, unsyncedSales);
+        // Use server-confirmed IDs to mark only truly synced sales
+        const confirmedSaleIds: string[] = data.syncedSaleIds || unsyncedSales.map((s: any) => s.id);
+        if (confirmedSaleIds.length > 0) {
+          const MODIFY_CHUNK_SIZE = 50;
+          const yieldFn = () => new Promise(resolve => setTimeout(resolve, 0));
+          for (let i = 0; i < confirmedSaleIds.length; i += MODIFY_CHUNK_SIZE) {
+            const chunk = confirmedSaleIds.slice(i, i + MODIFY_CHUNK_SIZE);
+            await db.salesQueue.where('id').anyOf(chunk).modify({ synced: 1 });
+            await yieldFn();
+          }
         }
         if (unsyncedExpenses.length > 0) {
           await markAsSynced(db.expenses, unsyncedExpenses);
