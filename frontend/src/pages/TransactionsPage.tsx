@@ -26,14 +26,14 @@ import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
 import { clsx } from 'clsx';
 
-type TimeFilter = 'Today' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
+type TimeFilter = 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
 
 const TransactionsPage: React.FC = () => {
   const { isReadOnly } = useFeatureAccess();
   const user = useAuthStore(state => state.user);
   const readOnly = isReadOnly('SALES_HISTORY') || user?.role === 'CASHIER';
   const [searchTerm, setSearchTerm] = useState('');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('Today');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('Daily');
   const [dateFilter, setDateFilter] = useState('');
   const [skuFilter] = useState('');
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
@@ -116,7 +116,7 @@ const TransactionsPage: React.FC = () => {
         
         // Scope Map for API
         const scopeMap: Record<TimeFilter, string> = {
-          'Today': 'today',
+          'Daily': 'daily',
           'Weekly': 'weekly',
           'Monthly': 'monthly',
           'Quarterly': 'quarterly',
@@ -229,7 +229,7 @@ const TransactionsPage: React.FC = () => {
       
       // Server update
       try {
-        await api.put(`/sales/\${editingSale.id}`, updates);
+        await api.put(`/sales/${editingSale.id}`, updates);
       } catch { /* Silent */ }
       
       toast.success('Sale updated');
@@ -382,7 +382,7 @@ const TransactionsPage: React.FC = () => {
               onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
               className="bg-card/50 border border-border/50 text-foreground text-[9px] font-bold tracking-tight px-3 h-9 rounded-xl appearance-none cursor-pointer hover:border-primary/50 transition-all capitalize btn-press"
             >
-              {['Today', 'Weekly', 'Monthly', 'Quarterly', 'Annual'].map(f => (
+              {['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annual'].map(f => (
                 <option key={f} value={f}>{f}</option>
               ))}
             </select>

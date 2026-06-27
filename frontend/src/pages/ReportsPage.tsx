@@ -18,7 +18,7 @@ import {
 } from 'date-fns';
 
 type ReportTab = 'Financial' | 'Staff' | 'Payment';
-type TimeFilter = 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
+type TimeFilter = 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
 
 // ─── Bar Chart ───────────────────────────────────────────────────────────────
 const BarChart = ({
@@ -82,6 +82,7 @@ const isActiveTransaction = (s: LocalSale) =>
 const getScopeInterval = (timeFilter: TimeFilter) => {
   const now = new Date();
   const end = endOfDay(now);
+  if (timeFilter === 'Daily') return { start: new Date(now.setHours(0, 0, 0, 0)), end };
   if (timeFilter === 'Weekly') return { start: startOfWeek(now), end };
   if (timeFilter === 'Monthly') return { start: startOfMonth(now), end };
   if (timeFilter === 'Quarterly') return { start: startOfQuarter(now), end };
@@ -91,7 +92,7 @@ const getScopeInterval = (timeFilter: TimeFilter) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('Financial');
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('Weekly');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('Daily');
 
   // ── 1. Local live DB (instant on any change) ─────────────────────────────
   const localSales = useLiveQuery(() => db.salesQueue.toArray(), []) ?? [];
@@ -101,6 +102,7 @@ const ReportsPage: React.FC = () => {
     queryKey: ['reports-transactions', timeFilter],
     queryFn: async () => {
       const scopeMap: Record<TimeFilter, string> = {
+        Daily: 'daily',
         Weekly: 'weekly',
         Monthly: 'monthly',
         Quarterly: 'quarterly',
@@ -174,7 +176,19 @@ const ReportsPage: React.FC = () => {
 
     let financialData: { label: string; value: number }[] = [];
 
-    if (timeFilter === 'Weekly') {
+    if (timeFilter === 'Daily') {
+      const map: Record<string, number> = {};
+      const hours = Array.from({ length: 6 }, (_, i) => `${i * 4}:00 - ${(i + 1) * 4}:00`);
+      activeSales.forEach((s) => {
+        const d = new Date(s.createdAt);
+        if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+          const slot = Math.floor(d.getHours() / 4);
+          const label = hours[slot];
+          map[label] = (map[label] || 0) + Number(s.total || 0);
+        }
+      });
+      financialData = hours.map((l) => ({ label: l, value: map[l] || 0 }));
+    } else if (timeFilter === 'Weekly') {
       if (serverStats?.chart_data?.length) {
         financialData = serverStats.chart_data.map((d: { name: string; revenue: number }) => ({
           label: d.name,
@@ -358,6 +372,7 @@ const ReportsPage: React.FC = () => {
                 aria-label="Filter by time period"
                 className="px-4 py-2 bg-card/50 border border-border/50 rounded-xl text-[10px] font-black tracking-widest uppercase text-primary outline-none cursor-pointer btn-press"
               >
+                <option value="Daily">Daily</option>
                 <option value="Weekly">Weekly</option>
                 <option value="Monthly">Monthly</option>
                 <option value="Quarterly">Quarterly</option>
@@ -429,11 +444,13 @@ const ReportsPage: React.FC = () => {
         </div>
 
         {/* ── Recent active transactions list ─────────────────────────────── */}
-        <div className="glass-panel border border-border/50 rounded-3xl p-6 mb-8 overflow-hidden">
-          <h4 className="text-[10px] font-black tracking-widest text-muted-foreground/60 mb-4 uppercase">
-            Recent Transactions — Live Feed
-          </h4>
-          <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
+        <div className="bg-background border-y border-border/50 -mx-4 md:-mx-12 mb-8 overflow-hidden">
+          <div className="px-4 md:px-12 py-4 bg-muted/5 border-b border-border/20">
+            <h4 className="text-[10px] font-black tracking-widest text-muted-foreground/60 uppercase">
+              Recent Transactions — Live Feed
+            </h4>
+          </div>
+          <div className="max-h-72 overflow-y-auto custom-scrollbar">
             {activeSales.slice(0, 20).length === 0 ? (
               <p className="text-[10px] font-bold text-muted-foreground/30 text-center py-8 uppercase tracking-widest">
                 No transactions for this period
@@ -442,10 +459,10 @@ const ReportsPage: React.FC = () => {
               activeSales.slice(0, 20).map((s, i) => (
                 <motion.div
                   key={s.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  className="flex items-center justify-between py-3 px-4 rounded-2xl bg-muted/5 border border-border/30 hover:border-primary/20 transition-all"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.02 }}
+                  className="flex items-center justify-between py-4 px-4 md:px-12 bg-transparent border-b border-border/10 hover:bg-muted/10 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
