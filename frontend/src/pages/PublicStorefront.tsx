@@ -500,10 +500,10 @@ export const PublicStorefront: React.FC = () => {
 
     <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[115px] md:pt-[120px]">
       <div className="w-full glass-panel border-b border-border/30 transition-colors">
-        <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="max-w-xl">
-            <h2 className="text-xl md:text-3xl font-medium tracking-tighter leading-none text-primary">Market Place</h2>
-            <p className="text-[10px] md:text-[14px] font-medium text-muted-foreground/60 mt-1 tracking-widest">Premium Products &amp; Services</p>
+        <div className="w-full px-6 md:px-12 py-3 md:py-4 flex flex-row items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm md:text-base font-medium tracking-tighter leading-none text-primary">Market Place</h2>
+            <p className="text-[9px] md:text-[10px] font-medium text-muted-foreground/60 mt-0.5 tracking-widest">Premium Products &amp; Services</p>
           </div>
           
           <div className="relative w-full md:max-w-sm">
