@@ -56,7 +56,6 @@ export const PublicStorefront: React.FC = () => {
   });
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
-  const categoryNavRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState(() => localStorage.getItem('fontSize') || 'medium');
@@ -67,6 +66,7 @@ export const PublicStorefront: React.FC = () => {
   const [ratingValue, setRatingValue] = useState(5);
   const [ratingComment, setRatingComment] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   const CUSTOM_CATEGORIES = [
     'Phone Accessories',
@@ -85,14 +85,7 @@ export const PublicStorefront: React.FC = () => {
     }
   }, [theme]);
 
-  const checkCategoryScroll = () => {
-    const el = categoryNavRef.current;
-    if (!el) return;
-    const leftFade = document.getElementById('fade-left');
-    const rightFade = document.getElementById('fade-right');
-    if (leftFade) leftFade.style.opacity = el.scrollLeft > 20 ? '1' : '0';
-    if (rightFade) rightFade.style.opacity = el.scrollLeft < (el.scrollWidth - el.clientWidth - 20) ? '1' : '0';
-  };
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -101,10 +94,7 @@ export const PublicStorefront: React.FC = () => {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    checkCategoryScroll();
-    window.addEventListener('resize', checkCategoryScroll);
     return () => {
-      window.removeEventListener('resize', checkCategoryScroll);
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [categories]);
@@ -447,84 +437,72 @@ export const PublicStorefront: React.FC = () => {
             </div>
           </div>
         </div>
-      </header>
-
-      <div className="w-full bg-background/95 backdrop-blur-xl border-b border-border/50 relative">
-        <div id="fade-left" className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background via-background/60 to-transparent z-10 pointer-events-none opacity-0 transition-opacity duration-500"></div>
-        <div id="fade-right" className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background via-background/60 to-transparent z-10 pointer-events-none transition-opacity duration-500"></div>
-
-        <div 
-          ref={categoryNavRef}
-          className="w-full px-6 md:px-12 py-3 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth relative"
-          onScroll={checkCategoryScroll}
-        >
-          <button 
-            onClick={() => setSelectedCategory('All')}
-            className={`px-6 py-2 rounded-full text-[9px] font-medium tracking-widest transition-all whitespace-nowrap btn-press ${
-              selectedCategory === 'All' 
-                ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
-                : 'glass-card border border-border/50 text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            ALL ITEMS
-          </button>
-          {CUSTOM_CATEGORIES.map(cat => (
-            <button 
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-6 py-2 rounded-full text-[9px] font-medium tracking-widest transition-all whitespace-nowrap btn-press ${
-                selectedCategory === cat 
-                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
-                  : 'glass-card border border-border/50 text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
-            </button>
-          ))}
-          {categories.filter(c => !CUSTOM_CATEGORIES.includes(c)).map(cat => (
-            <button 
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-6 py-2 rounded-full text-[9px] font-medium tracking-widest transition-all whitespace-nowrap btn-press ${
-                selectedCategory === cat 
-                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
-                  : 'glass-card border border-border/50 text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
 
-    <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[115px] md:pt-[120px]">
-      <div className="w-full glass-panel border-b border-border/30 transition-colors">
-        <div className="w-full px-6 md:px-12 py-3 md:py-4 flex flex-row items-center justify-between gap-4">
-          <div>
-            <h2 className="text-sm md:text-base font-medium tracking-tighter leading-none text-primary">Market Place</h2>
-            <p className="text-[9px] md:text-[10px] font-medium text-muted-foreground/60 mt-0.5 tracking-widest">Premium Products &amp; Services</p>
+    <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[88px] md:pt-[88px]">
+      {/* Unified compact toolbar: title | category dropdown | search */}
+      <div className="w-full glass-panel border-b border-border/30 sticky top-0 z-30">
+        <div className="w-full px-4 md:px-12 py-2.5 flex items-center gap-3">
+
+          {/* Market Place title */}
+          <div className="shrink-0 hidden sm:block">
+            <h2 className="text-xs font-medium tracking-tighter leading-none text-primary">Market Place</h2>
+            <p className="text-[8px] font-medium text-muted-foreground/50 mt-0.5 tracking-widest">Premium Products &amp; Services</p>
           </div>
-          
-          <div className="relative w-full md:max-w-sm">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <input 
-              type="text" 
+
+          {/* Category dropdown */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setIsCategoryOpen(v => !v)}
+              className="flex items-center gap-1.5 h-9 px-3 glass-card border border-border/50 rounded-full text-[10px] font-medium text-foreground hover:border-primary transition-all"
+            >
+              <span className="max-w-[120px] truncate">
+                {selectedCategory === 'All' ? 'All Items' : selectedCategory}
+              </span>
+              <svg className="w-3 h-3 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {isCategoryOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
+                <div className="absolute left-0 top-full mt-1.5 z-50 bg-surface-card border border-border/50 rounded-2xl shadow-2xl py-1.5 min-w-[180px] overflow-hidden">
+                  {['All', ...CUSTOM_CATEGORIES, ...categories.filter(c => !CUSTOM_CATEGORIES.includes(c))].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => { setSelectedCategory(cat === 'All' ? 'All' : cat); setIsCategoryOpen(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
+                        selectedCategory === (cat === 'All' ? 'All' : cat)
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                      }`}
+                    >
+                      {cat === 'All' ? 'All Items' : cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+            <input
+              type="text"
               placeholder="Search"
-              className="w-full py-4 pl-14 pr-12 glass-card border border-border/50 rounded-full outline-none focus:border-primary font-medium text-xs shadow-lg transition-all"
+              className="w-full h-9 py-0 pl-10 pr-9 glass-card border border-border/50 rounded-full outline-none focus:border-primary font-medium text-xs shadow-sm transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
-              <button 
+              <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 transition-colors btn-press"
-                title="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
+
         </div>
       </div>
 
