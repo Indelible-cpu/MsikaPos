@@ -374,7 +374,7 @@ export const PublicStorefront: React.FC = () => {
 
       <div className="fixed top-0 left-0 right-0 z-50">
         <header className="bg-background/95 backdrop-blur-xl border-b border-border/50 shadow-sm">
-        <div className="w-full px-6 md:px-12 py-3 flex items-center justify-between">
+        <div className="w-full px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full border border-primary/20 bg-muted/10 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
               {shopLogo ? (
@@ -433,7 +433,7 @@ export const PublicStorefront: React.FC = () => {
 
         {/* Unified compact toolbar: title | category dropdown | search — fixed below header */}
         <div className="w-full bg-background/95 backdrop-blur-xl border-b border-border/50">
-          <div className="w-full px-4 md:px-12 py-3 flex items-center gap-3">
+          <div className="w-full px-4 py-3 flex items-center gap-3">
 
             {/* Market Place title */}
             <div className="shrink-0">
