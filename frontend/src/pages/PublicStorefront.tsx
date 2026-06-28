@@ -434,11 +434,11 @@ export const PublicStorefront: React.FC = () => {
 
     <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[88px] md:pt-[88px]">
       {/* Unified compact toolbar: title | category dropdown | search */}
-      <div className="w-full bg-background/95 backdrop-blur-xl border-b border-border/50 sticky top-0 z-30 shadow-sm">
-        <div className="w-full px-4 md:px-12 py-2 flex items-center gap-3">
+      <div className="w-full bg-background/95 backdrop-blur-xl border-b border-border/50 sticky top-0 z-30">
+        <div className="w-full px-4 md:px-12 py-3 flex items-center gap-3">
 
           {/* Market Place title */}
-          <div className="shrink-0 hidden sm:block">
+          <div className="shrink-0">
             <h2 className="text-xs font-medium tracking-tighter leading-none text-primary">Market Place</h2>
             <p className="text-[8px] font-medium text-muted-foreground/50 mt-0.5 tracking-widest">Premium Products &amp; Services</p>
           </div>
