@@ -500,7 +500,7 @@ export const PublicStorefront: React.FC = () => {
 
     <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[136px] md:pt-[136px]">
 
-      <div className="px-3 md:px-12 py-8">
+      <div className="py-4">
         {loading ? (
           <div className="py-32 text-center flex flex-col items-center gap-8">
             <div className="relative">
