@@ -52,6 +52,7 @@ export const PublicStorefront: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [cartItems, setCartItems] = useState<{ product: StoreProduct; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { theme, setTheme: setStoreTheme } = useThemeStore();
 
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
@@ -1007,10 +1008,10 @@ export const PublicStorefront: React.FC = () => {
                       <button 
                         key={t}
                         onClick={() => {
-                          useThemeStore.getState().setTheme(t as any);
+                          setStoreTheme(t as any);
                           setIsSettingsOpen(false);
                         }} 
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-medium capitalize tracking-widest transition-all btn-press ${useThemeStore((s) => s.theme) === t ? 'bg-primary text-primary-foreground shadow-lg' : 'glass-card border border-border/50 text-muted-foreground hover:bg-muted/50'}`}
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-medium capitalize tracking-widest transition-all btn-press ${theme === t ? 'bg-primary text-primary-foreground shadow-lg' : 'glass-card border border-border/50 text-muted-foreground hover:bg-muted/50'}`}
                       >
                         {t === 'light' ? '☀️ Light' : t === 'dark' ? '🌙 Dark' : '💻 System'}
                       </button>
