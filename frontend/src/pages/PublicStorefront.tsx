@@ -588,88 +588,76 @@ export const PublicStorefront: React.FC = () => {
                         </div>
                       )}
                     </div>
-                      <div className="mt-auto pt-4 border-t border-border/30 flex flex-col gap-3">
-                        <div className="flex flex-col gap-1 w-full">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[7px] md:text-[9px] font-medium text-muted-foreground/40 capitalize tracking-widest">
-                              {hasDiscount ? 'Special Offer' : 'Price'}
-                            </span>
+                      <div className="mt-auto pt-3 border-t border-border/30 flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex flex-col min-w-0">
                             {hasDiscount && (
-                              <span className="bg-red-500 text-white text-[8px] font-medium px-2 py-0.5 rounded shadow-lg capitalize tracking-tighter">
-                                {badgeText}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-baseline justify-between">
-                            <p className={`font-medium tracking-tighter ${hasDiscount ? 'text-muted-foreground/40 line-through text-[10px] md:text-sm' : 'text-sm md:text-xl text-primary'}`}>
-                              {formatCurrency(Number(p.sellPrice ?? 0))}
-                            </p>
-                            {hasDiscount && (
-                              <p className="text-sm md:text-xl font-medium text-red-500 tracking-tighter">
-                                {formatCurrency(finalPrice)}
+                              <p className="font-medium text-muted-foreground/40 line-through text-[9px]">
+                                {formatCurrency(Number(p.sellPrice ?? 0))}
                               </p>
                             )}
+                            <div className="flex items-center gap-2">
+                              <p className={`font-medium tracking-tighter leading-none ${hasDiscount ? 'text-sm text-red-500' : 'text-sm text-primary'}`}>
+                                {formatCurrency(hasDiscount ? finalPrice : Number(p.sellPrice ?? 0))}
+                              </p>
+                              {hasDiscount && (
+                                <span className="bg-red-500 text-white text-[7px] font-medium px-1.5 py-0.5 rounded">{badgeText}</span>
+                              )}
+                            </div>
                           </div>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); addToCart(p, e); }}
+                            title="Add to cart"
+                            className="shrink-0 h-9 px-3 bg-primary text-primary-foreground rounded-xl flex items-center gap-1.5 text-[10px] font-medium transition-all active:scale-95 shadow-md shadow-primary/20 hover:-translate-y-0.5"
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" /> Add
+                          </button>
                         </div>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); addToCart(p, e); }}
-                          title="Add to cart"
-                          className="w-full py-3 bg-primary text-primary-foreground rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-primary/20 hover:-translate-y-0.5"
-                        >
-                          <ShoppingCart className="w-4 h-4" /> Add to Cart
-                        </button>
-                        <div className="grid grid-cols-3 gap-2">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }}
-                          title={likedItems.has(p.id) ? "Remove from favorites" : "Add to favorites"}
-                          className={`col-span-1 py-3 rounded-xl flex items-center justify-center transition-all btn-press shadow-sm ${
-                            likedItems.has(p.id) 
-                              ? 'bg-rose-500 text-white shadow-rose-500/20' 
-                              : 'glass-card border border-border/50 text-muted-foreground hover:text-rose-500 shadow-primary/5'
-                          }`}
-                        >
-                          <Heart className={`w-4 h-4 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const number = whatsappNumber || '265993732694';
-                            const priceFormatted = formatCurrency(finalPrice);
-                            const message = encodeURIComponent(`Hello, I'm interested in ${p.name} priced at ${priceFormatted}. Is it available?`);
-                            window.open(`https://wa.me/${number.replace('+', '')}?text=${message}`, '_blank');
-                          }}
-                          className="col-span-1 py-3 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 rounded-xl hover:bg-[#25D366] hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
-                          title="Contact via WhatsApp"
-                        >
-                          <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                          </svg>
-                        </button>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); toggleSave(p.id); }}
-                          className={`col-span-1 py-3 rounded-xl flex items-center justify-center transition-all btn-press shadow-sm ${
-                            savedItems.has(p.id) 
-                              ? 'bg-primary text-primary-foreground shadow-primary/20' 
-                              : 'glass-card border border-border/50 text-muted-foreground hover:text-primary shadow-primary/5'
-                          }`}
-                          title="Save for Later"
-                        >
-                          <Bookmark className={`w-4 h-4 ${savedItems.has(p.id) ? 'fill-current' : ''}`} />
-                        </button>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); toggleLike(p.id); }}
+                            title={likedItems.has(p.id) ? "Unlike" : "Favourite"}
+                            className={`py-2.5 rounded-xl flex items-center justify-center transition-all btn-press ${
+                              likedItems.has(p.id) 
+                                ? 'bg-rose-500 text-white' 
+                                : 'glass-card border border-border/50 text-muted-foreground hover:text-rose-500'
+                            }`}
+                          >
+                            <Heart className={`w-3.5 h-3.5 ${likedItems.has(p.id) ? 'fill-current' : ''}`} />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const number = whatsappNumber || '265993732694';
+                              const msg = encodeURIComponent(`Hello, I'm interested in ${p.name} priced at ${formatCurrency(finalPrice)}. Is it available?`);
+                              window.open(`https://wa.me/${number.replace('+', '')}?text=${msg}`, '_blank');
+                            }}
+                            className="py-2.5 bg-[#25D366]/10 text-[#25D366] border border-[#25D366]/20 rounded-xl hover:bg-[#25D366] hover:text-white transition-all flex items-center justify-center active:scale-95"
+                            title="WhatsApp"
+                          >
+                            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); toggleSave(p.id); }}
+                            className={`py-2.5 rounded-xl flex items-center justify-center transition-all btn-press ${
+                              savedItems.has(p.id) 
+                                ? 'bg-primary text-primary-foreground' 
+                                : 'glass-card border border-border/50 text-muted-foreground hover:text-primary'
+                            }`}
+                            title="Save"
+                          >
+                            <Bookmark className={`w-3.5 h-3.5 ${savedItems.has(p.id) ? 'fill-current' : ''}`} />
+                          </button>
+                          <button 
+                            onClick={(e) => handleOpenRating(p, e)}
+                            className="py-2.5 glass-card border border-border/50 rounded-xl text-muted-foreground hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center justify-center gap-1 btn-press"
+                            title="Rate"
+                          >
+                            <svg className="w-3 h-3 fill-current text-amber-500" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            <span className="text-[9px] font-medium text-amber-500">{p.rating || 1}</span>
+                          </button>
                         </div>
-                      <button 
-                        onClick={(e) => handleOpenRating(p, e)}
-                        className="w-full py-3 glass-card border border-border/50 rounded-xl text-[9px] font-medium text-muted-foreground hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center justify-center gap-2 mt-2 btn-press"
-                      >
-                        <span className="flex items-center gap-1.5 text-amber-500">
-                          <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <span className="text-[10px] font-medium">{p.rating || 1}</span>
-                        </span>
-                        Rate
-                      </button>
-                    </div>
+                      </div>
                   </div>
                 </div>
                 </div>
@@ -827,13 +815,7 @@ export const PublicStorefront: React.FC = () => {
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 md:p-6">
             <div className="absolute inset-0 bg-background/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setSelectedProduct(null)}></div>
             <div className="relative w-full max-w-4xl bg-surface-card border border-border/50 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col md:flex-row max-h-[90vh]">
-              <button 
-                title="Close Modal" aria-label="Close Modal"
-                onClick={() => setSelectedProduct(null)}
-                className="absolute top-4 right-4 z-20 w-10 h-10 bg-background/50 backdrop-blur-md border border-border/50 rounded-full flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-all btn-press"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
 
               <div className="w-full md:w-1/2 bg-gradient-to-br from-muted/10 to-muted/30 flex items-center justify-center p-12 relative shrink-0 min-h-[300px]">
                  {(() => {
