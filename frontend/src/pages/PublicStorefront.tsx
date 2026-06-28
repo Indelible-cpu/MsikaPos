@@ -498,7 +498,7 @@ export const PublicStorefront: React.FC = () => {
       </div>
     </div>
 
-    <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[130px] md:pt-[150px]">
+    <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[115px] md:pt-[120px]">
       <div className="w-full glass-panel border-b border-border/30 transition-colors">
         <div className="w-full px-6 md:px-12 py-6 md:py-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
