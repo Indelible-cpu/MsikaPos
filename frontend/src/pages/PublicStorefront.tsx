@@ -7,7 +7,6 @@ import { db } from '../db/posDB';
 import toast from 'react-hot-toast';
 import api from '../api/client';
 import CustomerAuthModal from '../components/CustomerAuthModal';
-import BrandName from '../components/BrandName';
 import AppFooter from '../components/AppFooter';
 import { toSentenceCase } from '../utils/stringUtils';
 import { calculateEffectiveDiscount } from '../utils/discountUtils';
