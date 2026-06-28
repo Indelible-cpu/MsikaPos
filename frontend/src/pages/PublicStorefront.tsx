@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Package, Search, ShoppingBag, User as UserIcon, Heart, Plus, Minus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2, RefreshCw, Check } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AuditService } from '../services/AuditService';
 import { formatCurrency } from '../utils/phoneUtils';
 import { db } from '../db/posDB';
@@ -84,23 +84,6 @@ export const PublicStorefront: React.FC = () => {
       document.documentElement.classList.toggle('dark', prefersDark);
     }
   }, [theme]);
-
-  const toggleTheme = () => {
-    let newTheme: 'light' | 'dark' | 'system';
-    if (theme === 'system') newTheme = 'light';
-    else if (theme === 'light') newTheme = 'dark';
-    else newTheme = 'system';
-
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    
-    if (newTheme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', prefersDark);
-    } else {
-      document.documentElement.classList.toggle('dark', newTheme === 'dark');
-    }
-  };
 
   const checkCategoryScroll = () => {
     const el = categoryNavRef.current;
