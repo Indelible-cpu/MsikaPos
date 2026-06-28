@@ -134,7 +134,7 @@ const LandingPage: React.FC = () => {
       <section id="features" className="py-20 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-16 space-y-4">
           <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Built for Resilience</h2>
-          <p className="text-muted-foreground font-medium uppercase tracking-[0.2em] text-[10px]">Why choose {branding.name}?</p>
+          <p className="text-muted-foreground font-medium uppercase tracking-[0.2em] text-[10px]">Why choose MsikaPos?</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -10,6 +10,7 @@ import CustomerAuthModal from '../components/CustomerAuthModal';
 import AppFooter from '../components/AppFooter';
 import { toSentenceCase } from '../utils/stringUtils';
 import { calculateEffectiveDiscount } from '../utils/discountUtils';
+import { useThemeStore } from '../hooks/useThemeStore';
 
 interface StoreProduct {
   id: number;
@@ -51,9 +52,7 @@ export const PublicStorefront: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [cartItems, setCartItems] = useState<{ product: StoreProduct; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
-    return (localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null) || 'system';
-  });
+  const { theme, setTheme } = useThemeStore();
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -442,8 +441,8 @@ export const PublicStorefront: React.FC = () => {
 
     <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[88px] md:pt-[88px]">
       {/* Unified compact toolbar: title | category dropdown | search */}
-      <div className="w-full glass-panel border-b border-border/30 sticky top-0 z-30">
-        <div className="w-full px-4 md:px-12 py-2.5 flex items-center gap-3">
+      <div className="w-full bg-background/95 backdrop-blur-xl border-b border-border/50 sticky top-0 z-30 shadow-sm">
+        <div className="w-full px-4 md:px-12 py-2 flex items-center gap-3">
 
           {/* Market Place title */}
           <div className="shrink-0 hidden sm:block">
@@ -455,7 +454,7 @@ export const PublicStorefront: React.FC = () => {
           <div className="relative shrink-0">
             <button
               onClick={() => setIsCategoryOpen(v => !v)}
-              className="flex items-center gap-1.5 h-9 px-3 glass-card border border-border/50 rounded-full text-[10px] font-medium text-foreground hover:border-primary transition-all"
+              className="flex items-center gap-1.5 h-8 px-3 bg-surface-card border border-border rounded-full text-[10px] font-medium text-foreground hover:border-primary transition-all"
             >
               <span className="max-w-[120px] truncate">
                 {selectedCategory === 'All' ? 'All Items' : selectedCategory}
@@ -490,7 +489,7 @@ export const PublicStorefront: React.FC = () => {
             <input
               type="text"
               placeholder="Search"
-              className="w-full h-9 py-0 pl-10 pr-9 glass-card border border-border/50 rounded-full outline-none focus:border-primary font-medium text-xs shadow-sm transition-all"
+              className="w-full h-8 py-0 pl-10 pr-9 bg-surface-card border border-border rounded-full outline-none focus:border-primary font-medium text-xs shadow-sm transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -533,7 +532,7 @@ export const PublicStorefront: React.FC = () => {
                   <div 
                     id={`product-${p.id}`}
                     onClick={() => { setSelectedProduct(p as StoreProduct); setCurrentImageIndex(0); }}
-                    className="group relative glass-card border border-border/50 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-1 flex flex-col h-full cursor-pointer"
+                    className="group relative bg-surface-card border-2 border-surface-border rounded-[1.5rem] md:rounded-[2rem] overflow-hidden transition-all duration-300 shadow-md hover:shadow-xl hover:-translate-y-1 flex flex-col h-full cursor-pointer"
                   >
 
 
@@ -1016,16 +1015,10 @@ export const PublicStorefront: React.FC = () => {
                       <button 
                         key={t}
                         onClick={() => {
-                          setTheme(t as any);
-                          localStorage.setItem('theme', t);
-                          if (t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                            document.documentElement.classList.add('dark');
-                          } else {
-                            document.documentElement.classList.remove('dark');
-                          }
+                          useThemeStore.getState().setTheme(t as any);
                           setIsSettingsOpen(false);
                         }} 
-                        className={`flex-1 py-3 rounded-xl text-[10px] font-medium capitalize tracking-widest transition-all btn-press ${theme === t ? 'bg-primary text-primary-foreground shadow-lg' : 'glass-card border border-border/50 text-muted-foreground hover:bg-muted/50'}`}
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-medium capitalize tracking-widest transition-all btn-press ${useThemeStore((s) => s.theme) === t ? 'bg-primary text-primary-foreground shadow-lg' : 'glass-card border border-border/50 text-muted-foreground hover:bg-muted/50'}`}
                       >
                         {t === 'light' ? '☀️ Light' : t === 'dark' ? '🌙 Dark' : '💻 System'}
                       </button>
