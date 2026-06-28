@@ -40,6 +40,7 @@ const ExpensesPage: React.FC = () => {
   });
 
   const [expenseReceipt, setExpenseReceipt] = useState<ExpenseReceiptProps | null>(null);
+  const [selectedExpenseIds, setSelectedExpenseIds] = useState<Set<string>>(new Set());
 
   const expenses = useLiveQuery(
     () => db.expenses
@@ -142,6 +143,34 @@ const ExpensesPage: React.FC = () => {
     ), { duration: Infinity });
   };
 
+  const handleBulkDelete = () => {
+    if (selectedExpenseIds.size === 0) return;
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <span className="text-[11px] font-black tracking-wide text-foreground uppercase">Delete {selectedExpenseIds.size} selected expenses?</span>
+        <div className="flex gap-2 justify-end mt-1">
+          <button 
+            className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-muted/50 text-muted-foreground hover:bg-muted/80 transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button 
+            className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await db.expenses.bulkDelete(Array.from(selectedExpenseIds));
+              setSelectedExpenseIds(new Set());
+              toast.success(`${selectedExpenseIds.size} records deleted`);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity });
+  };
+
   const resetForm = () => {
     setFormData({
       category: 'Utilities',
@@ -169,6 +198,14 @@ const ExpensesPage: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {selectedExpenseIds.size > 0 && !readOnly && (
+            <button
+              onClick={handleBulkDelete}
+              className="flex items-center gap-1.5 text-[11px] font-black text-white bg-rose-500 hover:bg-rose-600 transition-colors px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0 shadow-lg shadow-rose-500/20"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Delete {selectedExpenseIds.size}
+            </button>
+          )}
           {!readOnly && (
             <button
               onClick={() => { resetForm(); setEditingExpense(null); setIsModalOpen(true); }}
@@ -206,6 +243,19 @@ const ExpensesPage: React.FC = () => {
                    {items.map(exp => (
                     <div key={exp.id} className="py-3 px-1 flex justify-between items-center group hover:bg-muted/5 transition-all gap-2">
                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {!readOnly && (
+                            <input 
+                              type="checkbox" 
+                              checked={selectedExpenseIds.has(exp.id)} 
+                              onChange={(e) => {
+                                 const next = new Set(selectedExpenseIds);
+                                 if (e.target.checked) next.add(exp.id);
+                                 else next.delete(exp.id);
+                                 setSelectedExpenseIds(next);
+                              }}
+                              className="w-4 h-4 rounded border-border/50 text-primary focus:ring-primary accent-primary cursor-pointer shrink-0"
+                            />
+                          )}
                           <div className="hidden sm:flex w-9 h-9 bg-muted/10 text-muted-foreground/60 rounded-xl items-center justify-center shrink-0">
                              <FileText className="w-4.5 h-4.5" />
                           </div>

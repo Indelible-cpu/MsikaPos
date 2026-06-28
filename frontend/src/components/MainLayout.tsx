@@ -80,7 +80,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {/* Mobile Footer — sits after page content, padded above mobile nav bar */}
           <div className="md:hidden">
             <AppFooter />
-            <div className="h-20" /> {/* spacer above mobile nav */}
+            <div className="h-[66px]" /> {/* spacer above mobile nav */}
           </div>
         </main>
 
