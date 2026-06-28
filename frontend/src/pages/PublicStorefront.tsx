@@ -1026,12 +1026,7 @@ export const PublicStorefront: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-8">
                 <h3 className="text-2xl font-medium tracking-tighter text-primary">Settings</h3>
-                <button 
-                  onClick={() => setIsSettingsOpen(false)}
-                  className="w-10 h-10 rounded-full glass-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-all btn-press"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+
               </div>
               
               <div className="space-y-8">

@@ -219,6 +219,23 @@ const ExpensesPage: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {!readOnly && expenses && expenses.length > 0 && (
+            <label className="flex items-center gap-1.5 cursor-pointer shrink-0 px-2 group">
+              <input 
+                type="checkbox"
+                className="w-4 h-4 rounded-md border-border/50 text-primary focus:ring-primary bg-surface-card cursor-pointer"
+                checked={selectedExpenseIds.size === expenses.length}
+                onChange={(e) => {
+                  if (e.target.checked && expenses) {
+                    setSelectedExpenseIds(new Set(expenses.map(exp => exp.id)));
+                  } else {
+                    setSelectedExpenseIds(new Set());
+                  }
+                }}
+              />
+              <span className="text-[11px] font-black text-muted-foreground group-hover:text-primary transition-colors uppercase tracking-wider">Select All</span>
+            </label>
+          )}
           {selectedExpenseIds.size > 0 && !readOnly && (
             <button
               onClick={handleBulkDelete}
