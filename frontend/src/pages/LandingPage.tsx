@@ -13,7 +13,7 @@ import {
   Store
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { db } from '../db/posDB';
+
 import BrandName from '../components/BrandName';
 import AppFooter from '../components/AppFooter';
 
