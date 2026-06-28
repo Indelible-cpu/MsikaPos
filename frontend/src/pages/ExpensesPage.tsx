@@ -15,6 +15,7 @@ import Modal from '../components/Modal';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { Receipt } from '../components/Receipt';
 import html2canvas from 'html2canvas';
+import api from '../api/client';
 
 type ExpenseReceiptProps = React.ComponentProps<typeof Receipt>;
 
@@ -132,8 +133,17 @@ const ExpensesPage: React.FC = () => {
             className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
             onClick={async () => {
               toast.dismiss(t.id);
-              await db.expenses.delete(id);
-              toast.success('Record deleted');
+              try {
+                if (!navigator.onLine) {
+                  toast.error('You must be online to delete an expense.');
+                  return;
+                }
+                await api.delete(`/expenses/${id}`);
+                await db.expenses.delete(id);
+                toast.success('Record deleted');
+              } catch (e) {
+                toast.error('Failed to delete expense online. Try again.');
+              }
             }}
           >
             Delete
@@ -159,9 +169,20 @@ const ExpensesPage: React.FC = () => {
             className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
             onClick={async () => {
               toast.dismiss(t.id);
-              await db.expenses.bulkDelete(Array.from(selectedExpenseIds));
-              setSelectedExpenseIds(new Set());
-              toast.success(`${selectedExpenseIds.size} records deleted`);
+              try {
+                if (!navigator.onLine) {
+                  toast.error('You must be online to bulk delete expenses.');
+                  return;
+                }
+                const deletePromises = Array.from(selectedExpenseIds).map(id => api.delete(`/expenses/${id}`));
+                await Promise.all(deletePromises);
+                
+                await db.expenses.bulkDelete(Array.from(selectedExpenseIds));
+                setSelectedExpenseIds(new Set());
+                toast.success(`${selectedExpenseIds.size} records deleted`);
+              } catch (e) {
+                toast.error('Failed to bulk delete online. Try again.');
+              }
             }}
           >
             Delete

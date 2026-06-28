@@ -15,6 +15,7 @@ import {
 import { motion } from 'framer-motion';
 import { db } from '../db/posDB';
 import BrandName from '../components/BrandName';
+import AppFooter from '../components/AppFooter';
 
 const LandingPage: React.FC = () => {
   const [branding, setBranding] = useState({
@@ -217,14 +218,7 @@ const LandingPage: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full shrink-0 border-t border-border/20 py-2 bg-background">
-        <p className="text-[9px] font-semibold text-muted-foreground/60 text-center py-0.5 select-none">
-          Powered by <BrandName />
-        </p>
-        <p className="text-[11px] font-medium text-muted-foreground/50 text-center w-full py-0.5 select-none border-t border-border/10">
-          © {new Date().getFullYear()} Indelible Technologies. All Rights Reserved.
-        </p>
-      </footer>
+      <AppFooter />
     </div>
   );
 };
