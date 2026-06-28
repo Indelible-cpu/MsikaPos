@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Rocket, 
@@ -41,17 +41,7 @@ const LandingPage: React.FC = () => {
       }
     }
 
-    const loadBranding = async () => {
-      const nameSetting = await db.settings.get('company_config');
-      const logoSetting = await db.settings.get('company_logo');
-      if (nameSetting?.value || logoSetting?.value) {
-        setBranding(prev => ({
-          name: (nameSetting?.value as { name: string })?.name || prev.name,
-          logo: (logoSetting?.value as string) || prev.logo
-        }));
-      }
-    };
-    loadBranding();
+
   }, []);
 
   return (
