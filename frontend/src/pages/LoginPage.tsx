@@ -57,7 +57,8 @@ const LoginPage: React.FC = () => {
             challenge,
             rpId: window.location.hostname,
             userVerification: 'required',
-            allowCredentials
+            allowCredentials,
+            timeout: 8000
           }
         });
 
@@ -525,23 +526,31 @@ const LoginPage: React.FC = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="flex flex-col items-center py-4"
             >
-              <h2 className="text-xl font-black tracking-tight mb-2">Biometric access</h2>
+              <h2 className="text-xl font-semibold tracking-tight mb-1">Biometric access</h2>
+              <p className="text-[10px] text-muted-foreground/50 mb-8">Tap anywhere or the fingerprint to verify</p>
 
-              <button 
-                onClick={handleBiometricLogin}
-                disabled={loading}
-                className="group relative w-32 h-32 rounded-full bg-surface-bg border-4 border-surface-border flex items-center justify-center hover:border-primary-500/50 transition-all active:scale-90 overflow-hidden shadow-2xl"
+              {/* Tap the whole area or the button to trigger */}
+              <div
+                onClick={!loading ? handleBiometricLogin : undefined}
+                className="flex flex-col items-center cursor-pointer select-none"
               >
-                {loading && (
-                  <motion.div 
-                    initial={{ rotate: 0 }}
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 border-4 border-transparent border-t-primary-500 rounded-full"
-                  />
-                )}
-                <Fingerprint className="w-12 h-12 text-primary-500 group-hover:scale-110 transition-transform" />
-              </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); if (!loading) handleBiometricLogin(); }}
+                  disabled={loading}
+                  className="group relative w-32 h-32 rounded-full bg-surface-bg border-4 border-surface-border flex items-center justify-center hover:border-primary-500/50 transition-all active:scale-90 overflow-hidden shadow-2xl"
+                >
+                  {loading && (
+                    <motion.div 
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 border-4 border-transparent border-t-primary-500 rounded-full"
+                    />
+                  )}
+                  <Fingerprint className={`w-12 h-12 transition-all ${loading ? 'text-primary-500 animate-pulse' : 'text-primary-500 group-hover:scale-110'}`} />
+                </button>
+                <p className="mt-4 text-[9px] text-muted-foreground/30">{loading ? 'Verifying...' : 'Touch sensor'}</p>
+              </div>
 
               <div className="mt-12 space-y-4 w-full">
                 <button 

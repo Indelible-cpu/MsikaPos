@@ -659,7 +659,7 @@ export const PublicStorefront: React.FC = () => {
                         </div>
                       <button 
                         onClick={(e) => handleOpenRating(p, e)}
-                        className="w-full py-3 glass-card border border-border/50 rounded-xl text-[9px] font-medium tracking-widest text-muted-foreground hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center justify-center gap-2 mt-2 btn-press"
+                        className="w-full py-3 glass-card border border-border/50 rounded-xl text-[9px] font-medium text-muted-foreground hover:text-amber-500 hover:border-amber-500/30 transition-all flex items-center justify-center gap-2 mt-2 btn-press"
                       >
                         <span className="flex items-center gap-1.5 text-amber-500">
                           <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
@@ -667,7 +667,7 @@ export const PublicStorefront: React.FC = () => {
                           </svg>
                           <span className="text-[10px] font-medium">{p.rating || 1}</span>
                         </span>
-                        Rate this {p.isService ? 'service' : 'product'}
+                        Rate
                       </button>
                     </div>
                   </div>
