@@ -436,8 +436,8 @@ export const PublicStorefront: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
-    </div>
+        </header>
+      </div>
 
     <main className="flex-1 overflow-y-auto overflow-x-hidden w-full pt-[88px] md:pt-[88px]">
       {/* Unified compact toolbar: title | category dropdown | search */}
