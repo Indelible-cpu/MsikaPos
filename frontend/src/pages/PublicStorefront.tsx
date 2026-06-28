@@ -433,7 +433,7 @@ export const PublicStorefront: React.FC = () => {
 
         {/* Unified compact toolbar: title | category dropdown | search — fixed below header */}
         <div className="w-full bg-background/95 backdrop-blur-xl border-b border-border/50">
-          <div className="w-full px-4 py-3 flex items-center gap-3">
+          <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
 
             {/* Market Place title */}
             <div className="shrink-0">
@@ -441,57 +441,59 @@ export const PublicStorefront: React.FC = () => {
               <p className="text-[8px] font-medium text-muted-foreground/50 mt-0.5 tracking-widest">Premium Products &amp; Services</p>
             </div>
 
-            {/* Category dropdown */}
-            <div className="relative shrink-0">
-              <button
-                onClick={() => setIsCategoryOpen(v => !v)}
-                className="flex items-center gap-1.5 h-8 px-3 bg-surface-card border border-border rounded-full text-[10px] font-medium text-foreground hover:border-primary transition-all"
-              >
-                <span className="max-w-[120px] truncate">
-                  {selectedCategory === 'All' ? 'All Items' : selectedCategory}
-                </span>
-                <svg className="w-3 h-3 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-              </button>
-              {isCategoryOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
-                  <div className="absolute left-0 top-full mt-1.5 z-50 bg-surface-card border border-border/50 rounded-2xl shadow-2xl py-1.5 min-w-[180px] overflow-hidden">
-                    {['All', ...CUSTOM_CATEGORIES, ...categories.filter(c => !CUSTOM_CATEGORIES.includes(c))].map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => { setSelectedCategory(cat === 'All' ? 'All' : cat); setIsCategoryOpen(false); }}
-                        className={`w-full text-left px-4 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
-                          selectedCategory === (cat === 'All' ? 'All' : cat)
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                        }`}
-                      >
-                        {cat === 'All' ? 'All Items' : cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
-              <input
-                type="text"
-                placeholder="Search"
-                className="w-full h-8 py-0 pl-10 pr-9 bg-surface-card border border-border rounded-full outline-none focus:border-primary font-medium text-xs shadow-sm transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
+            <div className="flex items-center justify-end gap-2 md:gap-3 flex-1 min-w-0">
+              {/* Category dropdown */}
+              <div className="relative shrink-0">
                 <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 transition-colors"
+                  onClick={() => setIsCategoryOpen(v => !v)}
+                  className="flex items-center gap-1.5 h-8 px-3 bg-surface-card border border-border rounded-full text-[10px] font-medium text-foreground hover:border-primary transition-all"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <span className="max-w-[80px] md:max-w-[120px] truncate">
+                    {selectedCategory === 'All' ? 'All Items' : selectedCategory}
+                  </span>
+                  <svg className="w-3 h-3 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </button>
-              )}
+                {isCategoryOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1.5 z-50 bg-surface-card border border-border/50 rounded-2xl shadow-2xl py-1.5 min-w-[180px] overflow-hidden">
+                      {['All', ...CUSTOM_CATEGORIES, ...categories.filter(c => !CUSTOM_CATEGORIES.includes(c))].map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => { setSelectedCategory(cat === 'All' ? 'All' : cat); setIsCategoryOpen(false); }}
+                          className={`w-full text-left px-4 py-2.5 text-[10px] font-medium tracking-wide transition-colors ${
+                            selectedCategory === (cat === 'All' ? 'All' : cat)
+                              ? 'bg-primary/10 text-primary'
+                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                          }`}
+                        >
+                          {cat === 'All' ? 'All Items' : cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Search */}
+              <div className="relative w-full max-w-[130px] sm:max-w-[200px] md:max-w-xs lg:max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="w-full h-8 py-0 pl-9 pr-8 bg-surface-card border border-border rounded-full outline-none focus:border-primary font-medium text-xs shadow-sm transition-all"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-muted-foreground/40 hover:text-rose-500 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
           </div>
