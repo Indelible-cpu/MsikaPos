@@ -1050,6 +1050,7 @@ export const PublicStorefront: React.FC = () => {
               </div>
             </div>
           </div>
+        )}
       </AnimatePresence>
 
       {/* Settings Modal */}
