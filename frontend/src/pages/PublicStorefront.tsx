@@ -441,10 +441,13 @@ export const PublicStorefront: React.FC = () => {
               </div>
             )}
             <div className="flex items-center gap-2">
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="w-8 h-8 glass-card border border-border/50 rounded-full flex items-center justify-center text-muted-foreground hover:text-primary transition-all btn-press"
+                title="Settings & Accessibility"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
               <button 
                 onClick={() => setIsCartOpen(true)}
                 className="relative group"
