@@ -18,10 +18,7 @@ import BrandName from '../components/BrandName';
 import AppFooter from '../components/AppFooter';
 
 const LandingPage: React.FC = () => {
-  const [branding, setBranding] = useState({
-    name: localStorage.getItem('companyName') || 'MsikaPos',
-    logo: localStorage.getItem('companyLogo') || '/icon.png?v=2'
-  });
+
 
   useEffect(() => {
     // If the user is already logged in, bypass the landing page entirely

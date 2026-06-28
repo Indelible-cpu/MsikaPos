@@ -52,7 +52,7 @@ export const PublicStorefront: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [cartItems, setCartItems] = useState<{ product: StoreProduct; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const { theme, setTheme } = useThemeStore();
+
   const [likedItems, setLikedItems] = useState<Set<number>>(new Set());
   const [savedItems, setSavedItems] = useState<Set<number>>(new Set());
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -74,15 +74,7 @@ export const PublicStorefront: React.FC = () => {
     'Phones and Computer Tech Solutions'
   ];
 
-  useEffect(() => {
-    const activeTheme = theme;
-    if (activeTheme !== 'system') {
-      document.documentElement.classList.toggle('dark', activeTheme === 'dark');
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', prefersDark);
-    }
-  }, [theme]);
+
 
 
 
