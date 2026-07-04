@@ -83,7 +83,6 @@ app.use('/api', Security.globalLimiter as any);
 // Public Routes
 app.post('/api/auth/login', UserCtrl.loginUser as any);
 app.post('/api/auth/magic-login', UserCtrl.magicLogin as any);
-app.post('/api/auth/biometrics', UserCtrl.enableBiometrics as any);
 app.post('/api/auth/forgot-password', UserCtrl.forgotPassword as any);
 app.post('/api/auth/reset-password', UserCtrl.resetPassword as any);
 app.post('/api/onboarding/validate', UserCtrl.magicLogin as any);
@@ -133,6 +132,8 @@ app.use('/api', authenticate as any, (req: any, _res: any, next: any) => {
   }
 });
 
+app.post('/api/auth/biometrics', authenticate as any, UserCtrl.enableBiometrics as any);
+
 // Staff-Only Middleware
 const staffOnly = authorize(['SUPER_ADMIN', 'ADMIN', 'CASHIER']);
 const adminOnly = authorize(['SUPER_ADMIN', 'ADMIN']);
@@ -170,7 +171,7 @@ app.delete('/api/products/:id', adminOnly, ProductCtrl.deleteProduct);
 // Sales & Sync
 app.post('/api/sync', staffOnly, SyncCtrl.syncData);
 app.put('/api/sales/:id', staffOnly, SaleCtrl.updateSale);
-app.delete('/api/sales/:id', staffOnly, SaleCtrl.deleteSale);
+app.delete('/api/sales/:id', adminOnly, SaleCtrl.deleteSale);
 app.get('/api/reports/transactions', staffOnly, ReportCtrl.fetchTransactions);
 app.get('/api/reports/summary', adminOnly, ReportCtrl.getSummary);
 

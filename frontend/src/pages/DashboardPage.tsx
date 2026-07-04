@@ -29,6 +29,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import { isSameDay } from 'date-fns';
 import api from '../api/client';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
 interface ServerStats {
   today_sales: number;
@@ -57,6 +58,7 @@ interface Credit {
 }
 
 const DashboardPage: React.FC = () => {
+  const { canAccess } = useFeatureAccess();
   // ── Server stats (single source of truth for all financial numbers) ──────
   const { data: serverStats, isLoading: serverLoading, refetch, isRefetching } = useQuery<ServerStats>({
     queryKey: ['dashboard-stats'],
@@ -147,6 +149,7 @@ const DashboardPage: React.FC = () => {
         </div>
 
         {/* Historical Financials Section */}
+        {(canAccess('REPORTS') || canAccess('FINANCE')) && (
         <div className="glass-panel border-y border-border/50">
           <div className="px-12 py-4 border-b border-border/50 flex items-center justify-between">
             <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Cumulative Financial Performance</h3>
@@ -180,8 +183,10 @@ const DashboardPage: React.FC = () => {
             ))}
           </div>
         </div>
+        )}
 
         {/* Charts Section */}
+        {(canAccess('REPORTS') || canAccess('FINANCE')) && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 stagger-children border-b border-border/50">
            {/* Revenue & Customer Flow Chart */}
            <div className="lg:col-span-2 p-6 md:p-12 relative overflow-hidden md:border-r border-border/50 glass-panel">
@@ -278,9 +283,11 @@ const DashboardPage: React.FC = () => {
               </div>
            </div>
         </div>
+        )}
 
         {/* Expenses & Low Stock Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border-t border-border/50 stagger-children">
+           {canAccess('FINANCE') ? (
            <div className="p-6 md:p-12 md:border-r border-border/50 glass-panel">
               <div className="flex justify-between items-center mb-10">
                  <h3 className="text-sm font-black text-muted-foreground uppercase">Recent Expenses</h3>
@@ -313,7 +320,9 @@ const DashboardPage: React.FC = () => {
                  )}
               </div>
            </div>
+           ) : <div className="hidden lg:block md:border-r border-border/50" />}
 
+           {canAccess('INVENTORY') ? (
            <div className="p-6 md:p-12 glass-panel">
               <div className="flex justify-between items-center mb-10">
                  <h3 className="text-sm font-black text-muted-foreground uppercase">Low Stock Alert</h3>
@@ -342,9 +351,11 @@ const DashboardPage: React.FC = () => {
                  )}
               </div>
            </div>
+           ) : <div className="hidden lg:block glass-panel" />}
         </div>
 
         {/* Credit Customers */}
+        {canAccess('CUSTOMERS') && (
         <div className="p-6 md:p-12 border-t border-border/50 glass-panel">
            <div className="flex justify-between items-center mb-10">
               <h3 className="text-sm font-black text-muted-foreground uppercase">Active Credits</h3>
@@ -372,6 +383,7 @@ const DashboardPage: React.FC = () => {
               )}
            </div>
         </div>
+        )}
       </div>
     </div>
   );

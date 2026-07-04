@@ -3,16 +3,18 @@ import { NavLink } from 'react-router-dom';
 import { Home, Receipt, ShoppingCart, MoreHorizontal, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
 import MoreOptionsMenu from './MoreOptionsMenu';
+import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
 const MobileNav: React.FC = () => {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const { canAccess } = useFeatureAccess();
 
   const tabs = [
-    { id: 'dashboard', label: 'Home', icon: Home, path: '/staff/dashboard' },
-    { id: 'sales', label: 'Sales', icon: Receipt, path: '/staff/transactions' },
-    { id: 'pos', label: 'Pos', icon: ShoppingCart, path: '/staff/pos' },
-    { id: 'expenses', label: 'Finance', icon: Wallet, path: '/staff/expenses' },
-  ];
+    { id: 'dashboard', label: 'Home', icon: Home, path: '/staff/dashboard', feature: 'DASHBOARD' },
+    { id: 'sales', label: 'Sales', icon: Receipt, path: '/staff/transactions', feature: 'SALES_HISTORY' },
+    { id: 'pos', label: 'Pos', icon: ShoppingCart, path: '/staff/pos', feature: 'POS_TERMINAL' },
+    { id: 'expenses', label: 'Finance', icon: Wallet, path: '/staff/expenses', feature: 'FINANCE' },
+  ].filter(t => canAccess(t.feature));
 
 
   return (

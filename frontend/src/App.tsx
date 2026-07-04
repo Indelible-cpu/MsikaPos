@@ -34,6 +34,7 @@ const PageLoader = () => (
 );
 import { SyncService } from './services/SyncService';
 import MainLayout from './components/MainLayout';
+import FeatureGuard from './components/FeatureGuard';
 import { db } from './db/posDB';
 import { initDB } from './db/seedData';
 import { AuditService } from './services/AuditService';
@@ -372,18 +373,18 @@ const App: React.FC = () => {
                     return (
                       <MainLayout>
                         <Routes>
-                          <Route path="dashboard" element={<DashboardPage />} />
-                          <Route path="pos" element={<POSPage />} />
-                          <Route path="inventory" element={<InventoryPage />} />
-                          <Route path="orders" element={<OrdersPage />} />
-                          <Route path="sales" element={<SalesPage />} />
-                          <Route path="debt" element={<DebtPage />} />
-                          <Route path="expenses" element={<ExpensesPage />} />
-                          <Route path="transactions" element={<TransactionsPage />} />
-                          <Route path="users" element={<UsersPage />} />
-                          <Route path="settings" element={<SettingsPage />} />
-                          <Route path="reports" element={<ReportsPage />} />
-                          <Route path="branches" element={<BranchesPage />} />
+                          <Route element={<FeatureGuard featureKey="DASHBOARD" />}><Route path="dashboard" element={<DashboardPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="POS_TERMINAL" />}><Route path="pos" element={<POSPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="INVENTORY" />}><Route path="inventory" element={<InventoryPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="INVENTORY" />}><Route path="orders" element={<OrdersPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="SALES_HISTORY" />}><Route path="sales" element={<SalesPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="CUSTOMERS" />}><Route path="debt" element={<DebtPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="FINANCE" />}><Route path="expenses" element={<ExpensesPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="SALES_HISTORY" />}><Route path="transactions" element={<TransactionsPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="STAFF" />}><Route path="users" element={<UsersPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="SETTINGS" />}><Route path="settings" element={<SettingsPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="REPORTS" />}><Route path="reports" element={<ReportsPage />} /></Route>
+                          <Route element={<FeatureGuard featureKey="BRANCHES" />}><Route path="branches" element={<BranchesPage />} /></Route>
                           <Route path="audit-logs" element={isSuperAdmin ? <AuditLogsPage /> : <Navigate to="/staff/dashboard" replace />} />
                           <Route path="feature-access" element={isSuperAdmin ? <FeatureAccessPage /> : <Navigate to="/staff/dashboard" replace />} />
                           <Route path="about" element={<AboutPage />} />

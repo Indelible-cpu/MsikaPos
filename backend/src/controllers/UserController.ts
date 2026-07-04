@@ -408,11 +408,11 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 
 export const enableBiometrics = async (req: Request, res: Response) => {
   try {
-    // Assuming req.user is set by auth middleware, or we pass userId in body
-    const { userId, hasBiometrics } = req.body;
+    const { hasBiometrics } = req.body;
+    const userId = (req as any).user?.id;
     
     if (!userId) {
-      return res.status(400).json({ success: false, message: 'User ID is required' });
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
     const updatedUser = await prisma.user.update({
