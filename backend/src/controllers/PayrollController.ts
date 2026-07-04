@@ -75,7 +75,24 @@ export const updateAdvance = async (req: Request, res: Response) => {
     const data: any = { status };
     if (status === 'APPROVED') { data.approvedAt = new Date(); data.approvedBy = user.id; }
     if (status === 'REPAID')   { data.repaidAt = new Date(); }
-    const advance = await prisma.salaryAdvance.update({ where: { id: Number(id) }, data });
+    const advance = await prisma.salaryAdvance.update({ where: { id: Number(id) }, data, include: { user: true } });
+
+    if (status === 'APPROVED' && Number(advance.amount) > 0) {
+      await prisma.expense.upsert({
+        where: { id: `ADVANCE-${advance.id}` },
+        create: {
+          id: `ADVANCE-${advance.id}`,
+          category: 'Salaries',
+          amount: advance.amount,
+          description: `Salary Advance - ${advance.user?.username || advance.userId}`,
+          paymentMethod: 'Cash',
+          expenseDate: new Date(),
+          userId: user.id
+        },
+        update: { amount: advance.amount }
+      });
+    }
+
     return res.json({ success: true, data: advance });
   } catch (e: any) {
     return res.status(500).json({ success: false, message: e.message });
@@ -129,6 +146,24 @@ export const generatePayslip = async (req: Request, res: Response) => {
       await prisma.salaryAdvance.updateMany({
         where: { id: { in: advances.map((a: any) => a.id) } },
         data: { status: 'REPAID', repaidAt: new Date() }
+      });
+    }
+
+    // Auto-record expense for net pay
+    if (netPay > 0) {
+      const adminUserId = (req as any).user?.id || Number(userId);
+      await prisma.expense.upsert({
+        where: { id: `PAYSLIP-${payslip.id}` },
+        create: {
+          id: `PAYSLIP-${payslip.id}`,
+          category: 'Salaries',
+          amount: netPay,
+          description: `Payslip - ${month}/${year} - ${(payslip as any).user?.fullname || (payslip as any).user?.username}`,
+          paymentMethod: 'Bank Transfer',
+          expenseDate: new Date(),
+          userId: adminUserId
+        },
+        update: { amount: netPay }
       });
     }
 
