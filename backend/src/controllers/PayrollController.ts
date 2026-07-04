@@ -99,16 +99,30 @@ export const generatePayslip = async (req: Request, res: Response) => {
     const advanceDeduct = advances.reduce((s: number, a: any) => s + Number(a.amount), 0);
     const netPay = Number(config.basicSalary) + Number(config.allowances) - Number(config.deductions) - advanceDeduct;
 
-    const payslip = await prisma.payslip.upsert({
-      where: { userId_month_year: { userId: Number(userId), month: Number(month), year: Number(year) } },
-      create: {
-        userId: Number(userId), month: Number(month), year: Number(year),
-        basicSalary: config.basicSalary, allowances: config.allowances, deductions: config.deductions,
-        advanceDeduct, netPay, status: 'DRAFT'
-      },
-      update: { basicSalary: config.basicSalary, allowances: config.allowances, deductions: config.deductions, advanceDeduct, netPay, generatedAt: new Date() },
-      include: { user: { select: { id: true, username: true, fullname: true, phone: true, role: { select: { name: true } } } } }
+    let payslip = await prisma.payslip.findFirst({
+      where: { userId: Number(userId), month: Number(month), year: Number(year) }
     });
+
+    const payslipData = {
+      basicSalary: config.basicSalary, allowances: config.allowances, deductions: config.deductions,
+      advanceDeduct, netPay
+    };
+
+    if (payslip) {
+      payslip = await prisma.payslip.update({
+        where: { id: payslip.id },
+        data: { ...payslipData, generatedAt: new Date() },
+        include: { user: { select: { id: true, username: true, fullname: true, phone: true, role: { select: { name: true } } } } }
+      });
+    } else {
+      payslip = await prisma.payslip.create({
+        data: {
+          userId: Number(userId), month: Number(month), year: Number(year),
+          ...payslipData, status: 'DRAFT'
+        },
+        include: { user: { select: { id: true, username: true, fullname: true, phone: true, role: { select: { name: true } } } } }
+      });
+    }
 
     // Mark the deducted advances as REPAID
     if (advances.length > 0) {

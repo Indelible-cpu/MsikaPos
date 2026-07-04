@@ -4,7 +4,7 @@ import { db, type LocalExpense, type LocalProduct } from '../db/posDB';
 import {
   Plus, Search, Trash2, ArrowDownCircle, FileText, MessageSquare, Pencil,
   Users, DollarSign, FileBarChart2, CheckCircle2, XCircle,
-  Printer, BadgeDollarSign, Settings2, AlertCircle
+  Printer, BadgeDollarSign, Settings2, AlertCircle, QrCode, ShieldCheck
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
@@ -469,62 +469,123 @@ const PayrollTab: React.FC = () => {
       <Modal isOpen={!!viewingPayslip} onClose={() => setViewingPayslip(null)} title="Payslip" maxWidth="max-w-lg">
         {viewingPayslip && (
           <div className="p-6 flex flex-col items-center gap-6">
-            {/* Payslip Card */}
-            <div id="payslip-card" className="w-full bg-white text-gray-800 rounded-2xl p-8 shadow-xl border border-gray-100 font-sans">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-8 pb-6 border-b border-gray-200">
-                <div>
-                  <h1 className="text-xl font-black text-gray-900 tracking-tight">{companyName}</h1>
-                  <p className="text-xs text-gray-400 font-semibold mt-0.5 uppercase tracking-widest">Payslip</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-black text-gray-900">{MONTHS[viewingPayslip.month - 1]} {viewingPayslip.year}</p>
-                  <p className="text-[10px] text-gray-400 font-semibold">Issued {new Date(viewingPayslip.generatedAt).toLocaleDateString()}</p>
-                </div>
+            {/* Professional Payslip Card */}
+            <div id="payslip-card" className="w-full bg-white text-slate-800 rounded-xl p-8 md:p-10 shadow-2xl border border-slate-200 font-sans relative overflow-hidden">
+              {/* Secure Watermark */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                <ShieldCheck className="w-96 h-96 text-slate-900" />
               </div>
-
-              {/* Employee Info */}
-              <div className="mb-8">
-                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1">Employee</p>
-                <p className="text-lg font-black text-gray-900">{viewingPayslip.user.fullname || viewingPayslip.user.username}</p>
-                <p className="text-xs text-gray-400 font-semibold">{viewingPayslip.user.role.name.replace('_', ' ')}</p>
-              </div>
-
-              {/* Earnings & Deductions */}
-              <div className="space-y-2 mb-6">
-                <div className="flex justify-between py-2 border-b border-gray-100">
-                  <span className="text-xs font-semibold text-gray-600">Basic Salary</span>
-                  <span className="text-sm font-black text-gray-900">MK {Number(viewingPayslip.basicSalary).toLocaleString()}</span>
-                </div>
-                {Number(viewingPayslip.allowances) > 0 && (
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-xs font-semibold text-emerald-600">+ Allowances</span>
-                    <span className="text-sm font-black text-emerald-600">MK {Number(viewingPayslip.allowances).toLocaleString()}</span>
+              
+              <div className="relative z-10">
+                {/* Header & Logo Area */}
+                <div className="flex items-start justify-between mb-8 pb-6 border-b-2 border-slate-100">
+                  <div className="flex gap-4 items-center">
+                    <div className="w-12 h-12 bg-slate-900 text-white rounded-lg flex items-center justify-center font-black text-xl shadow-lg">
+                      {companyName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{companyName}</h1>
+                      <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-widest">Official Payslip Document</p>
+                    </div>
                   </div>
-                )}
-                {Number(viewingPayslip.deductions) > 0 && (
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-xs font-semibold text-red-500">− Deductions</span>
-                    <span className="text-sm font-black text-red-500">MK {Number(viewingPayslip.deductions).toLocaleString()}</span>
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Pay Period</p>
+                    <p className="text-lg font-black text-slate-900 leading-none">{MONTHS[viewingPayslip.month - 1]} {viewingPayslip.year}</p>
+                    <p className="text-[9px] text-slate-500 font-semibold mt-2">Ref: PAY-{viewingPayslip.year}{String(viewingPayslip.month).padStart(2, '0')}-{String(viewingPayslip.userId).padStart(4, '0')}</p>
                   </div>
-                )}
-                {Number(viewingPayslip.advanceDeduct) > 0 && (
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="text-xs font-semibold text-amber-600">− Advance Deduction</span>
-                    <span className="text-sm font-black text-amber-600">MK {Number(viewingPayslip.advanceDeduct).toLocaleString()}</span>
+                </div>
+
+                {/* Employee Info Grid */}
+                <div className="grid grid-cols-2 gap-6 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Employee Name</p>
+                    <p className="text-base font-black text-slate-900">{viewingPayslip.user.fullname || viewingPayslip.user.username}</p>
                   </div>
-                )}
-              </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Designation / Role</p>
+                    <p className="text-sm font-bold text-slate-700">{viewingPayslip.user.role.name.replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Payment Status</p>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700">
+                      <CheckCircle2 className="w-3 h-3" /> Processed
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Issue Date</p>
+                    <p className="text-sm font-bold text-slate-700">{new Date(viewingPayslip.generatedAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
 
-              {/* Net Pay */}
-              <div className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
-                <span className="text-xs font-black text-gray-500 uppercase tracking-widest">Net Pay</span>
-                <span className="text-2xl font-black text-gray-900">MK {Number(viewingPayslip.netPay).toLocaleString()}</span>
-              </div>
+                {/* Financial Details Table */}
+                <div className="mb-8">
+                  <div className="grid grid-cols-2 gap-4 pb-2 border-b-2 border-slate-800 mb-3">
+                    <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Earnings</div>
+                    <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest text-right">Amount (MK)</div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold text-slate-600">Basic Salary</span>
+                      <span className="text-sm font-black text-slate-900">{Number(viewingPayslip.basicSalary).toLocaleString()}</span>
+                    </div>
+                    {Number(viewingPayslip.allowances) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-slate-600">Allowances & Bonuses</span>
+                        <span className="text-sm font-black text-emerald-600">+{Number(viewingPayslip.allowances).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
 
-              {/* Footer */}
-              <div className="mt-8 pt-4 border-t border-gray-100 text-center">
-                <p className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">Generated by MsikaPos — Confidential</p>
+                  <div className="grid grid-cols-2 gap-4 pb-2 border-b-2 border-slate-800 mt-6 mb-3">
+                    <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Deductions</div>
+                    <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest text-right">Amount (MK)</div>
+                  </div>
+                  <div className="space-y-3">
+                    {Number(viewingPayslip.deductions) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-slate-600">Standard Deductions</span>
+                        <span className="text-sm font-black text-rose-600">-{Number(viewingPayslip.deductions).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {Number(viewingPayslip.advanceDeduct) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-slate-600">Salary Advance Repayment</span>
+                        <span className="text-sm font-black text-rose-600">-{Number(viewingPayslip.advanceDeduct).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {Number(viewingPayslip.deductions) === 0 && Number(viewingPayslip.advanceDeduct) === 0 && (
+                      <div className="text-sm font-bold text-slate-400 italic">No deductions for this period.</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Net Pay Summary */}
+                <div className="bg-slate-900 rounded-xl p-6 flex items-center justify-between shadow-lg">
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Net Payable Amount</span>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Transferred to employee account</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-black text-slate-400 mr-1">MK</span>
+                    <span className="text-3xl font-black text-white tracking-tight">{Number(viewingPayslip.netPay).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Secure Footer Section */}
+                <div className="mt-10 pt-6 border-t border-slate-200 flex items-end justify-between">
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="border-b border-slate-300 w-32 pb-6"></div>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Authorized Signatory</span>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 text-right">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span className="text-[8px] font-black uppercase tracking-widest">Verified Document</span>
+                    </div>
+                    <QrCode className="w-12 h-12 text-slate-800" />
+                    <span className="text-[7px] text-slate-400 font-bold mt-1">Scan for verification</span>
+                  </div>
+                </div>
               </div>
             </div>
 
