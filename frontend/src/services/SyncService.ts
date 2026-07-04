@@ -320,6 +320,8 @@ export const SyncService = {
 
         localStorage.setItem('lastSyncTimestamp', data.serverTime);
         console.log('✅ Power Sync Completed');
+        // Notify all listening components (e.g. Dashboard) to refetch from server immediately
+        window.dispatchEvent(new CustomEvent('sync:completed'));
         return true;
       }
       

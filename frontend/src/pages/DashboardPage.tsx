@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Users, 
   Package, 
@@ -66,10 +66,17 @@ const DashboardPage: React.FC = () => {
       const res = await api.get('/dashboard/stats');
       return res.data.data;
     },
-    staleTime: 30_000,       // data is fresh for 30s
+    staleTime: 0,            // always re-check when focus returns or sync fires
     refetchInterval: 60_000, // auto-refresh every minute
     refetchOnWindowFocus: true,
   });
+
+  // Immediately refetch dashboard whenever a background sync completes
+  useEffect(() => {
+    const onSyncDone = () => refetch();
+    window.addEventListener('sync:completed', onSyncDone);
+    return () => window.removeEventListener('sync:completed', onSyncDone);
+  }, [refetch]);
 
   // ── Local DB — only for lists that are display-only (expenses, low-stock) ─
   const localExpenses = useLiveQuery(() => db.expenses.toArray());
