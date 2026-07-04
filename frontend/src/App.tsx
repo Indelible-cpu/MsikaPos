@@ -57,12 +57,13 @@ const App: React.FC = () => {
 
   const pwaOptions = React.useMemo(() => ({
     onRegistered(r: ServiceWorkerRegistration | undefined) {
-      // Check for updates every 10 minutes
-      if (r) {
-        setInterval(() => {
-          r.update();
-        }, 10 * 60 * 1000);
-      }
+      if (!r) return;
+      // Check for updates every 60 seconds
+      setInterval(() => { r.update(); }, 60 * 1000);
+      // Also check immediately when user switches back to this tab
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') r.update();
+      });
     },
     onNeedRefresh() {
       toast((t) => (
