@@ -50,7 +50,6 @@ interface BeforeInstallPromptEvent extends Event {
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   // PWA Auto-Update Logic
   const updateSWRef = React.useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
@@ -66,7 +65,7 @@ const App: React.FC = () => {
       });
     },
     onNeedRefresh() {
-      toast.loading((t) => (
+      toast.loading(() => (
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-black tracking-widest text-white uppercase">Updating system</p>
           <p className="text-[9px] font-bold text-muted-foreground">Applying new features...</p>
@@ -100,12 +99,12 @@ const App: React.FC = () => {
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as unknown as BeforeInstallPromptEvent);
+      // setDeferredPrompt(e as unknown as BeforeInstallPromptEvent); // Removed
     };
 
     const handleAppInstalled = () => {
       localStorage.setItem('pwa-installed', 'true');
-      setDeferredPrompt(null);
+      // setDeferredPrompt(null); // Removed
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -116,20 +115,6 @@ const App: React.FC = () => {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
-  };
-
-  const handleDismissInstall = () => {
-    setDeferredPrompt(null);
-    localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
-  };
 
   const checkSystemLock = useCallback(async () => {
     try {

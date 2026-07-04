@@ -27,7 +27,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
-import { isSameDay } from 'date-fns';
+// date-fns removed
 import api from '../api/client';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 
@@ -78,10 +78,6 @@ const DashboardPage: React.FC = () => {
   );
   const localCustomers = useLiveQuery(() => db.customers.toArray());
 
-  const todayDate = new Date();
-  const todayExpensesArr = (localExpenses || []).filter(e =>
-    isSameDay(new Date(e.date || e.createdAt), todayDate)
-  );
   const lowStockItems = (localProducts || []).filter(p => !p.isService && p.quantity <= 5);
   const activeCredits = (localCustomers || [])
     .filter(c => Number(c.balance || 0) > 0)

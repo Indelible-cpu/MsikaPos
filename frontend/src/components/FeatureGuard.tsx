@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { Lock } from 'lucide-react';
 
