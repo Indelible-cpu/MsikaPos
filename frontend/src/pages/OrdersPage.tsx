@@ -317,6 +317,9 @@ const OrdersPage: React.FC = () => {
 
       {/* ── Document View For PDF/Print ─────────────────────────────────────────────────────────── */}
       <style dangerouslySetInnerHTML={{__html: `
+        @page {
+          margin: 20mm 18mm;
+        }
         @media print {
           body * {
             visibility: hidden !important;
@@ -335,57 +338,88 @@ const OrdersPage: React.FC = () => {
             background: white !important;
             color: black !important;
           }
+          #supplier-doc-inner {
+            padding: 0 !important;
+          }
         }
       `}} />
-      <div id="supplier-doc-print-area" className="bg-white text-black p-16 max-w-[800px] w-[800px] flex flex-col fixed top-[-9999px] left-[-9999px] z-[-1] min-h-[1056px]">
-                  <div className="flex justify-between items-start mb-8 border-b-2 border-black/10 pb-6">
-                     <div>
-                       <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Purchase Order</h1>
-                       <div className="text-sm font-bold opacity-60">Date: {new Date().toLocaleDateString()}</div>
-                       <div className="text-sm font-bold opacity-60 mt-4">Order Ref: PO-{Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}</div>
-                     </div>
-                     <div className="text-right max-w-xs">
-                       {localStorage.getItem('companyLogo') && (
-                         <img src={localStorage.getItem('companyLogo') || ''} alt="Logo" className="h-16 object-contain mb-3 inline-block" />
-                       )}
-                       <div className="font-black text-2xl tracking-tight">{localStorage.getItem('companyName') || 'MsikaPOS'}</div>
-                       {localStorage.getItem('companyAddress') && <div className="text-sm mt-1 opacity-80 whitespace-pre-wrap">{localStorage.getItem('companyAddress')}</div>}
-                       {localStorage.getItem('companyPhone') && <div className="text-sm opacity-80">{localStorage.getItem('companyPhone')}</div>}
-                     </div>
-                  </div>
+      <div id="supplier-doc-print-area" className="bg-white text-black max-w-[794px] w-[794px] flex flex-col fixed top-[-9999px] left-[-9999px] z-[-1] min-h-[1123px]">
+        {/* Inner padding wrapper — keeps margins for share/canvas capture */}
+        <div id="supplier-doc-inner" className="flex flex-col flex-1 px-14 pt-12 pb-10">
 
-                  <table className="w-full text-left border-collapse mb-12">
-                    <thead>
-                      <tr className="border-b-2 border-black/80 text-[10px] font-black uppercase tracking-widest">
-                        <th className="py-4 pr-4">Product Name</th>
-                        <th className="py-4 px-4 text-center w-32">Quantity</th>
-                        <th className="py-4 px-4 text-right">Unit Price (MK)</th>
-                        <th className="py-4 pl-4 text-right">Line Total (MK)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-black/10">
-                      {workingList.map(item => (
-                        <tr key={item.productId}>
-                          <td className="py-4 pr-4 font-bold">{item.productName}</td>
-                          <td className="py-4 px-4 text-center font-black">{item.orderQty}</td>
-                          <td className="py-4 px-4 text-right text-sm">{item.unitCost.toLocaleString()}</td>
-                          <td className="py-4 pl-4 text-right font-black">{item.lineTotal.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-
-                  <div className="flex justify-end border-t-2 border-black/80 pt-6 mt-4">
-                     <div className="text-right">
-                       <div className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Estimated Grand Total</div>
-                       <div className="text-3xl font-black tracking-tighter">MK{orderTotal.toLocaleString()}</div>
-                     </div>
-                  </div>
-
-            <div className="mt-auto pt-16 print:absolute print:bottom-0 print:w-full">
-               <AppFooter />
+          {/* ── Professional Header ── */}
+          <div className="flex items-start justify-between pb-6 mb-8 border-b-4 border-black">
+            {/* Left: Company branding */}
+            <div className="flex items-center gap-4">
+              {localStorage.getItem('companyLogo') && (
+                <img src={localStorage.getItem('companyLogo') || ''} alt="Logo" className="h-16 w-16 object-contain rounded-lg" />
+              )}
+              <div>
+                <div className="text-2xl font-black tracking-tight leading-tight">{localStorage.getItem('companyName') || 'MsikaPOS'}</div>
+                {localStorage.getItem('companyAddress') && (
+                  <div className="text-xs mt-0.5 opacity-60 whitespace-pre-wrap leading-relaxed">{localStorage.getItem('companyAddress')}</div>
+                )}
+                {localStorage.getItem('companyPhone') && (
+                  <div className="text-xs opacity-60">{localStorage.getItem('companyPhone')}</div>
+                )}
+              </div>
             </div>
-         </div>
+
+            {/* Right: Document title & meta */}
+            <div className="text-right">
+              <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40 mb-1">Document</div>
+              <h1 className="text-3xl font-black uppercase tracking-tight leading-none mb-3">Purchase Order</h1>
+              <div className="inline-flex flex-col gap-1 bg-black/5 rounded-lg px-4 py-2.5 text-right">
+                <div className="flex gap-6 items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-widest opacity-50">Date</span>
+                  <span className="text-xs font-bold">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                </div>
+                <div className="flex gap-6 items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-widest opacity-50">Ref</span>
+                  <span className="text-xs font-black tracking-wider">PO-{Math.floor(Date.now() / 1000).toString().slice(-6)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Items Table ── */}
+          <table className="w-full text-left border-collapse mb-10">
+            <thead>
+              <tr className="border-b-2 border-black text-[9px] font-black uppercase tracking-[0.15em]">
+                <th className="py-3 pr-4">#</th>
+                <th className="py-3 pr-4">Product Name</th>
+                <th className="py-3 px-4 text-center w-28">Qty</th>
+                <th className="py-3 px-4 text-right">Unit Price (MK)</th>
+                <th className="py-3 pl-4 text-right">Line Total (MK)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {workingList.map((item, idx) => (
+                <tr key={item.productId} className={idx % 2 === 0 ? 'bg-black/[0.025]' : 'bg-white'}>
+                  <td className="py-3 pr-4 text-xs opacity-40 font-bold">{String(idx + 1).padStart(2, '0')}</td>
+                  <td className="py-3 pr-4 font-bold text-sm">{item.productName}</td>
+                  <td className="py-3 px-4 text-center font-black text-sm">{item.orderQty}</td>
+                  <td className="py-3 px-4 text-right text-sm">{item.unitCost.toLocaleString()}</td>
+                  <td className="py-3 pl-4 text-right font-black text-sm">{item.lineTotal.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* ── Grand Total ── */}
+          <div className="flex justify-end border-t-2 border-black pt-5">
+            <div className="text-right">
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] opacity-50 mb-1">Estimated Grand Total</div>
+              <div className="text-4xl font-black tracking-tighter">MK {orderTotal.toLocaleString()}</div>
+            </div>
+          </div>
+
+          {/* ── Footer ── */}
+          <div className="mt-auto pt-10">
+            <AppFooter />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
