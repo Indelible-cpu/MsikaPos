@@ -24,6 +24,7 @@ import * as ExpenseCtrl from './controllers/ExpenseController';
 import * as AiCtrl from './controllers/AiController';
 import * as FeatureCtrl from './controllers/FeatureController';
 import * as SaleCtrl from './controllers/SaleController';
+import * as PayrollCtrl from './controllers/PayrollController';
 import * as Security from './middleware/security';
 
 import { authenticate, authorize } from './middleware/auth';
@@ -199,6 +200,15 @@ app.post('/api/settings', adminOnly, SettingsCtrl.saveSettings);
 // Feature Access Control
 app.get('/api/feature-configs', authenticate, FeatureCtrl.getFeatureConfigs);
 app.post('/api/feature-configs', adminOnly, FeatureCtrl.updateFeatureConfig);
+
+// Payroll
+app.get('/api/payroll/employees', adminOnly, PayrollCtrl.getEmployees as any);
+app.post('/api/payroll/salary-config', adminOnly, PayrollCtrl.setSalaryConfig as any);
+app.get('/api/payroll/advances', adminOnly, PayrollCtrl.getAdvances as any);
+app.post('/api/payroll/advances', adminOnly, PayrollCtrl.createAdvance as any);
+app.put('/api/payroll/advances/:id', adminOnly, PayrollCtrl.updateAdvance as any);
+app.get('/api/payroll/payslips', adminOnly, PayrollCtrl.getPayslips as any);
+app.post('/api/payroll/payslips/generate', adminOnly, PayrollCtrl.generatePayslip as any);
 
 // Role Initialization
 const initRoles = async () => {
