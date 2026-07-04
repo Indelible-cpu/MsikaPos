@@ -322,7 +322,7 @@ const OrdersPage: React.FC = () => {
           </div>
       </div>
 
-      <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Receive Stock">
+      <Modal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} title="Receive Stock" maxWidth="max-w-md">
         <div className="p-6">
           <p className="text-sm font-bold text-surface-text mb-6">
             Are you sure you want to receive this order? This will ADD the requested quantities directly into your active inventory stock and clear them from this list.

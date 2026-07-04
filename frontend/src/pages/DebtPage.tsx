@@ -856,7 +856,7 @@ const DebtPage: React.FC = () => {
         <canvas ref={canvasRef} className="hidden" />
       </Modal>
 
-      <Modal isOpen={!!clearedReceipt} onClose={() => setClearedReceipt(null)} title="Payment receipt">
+      <Modal isOpen={!!clearedReceipt} onClose={() => setClearedReceipt(null)} title="Payment receipt" maxWidth="max-w-md">
         {clearedReceipt && (
           <div className="p-6 flex flex-col items-center gap-6">
             <div className="bg-white p-6 w-full" id="printable-repayment-receipt"><Receipt {...clearedReceipt} /></div>

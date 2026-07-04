@@ -361,6 +361,7 @@ const ExpensesPage: React.FC = () => {
         isOpen={isModalOpen} 
         onClose={() => { setIsModalOpen(false); setEditingExpense(null); resetForm(); }} 
         title={editingExpense ? 'Edit expense' : 'New expense'}
+        maxWidth="max-w-md"
       >
         <form onSubmit={handleSave} className="p-10 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -408,7 +409,7 @@ const ExpensesPage: React.FC = () => {
         </form>
       </Modal>
 
-      <Modal isOpen={!!expenseReceipt} onClose={() => setExpenseReceipt(null)} title="Expense voucher">
+      <Modal isOpen={!!expenseReceipt} onClose={() => setExpenseReceipt(null)} title="Expense voucher" maxWidth="max-w-md">
         {expenseReceipt && (
           <div className="p-10 flex flex-col items-center gap-8">
             <div className="bg-white p-10 w-full rounded-[2rem] shadow-2xl" id="expense-voucher">

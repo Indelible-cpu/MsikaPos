@@ -800,7 +800,7 @@ const InventoryPage: React.FC = () => {
       </div>
 
       {/* Product Add/Edit Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={editingProduct ? 'Edit product' : 'New product'}>
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={editingProduct ? 'Edit product' : 'New product'} maxWidth="max-w-2xl">
         <form onSubmit={handleSaveProduct} className="p-8 space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div className="col-span-2 flex items-center gap-6 mb-2">
@@ -986,7 +986,7 @@ const InventoryPage: React.FC = () => {
       </Modal>
 
       {/* Category Modal */}
-      <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} title="Manage Categories">
+      <Modal isOpen={isCategoryModalOpen} onClose={() => setIsCategoryModalOpen(false)} title="Manage Categories" maxWidth="max-w-xl">
         <div className="w-full space-y-10 px-8 py-4">
           <div className="space-y-2">
             <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="new-category">{editingCategory ? 'Edit category' : 'Create new category'}</label>
@@ -1031,7 +1031,7 @@ const InventoryPage: React.FC = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal isOpen={!!deleteConfirmation} onClose={() => setDeleteConfirmation(null)} title="Confirm Deletion">
+      <Modal isOpen={!!deleteConfirmation} onClose={() => setDeleteConfirmation(null)} title="Confirm Deletion" danger>
         <div className="p-10 text-center space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto">
             <Trash2 className="w-8 h-8 text-red-500" />
@@ -1072,6 +1072,7 @@ const InventoryPage: React.FC = () => {
         isOpen={isSmartOrderOpen} 
         onClose={() => setIsSmartOrderOpen(false)} 
         title="Smart Auto-Order List"
+        maxWidth="max-w-4xl"
       >
         <div className="p-6 md:p-10 flex flex-col max-h-[85vh]">
           <div className="mb-6 bg-primary/10 text-primary p-4 rounded-2xl text-[10px] font-black tracking-widest uppercase flex items-start gap-3 border border-primary/20">

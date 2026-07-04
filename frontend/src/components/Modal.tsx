@@ -1,107 +1,127 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 import { clsx } from 'clsx';
-
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  /** Optional subtitle shown under the title */
+  subtitle?: string;
+  /** Desktop max width. Defaults to max-w-lg */
   maxWidth?: string;
+  /** Set true for danger/destructive dialogs — colours the header ring red */
+  danger?: boolean;
 }
 
-const Modal: React.FC<ModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
-  maxWidth = 'max-w-lg' 
+const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  subtitle,
+  maxWidth = 'max-w-lg',
+  danger = false,
 }) => {
-  const [isInputFocused, setIsInputFocused] = React.useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    if (!isOpen && isInputFocused) {
-      setIsInputFocused(false);
-    }
-  }, [isOpen, isInputFocused]);
-
-  React.useEffect(() => {
+  /* ── Keyboard: Escape to close ── */
+  useEffect(() => {
     if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isOpen, onClose]);
 
-    const handleFocus = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
-        setIsInputFocused(true);
-      }
-    };
-
-    const handleBlur = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
-        // Short delay to see if next focus is also an input
-        setTimeout(() => {
-          if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName || '')) {
-            setIsInputFocused(false);
-          }
-        }, 100);
-      }
-    };
-
-    window.addEventListener('focusin', handleFocus);
-    window.addEventListener('focusout', handleBlur);
-    return () => {
-      window.removeEventListener('focusin', handleFocus);
-      window.removeEventListener('focusout', handleBlur);
-    };
+  /* ── Prevent body scroll while open ── */
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div 
+        /* ── Backdrop ── */
+        <motion.div
+          key="modal-backdrop"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className={clsx(
-            "fixed inset-0 z-[100] flex p-4 md:p-6 bg-zinc-900/60 backdrop-blur-md transition-all duration-500",
-            isInputFocused ? "items-start pt-2" : "items-center justify-center"
-          )}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[200] flex items-end md:items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
           onClick={onClose}
         >
-          <motion.div 
+          {/* ── Panel ── */}
+          <motion.div
+            key="modal-panel"
             onClick={(e) => e.stopPropagation()}
-            initial={{ y: 20, opacity: 0, scale: 0.95 }}
-            animate={{ 
-              y: isInputFocused ? 0 : 0, 
-              opacity: 1, 
-              scale: 1,
-            }}
-            exit={{ y: 20, opacity: 0, scale: 0.95 }}
+            /* Mobile: slides up from bottom; Desktop: pops in from center */
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
             className={clsx(
-              "glass-panel border border-border/60 rounded-3xl w-full shadow-2xl overflow-hidden flex flex-col transition-all duration-500",
+              'relative w-full flex flex-col',
+              /* Mobile: full width, rounded top corners, max 92vh */
+              'rounded-t-[2rem] md:rounded-[2rem]',
+              /* Desktop: centered card with max width */
+              'md:mx-auto',
               maxWidth,
-              isInputFocused ? "max-h-[50vh] md:max-h-[90vh]" : "max-h-[90vh]"
+              /* Height: on mobile fill up to 92vh; desktop up to 88vh */
+              'max-h-[92svh] md:max-h-[88vh]',
+              /* Colors */
+              'bg-surface-card border border-surface-border/60',
+              'shadow-[0_-8px_60px_rgba(0,0,0,0.25)] md:shadow-[0_24px_80px_rgba(0,0,0,0.35)]',
             )}
           >
-            <div className="p-6 border-b border-border/50 flex justify-between items-center bg-muted/10">
-              <h2 className="text-xl font-black tracking-tighter text-foreground uppercase">{title}</h2>
-            </div>
-            
-            <div className={clsx(
-              "flex-1 overflow-y-auto custom-scrollbar transition-all duration-500",
-              isInputFocused && "pb-32"
-            )}>
-              {children}
+            {/* ── Drag handle (mobile only) ── */}
+            <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
+              <div className="w-10 h-1 rounded-full bg-surface-text/20" />
             </div>
 
-            <div className="border-t border-border/50 bg-muted/5">
-              <button 
+            {/* ── Header ── */}
+            <div className={clsx(
+              'flex items-start justify-between px-6 pt-4 pb-5 shrink-0',
+              'border-b border-surface-border/50',
+              danger && 'border-b-destructive/30'
+            )}>
+              <div className="flex-1 pr-4">
+                <h2 className={clsx(
+                  'text-lg font-black tracking-tight leading-tight',
+                  danger ? 'text-destructive' : 'text-surface-text'
+                )}>
+                  {title}
+                </h2>
+                {subtitle && (
+                  <p className="text-xs font-medium text-surface-text/45 mt-0.5 leading-relaxed">
+                    {subtitle}
+                  </p>
+                )}
+              </div>
+              <button
                 onClick={onClose}
-                className="w-full h-14 bg-transparent text-[10px] font-black tracking-widest text-muted-foreground hover:bg-muted/20 transition-all btn-press uppercase"
+                className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-surface-text/8 hover:bg-destructive/10 hover:text-destructive text-surface-text/50 transition-all active:scale-90"
+                aria-label="Close"
               >
-                Close Window
+                <X className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* ── Scrollable Content ── */}
+            <div
+              ref={contentRef}
+              className="flex-1 overflow-y-auto overscroll-contain"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {children}
             </div>
           </motion.div>
         </motion.div>

@@ -476,6 +476,7 @@ const UsersPage: React.FC = () => {
         onClose={() => setActionModal({ ...actionModal, isOpen: false })}
         title={actionModal.type?.replace('_', ' ') || 'Action'}
         maxWidth="max-w-md"
+        danger={actionModal.type !== 'REACTIVATE'}
       >
         <div className="p-8 space-y-6">
           <div className="flex items-start gap-4 p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10">

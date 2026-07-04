@@ -823,7 +823,7 @@ const SettingsPage: React.FC = () => {
       )}
 
       {/* Themed Confirmation Modal */}
-      <Modal isOpen={!!confirmModal} onClose={() => setConfirmModal(null)} title="Security confirmation">
+      <Modal isOpen={!!confirmModal} onClose={() => setConfirmModal(null)} title="Security confirmation" danger>
         <div className="p-10 text-center space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto">
             <ShieldAlert className="w-8 h-8 text-destructive" />
