@@ -46,6 +46,7 @@ export interface LocalSale {
   itemsCount: number;
   createdAt: string;
   synced: number;
+  syncRetries?: number; // counts failed sync attempts; skip after 10
   customerId?: string;
   items: LocalSaleItem[];
   sellerName?: string;
@@ -66,15 +67,16 @@ export interface LocalCustomer {
   phone: string;
   witnessPhone?: string;
   balance: number;
-  totalCreditAmount: number; // Added: sum of all credit sales
-  totalPaidAmount: number;   // Added: sum of all payments
+  totalCreditAmount: number;
+  totalPaidAmount: number;
   idNumber?: string;
   village?: string;
   livePhoto?: string;
-  fingerprintData?: string; // Encrypted representation
+  fingerprintData?: string;
   createdAt: string;
   updatedAt: string;
-  synced: number; // 0 = unsynced, 1 = synced
+  synced: number;
+  syncRetries?: number;
 }
 
 export interface LocalDebtPayment {
@@ -87,6 +89,7 @@ export interface LocalDebtPayment {
   reference?: string;
   createdAt: string;
   synced: number;
+  syncRetries?: number;
 }
 
 export interface LocalExpense {
@@ -99,6 +102,7 @@ export interface LocalExpense {
   frequency?: 'Daily' | 'Weekly' | 'Monthly' | 'Annually';
   createdAt: string;
   synced: number;
+  syncRetries?: number;
 }
 
 export interface LocalUser {
@@ -178,14 +182,14 @@ export class POSDatabase extends Dexie {
 
   constructor() {
     super('JEF_POS_DB');
-    this.version(15).stores({
+    this.version(16).stores({
       products: 'id, categoryId, sku, name, status, supplierId, updatedAt',
       categories: 'id, slug',
-      salesQueue: 'id, customerId, status, synced, createdAt',
+      salesQueue: 'id, customerId, status, synced, syncRetries, createdAt',
       settings: 'key',
-      customers: 'id, name, phone, balance, idNumber, synced, updatedAt',
-      debtPayments: 'id, customerId, createdAt, synced',
-      expenses: 'id, category, date, synced',
+      customers: 'id, name, phone, balance, idNumber, synced, syncRetries, updatedAt',
+      debtPayments: 'id, customerId, createdAt, synced, syncRetries',
+      expenses: 'id, category, date, synced, syncRetries',
       users: 'id, username, role',
       auditLogs: 'id, userId, action, createdAt',
       offlineAuth: 'username',

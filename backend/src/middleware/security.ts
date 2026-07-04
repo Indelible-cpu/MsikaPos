@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import { prisma } from '../lib/prisma';
 import { sendMail } from '../lib/emailService';
+import { getClientIp } from '../lib/ipHelper';
 
 // Email transporter for alerts
 // Centralized email service is used instead of local transporter
@@ -20,6 +21,7 @@ export const globalLimiter = rateLimit({
   message: 'Too many requests from this IP, please try again after 15 minutes',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => getClientIp(req).ip,
 });
 
 // 3. AUTH LIMITER (More strict for login)
@@ -28,6 +30,7 @@ export const authLimiter = rateLimit({
   max: 50, // More headroom for staff login retries
   message: 'Too many login attempts, your IP has been flagged',
   skipSuccessfulRequests: true,
+  keyGenerator: (req) => getClientIp(req).ip,
 });
 
 // 4. PARAMETER POLLUTION PREVENTION
@@ -38,7 +41,7 @@ const ipCache = new Map<string, { blocked: boolean; reason?: string; expiresAt?:
 const IP_CACHE_TTL = 60 * 1000; // 1 minute
 
 export const ipBlocker = async (req: Request, res: Response, next: NextFunction) => {
-  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const { ip } = getClientIp(req);
   const now = Date.now();
   
   // Check Cache first
@@ -90,11 +93,11 @@ export const ipBlocker = async (req: Request, res: Response, next: NextFunction)
 };
 
 // 6. INTRUSION DETECTION & ALERTING
-export const securityAlert = async (ip: string, event: string, details: string) => {
+export const securityAlert = async (ip: string, event: string, details: string, ipSource?: string) => {
   try {
     // Log to DB
     await prisma.securityLog.create({
-      data: { ipAddress: ip, event, details }
+      data: { ipAddress: ip, ipSource: ipSource || 'unknown', event, details }
     });
 
     // Check if we should block (e.g. 5 security events in 10 mins)
@@ -135,6 +138,7 @@ export const securityAlert = async (ip: string, event: string, details: string) 
           <hr />
           <p><strong>Event:</strong> ${event}</p>
           <p><strong>Details:</strong> ${details}</p>
+          <p><strong>IP Source:</strong> ${ipSource || 'unknown'}</p>
           <p><strong>Recent Attempts:</strong> ${recentEvents}</p>
           <hr />
           <p style="font-size: 12px; color: #666;">

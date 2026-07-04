@@ -1,9 +1,11 @@
 import type { Request, Response } from 'express';
 import { SyncService } from '../services/SyncService';
+import { getClientIp } from '../lib/ipHelper';
 
 export const syncData = async (req: Request, res: Response) => {
   const { sales, expenses, customers, debtPayments, deviceId, lastSyncTimestamp } = req.body;
   const user = (req as any).user;
+  const ipInfo = getClientIp(req);
 
   try {
     const result = await SyncService.syncData({
@@ -13,7 +15,8 @@ export const syncData = async (req: Request, res: Response) => {
       debtPayments,
       deviceId,
       lastSyncTimestamp,
-      user
+      user,
+      ipInfo
     });
 
     return res.status(200).json({

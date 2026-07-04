@@ -73,22 +73,39 @@ const LoginPage: React.FC = () => {
             try {
               const savedPassword = atob(authData);
               if (navigator.onLine) {
-                const res = await api.post('/auth/login', { username: userData.username, password: savedPassword });
-                token = res.data.token;
-                userData = res.data.user;
-                
-                const passwordHash = await hashPassword(savedPassword);
-                await db.offlineAuth.put({
-                  username: userData.username,
-                  passwordHash,
-                  userData,
-                  token: token!
-                });
+                try {
+                  const res = await api.post('/auth/login', { username: userData.username, password: savedPassword });
+                  token = res.data.token;
+                  userData = res.data.user;
+                  
+                  const passwordHash = await hashPassword(savedPassword);
+                  await db.offlineAuth.put({
+                    username: userData.username,
+                    passwordHash,
+                    userData,
+                    token: token!
+                  });
+                } catch (err: unknown) {
+                  const loginError = err as { response?: { status?: number } };
+                  if (loginError.response && loginError.response.status !== 500 && loginError.response.status !== 502 && loginError.response.status !== 503) {
+                    // Explicitly rejected by server
+                    localStorage.removeItem('biometricAuth');
+                    localStorage.removeItem('biometricToken');
+                    localStorage.removeItem('biometricRegistered');
+                    await db.offlineAuth.delete(userData.username);
+                    throw new Error('Your account access has changed. Please login with your password.');
+                  }
+                  // Network error or 5xx, try offline fallback
+                  const offlineUser = await db.offlineAuth.get(userData.username);
+                  if (offlineUser) token = offlineUser.token;
+                }
               } else {
                 const offlineUser = await db.offlineAuth.get(userData.username);
                 if (offlineUser) token = offlineUser.token;
               }
-            } catch (err) {
+            } catch (err: unknown) {
+              const e = err as Error;
+              if (e.message.includes('account access has changed')) throw e;
               localStorage.removeItem('biometricAuth');
               throw new Error('Your biometric credentials are out of date. Please login with password to update.');
             }
@@ -297,34 +314,8 @@ const LoginPage: React.FC = () => {
       let userData: UserData | null = null;
       let userToken: string | null = null;
 
-      // Fast Local/Offline Login First
-      const offlineUser = await db.offlineAuth.get(username);
-      if (offlineUser) {
-        const passwordHash = await hashPassword(password);
-        if (passwordHash === offlineUser.passwordHash) {
-          userData = offlineUser.userData;
-          userToken = offlineUser.token;
-          
-          // Trigger background fetch to refresh token if online
-          if (navigator.onLine) {
-            api.post('/auth/login', { username, password }).then(async (response) => {
-               const freshUserData = response.data.user;
-               const freshToken = response.data.token;
-               await db.offlineAuth.put({
-                 username,
-                 passwordHash,
-                 userData: freshUserData,
-                 token: freshToken
-               });
-               localStorage.setItem('token', freshToken);
-               localStorage.setItem('user', JSON.stringify(freshUserData));
-            }).catch(e => console.warn('Background login refresh failed:', e));
-          }
-        }
-      }
-
-      // If local login failed or user not found locally, try online
-      if (!userData && navigator.onLine) {
+      // Online First Login
+      if (navigator.onLine) {
         try {
           const response = await api.post('/auth/login', { username, password });
           userData = response.data.user;
@@ -338,11 +329,27 @@ const LoginPage: React.FC = () => {
             token: userToken!
           });
         } catch (err: unknown) {
-          const loginError = err as { response?: { data?: { message?: string } } };
-          if (loginError.response) {
+          const loginError = err as { response?: { data?: { message?: string }, status?: number } };
+          
+          if (loginError.response && loginError.response.status !== 500 && loginError.response.status !== 502 && loginError.response.status !== 503) {
+            // True failure (wrong password, suspended, etc). Do not allow offline fallback.
+            await db.offlineAuth.delete(username);
             throw new Error(loginError.response?.data?.message || 'Invalid credentials');
           }
-          throw err;
+          console.warn('Online login failed or server unreachable, attempting offline fallback:', err);
+        }
+      }
+
+      // Offline Fallback (Only reached if offline, or if server threw 5xx/network error)
+      if (!userData) {
+        const offlineUser = await db.offlineAuth.get(username);
+        if (offlineUser) {
+          const passwordHash = await hashPassword(password);
+          if (passwordHash === offlineUser.passwordHash) {
+            userData = offlineUser.userData;
+            userToken = offlineUser.token;
+            toast.success('Logged in offline mode', { icon: '📡' });
+          }
         }
       }
 

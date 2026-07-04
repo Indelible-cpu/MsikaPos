@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuditService } from '../services/AuditService';
+import { getClientIp } from '../lib/ipHelper';
 
 export const updateSale = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -57,12 +58,15 @@ export const updateSale = async (req: Request, res: Response) => {
       }
     });
 
+    const { ip, source } = getClientIp(req);
     await AuditService.log({
       userId: user.id,
       action: 'UPDATE_SALE',
       entityType: 'SALE',
       entityId: id as string,
-      details: `Status: ${status}, RefundReason: ${refundReason}`
+      details: `Status: ${status}, RefundReason: ${refundReason}`,
+      ip,
+      ipSource: source
     });
 
     return res.status(200).json({ success: true, data: updatedSale });
@@ -112,12 +116,15 @@ export const deleteSale = async (req: Request, res: Response) => {
       where: { id: id as string }
     });
 
+    const { ip, source } = getClientIp(req);
     await AuditService.log({
       userId: user.id,
       action: 'DELETE_SALE',
       entityType: 'SALE',
       entityId: id as string,
-      details: 'Sale hard-deleted'
+      details: 'Sale hard-deleted',
+      ip,
+      ipSource: source
     });
 
     return res.status(200).json({ success: true, message: 'Sale deleted' });

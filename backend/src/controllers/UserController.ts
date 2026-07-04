@@ -5,12 +5,14 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendMail } from '../lib/emailService';
 import { securityAlert } from '../middleware/security';
+import { getClientIp } from '../lib/ipHelper';
 import { normalizePhone, isValidMalawianPhone } from '../lib/phoneUtils';
 
 // Centralized email service is used instead of local transporter
 
 export const loginUser = async (req: Request, res: Response) => {
   const { username, password } = req.body;
+  const { ip, source } = getClientIp(req);
 
   try {
     const user = await prisma.user.findUnique({
@@ -19,14 +21,14 @@ export const loginUser = async (req: Request, res: Response) => {
     });
 
     if (!user || user.deleted) {
-      await securityAlert(req.ip || 'unknown', 'BRUTE_FORCE', `Failed login attempt for non-existent user: ${username}`);
+      await securityAlert(ip, 'BRUTE_FORCE', `Failed login attempt for non-existent user: ${username}`, source);
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
     const normalizedHash = user.password.replace(/^\$2y\$/, '$2a$');
     const validPassword = await bcrypt.compare(password, normalizedHash);
     if (!validPassword) {
-      await securityAlert(req.ip || 'unknown', 'BRUTE_FORCE', `Incorrect password for user: ${username}`);
+      await securityAlert(ip, 'BRUTE_FORCE', `Incorrect password for user: ${username}`, source);
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 

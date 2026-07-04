@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { securityAlert } from '../middleware/security';
+import { getClientIp } from '../lib/ipHelper';
 import { normalizePhone, isValidMalawianPhone } from '../lib/phoneUtils';
 
 interface AuthRequest extends Request {
@@ -16,6 +17,7 @@ interface AuthRequest extends Request {
 
 export const registerCustomer = async (req: Request, res: Response) => {
   const { username, password, fullname, phone } = req.body;
+  const { ip, source } = getClientIp(req);
 
   try {
     if (phone && !isValidMalawianPhone(phone)) {
@@ -24,7 +26,7 @@ export const registerCustomer = async (req: Request, res: Response) => {
 
     const existing = await prisma.user.findUnique({ where: { username } });
     if (existing) {
-      await securityAlert(req.ip || 'unknown', 'RECONNAISSANCE', `Registration attempt with existing username: ${username}`);
+      await securityAlert(ip, 'RECONNAISSANCE', `Registration attempt with existing username: ${username}`, source);
       return res.status(400).json({ success: false, message: 'Username already taken' });
     }
 
@@ -90,6 +92,7 @@ export const registerCustomer = async (req: Request, res: Response) => {
 
 export const loginCustomer = async (req: Request, res: Response) => {
   const { username, password } = req.body;
+  const { ip, source } = getClientIp(req);
 
   try {
     const user = await prisma.user.findUnique({ 
@@ -98,7 +101,7 @@ export const loginCustomer = async (req: Request, res: Response) => {
     });
 
     if (!user || user.deleted) {
-      await securityAlert(req.ip || 'unknown', 'BRUTE_FORCE', `Unified login failed: ${username}`);
+      await securityAlert(ip, 'BRUTE_FORCE', `Unified login failed: ${username}`, source);
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
@@ -106,7 +109,7 @@ export const loginCustomer = async (req: Request, res: Response) => {
     const validPassword = await bcrypt.compare(password, normalizedHash);
     
     if (!validPassword) {
-      await securityAlert(req.ip || 'unknown', 'BRUTE_FORCE', `Unified incorrect password: ${username}`);
+      await securityAlert(ip, 'BRUTE_FORCE', `Unified incorrect password: ${username}`, source);
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 

@@ -9,9 +9,11 @@ export class AuditService {
     entityId: string | number;
     details?: any;
     branchId?: string | number;
+    ip?: string | undefined;
+    ipSource?: string | undefined;
   }) {
     try {
-      console.log(`📝 [AUDIT] ${params.action} on ${params.entityType}:${params.entityId} by User:${params.userId}`);
+      console.log(`📝 [AUDIT] ${params.action} on ${params.entityType}:${params.entityId} by User:${params.userId} [IP: ${params.ip || 'unknown'} / Source: ${params.ipSource || 'unknown'}]`);
       
       // In a real production system, we would save this to an AuditLog table
       // For now, we'll use a centralized logging approach

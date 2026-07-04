@@ -3,7 +3,11 @@ import { AuditService } from './AuditService';
 
 export class SyncService {
   /**
-   * Main sync logic to process batch updates from offline clients
+   * Main sync logic to process batch updates from offline clients.
+   * Design principles:
+   *  - Idempotent: safe to call multiple times with the same data
+   *  - Offline-first: local UUIDs are resolved to server integer IDs and returned
+   *  - Fail-safe: individual record errors never abort the whole sync
    */
   static async syncData(params: {
     sales?: any[];
@@ -13,59 +17,115 @@ export class SyncService {
     deviceId: string;
     lastSyncTimestamp?: string;
     user: any;
+    ipInfo?: { ip: string; source: string };
   }) {
-    const { sales, expenses, customers, debtPayments, deviceId, lastSyncTimestamp, user } = params;
+    const { sales, expenses, customers, debtPayments, deviceId, lastSyncTimestamp, user, ipInfo } = params;
     const userId = user.id;
 
-    // 1. Process Incoming Sales (Reconciliation Logic)
+    // â”€â”€â”€ 1. Process Incoming Customers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Must run BEFORE sales and debtPayments so we can resolve UUID â†’ Int IDs.
+    const customerIdMap = new Map<string, number>(); // offlineId (UUID) â†’ serverId (Int)
+
+    if (customers && customers.length > 0) {
+      for (const cust of customers) {
+        try {
+          const offlineId = String(cust.id);
+
+          // Prefer offlineId lookup first, fall back to phone match
+          let existing = await prisma.customer.findUnique({ where: { offlineId } });
+          if (!existing && cust.phone) {
+            existing = await prisma.customer.findFirst({ where: { phone: cust.phone } });
+          }
+
+          if (existing) {
+            // Update fields that may have changed, but don't overwrite server-side debt/balance blindly
+            await prisma.customer.update({
+              where: { id: existing.id },
+              data: {
+                fullname: cust.name || existing.fullname,
+                phone: cust.phone || existing.phone,
+                idNumber: cust.idNumber ?? existing.idNumber,
+                village: cust.village ?? existing.village,
+                livePhoto: cust.livePhoto ?? existing.livePhoto,
+                offlineId: existing.offlineId ?? offlineId,
+              }
+            });
+            customerIdMap.set(offlineId, existing.id);
+          } else {
+            const created = await prisma.customer.create({
+              data: {
+                fullname: cust.name,
+                phone: cust.phone,
+                idNumber: cust.idNumber,
+                village: cust.village,
+                livePhoto: cust.livePhoto,
+                balance: Number(cust.balance || 0),
+                totalDebt: Number(cust.totalCreditAmount || 0),
+                offlineId,
+                createdAt: new Date(cust.createdAt || Date.now()),
+              }
+            });
+            customerIdMap.set(offlineId, created.id);
+          }
+        } catch (err: any) {
+          console.error(`[Sync] Failed to process customer ${cust.id}:`, err.message);
+        }
+      }
+    }
+
+    // â”€â”€â”€ 2. Process Incoming Sales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const syncedSaleIds: string[] = [];
+
     if (sales && sales.length > 0) {
       const allProductIds = Array.from(new Set(
         sales.flatMap((s: any) => (s.items || []).map((i: any) => i.productId))
       ));
-      
+
       const productMeta = await prisma.product.findMany({
         where: { id: { in: allProductIds as number[] } },
         select: { id: true, isService: true }
       });
-      
+
       const serviceStatusMap = new Map(productMeta.map(p => [p.id, p.isService]));
       const validProductIds = new Set(productMeta.map(p => p.id));
 
       for (const saleData of sales) {
         try {
-          // Reconciliation: Check if sale already exists by invoiceNo (Strong Match)
           const existingSale = await prisma.sale.findUnique({
             where: { invoiceNo: saleData.invoiceNo },
             select: { id: true, status: true, items: true }
           });
 
           if (!existingSale) {
-            // Filter out items with invalid/deleted productIds so the sale doesn't fail
             const validItems = (saleData.items || []).filter((item: any) => validProductIds.has(item.productId));
 
             await prisma.$transaction(async (tx) => {
+              // Resolve customerId: Int parse â†’ in-memory map â†’ DB offlineId lookup â†’ placeholder
               let finalCustomerId: number | null = null;
               if (saleData.customerId) {
                 const parsed = parseInt(saleData.customerId, 10);
-                if (!isNaN(parsed) && parsed.toString() === saleData.customerId.toString()) {
+                if (!isNaN(parsed) && String(parsed) === String(saleData.customerId)) {
                   finalCustomerId = parsed;
                 } else {
-                  let cust = await tx.customer.findUnique({ where: { offlineId: saleData.customerId } });
-                  if (!cust) {
-                    cust = await tx.customer.create({
-                      data: {
-                        fullname: saleData.customerName || 'Offline Customer',
-                        phone: '000000000',
-                        offlineId: saleData.customerId
-                      }
-                    });
+                  const mappedId = customerIdMap.get(String(saleData.customerId));
+                  if (mappedId) {
+                    finalCustomerId = mappedId;
+                  } else {
+                    let cust = await tx.customer.findUnique({ where: { offlineId: saleData.customerId } });
+                    if (!cust) {
+                      cust = await tx.customer.create({
+                        data: {
+                          fullname: saleData.customerName || 'Offline Customer',
+                          phone: '000000000',
+                          offlineId: saleData.customerId
+                        }
+                      });
+                    }
+                    finalCustomerId = cust.id;
                   }
-                  finalCustomerId = cust.id;
                 }
               }
 
-              // Create Sale
               await tx.sale.create({
                 data: {
                   id: saleData.id,
@@ -79,13 +139,14 @@ export class SyncService {
                   paid: saleData.paid,
                   changeDue: saleData.changeDue,
                   profit: saleData.profit || validItems.reduce((acc: number, item: any) => acc + (item.profit || 0), 0),
-                  paymentMode: saleData.paymentMode === 'Momo' ? 'MOBILE_MONEY' : 
-                               saleData.paymentMode === 'Card' ? 'CARD' : 
+                  paymentMode: saleData.paymentMode === 'Momo' ? 'MOBILE_MONEY' :
+                               saleData.paymentMode === 'Card' ? 'CARD' :
                                saleData.paymentMode === 'Credit' ? 'CREDIT' : 'CASH',
                   status: saleData.status || 'COMPLETED',
                   taxAmount: saleData.tax || 0,
                   taxRate: saleData.taxRate || 0,
                   isCredit: saleData.paymentMode === 'Credit',
+                  dueDate: saleData.dueDate ? new Date(saleData.dueDate) : null,
                   itemsCount: saleData.itemsCount,
                   synced: true,
                   deviceId: deviceId,
@@ -104,10 +165,9 @@ export class SyncService {
                 },
               });
 
-              // Update Inventory only for valid non-service products
+              // Decrement inventory for physical (non-service) products
               for (const item of validItems) {
-                const isService = serviceStatusMap.get(item.productId);
-                if (!isService) {
+                if (!serviceStatusMap.get(item.productId)) {
                   await tx.product.update({
                     where: { id: item.productId },
                     data: { quantity: { decrement: item.quantity } },
@@ -122,29 +182,27 @@ export class SyncService {
               userId,
               action: 'SYNC_SALE',
               entityType: 'SALE',
-              entityId: saleData.invoiceNo
+              entityId: saleData.invoiceNo,
+              ip: ipInfo?.ip,
+              ipSource: ipInfo?.source
             });
           } else {
-            // Already exists — mark as synced on client
+            // Already exists â€” mark as synced on client
             syncedSaleIds.push(saleData.id);
 
-            // Check if status changed to REFUNDED or DELETED locally
-            if (saleData.status && existingSale.status !== saleData.status && 
+            // Propagate status changes (REFUNDED / DELETED) from client to server
+            if (saleData.status && existingSale.status !== saleData.status &&
                 (saleData.status === 'REFUNDED' || saleData.status === 'DELETED')) {
-              
+
               await prisma.$transaction(async (tx) => {
                 await tx.sale.update({
                   where: { id: existingSale.id },
-                  data: { 
-                    status: saleData.status,
-                    refundReason: saleData.refundReason
-                  }
+                  data: { status: saleData.status, refundReason: saleData.refundReason }
                 });
 
                 // Restock items
                 for (const item of existingSale.items) {
-                  const isService = serviceStatusMap.get(item.productId);
-                  if (!isService && validProductIds.has(item.productId)) {
+                  if (!serviceStatusMap.get(item.productId) && validProductIds.has(item.productId)) {
                     await tx.product.update({
                       where: { id: item.productId },
                       data: { quantity: { increment: item.quantity } }
@@ -158,84 +216,84 @@ export class SyncService {
                 action: 'SYNC_SALE_UPDATE',
                 entityType: 'SALE',
                 entityId: saleData.invoiceNo,
-                details: `Status updated to ${saleData.status} via sync`
+                details: `Status updated to ${saleData.status} via sync`,
+                ip: ipInfo?.ip,
+                ipSource: ipInfo?.source
               });
             }
           }
         } catch (saleErr: any) {
-          // Log and skip this sale — do NOT fail the entire sync
           console.error(`[Sync] Failed to process sale ${saleData.invoiceNo}:`, saleErr.message);
         }
       }
     }
 
-    // 2. Process Incoming Expenses
+    // â”€â”€â”€ 3. Process Incoming Expenses (upsert â€” edits are captured) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (expenses && expenses.length > 0) {
       for (const exp of expenses) {
         try {
-          const existing = await prisma.expense.findUnique({ where: { id: exp.id } });
-          if (!existing) {
-            await prisma.expense.create({
-              data: {
-                id: exp.id,
-                category: exp.category,
-                amount: exp.amount,
-                description: exp.description,
-                paymentMethod: exp.paymentMethod,
-                expenseDate: new Date(exp.date),
-                userId: userId
-              }
-            });
-          }
+          await prisma.expense.upsert({
+            where: { id: exp.id },
+            create: {
+              id: exp.id,
+              category: exp.category,
+              amount: exp.amount,
+              description: exp.description,
+              paymentMethod: exp.paymentMethod || 'Cash',
+              expenseDate: new Date(exp.date),
+              userId: userId,
+            },
+            update: {
+              category: exp.category,
+              amount: exp.amount,
+              description: exp.description,
+              paymentMethod: exp.paymentMethod || 'Cash',
+              expenseDate: new Date(exp.date),
+            }
+          });
         } catch (err: any) {
           console.error(`[Sync] Failed to process expense ${exp.id}:`, err.message);
         }
       }
     }
 
-    // 3. Process Incoming Customers
-    if (customers && customers.length > 0) {
-      for (const cust of customers) {
-        try {
-          const existing = await prisma.customer.findUnique({ where: { id: cust.id } });
-          if (!existing) {
-            await prisma.customer.create({
-              data: {
-                id: cust.id,
-                fullname: cust.name,
-                phone: cust.phone,
-                idNumber: cust.idNumber,
-                village: cust.village,
-                livePhoto: cust.livePhoto,
-                balance: cust.balance || 0,
-                totalDebt: cust.totalCreditAmount || 0,
-                createdAt: new Date(cust.createdAt)
-              }
-            });
-          }
-        } catch (err: any) {
-          console.error(`[Sync] Failed to process customer ${cust.id}:`, err.message);
-        }
-      }
-    }
-
-    // 4. Process Incoming Debt Payments
-    if (debtPayments && debtPayments.length > 0 && prisma.debtPayment) {
+    // â”€â”€â”€ 4. Process Incoming Debt Payments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    if (debtPayments && debtPayments.length > 0) {
       for (const pay of debtPayments) {
         try {
-          const existing = await (prisma as any).debtPayment.findUnique({ where: { id: pay.id } });
+          // Resolve customerId (UUID â†’ Int via map or DB lookup)
+          let resolvedCustomerId: number | null = null;
+          if (pay.customerId) {
+            const parsed = parseInt(pay.customerId, 10);
+            if (!isNaN(parsed) && String(parsed) === String(pay.customerId)) {
+              resolvedCustomerId = parsed;
+            } else {
+              const mappedId = customerIdMap.get(String(pay.customerId));
+              if (mappedId) {
+                resolvedCustomerId = mappedId;
+              } else {
+                const cust = await prisma.customer.findUnique({ where: { offlineId: pay.customerId } });
+                if (cust) resolvedCustomerId = cust.id;
+              }
+            }
+          }
+
+          if (!resolvedCustomerId) {
+            console.warn(`[Sync] Skipping debt payment ${pay.id}: cannot resolve customerId ${pay.customerId}`);
+            continue;
+          }
+
+          const existing = await prisma.debtPayment.findUnique({ where: { id: pay.id } });
           if (!existing) {
-            await prisma.$transaction(async (tx) => {
-              await (tx as any).debtPayment.create({
-                data: {
-                  id: pay.id,
-                  customerId: pay.customerId,
-                  amount: pay.amount,
-                  paymentMethod: pay.paymentMethod,
-                  reference: pay.reference,
-                  createdAt: new Date(pay.createdAt)
-                }
-              });
+            await prisma.debtPayment.create({
+              data: {
+                id: pay.id,
+                customerId: resolvedCustomerId,
+                amount: pay.amount,
+                paymentMethod: pay.paymentMethod,
+                reference: pay.reference,
+                createdAt: new Date(pay.createdAt)
+              }
             });
           }
         } catch (err: any) {
@@ -244,15 +302,21 @@ export class SyncService {
       }
     }
 
-    // 5. Fetch Remote Updates
-    const updatedProducts = await prisma.product.findMany({
-      where: {
-        updatedAt: {
-          gt: lastSyncTimestamp ? new Date(lastSyncTimestamp) : new Date(0),
-        }
-      },
-      include: { category: true },
-    });
+    // â”€â”€â”€ 5. Fetch Remote Updates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const syncCutoff = lastSyncTimestamp ? new Date(lastSyncTimestamp) : new Date(0);
+
+    const [updatedProducts, updatedCategories, updatedCustomers, updatedExpenses, updatedDebtPayments, updatedSales] =
+      await Promise.all([
+        prisma.product.findMany({
+          where: { updatedAt: { gt: syncCutoff } },
+          include: { category: true },
+        }),
+        prisma.category.findMany({}), // categories have no updatedAt; sync all (small table)
+        prisma.customer.findMany({ where: { updatedAt: { gt: syncCutoff } } }),
+        prisma.expense.findMany({ where: { createdAt: { gt: syncCutoff } } }), // Expense has no updatedAt; use createdAt
+        prisma.debtPayment.findMany({ where: { createdAt: { gt: syncCutoff } } }),
+        prisma.sale.findMany({ where: { updatedAt: { gt: syncCutoff } }, include: { items: true } }),
+      ]);
 
     const mappedProducts = updatedProducts.map((p: any) => ({
       ...p,
@@ -261,55 +325,35 @@ export class SyncService {
       discountValue: p.discountValue ? Number(p.discountValue) : 0,
     }));
 
-    const updatedCategories = await prisma.category.findMany({});
-
-    // Fetch Other Updates since last sync
-    const syncCutoff = lastSyncTimestamp ? new Date(lastSyncTimestamp) : new Date(0);
-    
-    const updatedCustomers = await prisma.customer.findMany({
-      where: { updatedAt: { gt: syncCutoff } }
-    });
-
     const mappedCustomers = updatedCustomers.map((c: any) => ({
       ...c,
       balance: Number(c.balance),
-      totalCreditAmount: Number(c.totalDebt)
+      totalCreditAmount: Number(c.totalDebt),
     }));
 
-    const updatedExpenses = await prisma.expense.findMany({
-      where: { createdAt: { gt: syncCutoff } }
-    });
-
-    const updatedDebtPayments = await (prisma as any).debtPayment.findMany({
-      where: { createdAt: { gt: syncCutoff } }
-    });
-
-    const updatedSales = await prisma.sale.findMany({
-      where: { updatedAt: { gt: syncCutoff } },
-      include: { items: true }
-    });
-
-    // Log Sync
+    // â”€â”€â”€ 6. Log Sync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     await prisma.syncLog.create({
       data: {
         deviceId: deviceId || 'unknown',
         userId: userId,
         action: 'BATCH_SYNC',
         status: 'SUCCESS',
-        details: `Processed ${sales?.length || 0} sales. Downloaded ${updatedProducts.length} product updates.`,
+        details: `Processed ${sales?.length || 0} sales, ${customers?.length || 0} customers. Downloaded ${updatedProducts.length} product updates.`,
       },
     });
 
     return {
       serverTime: new Date().toISOString(),
       syncedSaleIds,
+      // Frontend uses this to remap local UUID customer IDs â†’ server Int IDs
+      customerIdMap: Object.fromEntries(customerIdMap),
       updates: {
         products: mappedProducts,
         categories: updatedCategories,
         customers: mappedCustomers,
         expenses: updatedExpenses,
         debtPayments: updatedDebtPayments,
-        sales: updatedSales
+        sales: updatedSales,
       },
     };
   }

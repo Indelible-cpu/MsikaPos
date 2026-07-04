@@ -48,6 +48,14 @@ export const SyncService = {
       console.log('📡 System Offline: Entering local-only mode.');
     });
 
+    // Sync when the user returns to this tab
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && navigator.onLine && !this.isSyncing) {
+        console.log('👁 Tab visible: Triggering sync...');
+        this.pushSales().catch(console.error);
+      }
+    });
+
     // Handle session invalidation event from apiFetch
     window.addEventListener('auth:session-invalid', () => {
       console.warn('🔓 Session expired or invalid. Redirecting to login.');
@@ -61,14 +69,20 @@ export const SyncService = {
       this.pushSales().catch(console.error);
     }
 
-    // Automatic recurring sync (every 30 seconds)
-    setInterval(() => {
-      if (navigator.onLine && !this.isSyncing) {
-        this.pushSales().catch((err) => {
-          console.error('Automatic sync interval failed:', err);
-        });
-      }
-    }, 30000);
+    // Automatic recurring sync with ±10s jitter to avoid thundering-herd
+    const scheduleNextSync = () => {
+      const jitter = Math.floor(Math.random() * 20000) - 10000; // ±10s
+      const delay = 30000 + jitter;
+      setTimeout(() => {
+        if (navigator.onLine && !this.isSyncing) {
+          this.pushSales().catch((err) => {
+            console.error('Automatic sync interval failed:', err);
+          });
+        }
+        scheduleNextSync();
+      }, delay);
+    };
+    scheduleNextSync();
   },
 
   async pushSales() {
@@ -83,11 +97,14 @@ export const SyncService = {
     this.isSyncing = true;
 
     try {
-      // Chunked retrieval of local unsynced records to avoid blocking during initialization
+      // Chunked retrieval of local unsynced records, skipping ones that have
+      // repeatedly failed (syncRetries >= 10) to avoid infinite retry loops.
       const getUnsynced = async (table: any) => {
         const results: any[] = [];
         let count = 0;
         await table.where('synced').equals(0).each((item: any) => {
+          // Skip permanently stuck records (too many retries)
+          if ((item.syncRetries ?? 0) >= 10) return;
           results.push(item);
           count++;
           // Yield every 100 items to keep UI responsive
@@ -145,6 +162,8 @@ export const SyncService = {
 
       if (data.success) {
         const { products, categories, customers, expenses, debtPayments, sales } = data.updates;
+        // customerIdMap: { [offlineUUID]: serverIntId } — used to remap local IDs
+        const customerIdMap: Record<string, number> = data.customerIdMap || {};
         
         // 2. CHUNKED MAPPING: Map data in small batches to avoid blocking
         const MAP_CHUNK_SIZE = 100;
@@ -224,6 +243,31 @@ export const SyncService = {
           }
         };
 
+        // ── Customer ID Remapping ──────────────────────────────────────────────
+        // The server returns a map of { offlineUUID → serverIntId }.
+        // We must update every local record (customers, sales, debtPayments)
+        // that references the old offline UUID so future syncs link correctly.
+        if (Object.keys(customerIdMap).length > 0) {
+          for (const [offlineId, serverId] of Object.entries(customerIdMap)) {
+            const serverIdStr = String(serverId);
+            // Update the customer record itself
+            const localCust = await db.customers.get(offlineId);
+            if (localCust) {
+              await db.customers.delete(offlineId);
+              await db.customers.put({ ...localCust, id: serverIdStr, synced: 1 });
+            }
+            // Update any sales that referenced this customer's offline UUID
+            await db.salesQueue
+              .where('customerId').equals(offlineId)
+              .modify({ customerId: serverIdStr });
+            // Update any debt payments that referenced this customer's offline UUID
+            await db.debtPayments
+              .where('customerId').equals(offlineId)
+              .modify({ customerId: serverIdStr });
+          }
+        }
+
+        // ── Mark confirmed records as synced ─────────────────────────────────
         // Use server-confirmed IDs to mark only truly synced sales
         const confirmedSaleIds: string[] = data.syncedSaleIds || unsyncedSales.map((s: any) => s.id);
         if (confirmedSaleIds.length > 0) {
@@ -239,7 +283,10 @@ export const SyncService = {
           await markAsSynced(db.expenses, unsyncedExpenses);
         }
         if (unsyncedCustomers.length > 0) {
-          await markAsSynced(db.customers, unsyncedCustomers);
+          // Only mark customers synced if they were remapped — otherwise they
+          // already got synced=1 in the remapping step above
+          const notRemapped = unsyncedCustomers.filter((c: any) => !customerIdMap[c.id]);
+          if (notRemapped.length > 0) await markAsSynced(db.customers, notRemapped);
         }
         if (unsyncedPayments.length > 0) {
           await markAsSynced(db.debtPayments, unsyncedPayments);
@@ -280,6 +327,19 @@ export const SyncService = {
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       console.error('📡 Sync Error:', msg);
+      // Increment syncRetries on all unsynced records so we can detect stuck ones
+      try {
+        const increment = (table: any) =>
+          table.where('synced').equals(0).modify((item: any) => {
+            item.syncRetries = (item.syncRetries ?? 0) + 1;
+          });
+        await Promise.all([
+          increment(db.salesQueue),
+          increment(db.expenses),
+          increment(db.customers),
+          increment(db.debtPayments),
+        ]);
+      } catch { /* non-critical */ }
       return false;
     } finally {
       this.isSyncing = false;

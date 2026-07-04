@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ProductService } from '../services/ProductService';
+import { getClientIp } from '../lib/ipHelper';
 
 export const listProducts = async (req: Request, res: Response) => {
   const { q, categoryId, deleted } = req.query;
@@ -128,9 +129,10 @@ export const generateSku = async (req: Request, res: Response) => {
 export const saveProduct = async (req: Request, res: Response) => {
   const data = req.body;
   const user = (req as any).user;
+  const ipInfo = getClientIp(req);
 
   try {
-    const product = await ProductService.saveProduct(data, user);
+    const product = await ProductService.saveProduct(data, user, ipInfo);
     const isUpdate = data.id && parseInt(data.id) < 1000000000;
     
     return res.status(isUpdate ? 200 : 201).json({ 
@@ -185,13 +187,14 @@ export const getProductRatings = async (req: Request, res: Response) => {
 export const deleteProduct = async (req: Request, res: Response) => {
     const { id } = req.params;
     const user = (req as any).user;
+    const ipInfo = getClientIp(req);
     
     if (!id) return res.status(400).json({ success: false, message: "Missing product ID" });
 
     try {
         const productId = parseInt(id as string);
         if (isNaN(productId)) return res.status(400).json({ success: false, message: "Invalid product ID" });
-        await ProductService.deleteProduct(productId, user);
+        await ProductService.deleteProduct(productId, user, ipInfo);
         return res.status(200).json({ success: true, message: "Product deleted permanently" });
     } catch (error: any) {
         return res.status(500).json({ success: false, message: 'Failed to delete product', error: error.message });

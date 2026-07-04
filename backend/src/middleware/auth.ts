@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { getClientIp } from '../lib/ipHelper';
 
 interface AuthRequest extends Request {
   user?: {
@@ -14,7 +15,8 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
-    console.warn(`🔓 Auth Blocked: Missing token for ${req.method} ${req.originalUrl} from ${req.ip}`);
+    const { ip } = getClientIp(req);
+    console.warn(`🔓 Auth Blocked: Missing token for ${req.method} ${req.originalUrl} from ${ip}`);
     return res.status(401).json({ message: 'Authentication required' });
   }
 

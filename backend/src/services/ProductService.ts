@@ -47,7 +47,10 @@ export class ProductService {
     }));
   }
 
-  static async saveProduct(data: any, user: any) {
+  static async saveProduct(data: any, user: any, ipInfo?: { ip: string, source: string }) {
+    if (!data.name || !data.categoryId || !data.costPrice || !data.sellPrice) {
+      throw new Error("Missing required fields");
+    }
     const payload: any = {
       name: data.name,
       sku: data.sku,
@@ -83,7 +86,9 @@ export class ProductService {
         entityType: 'PRODUCT',
         entityId: product.id,
         details: payload,
-        branchId: payload.branchId
+        branchId: payload.branchId,
+        ip: ipInfo?.ip,
+        ipSource: ipInfo?.source
       });
     } else {
       product = await prisma.product.create({
@@ -96,14 +101,16 @@ export class ProductService {
         entityType: 'PRODUCT',
         entityId: product.id,
         details: payload,
-        branchId: payload.branchId
+        branchId: payload.branchId,
+        ip: ipInfo?.ip,
+        ipSource: ipInfo?.source
       });
     }
 
     return product;
   }
 
-  static async deleteProduct(id: string | number, user: any) {
+  static async deleteProduct(id: string | number, user: any, ipInfo?: { ip: string, source: string }) {
     const productId = parseInt(id as string);
 
     if (isNaN(productId)) {
@@ -146,7 +153,9 @@ export class ProductService {
         action: 'DELETE_PRODUCT_PERMANENT',
         entityType: 'PRODUCT',
         entityId: productId,
-        branchId: (product as any).branchId || user.branchId
+        branchId: (product as any).branchId || user.branchId,
+        ip: ipInfo?.ip,
+        ipSource: ipInfo?.source
       });
     } catch (error: any) {
       console.error('❌ Database Delete Error:', error);
