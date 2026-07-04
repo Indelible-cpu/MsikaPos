@@ -176,12 +176,17 @@ const TransactionsPage: React.FC = () => {
     const toastId = toast.loading(`Deleting ${selectedIds.size} transaction(s)...`);
     setIsBulkDeleting(true);
     try {
-      for (const id of selectedIds) {
-        await db.salesQueue.delete(id);
-        try { await api.delete(`/sales/${id}`); } catch { /* silent */ }
-      }
+      const idsArray = Array.from(selectedIds);
+      
+      // Run API deletions in parallel instead of one by one
+      const deletePromises = idsArray.map(id => api.delete(`/sales/${id}`).catch(() => { /* silent */ }));
+      await Promise.all(deletePromises);
+      
+      // Bulk delete locally
+      await db.salesQueue.bulkDelete(idsArray);
+      
       setServerSales(prev => prev.filter(s => !selectedIds.has(s.id)));
-      toast.success(`${selectedIds.size} transaction(s) deleted`, { id: toastId });
+      toast.success(`${idsArray.length} transaction(s) deleted`, { id: toastId });
       setSelectedIds(new Set());
     } catch {
       toast.error('Bulk delete failed', { id: toastId });
