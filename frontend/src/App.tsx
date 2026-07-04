@@ -39,7 +39,6 @@ import { initDB } from './db/seedData';
 import { AuditService } from './services/AuditService';
 import { getBase64Image } from './utils/imageUtils';
 import api from './api/client';
-import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -403,11 +402,6 @@ const App: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
-        <PWAInstallPrompt 
-          deferredPrompt={deferredPrompt} 
-          onInstall={handleInstallClick} 
-          onDismiss={handleDismissInstall} 
-        />
       </div>
     </Router>
   );
