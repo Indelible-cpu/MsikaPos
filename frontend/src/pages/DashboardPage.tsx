@@ -6,7 +6,8 @@ import {
   ArrowUpRight,
   Wallet,
   Receipt,
-  Plus
+  Plus,
+  RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom'; 
@@ -23,6 +24,23 @@ import {
   Cell
 } from 'recharts';
 
+import { useQuery } from '@tanstack/react-query';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/posDB';
+import { isSameDay } from 'date-fns';
+import api from '../api/client';
+
+interface ServerStats {
+  today_sales: number;
+  today_expenses: number;
+  total_sales: number;
+  total_credit_balance: number;
+  credit_customer_count: number;
+  low_stock: number;
+  chart_data: { name: string; revenue: number; customers: number }[];
+  recent_activity: { invoice_no: string; total: number; username: string; createdAt: string }[];
+}
+
 interface Product {
   isService: boolean;
   quantity: number;
@@ -38,72 +56,65 @@ interface Credit {
   customer_phone: string;
 }
 
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/posDB';
-import { isSameDay } from 'date-fns';
-
 const DashboardPage: React.FC = () => {
-  const localSales = useLiveQuery(() => db.salesQueue.toArray());
+  // ── Server stats (single source of truth for all financial numbers) ──────
+  const { data: serverStats, isLoading: serverLoading, refetch, isRefetching } = useQuery<ServerStats>({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const res = await api.get('/dashboard/stats');
+      return res.data.data;
+    },
+    staleTime: 30_000,       // data is fresh for 30s
+    refetchInterval: 60_000, // auto-refresh every minute
+    refetchOnWindowFocus: true,
+  });
+
+  // ── Local DB — only for lists that are display-only (expenses, low-stock) ─
   const localExpenses = useLiveQuery(() => db.expenses.toArray());
-  const localProducts = useLiveQuery(() => db.products.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active')).toArray());
+  const localProducts = useLiveQuery(() =>
+    db.products.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active')).toArray()
+  );
   const localCustomers = useLiveQuery(() => db.customers.toArray());
 
   const todayDate = new Date();
-  
-  const validSales = (localSales || []).filter(s => s.status !== 'DELETED' && s.status !== 'REFUNDED');
-  const todaySales = validSales.filter(s => isSameDay(new Date(s.createdAt), todayDate));
-  const todayExpensesArr = (localExpenses || []).filter(e => isSameDay(new Date(e.date || e.createdAt), todayDate));
-  
-  const totalRevenueToday = todaySales.reduce((sum, s) => sum + Number(s.total || 0), 0);
-  const totalExpensesToday = todayExpensesArr.reduce((sum, e) => sum + Number(e.amount || 0), 0);
-
-  const totalSalesAllTime = validSales.reduce((sum, s) => sum + Number(s.total || 0), 0);
-
-  const activeCredits = (localCustomers || []).filter(c => Number(c.balance || 0) > 0).map(c => ({
-    status: 'Pending',
-    current_total: Number(c.totalCreditAmount || 0),
-    paid_amount: Number(c.totalPaidAmount || 0),
-    customer_name: c.name,
-    customer_phone: c.phone
-  }));
-  const totalCreditAmount = (localCustomers || []).reduce((sum, c) => sum + Number(c.balance || 0), 0);
+  const todayExpensesArr = (localExpenses || []).filter(e =>
+    isSameDay(new Date(e.date || e.createdAt), todayDate)
+  );
   const lowStockItems = (localProducts || []).filter(p => !p.isService && p.quantity <= 5);
-  const expenses = localExpenses || [];
+  const activeCredits = (localCustomers || [])
+    .filter(c => Number(c.balance || 0) > 0)
+    .map(c => ({
+      status: 'Pending',
+      current_total: Number(c.totalCreditAmount || 0),
+      paid_amount: Number(c.totalPaidAmount || 0),
+      customer_name: c.name,
+      customer_phone: c.phone
+    }));
 
-  const chartData = React.useMemo(() => {
-    const valid = (localSales || []).filter(s => s.status !== 'DELETED' && s.status !== 'REFUNDED');
-    if (!valid.length) return [];
-    const days = [];
-    for(let i=6; i>=0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const salesOnDate = valid.filter(s => s.createdAt.startsWith(dateStr));
-      days.push({
-        name: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        revenue: salesOnDate.reduce((sum, s) => sum + Number(s.total || 0), 0),
-        customers: salesOnDate.length
-      });
-    }
-    return days;
-  }, [localSales]);
-
-
+  // ── Derived values — always from server, never from stale local cache ─────
+  const totalRevenueToday  = serverStats?.today_sales    ?? 0;
+  const totalExpensesToday = serverStats?.today_expenses ?? 0;
+  const totalCreditAmount  = serverStats?.total_credit_balance ?? 0;
+  const totalSalesAllTime  = serverStats?.total_sales    ?? 0;
+  const chartData          = serverStats?.chart_data     ?? [];
 
   const statCards = [
-    { label: "Today's sales", value: `MK ${totalRevenueToday.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
-    { label: "Today's expenses", value: `MK ${totalExpensesToday.toLocaleString()}`, icon: Wallet, color: 'text-rose-500', trend: 'Daily outflow' },
-    { label: 'Active credits', value: `MK ${totalCreditAmount.toLocaleString()}`, icon: Users, color: 'text-amber-500', trend: `${activeCredits.length} Customers` },
+    { label: "Today's sales",    value: `MK ${totalRevenueToday.toLocaleString()}`,  icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
+    { label: "Today's expenses", value: `MK ${totalExpensesToday.toLocaleString()}`, icon: Wallet,     color: 'text-rose-500',    trend: 'Daily outflow' },
+    { label: 'Active credits',   value: `MK ${totalCreditAmount.toLocaleString()}`,  icon: Users,      color: 'text-amber-500',   trend: `${serverStats?.credit_customer_count ?? activeCredits.length} Customers` },
   ];
 
   const historicalCards = [
-    { label: "Total Sales", value: `MK ${totalSalesAllTime.toLocaleString()}`, icon: Receipt, color: 'text-emerald-500' },
+    { label: 'Total Sales', value: `MK ${totalSalesAllTime.toLocaleString()}`, icon: Receipt, color: 'text-emerald-500' },
   ];
+
+  const expenses = (localExpenses || [])
+    .slice()
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+    .slice(0, 5);
 
   return (
     <div className="flex flex-col transition-all px-0">
-
-
       <div className="px-0 py-0 md:px-0 md:py-0">
 
         {/* Stats Grid */}
@@ -120,12 +131,16 @@ const DashboardPage: React.FC = () => {
                 <div className={`p-3 rounded-2xl bg-muted/10 border border-border/50 group-hover:border-primary/20 transition-colors ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <div className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${stat.trend.includes('outflow') || stat.trend.includes('Customers') || stat.trend.includes('margin') ? 'bg-primary/10 text-primary' : stat.trend.startsWith('+') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                <div className={`text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 ${stat.trend.includes('outflow') || stat.trend.includes('Customers') ? 'bg-primary/10 text-primary' : stat.trend.startsWith('+') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
                   {stat.trend.startsWith('+') && <ArrowUpRight className="w-3 h-3" />}
                   {stat.trend}
                 </div>
               </div>
-              <div className="text-3xl font-black tracking-tighter mb-1 text-foreground">{stat.value}</div>
+              {serverLoading ? (
+                <div className="h-9 w-3/4 rounded-xl bg-muted/20 animate-pulse mb-1" />
+              ) : (
+                <div className="text-3xl font-black tracking-tighter mb-1 text-foreground">{stat.value}</div>
+              )}
               <div className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{stat.label}</div>
             </motion.div>
           ))}
@@ -133,8 +148,16 @@ const DashboardPage: React.FC = () => {
 
         {/* Historical Financials Section */}
         <div className="glass-panel border-y border-border/50">
-          <div className="px-12 py-4 border-b border-border/50">
+          <div className="px-12 py-4 border-b border-border/50 flex items-center justify-between">
             <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Cumulative Financial Performance</h3>
+            <button
+              onClick={() => refetch()}
+              disabled={isRefetching}
+              className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary/60 hover:text-primary transition-colors disabled:opacity-40"
+            >
+              <RefreshCw className={`w-3 h-3 ${isRefetching ? 'animate-spin' : ''}`} />
+              {isRefetching ? 'Refreshing…' : 'Refresh'}
+            </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-1 gap-0 stagger-children">
             {historicalCards.map((stat, i) => (
@@ -145,10 +168,14 @@ const DashboardPage: React.FC = () => {
                   </div>
                   <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</div>
                 </div>
-                <div className="text-4xl font-black tracking-tighter text-foreground">
-                  <span className="text-xs text-muted-foreground/40 mr-2 font-mono uppercase">MWK</span>
-                  {stat.value.replace('MK ', '')}
-                </div>
+                {serverLoading ? (
+                  <div className="h-10 w-1/2 rounded-xl bg-muted/20 animate-pulse" />
+                ) : (
+                  <div className="text-4xl font-black tracking-tighter text-foreground">
+                    <span className="text-xs text-muted-foreground/40 mr-2 font-mono uppercase">MWK</span>
+                    {stat.value.replace('MK ', '')}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -185,9 +212,7 @@ const DashboardPage: React.FC = () => {
                       tickLine={false} 
                       tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.3)', fontWeight: 900 }}
                     />
-                    <YAxis 
-                      hide
-                    />
+                    <YAxis hide />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: '#111', 
@@ -267,7 +292,7 @@ const DashboardPage: React.FC = () => {
                  </div>
               </div>
               <div className="space-y-4">
-                 {expenses?.slice(0, 5).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).map((expense, i) => (
+                 {expenses.map((expense, i) => (
                    <div key={i} className="flex justify-between items-center p-4 bg-muted/5 border-b border-border/50 group hover:bg-muted/10 transition-all rounded-xl">
                       <div className="flex items-center gap-3">
                          <div className="w-10 h-10 bg-destructive/10 text-destructive rounded-xl flex items-center justify-center">
@@ -283,7 +308,7 @@ const DashboardPage: React.FC = () => {
                       </div>
                    </div>
                  ))}
-                 {(!expenses || expenses.length === 0) && (
+                 {expenses.length === 0 && (
                     <div className="p-10 text-center text-muted-foreground/20 font-bold text-xs tracking-widest uppercase">No expenses recorded</div>
                  )}
               </div>
@@ -348,7 +373,6 @@ const DashboardPage: React.FC = () => {
            </div>
         </div>
       </div>
-
     </div>
   );
 };
