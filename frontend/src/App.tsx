@@ -66,23 +66,20 @@ const App: React.FC = () => {
       });
     },
     onNeedRefresh() {
-      toast((t) => (
-        <div className="flex flex-col gap-3">
-          <p className="text-[10px] font-black tracking-widest text-white">New update available!</p>
-          <button 
-            onClick={() => {
-              if (updateSWRef.current) updateSWRef.current(true);
-              toast.dismiss(t.id);
-            }}
-            className="px-4 py-2 bg-primary text-white rounded-lg text-[9px] font-black tracking-[0.2em]"
-          >
-            REFRESH NOW
-          </button>
+      toast.loading((t) => (
+        <div className="flex flex-col gap-1">
+          <p className="text-[11px] font-black tracking-widest text-white uppercase">Updating system</p>
+          <p className="text-[9px] font-bold text-muted-foreground">Applying new features...</p>
         </div>
-      ), { 
-        duration: Infinity,
-        position: 'top-center'
-      });
+      ), { position: 'top-center' });
+      
+      setTimeout(() => {
+        if (updateSWRef.current) {
+          updateSWRef.current(true);
+        } else {
+          window.location.reload();
+        }
+      }, 1500);
     }
   }), []);
 
