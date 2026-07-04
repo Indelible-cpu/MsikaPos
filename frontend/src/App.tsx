@@ -42,11 +42,7 @@ import { getBase64Image } from './utils/imageUtils';
 import api from './api/client';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-  prompt(): Promise<void>;
-}
+// Removed BeforeInstallPromptEvent
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
