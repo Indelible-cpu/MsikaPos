@@ -162,33 +162,52 @@ const OrdersPage: React.FC = () => {
     if (!printElement) return;
 
     const toastId = toast.loading('Generating shareable document...');
+
+    // html2canvas cannot capture off-screen elements — temporarily bring it on-screen
+    const originalCss = printElement.style.cssText;
+    printElement.style.cssText = 'position:fixed;top:0;left:0;z-index:-1;pointer-events:none;opacity:1;';
+    // Let browser repaint so element is fully laid out
+    await new Promise(resolve => setTimeout(resolve, 150));
+
     try {
-      const canvas = await html2canvas(printElement, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const canvas = await html2canvas(printElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        allowTaint: false,
+        foreignObjectRendering: false,
+      });
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('Failed to generate image');
-      
-      const poRef = `PO-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-      const file = new File([blob], `Restocking-List-${poRef}.png`, { type: 'image/png' });
+
+      const poRef = `PO-${Date.now().toString().slice(-6)}`;
+      const file = new File([blob], `Purchase-Order-${poRef}.png`, { type: 'image/png' });
 
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
-          title: `Restocking List - ${poRef}`,
-          text: 'Please find the attached restocking order list.'
+          title: `Purchase Order - ${poRef}`,
+          text: 'Please find the attached purchase order.',
         });
         toast.success('Shared successfully', { id: toastId });
       } else {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Restocking-List-${poRef}.png`;
+        link.download = `Purchase-Order-${poRef}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast.success('Downloaded document', { id: toastId });
+        URL.revokeObjectURL(url);
+        toast.success('Downloaded successfully', { id: toastId });
       }
     } catch (e) {
+      console.error('Share error:', e);
       toast.error('Failed to generate document', { id: toastId });
+    } finally {
+      // Always restore element position
+      printElement.style.cssText = originalCss;
     }
   };
 
@@ -318,15 +337,12 @@ const OrdersPage: React.FC = () => {
       {/* ── Document View For PDF/Print ─────────────────────────────────────────────────────────── */}
       <style dangerouslySetInnerHTML={{__html: `
         @page {
-          margin: 20mm 18mm;
+          size: A4;
+          margin: 18mm 16mm;
         }
         @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #supplier-doc-print-area, #supplier-doc-print-area * {
-            visibility: visible !important;
-          }
+          body * { visibility: hidden !important; }
+          #supplier-doc-print-area, #supplier-doc-print-area * { visibility: visible !important; }
           #supplier-doc-print-area {
             position: absolute !important;
             left: 0 !important;
@@ -339,83 +355,108 @@ const OrdersPage: React.FC = () => {
             color: black !important;
           }
           #supplier-doc-inner {
-            padding: 0 !important;
+            /* Keep horizontal padding so content stays off the @page margin edge */
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            padding-top: 0 !important;
           }
+          /* Repeat footer on every print page */
+          #supplier-doc-footer {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+          }
+          /* Ensure table header repeats on new pages */
+          thead { display: table-header-group !important; }
+          tfoot { display: table-footer-group !important; }
         }
       `}} />
-      <div id="supplier-doc-print-area" className="bg-white text-black max-w-[794px] w-[794px] flex flex-col fixed top-[-9999px] left-[-9999px] z-[-1] min-h-[1123px]">
-        {/* Inner padding wrapper — keeps margins for share/canvas capture */}
-        <div id="supplier-doc-inner" className="flex flex-col flex-1 px-14 pt-12 pb-10">
+      <div
+        id="supplier-doc-print-area"
+        style={{ position: 'fixed', top: '-9999px', left: '-9999px', zIndex: -1, width: '794px', minHeight: '1123px', background: 'white', color: 'black' }}
+      >
+        {/* Inner content — px-14 gives visible margin for share/WhatsApp image */}
+        <div id="supplier-doc-inner" style={{ padding: '48px 56px 40px', display: 'flex', flexDirection: 'column', minHeight: '1123px' }}>
 
           {/* ── Professional Header ── */}
-          <div className="flex items-start justify-between pb-6 mb-8 border-b-4 border-black">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '24px', marginBottom: '28px', borderBottom: '4px solid black' }}>
+
             {/* Left: Company branding */}
-            <div className="flex items-center gap-4">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               {localStorage.getItem('companyLogo') && (
-                <img src={localStorage.getItem('companyLogo') || ''} alt="Logo" className="h-16 w-16 object-contain rounded-lg" />
+                <img src={localStorage.getItem('companyLogo') || ''} alt="Logo"
+                  style={{ height: '64px', width: '64px', objectFit: 'contain', borderRadius: '8px' }} />
               )}
               <div>
-                <div className="text-2xl font-black tracking-tight leading-tight">{localStorage.getItem('companyName') || 'MsikaPOS'}</div>
+                <div style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1.2 }}>
+                  {localStorage.getItem('companyName') || 'MsikaPOS'}
+                </div>
                 {localStorage.getItem('companyAddress') && (
-                  <div className="text-xs mt-0.5 opacity-60 whitespace-pre-wrap leading-relaxed">{localStorage.getItem('companyAddress')}</div>
+                  <div style={{ fontSize: '11px', opacity: 0.55, marginTop: '2px', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                    {localStorage.getItem('companyAddress')}
+                  </div>
                 )}
                 {localStorage.getItem('companyPhone') && (
-                  <div className="text-xs opacity-60">{localStorage.getItem('companyPhone')}</div>
+                  <div style={{ fontSize: '11px', opacity: 0.55 }}>{localStorage.getItem('companyPhone')}</div>
                 )}
               </div>
             </div>
 
             {/* Right: Document title & meta */}
-            <div className="text-right">
-              <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40 mb-1">Document</div>
-              <h1 className="text-3xl font-black uppercase tracking-tight leading-none mb-3">Purchase Order</h1>
-              <div className="inline-flex flex-col gap-1 bg-black/5 rounded-lg px-4 py-2.5 text-right">
-                <div className="flex gap-6 items-center justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-widest opacity-50">Date</span>
-                  <span className="text-xs font-bold">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.25em', opacity: 0.35, marginBottom: '4px' }}>Purchase Document</div>
+              <h1 style={{ fontSize: '28px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: '12px', margin: '0 0 12px 0' }}>Purchase Order</h1>
+              <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '4px', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', padding: '10px 16px', textAlign: 'right' }}>
+                <div style={{ display: 'flex', gap: '24px', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.45 }}>Date</span>
+                  <span style={{ fontSize: '12px', fontWeight: 700 }}>
+                    {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </span>
                 </div>
-                <div className="flex gap-6 items-center justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-widest opacity-50">Ref</span>
-                  <span className="text-xs font-black tracking-wider">PO-{Math.floor(Date.now() / 1000).toString().slice(-6)}</span>
+                <div style={{ display: 'flex', gap: '24px', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.45 }}>Ref</span>
+                  <span style={{ fontSize: '12px', fontWeight: 900, letterSpacing: '0.08em' }}>PO-{Date.now().toString().slice(-6)}</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* ── Items Table ── */}
-          <table className="w-full text-left border-collapse mb-10">
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '32px' }}>
             <thead>
-              <tr className="border-b-2 border-black text-[9px] font-black uppercase tracking-[0.15em]">
-                <th className="py-3 pr-4">#</th>
-                <th className="py-3 pr-4">Product Name</th>
-                <th className="py-3 px-4 text-center w-28">Qty</th>
-                <th className="py-3 px-4 text-right">Unit Price (MK)</th>
-                <th className="py-3 pl-4 text-right">Line Total (MK)</th>
+              <tr style={{ borderBottom: '2px solid black', fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                <th style={{ padding: '10px 12px 10px 0', textAlign: 'left' }}>#</th>
+                <th style={{ padding: '10px 12px', textAlign: 'left' }}>Product Name</th>
+                <th style={{ padding: '10px 12px', textAlign: 'center', width: '80px' }}>Qty</th>
+                <th style={{ padding: '10px 12px', textAlign: 'right' }}>Unit Price (MK)</th>
+                <th style={{ padding: '10px 0 10px 12px', textAlign: 'right' }}>Line Total (MK)</th>
               </tr>
             </thead>
             <tbody>
               {workingList.map((item, idx) => (
-                <tr key={item.productId} className={idx % 2 === 0 ? 'bg-black/[0.025]' : 'bg-white'}>
-                  <td className="py-3 pr-4 text-xs opacity-40 font-bold">{String(idx + 1).padStart(2, '0')}</td>
-                  <td className="py-3 pr-4 font-bold text-sm">{item.productName}</td>
-                  <td className="py-3 px-4 text-center font-black text-sm">{item.orderQty}</td>
-                  <td className="py-3 px-4 text-right text-sm">{item.unitCost.toLocaleString()}</td>
-                  <td className="py-3 pl-4 text-right font-black text-sm">{item.lineTotal.toLocaleString()}</td>
+                <tr key={item.productId} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.025)' : 'white', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+                  <td style={{ padding: '11px 12px 11px 0', fontSize: '11px', opacity: 0.35, fontWeight: 700 }}>{String(idx + 1).padStart(2, '0')}</td>
+                  <td style={{ padding: '11px 12px', fontWeight: 700, fontSize: '13px' }}>{item.productName}</td>
+                  <td style={{ padding: '11px 12px', textAlign: 'center', fontWeight: 900, fontSize: '13px' }}>{item.orderQty}</td>
+                  <td style={{ padding: '11px 12px', textAlign: 'right', fontSize: '13px' }}>{item.unitCost.toLocaleString()}</td>
+                  <td style={{ padding: '11px 0 11px 12px', textAlign: 'right', fontWeight: 900, fontSize: '13px' }}>{item.lineTotal.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
           {/* ── Grand Total ── */}
-          <div className="flex justify-end border-t-2 border-black pt-5">
-            <div className="text-right">
-              <div className="text-[9px] font-black uppercase tracking-[0.2em] opacity-50 mb-1">Estimated Grand Total</div>
-              <div className="text-4xl font-black tracking-tighter">MK {orderTotal.toLocaleString()}</div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '2px solid black', paddingTop: '18px' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', opacity: 0.45, marginBottom: '4px' }}>Estimated Grand Total</div>
+              <div style={{ fontSize: '36px', fontWeight: 900, letterSpacing: '-0.04em' }}>MK {orderTotal.toLocaleString()}</div>
             </div>
           </div>
 
-          {/* ── Footer ── */}
-          <div className="mt-auto pt-10">
+          {/* ── Footer (inline — also becomes fixed in @media print) ── */}
+          <div id="supplier-doc-footer" style={{ marginTop: 'auto', paddingTop: '36px' }}>
             <AppFooter />
           </div>
         </div>

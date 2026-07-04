@@ -513,14 +513,15 @@ const LoginPage: React.FC = () => {
                 )}
               </button>
 
-              {localStorage.getItem('biometricRegistered') === 'true' && (
+              {isBiometricAvailable && (
                 <div className="text-center">
                   <button 
                     type="button"
                     onClick={() => setLoginMode('biometric')}
-                    className="text-[10px] font-black tracking-widest text-primary-500 hover:text-primary-400 transition-colors"
+                    className="text-[10px] font-black tracking-widest text-primary-500 hover:text-primary-400 transition-colors flex items-center gap-1.5 mx-auto"
                   >
-                    Use Biometric Unlock
+                    <Fingerprint className="w-4 h-4" />
+                    {localStorage.getItem('biometricRegistered') === 'true' ? 'Use Biometric Unlock' : 'Sign in with Fingerprint'}
                   </button>
                 </div>
               )}
