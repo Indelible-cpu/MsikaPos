@@ -441,6 +441,8 @@ const POSPage: React.FC = () => {
       toast.error('Checkout failed.');
     } finally {
       setIsCheckingOut(false);
+      // Force power sync immediately after a cash sale
+      SyncService.pushSales().catch(console.error);
     }
   };
 
@@ -556,6 +558,8 @@ const POSPage: React.FC = () => {
       toast.error('Failed to save credit sale');
     } finally {
       setIsCheckingOut(false);
+      // Force power sync immediately after a credit sale
+      SyncService.pushSales().catch(console.error);
     }
   };
 
