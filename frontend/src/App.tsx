@@ -97,6 +97,9 @@ const App: React.FC = () => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     if (isStandalone || localStorage.getItem('pwa-installed') === 'true') return;
 
+    // 2. Don't show if user previously dismissed it
+    if (localStorage.getItem('pwa-prompt-dismissed')) return;
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as unknown as BeforeInstallPromptEvent);
