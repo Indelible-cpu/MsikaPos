@@ -61,12 +61,13 @@ const App: React.FC = () => {
       });
     },
     onNeedRefresh() {
-      toast.loading(() => (
+      toast.loading(
         <div className="flex flex-col gap-1">
           <p className="text-[11px] font-black tracking-widest text-white uppercase">Updating system</p>
           <p className="text-[9px] font-bold text-muted-foreground">Applying new features...</p>
-        </div>
-      ), { position: 'top-center' });
+        </div>,
+        { position: 'top-center', duration: 3000 }
+      );
       
       setTimeout(() => {
         if (updateSWRef.current) {
@@ -74,7 +75,7 @@ const App: React.FC = () => {
         } else {
           window.location.reload();
         }
-      }, 1500);
+      }, 3000);
     }
   }), []);
 
