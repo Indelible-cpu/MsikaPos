@@ -58,11 +58,15 @@ const PayrollTab: React.FC = () => {
   const [filterMonth, setFilterMonth] = useState(now.getMonth() + 1);
   const [filterYear, setFilterYear] = useState(now.getFullYear());
 
-  // Company name for payslip
+  // Company name and logo for payslip
   const [companyName, setCompanyName] = useState('MsikaPos');
+  const [logoBase64, setLogoBase64] = useState<string | null>(null);
 
   useEffect(() => {
-    api.get('/public/settings').then(r => { if (r.data?.data?.name) setCompanyName(r.data.data.name); }).catch(() => {});
+    api.get('/public/settings').then(r => { 
+      if (r.data?.data?.name) setCompanyName(r.data.data.name); 
+      if (r.data?.data?.logo) setLogoBase64(r.data.data.logo);
+    }).catch(() => {});
   }, []);
 
   const loadEmployees = useCallback(async () => {
@@ -480,39 +484,43 @@ const PayrollTab: React.FC = () => {
                 {/* Header & Logo Area */}
                 <div className="flex items-start justify-between mb-8 pb-6 border-b-2 border-slate-100">
                   <div className="flex gap-4 items-center">
-                    <div className="w-12 h-12 bg-slate-900 text-white rounded-lg flex items-center justify-center font-black text-xl shadow-lg">
-                      {companyName.charAt(0).toUpperCase()}
-                    </div>
+                    {logoBase64 ? (
+                      <img src={logoBase64} alt={companyName} className="w-12 h-12 object-contain rounded-lg shadow-lg bg-white" />
+                    ) : (
+                      <div className="w-12 h-12 bg-slate-900 text-white rounded-lg flex items-center justify-center font-black text-xl shadow-lg">
+                        {companyName.charAt(0)}
+                      </div>
+                    )}
                     <div>
                       <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{companyName}</h1>
-                      <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-widest">Official Payslip Document</p>
+                      <p className="text-[11px] text-slate-500 font-bold mt-1">Official Payslip Document</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Pay Period</p>
+                    <p className="text-[11px] text-slate-400 font-bold mb-1">Pay Period</p>
                     <p className="text-lg font-black text-slate-900 leading-none">{MONTHS[viewingPayslip.month - 1]} {viewingPayslip.year}</p>
-                    <p className="text-[9px] text-slate-500 font-semibold mt-2">Ref: PAY-{viewingPayslip.year}{String(viewingPayslip.month).padStart(2, '0')}-{String(viewingPayslip.userId).padStart(4, '0')}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold mt-2">Ref: PAY-{viewingPayslip.year}{String(viewingPayslip.month).padStart(2, '0')}-{String(viewingPayslip.userId).padStart(4, '0')}</p>
                   </div>
                 </div>
 
                 {/* Employee Info Grid */}
                 <div className="grid grid-cols-2 gap-6 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <div>
-                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Employee Name</p>
+                    <p className="text-[10px] text-slate-400 font-black mb-1">Employee Name</p>
                     <p className="text-base font-black text-slate-900">{viewingPayslip.user.fullname || viewingPayslip.user.username}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Designation / Role</p>
+                    <p className="text-[10px] text-slate-400 font-black mb-1">Designation / Role</p>
                     <p className="text-sm font-bold text-slate-700">{viewingPayslip.user.role.name.replace('_', ' ')}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Payment Status</p>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700">
+                    <p className="text-[10px] text-slate-400 font-black mb-1">Payment Status</p>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black bg-emerald-100 text-emerald-700">
                       <CheckCircle2 className="w-3 h-3" /> Processed
                     </span>
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">Issue Date</p>
+                    <p className="text-[10px] text-slate-400 font-black mb-1">Issue Date</p>
                     <p className="text-sm font-bold text-slate-700">{new Date(viewingPayslip.generatedAt).toLocaleDateString()}</p>
                   </div>
                 </div>
@@ -520,8 +528,8 @@ const PayrollTab: React.FC = () => {
                 {/* Financial Details Table */}
                 <div className="mb-8">
                   <div className="grid grid-cols-2 gap-4 pb-2 border-b-2 border-slate-800 mb-3">
-                    <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Earnings</div>
-                    <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest text-right">Amount (MK)</div>
+                    <div className="text-[11px] font-black text-slate-800">Earnings</div>
+                    <div className="text-[11px] font-black text-slate-800 text-right">Amount (MK)</div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
@@ -537,8 +545,8 @@ const PayrollTab: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pb-2 border-b-2 border-slate-800 mt-6 mb-3">
-                    <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest">Deductions</div>
-                    <div className="text-[10px] font-black text-slate-800 uppercase tracking-widest text-right">Amount (MK)</div>
+                    <div className="text-[11px] font-black text-slate-800">Deductions</div>
+                    <div className="text-[11px] font-black text-slate-800 text-right">Amount (MK)</div>
                   </div>
                   <div className="space-y-3">
                     {Number(viewingPayslip.deductions) > 0 && (
@@ -562,7 +570,7 @@ const PayrollTab: React.FC = () => {
                 {/* Net Pay Summary */}
                 <div className="bg-slate-900 rounded-xl p-6 flex items-center justify-between shadow-lg">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Net Payable Amount</span>
+                    <span className="text-[11px] font-black text-slate-400">Net Payable Amount</span>
                     <p className="text-[10px] text-slate-500 mt-0.5">Transferred to employee account</p>
                   </div>
                   <div className="text-right">
@@ -575,15 +583,15 @@ const PayrollTab: React.FC = () => {
                 <div className="mt-10 pt-6 border-t border-slate-200 flex items-end justify-between">
                   <div className="flex flex-col items-center gap-1">
                     <div className="border-b border-slate-300 w-32 pb-6"></div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Authorized Signatory</span>
+                    <span className="text-[10px] font-bold text-slate-400 mt-1">Authorized Signatory</span>
                   </div>
                   <div className="flex flex-col items-end gap-2 text-right">
                     <div className="flex items-center gap-2 text-slate-400">
                       <ShieldCheck className="w-4 h-4" />
-                      <span className="text-[8px] font-black uppercase tracking-widest">Verified Document</span>
+                      <span className="text-[9px] font-black">Verified Document</span>
                     </div>
                     <QrCode className="w-12 h-12 text-slate-800" />
-                    <span className="text-[7px] text-slate-400 font-bold mt-1">Scan for verification</span>
+                    <span className="text-[8px] text-slate-400 font-bold mt-1">Scan for verification</span>
                   </div>
                 </div>
               </div>
