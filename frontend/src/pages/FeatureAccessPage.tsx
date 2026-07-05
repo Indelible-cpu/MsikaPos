@@ -19,7 +19,7 @@ const FEATURES = [
   { key: 'SALES_HISTORY', label: 'Sales history', icon: 'Receipt' },
   { key: 'CUSTOMERS', label: 'Credit center', icon: 'Users' },
   { key: 'INVENTORY', label: 'Stock management', icon: 'Package' },
-  { key: 'FINANCE', label: 'Finance & expenses', icon: 'Wallet' },
+  { key: 'FINANCE', label: 'Salary & expenses', icon: 'Wallet' },
   { key: 'STAFF', label: 'Staff management', icon: 'Users' },
   { key: 'BRANCHES', label: 'Branch management', icon: 'Building' },
   { key: 'REPORTS', label: 'System reports', icon: 'BarChart' },

@@ -77,7 +77,7 @@ export default function MobileHeader() {
       case '/settings': return 'System settings';
       case '/branches': return 'Branch management';
       case '/debt': return 'Credit center';
-      case '/expenses': return 'Finance & expenses';
+      case '/expenses': return 'Salary & expenses';
       case '/transactions': return 'Sales history';
       case '/users': return 'Staff management';
       case '/onboarding': return 'Account setup';
