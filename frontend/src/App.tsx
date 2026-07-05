@@ -96,7 +96,39 @@ const App: React.FC = () => {
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      // setDeferredPrompt(e as unknown as BeforeInstallPromptEvent); // Removed
+      const promptEvent = e as any;
+      toast((t) => (
+        <div className="flex flex-col gap-3 p-1">
+          <span className="text-[12px] font-black tracking-wide text-foreground uppercase">Install MsikaPos App</span>
+          <span className="text-[10px] font-bold text-muted-foreground leading-relaxed">
+            Install the app for a faster, fullscreen experience and offline capabilities.
+          </span>
+          <div className="flex justify-end gap-2 mt-1">
+            <button 
+              className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+              onClick={() => {
+                localStorage.setItem('pwa-prompt-dismissed', 'true');
+                toast.dismiss(t.id);
+              }}
+            >
+              Maybe Later
+            </button>
+            <button 
+              className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+              onClick={async () => {
+                promptEvent.prompt();
+                const { outcome } = await promptEvent.userChoice;
+                if (outcome === 'accepted') {
+                  localStorage.setItem('pwa-installed', 'true');
+                }
+                toast.dismiss(t.id);
+              }}
+            >
+              Install App
+            </button>
+          </div>
+        </div>
+      ), { duration: Infinity, id: 'pwa-install' });
     };
 
     const handleAppInstalled = () => {

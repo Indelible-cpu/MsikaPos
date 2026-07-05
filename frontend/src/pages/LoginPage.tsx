@@ -168,6 +168,18 @@ const LoginPage: React.FC = () => {
     }
   }, []);
 
+  const performRedirect = (userData: any) => {
+    if (userData.role === 'CUSTOMER') {
+      window.location.href = '/';
+    } else if (!userData.isVerified || userData.mustChangePassword) {
+      window.location.href = '/staff/onboarding';
+    } else if (userData.role === 'CASHIER') {
+      window.location.href = '/staff/pos';
+    } else {
+      window.location.href = '/staff/dashboard';
+    }
+  };
+
   const registerBiometrics = async () => {
     try {
       if (!window.PublicKeyCredential) return;
@@ -223,13 +235,7 @@ const LoginPage: React.FC = () => {
         setShowBiometricPrompt(false);
         toast.success('Biometric login enabled for this device!');
         
-        if (user.role === 'CUSTOMER') {
-          window.location.href = '/';
-        } else if (user.role === 'CASHIER') {
-          window.location.href = '/staff/pos';
-        } else {
-          window.location.href = '/staff/dashboard';
-        }
+        performRedirect(user);
       }
     } catch (err: unknown) {
       console.error('Biometric error:', err);
@@ -365,9 +371,7 @@ const LoginPage: React.FC = () => {
         
         await AuditService.log('LOGIN', `User ${username} signed in ${navigator.onLine ? '' : '(Offline)'}`);
         
-        const isMobile = window.innerWidth < 768;
-        const canRegister = isMobile && 
-          window.PublicKeyCredential && 
+        const canRegister = window.PublicKeyCredential && 
           await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
           
         const alreadyRegistered = localStorage.getItem('biometricRegistered') === 'true' || userData.hasBiometrics === true;
@@ -386,16 +390,7 @@ const LoginPage: React.FC = () => {
           setShowBiometricPrompt(true);
         } else {
           toast.success('Welcome back!');
-          
-          if (userData.role === 'CUSTOMER') {
-            window.location.href = '/';
-          } else if (!userData.isVerified || userData.mustChangePassword) {
-            window.location.href = '/staff/onboarding';
-          } else if (userData.role === 'CASHIER') {
-            window.location.href = '/staff/pos';
-          } else {
-            window.location.href = '/staff/dashboard';
-          }
+          performRedirect(userData);
         }
       }
     } catch (err: unknown) {
@@ -573,13 +568,7 @@ const LoginPage: React.FC = () => {
         </AnimatePresence>
 
         <div className="mt-10 flex flex-col items-center gap-6">
-          {!isBiometricAvailable && (
-            <div className="px-6 py-4 bg-surface-card border border-surface-border rounded-2xl text-center">
-              <p className="text-[9px] font-black tracking-widest text-surface-text/20 uppercase leading-relaxed">
-                Biometric security is unavailable on this browser/device.
-              </p>
-            </div>
-          )}
+
 
           <Link to="/about" className="md:hidden flex items-center justify-center gap-2 text-[10px] font-medium tracking-wide text-muted-foreground/60 hover:text-primary hover:underline underline-offset-4 transition-all">
             <Info className="w-3 h-3" />
@@ -626,7 +615,8 @@ const LoginPage: React.FC = () => {
                 <button 
                   onClick={() => {
                     setShowBiometricPrompt(false);
-                    window.location.href = '/dashboard';
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    performRedirect(user);
                   }}
                   className="w-full h-14 bg-transparent text-surface-text/30 rounded-2xl font-black tracking-widest text-[10px] transition-all hover:text-surface-text active:scale-95"
                 >
