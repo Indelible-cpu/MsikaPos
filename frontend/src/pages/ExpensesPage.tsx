@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { Receipt } from '../components/Receipt';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import api from '../api/client';
 
 type ExpenseReceiptProps = React.ComponentProps<typeof Receipt>;
@@ -725,15 +725,15 @@ const PayrollTab: React.FC = () => {
                   if (!el) return;
                   const tid = toast.loading('Preparing payslip...');
                   try {
-                    const canvas = await html2canvas(el, {
-                      scale: 3,
-                      backgroundColor: '#ffffff',
-                      useCORS: true,
-                      logging: false,
-                      allowTaint: true,
-                      foreignObjectRendering: false
+                    const dataUrl = await toPng(el, {
+                      quality: 1.0,
+                      pixelRatio: 3,
+                      backgroundColor: '#ffffff'
                     });
-                    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+                    
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+                    
                     if (!blob) throw new Error('Failed to generate image');
                     const fname = `payslip-${viewingPayslip.user.username}-${MONTHS[viewingPayslip.month-1]}-${viewingPayslip.year}.png`;
                     const file = new File([blob], fname, { type: 'image/png' });
