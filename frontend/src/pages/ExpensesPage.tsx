@@ -1067,11 +1067,12 @@ const ExpensesPage: React.FC = () => {
                 if (!el) return;
                 toast.loading('Preparing voucher...', { id: 'share' });
                 try {
-                  const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff' });
-                  const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
+                  const dataUrl = await toPng(el, { quality: 1.0, pixelRatio: 3, backgroundColor: '#ffffff' });
+                  const res = await fetch(dataUrl);
+                  const blob = await res.blob();
                   if (blob) {
                     const file = new File([blob], `voucher-${expenseReceipt.invoiceNo}.png`, { type: 'image/png' });
-                    if (navigator.share) { await navigator.share({ files: [file], title: 'Expense voucher', text: `Voucher for ${formData.description}` }); toast.success('Shared successfully', { id: 'share' }); }
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Expense voucher', text: `Voucher for ${formData.description}` }); toast.success('Shared successfully', { id: 'share' }); }
                     else { const text = encodeURIComponent(`Expense voucher\nRef: ${expenseReceipt.invoiceNo}\nAmount: MK ${expenseReceipt.total.toLocaleString()}\nDesc: ${formData.description}`); window.open(`https://wa.me/?text=${text}`, '_blank'); toast.success('WhatsApp opened', { id: 'share' }); }
                   }
                 } catch { toast.error('Failed to share', { id: 'share' }); }
