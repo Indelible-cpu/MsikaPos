@@ -256,12 +256,9 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     const checkBiometrics = async () => {
-      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-      if (isMobile && window.PublicKeyCredential) {
-        // We check availability but also if the user HAS a registered ID for THIS site
+      if (window.PublicKeyCredential) {
         const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         const registered = localStorage.getItem('biometricRegistered') === 'true';
-        
         setIsBiometricAvailable(available);
         if (registered) {
           setLoginMode('biometric');
@@ -372,8 +369,7 @@ const LoginPage: React.FC = () => {
         
         await AuditService.log('LOGIN', `User ${username} signed in ${navigator.onLine ? '' : '(Offline)'}`);
         
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        const canRegister = isMobile && window.PublicKeyCredential && 
+        const canRegister = window.PublicKeyCredential && 
           await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
           
         const deviceRegistered = localStorage.getItem('biometricRegistered') === 'true';
