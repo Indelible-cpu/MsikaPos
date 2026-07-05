@@ -256,7 +256,8 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     const checkBiometrics = async () => {
-      if (window.PublicKeyCredential) {
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+      if (isMobile && window.PublicKeyCredential) {
         // We check availability but also if the user HAS a registered ID for THIS site
         const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         const registered = localStorage.getItem('biometricRegistered') === 'true';
@@ -371,22 +372,18 @@ const LoginPage: React.FC = () => {
         
         await AuditService.log('LOGIN', `User ${username} signed in ${navigator.onLine ? '' : '(Offline)'}`);
         
-        const canRegister = window.PublicKeyCredential && 
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const canRegister = isMobile && window.PublicKeyCredential && 
           await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
           
-        const alreadyRegistered = localStorage.getItem('biometricRegistered') === 'true' || userData.hasBiometrics === true;
+        const deviceRegistered = localStorage.getItem('biometricRegistered') === 'true';
         
-        if (alreadyRegistered) {
-          localStorage.setItem('biometricRegistered', 'true');
+        if (deviceRegistered) {
           localStorage.setItem('biometricUser', JSON.stringify(userData));
           localStorage.setItem('biometricAuth', btoa(password));
-          // If it was cleared, but backend says they have it, tell them we restored it!
-          if (localStorage.getItem('biometricRegistered') !== 'true' && userData.hasBiometrics) {
-            toast.success('Biometric login automatically restored!');
-          }
         }
         
-        if (canRegister && !alreadyRegistered) {
+        if (canRegister && !deviceRegistered) {
           setShowBiometricPrompt(true);
         } else {
           toast.success('Welcome back!');
