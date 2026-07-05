@@ -403,6 +403,10 @@ model Payslip {
   status        String   @default("DRAFT")
   notes         String?
   generatedAt   DateTime @default(now())
+  signature     String?  @db.Text
+  signedBy      String?
+  signedByRole  String?
+  signedAt      DateTime?
   user          User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, month, year])

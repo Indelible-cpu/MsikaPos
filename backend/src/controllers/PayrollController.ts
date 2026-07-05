@@ -190,3 +190,21 @@ export const getPayslips = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, message: e.message });
   }
 };
+
+// ─── SIGN PAYSLIP ─────────────────────────────────────────────────────────────
+export const signPayslip = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { signature, signedBy, signedByRole } = req.body;
+  if (!signature) return res.status(400).json({ success: false, message: 'Signature required' });
+  try {
+    const payslip = await prisma.payslip.update({
+      where: { id: Number(id) },
+      data: { signature, signedBy, signedByRole, signedAt: new Date() },
+      include: { user: { select: { id: true, username: true, fullname: true, role: { select: { name: true } } } } }
+    });
+    return res.json({ success: true, data: payslip });
+  } catch (e: any) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
+};
+

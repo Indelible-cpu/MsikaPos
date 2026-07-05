@@ -209,6 +209,7 @@ app.post('/api/payroll/advances', adminOnly, PayrollCtrl.createAdvance as any);
 app.put('/api/payroll/advances/:id', adminOnly, PayrollCtrl.updateAdvance as any);
 app.get('/api/payroll/payslips', adminOnly, PayrollCtrl.getPayslips as any);
 app.post('/api/payroll/payslips/generate', adminOnly, PayrollCtrl.generatePayslip as any);
+app.put('/api/payroll/payslips/:id/sign', adminOnly, PayrollCtrl.signPayslip as any);
 
 // Role Initialization
 const initRoles = async () => {

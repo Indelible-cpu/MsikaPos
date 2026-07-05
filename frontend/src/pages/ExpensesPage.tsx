@@ -31,6 +31,7 @@ interface Payslip {
   id: number; userId: number; month: number; year: number;
   basicSalary: number; allowances: number; deductions: number;
   advanceDeduct: number; netPay: number; status: string; generatedAt: string;
+  signature?: string; signedBy?: string; signedByRole?: string; signedAt?: string;
   user: { id: number; username: string; fullname: string; role: { name: string } };
 }
 
@@ -58,16 +59,87 @@ const PayrollTab: React.FC = () => {
   const [filterMonth, setFilterMonth] = useState(now.getMonth() + 1);
   const [filterYear, setFilterYear] = useState(now.getFullYear());
 
-  // Company name and logo for payslip
-  const [companyName, setCompanyName] = useState('MsikaPos');
-  const [logoBase64, setLogoBase64] = useState<string | null>(null);
+  // Company branding for payslip — prefer localStorage (set by branding settings) over API
+  const [companyName, setCompanyName] = useState(() => localStorage.getItem('companyName') || 'My Shop');
+  const [logoBase64, setLogoBase64] = useState<string | null>(() => localStorage.getItem('companyLogo'));
+
+  // Signature pad
+  const [showSignPad, setShowSignPad] = useState(false);
+  const [isSigning, setIsSigning] = useState(false);
+  const sigCanvasRef = React.useRef<HTMLCanvasElement>(null);
+  const sigDrawing = React.useRef(false);
+  const sigLastPos = React.useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    api.get('/public/settings').then(r => { 
-      if (r.data?.data?.name) setCompanyName(r.data.data.name); 
-      if (r.data?.data?.logo) setLogoBase64(r.data.data.logo);
-    }).catch(() => {});
-  }, []);
+    // Refresh from API if localStorage is empty
+    if (!companyName || companyName === 'My Shop') {
+      api.get('/public/settings').then(r => { 
+        if (r.data?.data?.name) { setCompanyName(r.data.data.name); localStorage.setItem('companyName', r.data.data.name); }
+        if (r.data?.data?.logo) { setLogoBase64(r.data.data.logo); localStorage.setItem('companyLogo', r.data.data.logo); }
+      }).catch(() => {});
+    }
+  }, [companyName]);
+
+  // Signature pad helpers
+  const getPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    if ('touches' in e) {
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    }
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
+  };
+  const sigStart = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    sigDrawing.current = true;
+    const canvas = sigCanvasRef.current!;
+    sigLastPos.current = getPos(e, canvas);
+  };
+  const sigMove = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    if (!sigDrawing.current || !sigCanvasRef.current) return;
+    const canvas = sigCanvasRef.current;
+    const ctx = canvas.getContext('2d')!;
+    const pos = getPos(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(sigLastPos.current!.x, sigLastPos.current!.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    sigLastPos.current = pos;
+  };
+  const sigEnd = () => { sigDrawing.current = false; };
+  const clearSig = () => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return;
+    canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height);
+  };
+  const isSigEmpty = () => {
+    const canvas = sigCanvasRef.current;
+    if (!canvas) return true;
+    const data = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+    return !Array.from(data).some(v => v !== 0);
+  };
+  const submitSignature = async () => {
+    if (!viewingPayslip) return;
+    if (isSigEmpty()) { toast.error('Please draw your signature'); return; }
+    const sigData = sigCanvasRef.current!.toDataURL('image/png');
+    const loggedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    setIsSigning(true);
+    try {
+      const r = await api.put(`/payroll/payslips/${viewingPayslip.id}/sign`, {
+        signature: sigData,
+        signedBy: loggedUser.fullname || loggedUser.username || 'Admin',
+        signedByRole: loggedUser.role || 'ADMIN'
+      });
+      setViewingPayslip(r.data.data);
+      setShowSignPad(false);
+      toast.success('Payslip signed successfully');
+    } catch { toast.error('Failed to sign payslip'); }
+    finally { setIsSigning(false); }
+  };
 
   const loadEmployees = useCallback(async () => {
     setLoading(true);
@@ -579,58 +651,126 @@ const PayrollTab: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Secure Footer Section */}
-                <div className="mt-10 pt-6 border-t border-slate-200 flex items-end justify-between">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="border-b border-slate-300 w-32 pb-6"></div>
-                    <span className="text-[10px] font-bold text-slate-400 mt-1">Authorized Signatory</span>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 text-right">
-                    <div className="flex items-center gap-2 text-slate-400">
-                      <ShieldCheck className="w-4 h-4" />
-                      <span className="text-[9px] font-black">Verified Document</span>
+                {/* Signature Section */}
+                <div className="mt-8 pt-6 border-t border-slate-200">
+                  <div className="flex items-end justify-between gap-6">
+                    {/* Authorized Signatory */}
+                    <div className="flex flex-col items-center gap-2 flex-1">
+                      {viewingPayslip.signature ? (
+                        <img src={viewingPayslip.signature} alt="Signature" className="h-16 object-contain" />
+                      ) : (
+                        <div className="h-16 border-b-2 border-dashed border-slate-300 w-full" />
+                      )}
+                      <span className="text-[10px] font-bold text-slate-400">Authorized Signatory</span>
+                      {viewingPayslip.signedBy && (
+                        <div className="text-center">
+                          <p className="text-[11px] font-black text-slate-700">{viewingPayslip.signedBy}</p>
+                          <p className="text-[10px] text-slate-400">{viewingPayslip.signedByRole?.replace(/_/g, ' ')}</p>
+                          <p className="text-[9px] text-slate-300 mt-0.5">{new Date(viewingPayslip.signedAt!).toLocaleString()}</p>
+                        </div>
+                      )}
                     </div>
-                    <QrCode className="w-12 h-12 text-slate-800" />
-                    <span className="text-[8px] text-slate-400 font-bold mt-1">Scan for verification</span>
+
+                    {/* Verification mark */}
+                    <div className="flex flex-col items-end gap-2 text-right">
+                      <div className="flex items-center gap-1.5 text-slate-400">
+                        <ShieldCheck className="w-4 h-4" />
+                        <span className="text-[9px] font-black">Verified Document</span>
+                      </div>
+                      <QrCode className="w-10 h-10 text-slate-700" />
+                      <span className="text-[8px] text-slate-400 font-bold">Scan to verify</span>
+                    </div>
                   </div>
+                </div>
+
+                {/* Powered by footer */}
+                <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+                  <p className="text-[9px] text-slate-300 font-bold">Powered by MsikaPos</p>
                 </div>
               </div>
             </div>
 
+            {/* Sign Pad Modal (inline) */}
+            {showSignPad && (
+              <div className="w-full bg-surface-card border border-border/50 rounded-2xl p-5 space-y-4">
+                <p className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">Draw Signature Below</p>
+                <canvas
+                  ref={sigCanvasRef}
+                  width={400}
+                  height={120}
+                  className="w-full border-2 border-dashed border-border rounded-xl bg-white touch-none cursor-crosshair"
+                  onMouseDown={sigStart}
+                  onMouseMove={sigMove}
+                  onMouseUp={sigEnd}
+                  onMouseLeave={sigEnd}
+                  onTouchStart={sigStart}
+                  onTouchMove={sigMove}
+                  onTouchEnd={sigEnd}
+                />
+                <div className="flex gap-3">
+                  <button onClick={clearSig} className="flex-1 py-3 text-[10px] font-black tracking-widest uppercase border border-border/50 rounded-xl bg-muted/10">Clear</button>
+                  <button onClick={() => setShowSignPad(false)} className="flex-1 py-3 text-[10px] font-black tracking-widest uppercase border border-border/50 rounded-xl bg-muted/10">Cancel</button>
+                  <button onClick={submitSignature} disabled={isSigning} className="flex-1 py-3 text-[10px] font-black tracking-widest uppercase btn-primary rounded-xl">
+                    {isSigning ? 'Saving...' : 'Sign Payslip'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
-            <div className="flex gap-3 w-full">
+            <div className="flex gap-3 w-full flex-wrap">
               <button
                 onClick={async () => {
                   const el = document.getElementById('payslip-card');
                   if (!el) return;
-                  toast.loading('Preparing payslip...', { id: 'payslip-share' });
+                  const tid = toast.loading('Preparing payslip...');
                   try {
-                    const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#ffffff', useCORS: true });
-                    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
-                    if (blob) {
-                      const file = new File([blob], `payslip-${viewingPayslip.user.username}-${viewingPayslip.month}-${viewingPayslip.year}.png`, { type: 'image/png' });
-                      if (navigator.share) {
-                        await navigator.share({ files: [file], title: 'Payslip', text: `Payslip for ${MONTHS[viewingPayslip.month - 1]} ${viewingPayslip.year}` });
-                        toast.success('Shared!', { id: 'payslip-share' });
-                      } else {
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url; a.download = file.name; a.click();
-                        toast.success('Downloaded!', { id: 'payslip-share' });
-                      }
+                    const canvas = await html2canvas(el, {
+                      scale: 3,
+                      backgroundColor: '#ffffff',
+                      useCORS: true,
+                      logging: false,
+                      allowTaint: true,
+                      foreignObjectRendering: false
+                    });
+                    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+                    if (!blob) throw new Error('Failed to generate image');
+                    const fname = `payslip-${viewingPayslip.user.username}-${MONTHS[viewingPayslip.month-1]}-${viewingPayslip.year}.png`;
+                    const file = new File([blob], fname, { type: 'image/png' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                      await navigator.share({ files: [file], title: 'Payslip', text: `${companyName} payslip for ${MONTHS[viewingPayslip.month-1]} ${viewingPayslip.year}` });
+                      toast.success('Shared!', { id: tid });
+                    } else {
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url; a.download = fname; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                      toast.success('Downloaded!', { id: tid });
                     }
-                  } catch { toast.error('Failed to share', { id: 'payslip-share' }); }
+                  } catch (err: any) {
+                    console.error('Share error:', err);
+                    toast.error(err?.message || 'Failed to share', { id: tid });
+                  }
                 }}
-                className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 uppercase"
+                className="flex-1 min-w-[140px] py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 uppercase"
               >
                 <MessageSquare className="w-4 h-4" /> Share / Download
               </button>
-              <button type="button" onClick={() => setViewingPayslip(null)}
-                className="flex-1 py-4 btn-primary font-black text-[10px] tracking-widest uppercase rounded-2xl">Close</button>
+              {!viewingPayslip.signature && (
+                <button
+                  onClick={() => { setShowSignPad(s => !s); }}
+                  className="flex-1 min-w-[140px] py-4 border border-border/50 bg-muted/10 rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 uppercase"
+                >
+                  <Pencil className="w-4 h-4" /> Sign Payslip
+                </button>
+              )}
+              <button type="button" onClick={() => { setViewingPayslip(null); setShowSignPad(false); }}
+                className="flex-1 min-w-[140px] py-4 btn-primary font-black text-[10px] tracking-widest uppercase rounded-2xl">Close</button>
             </div>
           </div>
         )}
       </Modal>
+
     </div>
   );
 };
