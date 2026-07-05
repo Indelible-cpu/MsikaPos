@@ -564,7 +564,7 @@ const PayrollTab: React.FC = () => {
                       </div>
                     )}
                     <div>
-                      <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">{companyName}</h1>
+                      <h1 className="text-lg font-black text-slate-900 tracking-tight leading-none">{companyName}</h1>
                       <p className="text-[11px] text-slate-500 font-bold mt-1">Official Payslip Document</p>
                     </div>
                   </div>
