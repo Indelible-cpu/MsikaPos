@@ -228,6 +228,9 @@ const InventoryPage: React.FC = () => {
   // Smart Order State
   const [isSmartOrderOpen, setIsSmartOrderOpen] = useState(false);
   const [smartOrderItems, setSmartOrderItems] = useState<{product: LocalProduct, orderQty: number}[]>([]);
+  
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
 
   const products = useLiveQuery(
     async () => {
@@ -515,6 +518,8 @@ const InventoryPage: React.FC = () => {
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSavingProduct) return;
+    setIsSavingProduct(true);
     try {
       const newId = generateNumericId();
       const productData = {
@@ -556,6 +561,8 @@ const InventoryPage: React.FC = () => {
       setEditingProduct(null);
     } catch {
       toast.error('Failed to save product');
+    } finally {
+      setIsSavingProduct(false);
     }
   };
 
@@ -612,7 +619,7 @@ const InventoryPage: React.FC = () => {
   };
 
   const handleAddCategory = async () => {
-    if (!newCategoryTitle) return;
+    if (!newCategoryTitle || isSavingCategory) return;
     const normalizedTitle = newCategoryTitle.trim();
     
     // Check if category already exists (case-insensitive)
@@ -623,6 +630,7 @@ const InventoryPage: React.FC = () => {
       return;
     }
 
+    setIsSavingCategory(true);
     try {
       if (editingCategory) {
         // Handle Edit
@@ -653,6 +661,8 @@ const InventoryPage: React.FC = () => {
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Failed to save category');
+    } finally {
+      setIsSavingCategory(false);
     }
   };
 
@@ -980,7 +990,7 @@ const InventoryPage: React.FC = () => {
           </div>
           <div className="flex gap-4 pt-4">
             <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest uppercase" title="Cancel" aria-label="Cancel">Cancel</button>
-            <button type="submit" className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest uppercase shadow-lg shadow-primary-500/20" title="Save product" aria-label="Save product">Save product</button>
+            <button type="submit" disabled={isSavingProduct} className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest uppercase shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all" title="Save product" aria-label="Save product">{isSavingProduct ? 'Saving...' : 'Save product'}</button>
           </div>
         </form>
       </Modal>
@@ -992,7 +1002,7 @@ const InventoryPage: React.FC = () => {
             <label className="text-[9px] font-black tracking-widest text-surface-text/40 ml-1 uppercase" htmlFor="new-category">{editingCategory ? 'Edit category' : 'Create new category'}</label>
             <div className="flex gap-2">
               <input id="new-category" type="text" className="input-field flex-1 py-3 px-4 font-black" placeholder="Category name..." title="Category name" aria-label="Category name" value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
-              <button onClick={handleAddCategory} className="btn-primary !px-8 !py-3 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20" title={editingCategory ? "Update category" : "Add category"} aria-label={editingCategory ? "Update category" : "Add category"}>{editingCategory ? 'Update' : 'Add'}</button>
+              <button onClick={handleAddCategory} disabled={isSavingCategory} className="btn-primary !px-8 !py-3 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all" title={editingCategory ? "Update category" : "Add category"} aria-label={editingCategory ? "Update category" : "Add category"}>{isSavingCategory ? 'Saving...' : (editingCategory ? 'Update' : 'Add')}</button>
               {editingCategory && (
                 <button onClick={() => { setEditingCategory(null); setNewCategoryTitle(''); }} className="btn-secondary !px-4 !py-3 font-black text-[10px] tracking-widest uppercase" title="Cancel Edit">Cancel</button>
               )}

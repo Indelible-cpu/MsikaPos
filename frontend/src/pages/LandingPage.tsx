@@ -63,13 +63,7 @@ const LandingPage: React.FC = () => {
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors">Features</a>
           <Link to="/about" className="text-[10px] font-black tracking-widest text-muted-foreground hover:text-primary transition-colors">About <BrandName /></Link>
-          <Link to="/staff/login" className="px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl text-[10px] font-black tracking-widest hover:bg-primary hover:text-white transition-all btn-press">
-            Sign in
-          </Link>
         </div>
-        <Link to="/staff/login" className="md:hidden w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
-          <ArrowRight className="w-5 h-5" />
-        </Link>
       </nav>
 
       {/* Main scrollable content area */}
@@ -94,10 +88,7 @@ const LandingPage: React.FC = () => {
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-8">
-            <Link to="/staff/login" className="w-full md:w-auto h-16 px-10 bg-primary text-white rounded-2xl font-black tracking-widest uppercase flex items-center justify-center gap-3 shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
-              Launch Staff Portal <ChevronRight className="w-5 h-5" />
-            </Link>
-            <Link to="/store" className="w-full md:w-auto h-16 px-10 bg-surface-card border border-border rounded-2xl font-black tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-surface-bg transition-all">
+            <Link to="/store" className="w-full md:w-auto h-16 px-10 bg-primary text-white border border-border rounded-2xl font-black tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30">
               <ShoppingBag className="w-5 h-5" /> Live Demo Store
             </Link>
           </div>

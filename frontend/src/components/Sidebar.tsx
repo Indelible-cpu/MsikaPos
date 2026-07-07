@@ -45,7 +45,19 @@ const Sidebar: React.FC = () => {
               <span className="text-[10px] font-bold text-muted-foreground leading-relaxed">
                 You have {unsynced} unsynced sales. Please connect to the internet to sync them before logging out to prevent data loss.
               </span>
-              <div className="flex justify-end mt-1">
+              <div className="flex justify-between items-center mt-1">
+                <button 
+                  className="px-3 py-2 text-[9px] font-black tracking-widest uppercase text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors"
+                  onClick={async () => {
+                    toast.dismiss(t.id);
+                    try { await db.delete(); } catch(e) {}
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/staff/login';
+                  }}
+                >
+                  Force Logout
+                </button>
                 <button 
                   className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                   onClick={() => toast.dismiss(t.id)}
