@@ -145,15 +145,37 @@ const TransactionsPage: React.FC = () => {
   const sales = useMemo(() => {
     const merged = [...(localSales || [])];
     const localInvoices = new Set(merged.map(s => s.invoiceNo));
-    
+
+    // Build the same date interval used by the local filter
+    const now = new Date();
+    let scopeStart: Date | null = startOfDay(now);
+    if (timeFilter === 'Weekly') scopeStart = startOfWeek(now);
+    else if (timeFilter === 'Monthly') scopeStart = startOfMonth(now);
+    else if (timeFilter === 'Quarterly') scopeStart = startOfQuarter(now);
+    else if (timeFilter === 'Annual') scopeStart = startOfYear(now);
+    else if (timeFilter === 'All') scopeStart = null; // no date restriction
+
     serverSales.forEach(ss => {
-      if (ss.status !== 'DELETED' && !localInvoices.has(ss.invoiceNo)) {
-        merged.push(ss);
+      if (ss.status === 'DELETED') return;
+      if (localInvoices.has(ss.invoiceNo)) return;
+
+      // Apply scope filter to server sales too
+      if (scopeStart !== null) {
+        const saleDate = new Date(ss.createdAt);
+        if (saleDate < scopeStart || saleDate > endOfDay(now)) return;
       }
+
+      // Apply specific date filter if set
+      if (dateFilter) {
+        const saleDate = format(new Date(ss.createdAt), 'yyyy-MM-dd');
+        if (saleDate !== dateFilter) return;
+      }
+
+      merged.push(ss);
     });
     
     return merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [localSales, serverSales]);
+  }, [localSales, serverSales, timeFilter, dateFilter]);
 
   const selectedSale = useMemo(() => {
     if (!selectedSaleId) return null;
