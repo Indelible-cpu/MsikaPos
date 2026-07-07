@@ -6,10 +6,8 @@ import {
   CloudSync, 
   Smartphone, 
   ShoppingBag, 
-  ArrowRight, 
   Globe, 
   Zap, 
-  ChevronRight,
   Store
 } from 'lucide-react';
 import { motion } from 'framer-motion';
