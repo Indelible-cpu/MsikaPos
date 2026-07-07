@@ -10,6 +10,7 @@ import { clsx } from 'clsx';
 import { Receipt } from '../components/Receipt';
 import { SyncService } from '../services/SyncService';
 import { isValidMalawianPhone, restrictPhone } from '../utils/phoneUtils';
+import { generateUUID } from '../utils/cryptoUtils';
 import { 
   Search, 
   Users, 
@@ -135,7 +136,7 @@ const DebtPage: React.FC = () => {
     mutationFn: async (data: { id: string, amount: number }) => {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const cashierName = user.fullname || 'Unknown Cashier';
-      const paymentId = crypto.randomUUID();
+      const paymentId = generateUUID();
       
       if (!selectedCustomer) throw new Error('No customer selected');
       
@@ -312,7 +313,7 @@ const DebtPage: React.FC = () => {
       const existing = await db.customers.where('phone').equals(custForm.phone).first();
       if (existing) return toast.error(`Customer with phone ${custForm.phone} already exists (${existing.name})`);
 
-      const customerId = crypto.randomUUID();
+      const customerId = generateUUID();
       const creditSale = location.state?.creditSale;
       const initialPaid = creditSale ? creditSale.paid : 0;
       const totalAmt = creditSale ? creditSale.total : 0;
@@ -335,7 +336,7 @@ const DebtPage: React.FC = () => {
         // Log the initial sale
         const saleData = {
           ...creditSale,
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           customerId,
           paymentMode: 'Credit',
           itemsCount: creditSale.items.reduce((s: number, i: { quantity: number }) => s + i.quantity, 0),
@@ -348,7 +349,7 @@ const DebtPage: React.FC = () => {
         // Record initial deposit in history if any
         if (initialPaid > 0) {
           await db.debtPayments.add({
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             customerId,
             amount: initialPaid,
             paymentMethod: creditSale.paymentMode || 'Cash',

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
+import { generateUUID } from '../utils/cryptoUtils';
 import AppFooter from '../components/AppFooter';
 import Modal from '../components/Modal';
 import html2canvas from 'html2canvas';
@@ -137,7 +138,7 @@ const OrdersPage: React.FC = () => {
       
       const poRef = `PO-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
       await db.expenses.add({
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         amount: orderTotal,
         category: 'Inventory Restock',
         description: `Order ${poRef}`,

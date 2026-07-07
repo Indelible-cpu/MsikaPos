@@ -12,6 +12,7 @@ import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { Receipt } from '../components/Receipt';
 import { toPng } from 'html-to-image';
 import api from '../api/client';
+import { generateUUID } from '../utils/cryptoUtils';
 
 type ExpenseReceiptProps = React.ComponentProps<typeof Receipt>;
 
@@ -821,7 +822,7 @@ const ExpensesPage: React.FC = () => {
         await db.expenses.update(editingExpense.id, { ...formData, amount: Number(formData.amount) || 0 });
         toast.success('Expense updated');
       } else {
-        const expenseId = crypto.randomUUID();
+        const expenseId = generateUUID();
         const expenseData = { ...formData, amount: Number(formData.amount) || 0, id: expenseId, createdAt: new Date().toISOString(), synced: 0 };
         await db.expenses.add(expenseData);
         setExpenseReceipt({

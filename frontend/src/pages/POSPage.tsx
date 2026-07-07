@@ -5,6 +5,7 @@ import type { LocalProduct, LocalSale, LocalSaleItem, LocalCustomer } from '../d
 import { SyncService } from '../services/SyncService';
 import { apiFetch } from '../api/apiFetch';
 import { isValidMalawianPhone, restrictPhone } from '../utils/phoneUtils';
+import { generateUUID } from '../utils/cryptoUtils';
 
 import { 
   Search, 
@@ -385,7 +386,7 @@ const POSPage: React.FC = () => {
       const finalProfit = totalItemProfit - (Number(discount) || 0);
 
       const saleData: LocalSale = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         invoiceNo,
         userId: Number(user.id),
         items: saleItems,
@@ -454,7 +455,7 @@ const POSPage: React.FC = () => {
     
     setIsCheckingOut(true);
     try {
-      const customerId = crypto.randomUUID();
+      const customerId = generateUUID();
       const paidAmt = parseFloat(amountPaid) || 0;
       const balance = finalTotal - paidAmt;
 
@@ -478,7 +479,7 @@ const POSPage: React.FC = () => {
       // Record initial deposit in history
       if (paidAmt > 0) {
         await db.debtPayments.add({
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           customerId: customerId,
           amount: paidAmt,
           paymentMethod: 'Cash',
@@ -503,7 +504,7 @@ const POSPage: React.FC = () => {
       const finalProfit = saleItems.reduce((s, i) => s + i.profit, 0) - (Number(discount) || 0);
 
       const saleData: LocalSale = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         invoiceNo,
         userId: Number(user.id),
         items: saleItems,
