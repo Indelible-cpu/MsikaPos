@@ -502,7 +502,7 @@ const PayrollTab: React.FC = () => {
           </div>
           <div className="flex gap-4 pt-2">
             <button type="button" onClick={() => setSalaryModal({ open: false, employee: null })}
-              className="flex-1 py-4 bg-muted/20 border border-border/50 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase">Cancel</button>
+              className="flex-1 py-4 btn-cancel text-[10px]">Cancel</button>
             <button type="submit" className="flex-1 btn-primary py-4 text-[10px] font-black tracking-widest uppercase rounded-[1.5rem]">Save Config</button>
           </div>
         </form>
@@ -535,7 +535,7 @@ const PayrollTab: React.FC = () => {
           </div>
           <div className="flex gap-4 pt-2">
             <button type="button" onClick={() => setAdvanceModal(false)}
-              className="flex-1 py-4 bg-muted/20 border border-border/50 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase">Cancel</button>
+              className="flex-1 py-4 btn-cancel text-[10px]">Cancel</button>
             <button type="submit" className="flex-1 btn-primary py-4 text-[10px] font-black tracking-widest uppercase rounded-[1.5rem]">Record Advance</button>
           </div>
         </form>
@@ -708,8 +708,8 @@ const PayrollTab: React.FC = () => {
                   onTouchEnd={sigEnd}
                 />
                 <div className="flex gap-3">
-                  <button onClick={clearSig} className="flex-1 py-3 text-[10px] font-black tracking-widest uppercase border border-border/50 rounded-xl bg-muted/10">Clear</button>
-                  <button onClick={() => setShowSignPad(false)} className="flex-1 py-3 text-[10px] font-black tracking-widest uppercase border border-border/50 rounded-xl bg-muted/10">Cancel</button>
+                  <button onClick={clearSig} className="flex-1 py-3 btn-cancel text-[10px]">Clear</button>
+                  <button onClick={() => setShowSignPad(false)} className="flex-1 py-3 btn-cancel text-[10px]">Cancel</button>
                   <button onClick={submitSignature} disabled={isSigning} className="flex-1 py-3 text-[10px] font-black tracking-widest uppercase btn-primary rounded-xl">
                     {isSigning ? 'Saving...' : 'Sign Payslip'}
                   </button>
@@ -764,8 +764,7 @@ const PayrollTab: React.FC = () => {
                   <Pencil className="w-4 h-4" /> Sign Payslip
                 </button>
               )}
-              <button type="button" onClick={() => { setViewingPayslip(null); setShowSignPad(false); }}
-                className="flex-1 min-w-[140px] py-4 btn-primary font-black text-[10px] tracking-widest uppercase rounded-2xl">Close</button>
+              <button onClick={() => setViewingPayslip(null)} className="flex-1 min-w-[140px] py-4 btn-cancel text-[10px]">Close</button>
             </div>
           </div>
         )}
@@ -842,8 +841,8 @@ const ExpensesPage: React.FC = () => {
       <div className="flex flex-col gap-3">
         <span className="text-[11px] font-black tracking-wide text-foreground uppercase">Delete this expense record?</span>
         <div className="flex gap-2 justify-end mt-1">
-          <button className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-muted/50 text-muted-foreground hover:bg-muted/80 transition-colors" onClick={() => toast.dismiss(t.id)}>Cancel</button>
-          <button className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
+          <button className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl btn-cancel" onClick={() => toast.dismiss(t.id)}>Cancel</button>
+          <button className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl btn-danger"
             onClick={async () => {
               toast.dismiss(t.id);
               try { if (!navigator.onLine) { toast.error('You must be online to delete an expense.'); return; } await api.delete(`/expenses/${id}`); await db.expenses.delete(id); toast.success('Record deleted'); }
@@ -860,8 +859,8 @@ const ExpensesPage: React.FC = () => {
       <div className="flex flex-col gap-3">
         <span className="text-[11px] font-black tracking-wide text-foreground uppercase">Delete {selectedExpenseIds.size} selected expenses?</span>
         <div className="flex gap-2 justify-end mt-1">
-          <button className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-muted/50 text-muted-foreground hover:bg-muted/80 transition-colors" onClick={() => toast.dismiss(t.id)}>Cancel</button>
-          <button className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20"
+          <button className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl btn-cancel" onClick={() => toast.dismiss(t.id)}>Cancel</button>
+          <button className="px-4 py-2 text-[10px] font-black tracking-widest uppercase rounded-xl btn-danger"
             onClick={async () => {
               toast.dismiss(t.id);
               try {
@@ -1049,7 +1048,7 @@ const ExpensesPage: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-4 pt-6">
-            <button type="button" onClick={() => { setIsModalOpen(false); setEditingExpense(null); resetForm(); }} className="flex-1 py-5 bg-muted/20 border border-border/50 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase transition-all hover:bg-muted/30">Cancel</button>
+            <button type="button" onClick={() => { setIsModalOpen(false); setEditingExpense(null); resetForm(); }} className="flex-1 py-5 btn-cancel text-[10px]">Cancel</button>
             <button type="submit" className="flex-1 btn-primary !py-5 text-[10px] font-black tracking-widest bg-destructive hover:bg-destructive/90 shadow-xl shadow-destructive/20 uppercase transition-all">Save expense</button>
           </div>
         </form>
@@ -1079,7 +1078,7 @@ const ExpensesPage: React.FC = () => {
               }} className="flex-1 py-5 bg-emerald-500 text-white rounded-[1.5rem] text-[10px] font-black tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 uppercase">
                 <MessageSquare className="w-5 h-5" /> Share WhatsApp
               </button>
-              <button type="button" onClick={() => setExpenseReceipt(null)} className="flex-1 py-5 btn-primary font-black text-[10px] tracking-widest uppercase rounded-[1.5rem]">Close</button>
+              <button type="button" onClick={() => setExpenseReceipt(null)} className="flex-1 py-5 btn-cancel text-[10px]">Close</button>
             </div>
           </div>
         )}

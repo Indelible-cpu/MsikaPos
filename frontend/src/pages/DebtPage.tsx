@@ -638,7 +638,7 @@ const DebtPage: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => toast.dismiss(t.id)}
-                                className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
+                                className="flex-1 py-2 btn-cancel text-[10px]"
                               >Cancel</button>
                             </div>
                           </div>
@@ -669,7 +669,7 @@ const DebtPage: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => toast.dismiss(t.id)}
-                                className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
+                                className="flex-1 py-2 btn-cancel text-[10px]"
                               >Cancel</button>
                             </div>
                           </div>
@@ -730,7 +730,7 @@ const DebtPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-4 pt-10 border-t border-border/50">
-                   <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-5 bg-muted/20 rounded-[2rem] font-bold text-[10px] capitalize tracking-widest btn-press">Cancel edit</button>
+                   <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-5 btn-cancel text-[10px]">Cancel edit</button>
                    <button type="submit" className="flex-[2] py-5 bg-primary text-primary-foreground rounded-[2rem] font-bold text-[10px] capitalize tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl shadow-primary/20 btn-press"><Save className="w-5 h-5" /> Save changes</button>
                 </div>
               </form>
@@ -786,7 +786,7 @@ const DebtPage: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => toast.dismiss(t.id)}
-                                className="flex-1 py-2 bg-surface-bg border border-surface-border rounded-lg text-xs font-black"
+                                className="flex-1 py-2 btn-cancel text-[10px]"
                               >Cancel</button>
                             </div>
                           </div>

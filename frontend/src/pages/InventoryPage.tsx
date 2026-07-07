@@ -989,7 +989,7 @@ const InventoryPage: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-4 pt-4">
-            <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest uppercase" title="Cancel" aria-label="Cancel">Cancel</button>
+            <button type="button" onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 btn-cancel text-[10px]" title="Cancel" aria-label="Cancel">Cancel</button>
             <button type="submit" disabled={isSavingProduct} className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest uppercase shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all" title="Save product" aria-label="Save product">{isSavingProduct ? 'Saving...' : 'Save product'}</button>
           </div>
         </form>
@@ -1051,7 +1051,7 @@ const InventoryPage: React.FC = () => {
             <p className="text-surface-text/40 text-[10px] font-black tracking-widest px-4 leading-relaxed">This action cannot be undone.</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => setDeleteConfirmation(null)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest uppercase">Cancel</button>
+            <button onClick={() => setDeleteConfirmation(null)} className="flex-1 py-4 btn-cancel text-[10px]">Cancel</button>
             <button onClick={confirmDelete} className="flex-1 bg-red-500 text-white rounded-2xl text-[10px] font-black tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all">Delete</button>
           </div>
         </div>

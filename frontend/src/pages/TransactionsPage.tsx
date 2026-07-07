@@ -677,12 +677,20 @@ const TransactionsPage: React.FC = () => {
               />
             </div>
           </div>
-          <button 
-            onClick={saveEdit}
-            className="w-full btn-primary !py-5 text-[10px] font-bold tracking-widest shadow-xl shadow-primary-500/20 capitalize"
-          >
-            Save changes
-          </button>
+          <div className="flex gap-4">
+            <button 
+              onClick={() => setIsEditOpen(false)}
+              className="flex-1 btn-cancel py-5 text-[10px] capitalize"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={saveEdit}
+              className="flex-1 btn-primary !py-5 text-[10px] font-bold tracking-widest shadow-xl shadow-primary-500/20 capitalize"
+            >
+              Save changes
+            </button>
+          </div>
         </div>
       </Modal>
 
@@ -705,12 +713,20 @@ const TransactionsPage: React.FC = () => {
               />
             </div>
           </div>
-          <button 
-            onClick={saveRefund}
-            className="w-full bg-red-500 hover:bg-red-600 text-white !py-5 text-[10px] font-bold tracking-widest shadow-xl shadow-red-500/20 capitalize rounded-2xl transition-all btn-press"
-          >
-            Confirm Refund
-          </button>
+          <div className="flex gap-4">
+            <button 
+              onClick={() => setIsRefundOpen(false)}
+              className="flex-1 btn-cancel py-5 text-[10px] capitalize"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={saveRefund}
+              className="flex-1 btn-danger !py-5 text-[10px] capitalize"
+            >
+              Confirm Refund
+            </button>
+          </div>
         </div>
       </Modal>
     </div>

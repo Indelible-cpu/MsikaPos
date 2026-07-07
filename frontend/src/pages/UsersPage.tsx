@@ -411,7 +411,7 @@ const UsersPage: React.FC = () => {
             </div>
             
             <div className="flex gap-4 pt-4">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest">Cancel</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 btn-cancel text-[10px]">Cancel</button>
               <button type="submit" disabled={loading} className="flex-1 btn-primary !py-4 text-[10px] font-black tracking-widest shadow-lg shadow-primary-500/20">
                 {loading ? <Loader2 className="animate-spin" /> : (editingUser ? 'Save changes' : 'Create account')}
               </button>
@@ -525,7 +525,7 @@ const UsersPage: React.FC = () => {
           <div className="flex gap-4">
             <button 
               onClick={() => setActionModal({ ...actionModal, isOpen: false })}
-              className="flex-1 py-4 bg-surface-bg border border-surface-border rounded-2xl text-[10px] font-black tracking-widest"
+              className="flex-1 py-4 btn-cancel text-[10px]"
             >
               Cancel
             </button>
