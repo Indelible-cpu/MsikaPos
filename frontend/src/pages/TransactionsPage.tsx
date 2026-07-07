@@ -26,7 +26,7 @@ import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
 import { clsx } from 'clsx';
 
-type TimeFilter = 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
+type TimeFilter = 'All' | 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
 
 const TransactionsPage: React.FC = () => {
   const { isReadOnly } = useFeatureAccess();
@@ -71,17 +71,20 @@ const TransactionsPage: React.FC = () => {
           if (saleDate !== dateFilter) return false;
         }
 
-        // Scope Filter
-        const saleDate = new Date(s.createdAt);
-        const now = new Date();
-        let interval = { start: startOfDay(now), end: endOfDay(now) };
+        // Scope Filter — skip entirely when 'All' is selected
+        let matchesScope = true;
+        if (timeFilter !== 'All') {
+          const saleDate = new Date(s.createdAt);
+          const now = new Date();
+          let interval = { start: startOfDay(now), end: endOfDay(now) };
 
-        if (timeFilter === 'Weekly') interval = { start: startOfWeek(now), end: endOfDay(now) };
-        else if (timeFilter === 'Monthly') interval = { start: startOfMonth(now), end: endOfDay(now) };
-        else if (timeFilter === 'Quarterly') interval = { start: startOfQuarter(now), end: endOfDay(now) };
-        else if (timeFilter === 'Annual') interval = { start: startOfYear(now), end: endOfDay(now) };
+          if (timeFilter === 'Weekly') interval = { start: startOfWeek(now), end: endOfDay(now) };
+          else if (timeFilter === 'Monthly') interval = { start: startOfMonth(now), end: endOfDay(now) };
+          else if (timeFilter === 'Quarterly') interval = { start: startOfQuarter(now), end: endOfDay(now) };
+          else if (timeFilter === 'Annual') interval = { start: startOfYear(now), end: endOfDay(now) };
 
-        const matchesScope = isWithinInterval(saleDate, interval);
+          matchesScope = isWithinInterval(saleDate, interval);
+        }
 
         return matchesSearch && matchesSku && matchesScope && s.status !== 'DELETED';
       })
@@ -116,6 +119,7 @@ const TransactionsPage: React.FC = () => {
         
         // Scope Map for API
         const scopeMap: Record<TimeFilter, string> = {
+          'All': 'all',
           'Daily': 'daily',
           'Weekly': 'weekly',
           'Monthly': 'monthly',
@@ -387,8 +391,8 @@ const TransactionsPage: React.FC = () => {
               onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
               className="bg-card/50 border border-border/50 text-foreground text-[9px] font-bold tracking-tight px-3 h-9 rounded-xl appearance-none cursor-pointer hover:border-primary/50 transition-all capitalize btn-press"
             >
-              {['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annual'].map(f => (
-                <option key={f} value={f}>{f}</option>
+              {[{ value: 'Daily', label: 'Daily' }, { value: 'Weekly', label: 'Weekly' }, { value: 'Monthly', label: 'Monthly' }, { value: 'Quarterly', label: 'Quarterly' }, { value: 'Annual', label: 'Annual' }, { value: 'All', label: 'All Sales' }].map(f => (
+                <option key={f.value} value={f.value}>{f.label}</option>
               ))}
             </select>
 
