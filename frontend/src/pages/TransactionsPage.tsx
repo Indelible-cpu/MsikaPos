@@ -412,12 +412,16 @@ const TransactionsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
              <div className="glass-card border border-border/50 p-5 rounded-2xl flex items-center gap-8 shadow-sm">
                 <div>
-                   <div className="text-[9px] font-bold tracking-widest text-muted-foreground capitalize mb-1">Volume</div>
-                   <div className="text-2xl font-bold text-foreground">{totalSalesCount}</div>
+                   <div className="text-[9px] font-bold tracking-widest text-muted-foreground capitalize mb-1">
+                     {timeFilter === 'All' ? 'All-Time Sales' : `${timeFilter} Sales`}
+                   </div>
+                   <div className="text-2xl font-bold text-foreground">{totalSalesCount} transactions</div>
                 </div>
                 <div className="h-10 w-px bg-border/50"></div>
                 <div>
-                   <div className="text-[9px] font-bold tracking-widest text-muted-foreground capitalize mb-1">Net revenue</div>
+                   <div className="text-[9px] font-bold tracking-widest text-muted-foreground capitalize mb-1">
+                     {timeFilter === 'All' ? 'Cumulative Revenue' : `${timeFilter} Revenue`}
+                   </div>
                    <div className="text-2xl font-bold text-primary">MK {totalRevenue.toLocaleString()}</div>
                 </div>
              </div>

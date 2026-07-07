@@ -100,7 +100,6 @@ const DashboardPage: React.FC = () => {
   const totalRevenueToday  = serverStats?.today_sales    ?? 0;
   const totalExpensesToday = serverStats?.today_expenses ?? 0;
   const totalCreditAmount  = serverStats?.total_credit_balance ?? 0;
-  const totalSalesAllTime  = serverStats?.total_sales    ?? 0;
   const chartData          = serverStats?.chart_data     ?? [];
 
   const statCards = [
@@ -109,9 +108,6 @@ const DashboardPage: React.FC = () => {
     { label: 'Active credits',   value: `MK ${totalCreditAmount.toLocaleString()}`,  icon: Users,      color: 'text-amber-500',   trend: `${serverStats?.credit_customer_count ?? activeCredits.length} Customers` },
   ];
 
-  const historicalCards = [
-    { label: 'Total Sales', value: `MK ${totalSalesAllTime.toLocaleString()}`, icon: Receipt, color: 'text-emerald-500' },
-  ];
 
   const expenses = (localExpenses || [])
     .slice()
@@ -151,42 +147,6 @@ const DashboardPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Historical Financials Section */}
-        {(canAccess('REPORTS') || canAccess('FINANCE')) && (
-        <div className="glass-panel border-y border-border/50">
-          <div className="px-12 py-4 border-b border-border/50 flex items-center justify-between">
-            <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Cumulative Financial Performance</h3>
-            <button
-              onClick={() => refetch()}
-              disabled={isRefetching}
-              className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary/60 hover:text-primary transition-colors disabled:opacity-40"
-            >
-              <RefreshCw className={`w-3 h-3 ${isRefetching ? 'animate-spin' : ''}`} />
-              {isRefetching ? 'Refreshing…' : 'Refresh'}
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-0 stagger-children">
-            {historicalCards.map((stat, i) => (
-              <div key={i} className="p-10 border-r border-border/50 last:border-r-0 hover:bg-muted/5 transition-colors">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className={`p-2 rounded-xl bg-muted/10 border border-border/50 ${stat.color}`}>
-                    <stat.icon className="w-4 h-4" />
-                  </div>
-                  <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">{stat.label}</div>
-                </div>
-                {serverLoading ? (
-                  <div className="h-10 w-1/2 rounded-xl bg-muted/20 animate-pulse" />
-                ) : (
-                  <div className="text-4xl font-black tracking-tighter text-foreground">
-                    <span className="text-xs text-muted-foreground/40 mr-2 font-mono uppercase">MWK</span>
-                    {stat.value.replace('MK ', '')}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        )}
 
         {/* Charts Section */}
         {(canAccess('REPORTS') || canAccess('FINANCE')) && (
