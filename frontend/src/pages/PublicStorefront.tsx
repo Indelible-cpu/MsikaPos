@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, Search, ShoppingBag, User as UserIcon, Heart, Plus, Minus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2, RefreshCw, Check } from 'lucide-react';
+import { Package, Search, ShoppingBag, User as UserIcon, Heart, Plus, Minus, ShoppingCart, X, ArrowRight, Settings, Bookmark, Loader2, RefreshCw, Check, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuditService } from '../services/AuditService';
 import { formatCurrency } from '../utils/phoneUtils';
@@ -66,7 +66,25 @@ export const PublicStorefront: React.FC = () => {
   const [ratingValue, setRatingValue] = useState(5);
   const [ratingComment, setRatingComment] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (!selectedProduct?.imageUrl) return;
+    const images = selectedProduct.imageUrl.split('|');
+    if (images.length <= 1) return;
+    
+    if (distance > 50) setCurrentImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+    if (distance < -50) setCurrentImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+  };
 
   const CUSTOM_CATEGORIES = [
     'Phone Accessories',
@@ -813,21 +831,52 @@ export const PublicStorefront: React.FC = () => {
                    );
                  })()}
                 
-                <div className="flex flex-col items-center w-full max-w-sm">
-                  <div className="w-full aspect-square relative mb-4">
+                <div 
+                  className="flex flex-col items-center w-full max-w-[90vw] md:max-w-[50vw] flex-1"
+                  onTouchStart={onTouchStart}
+                  onTouchMove={onTouchMove}
+                  onTouchEnd={onTouchEnd}
+                >
+                  <div className="w-full flex-1 relative mb-4 flex items-center justify-center min-h-[300px] cursor-pointer group">
+                    {selectedProduct.imageUrl && selectedProduct.imageUrl.split('|').length > 1 && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === 0 ? selectedProduct.imageUrl!.split('|').length - 1 : prev - 1); }}
+                        className="absolute left-2 md:left-4 z-10 p-2 rounded-full bg-black/20 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/40"
+                      >
+                        <ChevronRight className="w-6 h-6 rotate-180" />
+                      </button>
+                    )}
+                    
                     <img 
+                      onClick={() => {
+                        if (selectedProduct.imageUrl) {
+                          const images = selectedProduct.imageUrl.split('|');
+                          if (images.length > 1) {
+                            setCurrentImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+                          }
+                        }
+                      }}
                       src={selectedProduct.imageUrl?.split('|')[currentImageIndex] || selectedProduct.imageUrl?.split('|')[0] || '/premium-item.png'} 
-                      className="w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" 
+                      className="max-w-full max-h-[50vh] md:max-h-[75vh] w-auto h-auto object-contain drop-shadow-2xl transition-transform duration-500" 
                       alt={selectedProduct.name} 
                     />
+
+                    {selectedProduct.imageUrl && selectedProduct.imageUrl.split('|').length > 1 && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === selectedProduct.imageUrl!.split('|').length - 1 ? 0 : prev + 1); }}
+                        className="absolute right-2 md:right-4 z-10 p-2 rounded-full bg-black/20 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/40"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                    )}
                   </div>
                   {selectedProduct.imageUrl && selectedProduct.imageUrl.split('|').length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto p-2 no-scrollbar w-full justify-center">
+                    <div className="flex gap-2 overflow-x-auto p-2 no-scrollbar w-full justify-center mt-auto">
                       {selectedProduct.imageUrl.split('|').map((img, i) => (
                         <button 
                           title={`View image ${i + 1}`} aria-label={`View image ${i + 1}`}
                           key={i} 
-                          onClick={() => setCurrentImageIndex(i)}
+                          onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(i); }}
                           className={`w-12 h-12 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${currentImageIndex === i ? 'border-primary shadow-lg scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
                         >
                           <img src={img} className="w-full h-full object-cover" alt="" />
