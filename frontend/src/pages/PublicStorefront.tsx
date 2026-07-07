@@ -66,18 +66,18 @@ export const PublicStorefront: React.FC = () => {
   const [ratingValue, setRatingValue] = useState(5);
   const [ratingComment, setRatingComment] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [imgSwipeStart, setImgSwipeStart] = useState<number | null>(null);
+  const [imgSwipeEnd, setImgSwipeEnd] = useState<number | null>(null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+    setImgSwipeEnd(null);
+    setImgSwipeStart(e.targetTouches[0].clientX);
   };
-  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+  const onTouchMove = (e: React.TouchEvent) => setImgSwipeEnd(e.targetTouches[0].clientX);
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
+    if (!imgSwipeStart || !imgSwipeEnd) return;
+    const distance = imgSwipeStart - imgSwipeEnd;
     if (!selectedProduct?.imageUrl) return;
     const images = selectedProduct.imageUrl.split('|');
     if (images.length <= 1) return;

@@ -6,8 +6,7 @@ import {
   ArrowUpRight,
   Wallet,
   Receipt,
-  Plus,
-  RefreshCw
+  Plus
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom'; 
@@ -60,7 +59,7 @@ interface Credit {
 const DashboardPage: React.FC = () => {
   const { canAccess } = useFeatureAccess();
   // ── Server stats (single source of truth for all financial numbers) ──────
-  const { data: serverStats, isLoading: serverLoading, refetch, isRefetching } = useQuery<ServerStats>({
+  const { data: serverStats, isLoading: serverLoading, refetch } = useQuery<ServerStats>({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const res = await api.get('/dashboard/stats');
