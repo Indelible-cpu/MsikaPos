@@ -885,7 +885,7 @@ const InventoryPage: React.FC = () => {
                   <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-text/30" />
                   <input required id="product-sku" type="text" className="input-field w-full pl-10 py-3 px-4 font-black" placeholder="Scan or type..." title="SKU / Barcode" aria-label="SKU / Barcode" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} />
                 </div>
-                <button type="button" onClick={() => setFormData({...formData, sku: generateNumericId().toString()})} className="px-4 py-3 bg-surface-bg border border-surface-border rounded-xl text-[10px] font-black uppercase hover:bg-surface-card transition-all" title="Auto-generate SKU">
+                <button type="button" onClick={() => setFormData({...formData, sku: generateNumericId().toString()})} className="px-4 py-3 btn-cancel text-[10px]" title="Auto-generate SKU">
                   Generate
                 </button>
               </div>
@@ -1004,7 +1004,7 @@ const InventoryPage: React.FC = () => {
               <input id="new-category" type="text" className="input-field flex-1 py-3 px-4 font-black" placeholder="Category name..." title="Category name" aria-label="Category name" value={newCategoryTitle} onChange={(e) => setNewCategoryTitle(e.target.value)} />
               <button onClick={handleAddCategory} disabled={isSavingCategory} className="btn-primary !px-8 !py-3 font-black text-[10px] tracking-widest uppercase shadow-lg shadow-primary-500/20 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all" title={editingCategory ? "Update category" : "Add category"} aria-label={editingCategory ? "Update category" : "Add category"}>{isSavingCategory ? 'Saving...' : (editingCategory ? 'Update' : 'Add')}</button>
               {editingCategory && (
-                <button onClick={() => { setEditingCategory(null); setNewCategoryTitle(''); }} className="btn-secondary !px-4 !py-3 font-black text-[10px] tracking-widest uppercase" title="Cancel Edit">Cancel</button>
+                <button onClick={() => { setEditingCategory(null); setNewCategoryTitle(''); }} className="btn-cancel !px-4 !py-3 text-[10px]" title="Cancel Edit">Cancel</button>
               )}
             </div>
           </div>
@@ -1052,7 +1052,7 @@ const InventoryPage: React.FC = () => {
           </div>
           <div className="flex gap-4">
             <button onClick={() => setDeleteConfirmation(null)} className="flex-1 py-4 btn-cancel text-[10px]">Cancel</button>
-            <button onClick={confirmDelete} className="flex-1 bg-red-500 text-white rounded-2xl text-[10px] font-black tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all">Delete</button>
+            <button onClick={confirmDelete} className="flex-1 btn-danger text-[10px]">Delete</button>
           </div>
         </div>
       </Modal>
@@ -1062,7 +1062,7 @@ const InventoryPage: React.FC = () => {
           <div className="relative group w-full max-w-lg aspect-square rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
             <img src={previewImage || ''} alt="Preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
-              <button onClick={() => setPreviewImage(null)} className="btn-primary !bg-white !text-black !py-3 !px-8 text-[10px] font-black tracking-widest">Close preview</button>
+              <button onClick={() => setPreviewImage(null)} className="btn-cancel !py-3 !px-8 text-[10px]">Close preview</button>
             </div>
           </div>
         </div>
