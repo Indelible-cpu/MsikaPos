@@ -85,10 +85,15 @@ const LandingPage: React.FC = () => {
             Experience the most robust, offline-first point of sale system designed for the modern era. Sell, sync, and scale without boundaries.
           </p>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-8">
-            <Link to="/store" className="w-full md:w-auto h-16 px-10 bg-primary text-white border border-border rounded-2xl font-black tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30">
-              <ShoppingBag className="w-5 h-5" /> Live Demo Store
-            </Link>
+          <div className="flex flex-col items-center justify-center gap-4 pt-8">
+            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+              <Link to="/store" className="w-full md:w-auto h-16 px-10 bg-primary text-white border border-border rounded-2xl font-black tracking-widest uppercase flex items-center justify-center gap-3 hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30">
+                <ShoppingBag className="w-5 h-5" /> Live Demo Store
+              </Link>
+            </div>
+            <a href="mailto:indelibletechnologiesmw@gmail.com" className="w-full md:w-auto h-12 px-8 bg-surface-card border border-border text-foreground rounded-2xl font-black tracking-widest uppercase flex items-center justify-center hover:bg-muted/50 transition-all text-[10px]">
+              email: indelibletechnologiesmw@gmail.com to get msikapos system now
+            </a>
           </div>
         </motion.div>
 
@@ -185,7 +190,7 @@ const LandingPage: React.FC = () => {
           <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-none">Ready to transform <br /> your operations?</h2>
           <p className="text-muted-foreground max-w-xl mx-auto font-medium">Join thousands of businesses who have modernized their sales workflow with our platform.</p>
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
-            <Link to="/staff/login" className="w-full md:w-auto h-16 px-12 bg-primary text-white rounded-2xl font-black tracking-widest uppercase shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+            <Link to="/staff/login" className="hidden w-full md:w-auto h-16 px-12 bg-primary text-white rounded-2xl font-black tracking-widest uppercase shadow-2xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
               Get Started Now
             </Link>
           </div>
