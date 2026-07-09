@@ -820,8 +820,7 @@ const POSPage: React.FC = () => {
               id="product-search"
               title="Search Products"
               aria-label="Search Products"
-          className="w-full pl-10 pr-10 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all"
-              } 
+              className="w-full pl-10 pr-10 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all"
               placeholder="Search items..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
