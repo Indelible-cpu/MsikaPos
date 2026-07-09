@@ -3,7 +3,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/posDB';
 import type { LocalProduct, LocalSale, LocalSaleItem, LocalCustomer } from '../db/posDB';
 import { SyncService } from '../services/SyncService';
-import { apiFetch } from '../api/apiFetch';
 import { isValidMalawianPhone, restrictPhone } from '../utils/phoneUtils';
 import { generateUUID } from '../utils/cryptoUtils';
 
@@ -239,15 +238,17 @@ const POSPage: React.FC = () => {
       }
     };
     loadSettings();
-    // Trigger background sync on mount to ensure we have the latest remote data
-    SyncService.pushSales().catch(console.error);
+    // Delay initial sync by 3s so the POS page loads and is usable immediately
+    const syncTimer = setTimeout(() => {
+      SyncService.pushSales().catch(console.error);
+    }, 3000);
+    return () => clearTimeout(syncTimer);
   }, []);
 
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
 
-  const [isRemoteLoading, setIsRemoteLoading] = useState(false);
 
   const localProducts = useLiveQuery(
     async () => {
@@ -267,33 +268,8 @@ const POSPage: React.FC = () => {
     [searchTerm]
   );
 
-  // Effect to fetch from remote DB in background to keep local fresh
-  useEffect(() => {
-    let isMounted = true;
-    const fetchRemote = async () => {
-      if (!navigator.onLine) return;
-      setIsRemoteLoading(true);
-      try {
-        console.log('🔍 Fetching products...', searchTerm ? `Search: ${searchTerm}` : 'All');
-        const data = await apiFetch(searchTerm ? `/products?search=${encodeURIComponent(searchTerm)}` : '/products');
-        console.log('📦 Received products data:', data);
-        if (isMounted && data.success) {
-          const items = data.data || data.updates?.products || [];
-          console.log(`✅ Processing ${items.length} products`);
-          if (items.length > 0) {
-            await db.products.bulkPut(items);
-          }
-        }
-      } catch (e) {
-        console.error('Remote fetch failed:', e);
-      } finally {
-        if (isMounted) setIsRemoteLoading(false);
-      }
-    };
-
-    const debounce = setTimeout(fetchRemote, searchTerm ? 500 : 2000);
-    return () => { isMounted = false; clearTimeout(debounce); };
-  }, [searchTerm]);
+  // Remote product sync only happens via the periodic SyncService, NOT on every search.
+  // Searching is always instant because we read from the local IndexedDB.
 
   const products = React.useMemo(() => localProducts || [], [localProducts]);
 
@@ -367,6 +343,8 @@ const POSPage: React.FC = () => {
     }
 
     setIsCheckingOut(true);
+    // Safety net: auto-reset after 10s so the button never stays locked forever
+    const safetyTimer = setTimeout(() => setIsCheckingOut(false), 10000);
     try {
       const invoiceNo = currentInvoiceNo;
       const itemsCount = cart.reduce((s, i) => s + i.quantity, 0);
@@ -441,8 +419,9 @@ const POSPage: React.FC = () => {
     } catch {
       toast.error('Checkout failed.');
     } finally {
+      clearTimeout(safetyTimer);
       setIsCheckingOut(false);
-      // Force power sync immediately after a cash sale
+      // Force power sync after a cash sale
       SyncService.pushSales().catch(console.error);
     }
   };
@@ -454,6 +433,8 @@ const POSPage: React.FC = () => {
     if (!dueDate) return toast.error("Please select a due date");
     
     setIsCheckingOut(true);
+    // Safety net: auto-reset after 15 seconds so credit-sale button never stays locked
+    const safetyTimer = setTimeout(() => setIsCheckingOut(false), 15000);
     try {
       const customerId = generateUUID();
       const paidAmt = parseFloat(amountPaid) || 0;
@@ -558,8 +539,9 @@ const POSPage: React.FC = () => {
     } catch {
       toast.error('Failed to save credit sale');
     } finally {
+      clearTimeout(safetyTimer);
       setIsCheckingOut(false);
-      // Force power sync immediately after a credit sale
+      // Force power sync after a credit sale
       SyncService.pushSales().catch(console.error);
     }
   };
@@ -838,11 +820,9 @@ const POSPage: React.FC = () => {
               id="product-search"
               title="Search Products"
               aria-label="Search Products"
-              className={clsx(
-                "w-full pl-10 pr-10 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all",
-                isRemoteLoading && "animate-pulse border-primary/30"
-              )} 
-              placeholder={isRemoteLoading ? "Searching remote DB..." : "Search items..."}
+          className="w-full pl-10 pr-10 py-3 bg-muted/20 border border-border rounded-2xl outline-none text-sm text-foreground font-medium placeholder:font-normal focus:ring-2 focus:ring-primary/50 transition-all"
+              } 
+              placeholder="Search items..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -869,7 +849,7 @@ const POSPage: React.FC = () => {
             }}
             className="p-3 bg-muted/10 border border-border rounded-2xl text-muted-foreground hover:bg-muted/20 transition-all flex items-center justify-center btn-press"
           >
-            <RefreshCw className={clsx("w-5 h-5", isRemoteLoading && "animate-spin")} />
+            <RefreshCw className="w-5 h-5" />
           </button>
           <button 
             title="Scan Barcode"
@@ -1110,14 +1090,12 @@ const POSPage: React.FC = () => {
             <button 
               disabled={
                 cart.length === 0 || 
-                isCheckingOut || 
-                (paymentMode !== 'Credit' && (!amountReceived || parseFloat(amountReceived) < finalTotal)) ||
-                ((paymentMode === 'Card' || paymentMode === 'Momo') && !selectedSubMethod)
+                isCheckingOut
               } 
               onClick={handleCheckout} 
               className={clsx(
                 "w-full py-5 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] transition-all shadow-xl btn-press", 
-                (cart.length === 0 || (paymentMode !== 'Credit' && (!amountReceived || parseFloat(amountReceived) < finalTotal))) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
+                (cart.length === 0 || isCheckingOut) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
               )}
             >
               <CheckCircle2 className="w-5 h-5" /> {paymentMode === 'Credit' ? 'Proceed to Credit Sale' : 'Checkout'}
