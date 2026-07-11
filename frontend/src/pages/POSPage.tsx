@@ -290,15 +290,16 @@ const POSPage: React.FC = () => {
       document.getElementById('cart-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
 
-    if (!product.isService && product.quantity <= 0) return toast.error('Out of stock');
+    if (!product.isService && product.quantity <= 0) {
+      toast.error('Warning: Stock is 0 or less');
+    }
+    
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
         if (!product.isService && existing.quantity >= product.quantity) {
-          toast.error('No more stock available');
-          return prev;
+          toast.error('Warning: Exceeding current stock');
         }
-        soundService.playBeep();
         return prev.map(item => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
       }
       soundService.playBeep();
@@ -390,7 +391,7 @@ const POSPage: React.FC = () => {
           const product = await db.products.get(item.product.id);
           if (product) {
             await db.products.update(item.product.id, {
-              quantity: Math.max(0, product.quantity - item.quantity)
+              quantity: product.quantity - item.quantity
             });
           }
         }
@@ -512,7 +513,7 @@ const POSPage: React.FC = () => {
           const product = await db.products.get(item.product.id);
           if (product) {
             await db.products.update(item.product.id, {
-              quantity: Math.max(0, product.quantity - item.quantity)
+              quantity: product.quantity - item.quantity
             });
           }
         }
