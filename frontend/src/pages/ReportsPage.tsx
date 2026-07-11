@@ -243,11 +243,11 @@ const ReportsPage: React.FC = () => {
       financialData = days.map((label, i) => ({ label, value: map[i] || 0 }));
     } else if (timeFilter === 'Monthly') {
       const map: Record<string, number> = {};
-      const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
+      const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
-        // Week 1 = days 1-7, Week 2 = 8-14, etc.
-        const weekIndex = Math.min(Math.floor((d.getDate() - 1) / 7), 4);
+        // Week 1 = 1-7, Week 2 = 8-14, Week 3 = 15-21, Week 4 = 22+
+        const weekIndex = Math.min(Math.floor((d.getDate() - 1) / 7), 3);
         const label = weeks[weekIndex];
         map[label] = (map[label] || 0) + Number(s.total || 0);
       });
