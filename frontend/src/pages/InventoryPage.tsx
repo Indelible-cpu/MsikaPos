@@ -98,12 +98,12 @@ const InventoryProductCard = React.memo(({
 
 
         </div>
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-2">
           <div className="text-[9px] font-black text-muted-foreground tracking-widest uppercase">{product.sku}</div>
         </div>
-        <h3 className="font-black text-lg leading-tight mb-4 group-hover:text-primary transition-colors tracking-tight line-clamp-2">{toSentenceCase(product.name)}</h3>
-        <div className="flex items-center gap-2 mb-6">
-          <span className="text-primary font-black text-2xl leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
+        <h3 className="font-black text-xs sm:text-sm leading-tight mb-3 group-hover:text-primary transition-colors tracking-tight">{toSentenceCase(product.name)}</h3>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-primary font-black text-base sm:text-lg leading-none tracking-tighter">MK{product.sellPrice.toLocaleString()}</span>
         </div>
         <div className={clsx(
           "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black tracking-widest",
