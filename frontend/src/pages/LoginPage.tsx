@@ -321,7 +321,7 @@ const LoginPage: React.FC = () => {
       // Online First Login
       if (navigator.onLine) {
         try {
-          const response = await api.post('/auth/login', { username, password });
+          const response = await api.post('/auth/login', { username, password }, { timeout: 15000 });
           userData = response.data.user;
           userToken = response.data.token;
 
@@ -340,7 +340,11 @@ const LoginPage: React.FC = () => {
             await db.offlineAuth.delete(username);
             throw new Error(loginError.response?.data?.message || 'Invalid credentials');
           }
-          console.warn('Online login failed or server unreachable, attempting offline fallback:', err);
+          if (loginError.code === 'ECONNABORTED' || (loginError.message && loginError.message.toLowerCase().includes('timeout'))) {
+            console.warn('Login request timed out, attempting offline fallback...');
+          } else {
+            console.warn('Online login failed or server unreachable, attempting offline fallback:', err);
+          }
         }
       }
 
@@ -358,8 +362,12 @@ const LoginPage: React.FC = () => {
       }
 
       if (!userData) {
-        if (!navigator.onLine) throw new Error('No offline credentials found. Please login online first.');
-        else throw new Error('Invalid credentials');
+        if (!navigator.onLine) {
+          throw new Error('No offline credentials found. Please login online first.');
+        } else {
+          // If we got here while online, it means the API request failed (e.g. timeout or 502) and offline fallback failed
+          throw new Error('Server is waking up or network is slow. Please try again in a few seconds.');
+        }
       }
       
       if (userToken && userData) {
