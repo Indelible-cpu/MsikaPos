@@ -1089,12 +1089,14 @@ const POSPage: React.FC = () => {
             <button 
               disabled={
                 cart.length === 0 || 
-                isCheckingOut
+                isCheckingOut || 
+                (paymentMode !== 'Credit' && (!amountReceived || parseFloat(amountReceived) < finalTotal)) ||
+                ((paymentMode === 'Card' || paymentMode === 'Momo') && !selectedSubMethod)
               } 
               onClick={handleCheckout} 
               className={clsx(
                 "w-full py-5 text-white font-black rounded-2xl flex items-center justify-center gap-3 text-[11px] tracking-[0.2em] transition-all shadow-xl btn-press", 
-                (cart.length === 0 || isCheckingOut) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
+                (cart.length === 0 || isCheckingOut || (paymentMode !== 'Credit' && (!amountReceived || parseFloat(amountReceived) < finalTotal))) ? "bg-muted-foreground/20 cursor-not-allowed" : "bg-primary shadow-primary/30"
               )}
             >
               <CheckCircle2 className="w-5 h-5" /> {paymentMode === 'Credit' ? 'Proceed to Credit Sale' : 'Checkout'}
