@@ -299,16 +299,16 @@ const LoginPage: React.FC = () => {
 
   }, [handleBiometricLogin]);
 
-  const hasAutoTriggered = React.useRef(false);
-
+  // Auto-trigger biometric prompt whenever the biometric view becomes active.
+  // A short delay lets the animation settle before the system dialog pops up.
   useEffect(() => {
-    if (loginMode === 'biometric' && !hasAutoTriggered.current) {
-      hasAutoTriggered.current = true;
+    if (loginMode !== 'biometric') return;
+    const t = setTimeout(() => {
       handleBiometricLogin();
-    } else if (loginMode === 'password') {
-      hasAutoTriggered.current = false;
-    }
-  }, [loginMode, handleBiometricLogin]);
+    }, 300);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loginMode]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -523,7 +523,9 @@ const LoginPage: React.FC = () => {
               className="flex flex-col items-center py-4"
             >
               <h2 className="text-xl font-semibold tracking-tight mb-1">Biometric access</h2>
-              <p className="text-[10px] text-muted-foreground/50 mb-8">Tap anywhere or the fingerprint to verify</p>
+              <p className="text-[10px] text-muted-foreground/50 mb-8">
+                {loading ? 'Waiting for fingerprint...' : 'Touch the sensor or tap to retry'}
+              </p>
 
               {/* Tap the whole area or the button to trigger */}
               <div
@@ -545,7 +547,7 @@ const LoginPage: React.FC = () => {
                   )}
                   <Fingerprint className={`w-12 h-12 transition-all ${loading ? 'text-primary-500 animate-pulse' : 'text-primary-500 group-hover:scale-110'}`} />
                 </button>
-                <p className="mt-4 text-[9px] text-muted-foreground/30">{loading ? 'Verifying...' : 'Touch sensor'}</p>
+                <p className="mt-4 text-[9px] text-muted-foreground/30">{loading ? 'Verifying...' : 'Tap to retry'}</p>
               </div>
 
               <div className="mt-12 space-y-4 w-full">
