@@ -323,8 +323,6 @@ const POSPage: React.FC = () => {
   let finalTotal = discountedSubtotal;
   let taxAmount = 0;
 
-  const changeDue = Math.max(0, (parseFloat(amountReceived) || 0) - finalTotal);
-
   if (taxConfig.rate > 0) {
     if (taxConfig.inclusive) {
       taxAmount = discountedSubtotal - (discountedSubtotal / (1 + (taxConfig.rate / 100)));
@@ -333,6 +331,8 @@ const POSPage: React.FC = () => {
       finalTotal = discountedSubtotal + taxAmount;
     }
   }
+
+  const changeDue = Math.max(0, (parseFloat(amountReceived) || 0) - finalTotal);
 
   const handleCheckout = async () => {
     if (cart.length === 0 || isCheckingOut) return;
@@ -416,7 +416,8 @@ const POSPage: React.FC = () => {
       setCurrentInvoiceNo(generateInvoiceNo());
       toast.success('Sale Completed!');
       
-    } catch {
+    } catch (e) {
+      console.error(e);
       toast.error('Checkout failed.');
     } finally {
       clearTimeout(safetyTimer);
@@ -536,7 +537,8 @@ const POSPage: React.FC = () => {
       setPaymentMode('Cash');
       setLivePhoto('');
       
-    } catch {
+    } catch (e) {
+      console.error(e);
       toast.error('Failed to save credit sale');
     } finally {
       clearTimeout(safetyTimer);
