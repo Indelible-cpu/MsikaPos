@@ -100,13 +100,15 @@ const isActiveTransaction = (s: LocalSale) =>
 const getScopeInterval = (timeFilter: TimeFilter, dailyDateStr: string) => {
   const now = new Date();
   const targetDate = timeFilter === 'Daily' ? new Date(dailyDateStr) : now;
-  const end = endOfDay(targetDate);
-  if (timeFilter === 'All') return { start: new Date(0), end: endOfDay(now) };
-  if (timeFilter === 'Daily') return { start: new Date(targetDate.setHours(0, 0, 0, 0)), end };
-  if (timeFilter === 'Weekly') return { start: startOfWeek(now), end: endOfDay(now) };
-  if (timeFilter === 'Monthly') return { start: startOfMonth(now), end: endOfDay(now) };
-  if (timeFilter === 'Quarterly') return { start: startOfQuarter(now), end: endOfDay(now) };
-  return { start: startOfYear(now), end: endOfDay(now) };
+  const end = endOfDay(now);
+  if (timeFilter === 'All') return { start: new Date(0), end };
+  if (timeFilter === 'Daily') return { start: new Date(targetDate.setHours(0, 0, 0, 0)), end: endOfDay(targetDate) };
+  // Weekly: whole current month (so we can show all weeks-of-month so far)
+  if (timeFilter === 'Weekly') return { start: startOfMonth(now), end };
+  // Monthly: whole current year (so we can show all months so far)
+  if (timeFilter === 'Monthly') return { start: startOfYear(now), end };
+  if (timeFilter === 'Quarterly') return { start: startOfQuarter(now), end };
+  return { start: startOfYear(now), end };
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -250,27 +252,39 @@ const ReportsPage: React.FC = () => {
       });
       financialData = hours.map((l) => ({ label: l, value: map[l]?.value || 0, profit: map[l]?.profit || 0 }));
     } else if (timeFilter === 'Weekly') {
-      const map: Record<number, { value: number; profit: number }> = {};
-      activeSales.forEach((s) => {
-        const d = new Date(s.createdAt);
-        if (!map[d.getDay()]) map[d.getDay()] = { value: 0, profit: 0 };
-        map[d.getDay()].value += Number(s.total || 0);
-        map[d.getDay()].profit += Number(s.profit || 0);
-      });
-      financialData = days.map((label, i) => ({ label, value: map[i]?.value || 0, profit: map[i]?.profit || 0 }));
-    } else if (timeFilter === 'Monthly') {
+      // Show weeks-of-month (Week 1–4) for the current month, up to the current week only
       const map: Record<string, { value: number; profit: number }> = {};
-      const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      const allWeeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      // Current week index within the month (0-based)
+      const currentWeekIndex = Math.min(Math.floor((now.getDate() - 1) / 7), 3);
+      const weeksToShow = allWeeks.slice(0, currentWeekIndex + 1);
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
-        // Week 1 = 1-7, Week 2 = 8-14, Week 3 = 15-21, Week 4 = 22+
+        // Only include sales from the current month
+        if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return;
         const weekIndex = Math.min(Math.floor((d.getDate() - 1) / 7), 3);
-        const label = weeks[weekIndex];
+        const label = allWeeks[weekIndex];
         if (!map[label]) map[label] = { value: 0, profit: 0 };
         map[label].value += Number(s.total || 0);
         map[label].profit += Number(s.profit || 0);
       });
-      financialData = weeks.map((l) => ({ label: l, value: map[l]?.value || 0, profit: map[l]?.profit || 0 }));
+      financialData = weeksToShow.map((l) => ({ label: l, value: map[l]?.value || 0, profit: map[l]?.profit || 0 }));
+    } else if (timeFilter === 'Monthly') {
+      // Show each month of the current year up to the current month only
+      const map: Record<number, { value: number; profit: number }> = {};
+      const currentMonthIndex = now.getMonth(); // 0-based
+      activeSales.forEach((s) => {
+        const d = new Date(s.createdAt);
+        if (d.getFullYear() !== now.getFullYear()) return;
+        const mIdx = d.getMonth();
+        if (!map[mIdx]) map[mIdx] = { value: 0, profit: 0 };
+        map[mIdx].value += Number(s.total || 0);
+        map[mIdx].profit += Number(s.profit || 0);
+      });
+      // Only emit months from Jan up to (and including) the current month
+      financialData = months
+        .slice(0, currentMonthIndex + 1)
+        .map((label, i) => ({ label, value: map[i]?.value || 0, profit: map[i]?.profit || 0 }));
     } else if (timeFilter === 'Quarterly') {
       const map: Record<number, { value: number; profit: number }> = {};
       const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
