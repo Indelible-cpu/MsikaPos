@@ -206,7 +206,7 @@ const POSPage: React.FC = () => {
     setIsCameraOpen(false);
   };
 
-  const [taxConfig, setTaxConfig] = useState<TaxConfig>({ rate: 10, inclusive: false });
+  const [taxConfig, setTaxConfig] = useState<TaxConfig>({ rate: 0, inclusive: false });
   const [currentInvoiceNo, setCurrentInvoiceNo] = useState(generateInvoiceNo());
 
 
