@@ -14,7 +14,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import {
-  startOfWeek, startOfMonth, startOfQuarter,
+  startOfMonth, startOfQuarter,
   startOfYear, endOfDay, isWithinInterval
 } from 'date-fns';
 
@@ -231,7 +231,6 @@ const ReportsPage: React.FC = () => {
   // ── 7. Chart analytics ────────────────────────────────────────────────────
   const analyticsData = useMemo(() => {
     const now = new Date();
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     let financialData: { label: string; value: number; profit: number }[] = [];
