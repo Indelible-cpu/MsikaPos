@@ -232,64 +232,39 @@ const ReportsPage: React.FC = () => {
       });
       financialData = hours.map((l) => ({ label: l, value: map[l] || 0 }));
     } else if (timeFilter === 'Weekly') {
-      if (serverStats?.chart_data?.length) {
-        financialData = serverStats.chart_data.map((d: { name: string; revenue: number }) => ({
-          label: d.name,
-          value: d.revenue,
-        }));
-      } else {
-        const map: Record<string, number> = {};
-        const last7 = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date();
-          d.setDate(d.getDate() - (6 - i));
-          return { key: d.toLocaleDateString(), label: days[d.getDay()] };
-        });
-        activeSales.forEach((s) => {
-          const d = new Date(s.createdAt);
-          if (now.getTime() - d.getTime() <= 7 * 86_400_000) {
-            const k = d.toLocaleDateString();
-            map[k] = (map[k] || 0) + Number(s.total || 0);
-          }
-        });
-        financialData = last7.map((d) => ({ label: d.label, value: map[d.key] || 0 }));
-      }
+      const map: Record<number, number> = {};
+      activeSales.forEach((s) => {
+        const d = new Date(s.createdAt);
+        map[d.getDay()] = (map[d.getDay()] || 0) + Number(s.total || 0);
+      });
+      financialData = days.map((label, i) => ({ label, value: map[i] || 0 }));
     } else if (timeFilter === 'Monthly') {
       const map: Record<string, number> = {};
-      const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5'];
       activeSales.forEach((s) => {
-        const diff = Math.floor((now.getTime() - new Date(s.createdAt).getTime()) / 86_400_000);
-        if (diff < 28) {
-          const label = weeks[Math.max(0, 3 - Math.floor(diff / 7))];
-          map[label] = (map[label] || 0) + Number(s.total || 0);
-        }
+        const d = new Date(s.createdAt);
+        // Week 1 = days 1-7, Week 2 = 8-14, etc.
+        const weekIndex = Math.min(Math.floor((d.getDate() - 1) / 7), 4);
+        const label = weeks[weekIndex];
+        map[label] = (map[label] || 0) + Number(s.total || 0);
       });
       financialData = weeks.map((l) => ({ label: l, value: map[l] || 0 }));
     } else if (timeFilter === 'Quarterly') {
       const map: Record<number, number> = {};
-      const last3 = Array.from({ length: 3 }, (_, i) => {
-        const d = new Date();
-        d.setMonth(d.getMonth() - (2 - i));
-        return { key: d.getMonth(), label: months[d.getMonth()] };
-      });
+      const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
+      const quarterMonths = [quarterStartMonth, quarterStartMonth + 1, quarterStartMonth + 2];
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
-        const diff = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
-        if (diff < 3) map[d.getMonth()] = (map[d.getMonth()] || 0) + Number(s.total || 0);
+        map[d.getMonth()] = (map[d.getMonth()] || 0) + Number(s.total || 0);
       });
-      financialData = last3.map((m) => ({ label: m.label, value: map[m.key] || 0 }));
+      financialData = quarterMonths.map((m) => ({ label: months[m], value: map[m] || 0 }));
     } else if (timeFilter === 'Annual') {
       const map: Record<number, number> = {};
-      const last12 = Array.from({ length: 12 }, (_, i) => {
-        const d = new Date();
-        d.setMonth(d.getMonth() - (11 - i));
-        return { key: d.getMonth(), label: months[d.getMonth()] };
-      });
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
-        const diff = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
-        if (diff < 12) map[d.getMonth()] = (map[d.getMonth()] || 0) + Number(s.total || 0);
+        map[d.getMonth()] = (map[d.getMonth()] || 0) + Number(s.total || 0);
       });
-      financialData = last12.map((m) => ({ label: m.label, value: map[m.key] || 0 }));
+      financialData = months.map((label, i) => ({ label, value: map[i] || 0 }));
     } else { // All
       const map: Record<number, number> = {};
       const years = Array.from(new Set(activeSales.map((s) => new Date(s.createdAt).getFullYear()))).sort();
