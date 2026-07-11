@@ -27,7 +27,7 @@ const BarChart = ({
   label,
   valuePrefix = '',
 }: {
-  data: { label: string; value: number }[];
+  data: { label: string; value: number; profit?: number }[];
   label: string;
   valuePrefix?: string;
 }) => {
@@ -57,12 +57,29 @@ const BarChart = ({
                   initial={{ height: 0 }}
                   animate={{ height: `${(item.value / maxVal) * 100}%` }}
                   transition={{ duration: 0.6, ease: 'easeOut', delay: i * 0.05 }}
-                  className="w-full bg-primary/20 group-hover:bg-primary/40 border-t-4 border-primary rounded-t-lg transition-colors relative"
+                  className="w-full relative flex flex-col justify-end group"
                 >
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-foreground text-background text-[8px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 uppercase tracking-widest">
-                    {valuePrefix}
-                    {item.value.toLocaleString()}
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-foreground text-background text-[8px] font-black px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 flex flex-col items-center shadow-xl">
+                    <span className="text-muted-foreground/80 tracking-widest uppercase">REV: {valuePrefix}{item.value.toLocaleString()}</span>
+                    {item.profit !== undefined && (
+                      <span className="text-success tracking-widest uppercase">PRO: {valuePrefix}{item.profit.toLocaleString()}</span>
+                    )}
                   </div>
+
+                  {item.profit !== undefined ? (
+                    <div className="w-full h-full flex flex-col rounded-t-lg overflow-hidden">
+                      <div 
+                        className="w-full bg-success/80 transition-colors"
+                        style={{ height: `${(item.profit / item.value) * 100}%` }}
+                      />
+                      <div 
+                        className="w-full bg-primary/30 transition-colors border-t border-background/20"
+                        style={{ height: `${((item.value - item.profit) / item.value) * 100}%` }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full bg-primary/20 group-hover:bg-primary/40 border-t-4 border-primary rounded-t-lg transition-colors relative" />
+                  )}
                 </motion.div>
               </div>
               <span className="text-[9px] font-black text-muted-foreground/60 truncate w-full text-center tracking-tighter uppercase">
@@ -220,63 +237,75 @@ const ReportsPage: React.FC = () => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    let financialData: { label: string; value: number }[] = [];
+    let financialData: { label: string; value: number; profit: number }[] = [];
 
     if (timeFilter === 'Daily') {
-      const map: Record<string, number> = {};
+      const map: Record<string, { value: number; profit: number }> = {};
       const hours = Array.from({ length: 6 }, (_, i) => `${i * 4}:00 - ${(i + 1) * 4}:00`);
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
         if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
           const slot = Math.floor(d.getHours() / 4);
           const label = hours[slot];
-          map[label] = (map[label] || 0) + Number(s.total || 0);
+          if (!map[label]) map[label] = { value: 0, profit: 0 };
+          map[label].value += Number(s.total || 0);
+          map[label].profit += Number(s.profit || 0);
         }
       });
-      financialData = hours.map((l) => ({ label: l, value: map[l] || 0 }));
+      financialData = hours.map((l) => ({ label: l, value: map[l]?.value || 0, profit: map[l]?.profit || 0 }));
     } else if (timeFilter === 'Weekly') {
-      const map: Record<number, number> = {};
+      const map: Record<number, { value: number; profit: number }> = {};
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
-        map[d.getDay()] = (map[d.getDay()] || 0) + Number(s.total || 0);
+        if (!map[d.getDay()]) map[d.getDay()] = { value: 0, profit: 0 };
+        map[d.getDay()].value += Number(s.total || 0);
+        map[d.getDay()].profit += Number(s.profit || 0);
       });
-      financialData = days.map((label, i) => ({ label, value: map[i] || 0 }));
+      financialData = days.map((label, i) => ({ label, value: map[i]?.value || 0, profit: map[i]?.profit || 0 }));
     } else if (timeFilter === 'Monthly') {
-      const map: Record<string, number> = {};
+      const map: Record<string, { value: number; profit: number }> = {};
       const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
         // Week 1 = 1-7, Week 2 = 8-14, Week 3 = 15-21, Week 4 = 22+
         const weekIndex = Math.min(Math.floor((d.getDate() - 1) / 7), 3);
         const label = weeks[weekIndex];
-        map[label] = (map[label] || 0) + Number(s.total || 0);
+        if (!map[label]) map[label] = { value: 0, profit: 0 };
+        map[label].value += Number(s.total || 0);
+        map[label].profit += Number(s.profit || 0);
       });
-      financialData = weeks.map((l) => ({ label: l, value: map[l] || 0 }));
+      financialData = weeks.map((l) => ({ label: l, value: map[l]?.value || 0, profit: map[l]?.profit || 0 }));
     } else if (timeFilter === 'Quarterly') {
-      const map: Record<number, number> = {};
+      const map: Record<number, { value: number; profit: number }> = {};
       const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
       const quarterMonths = [quarterStartMonth, quarterStartMonth + 1, quarterStartMonth + 2];
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
-        map[d.getMonth()] = (map[d.getMonth()] || 0) + Number(s.total || 0);
+        if (!map[d.getMonth()]) map[d.getMonth()] = { value: 0, profit: 0 };
+        map[d.getMonth()].value += Number(s.total || 0);
+        map[d.getMonth()].profit += Number(s.profit || 0);
       });
-      financialData = quarterMonths.map((m) => ({ label: months[m], value: map[m] || 0 }));
+      financialData = quarterMonths.map((m) => ({ label: months[m], value: map[m]?.value || 0, profit: map[m]?.profit || 0 }));
     } else if (timeFilter === 'Annual') {
-      const map: Record<number, number> = {};
+      const map: Record<number, { value: number; profit: number }> = {};
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
-        map[d.getMonth()] = (map[d.getMonth()] || 0) + Number(s.total || 0);
+        if (!map[d.getMonth()]) map[d.getMonth()] = { value: 0, profit: 0 };
+        map[d.getMonth()].value += Number(s.total || 0);
+        map[d.getMonth()].profit += Number(s.profit || 0);
       });
-      financialData = months.map((label, i) => ({ label, value: map[i] || 0 }));
+      financialData = months.map((label, i) => ({ label, value: map[i]?.value || 0, profit: map[i]?.profit || 0 }));
     } else { // All
-      const map: Record<number, number> = {};
+      const map: Record<number, { value: number; profit: number }> = {};
       const years = Array.from(new Set(activeSales.map((s) => new Date(s.createdAt).getFullYear()))).sort();
       activeSales.forEach((s) => {
         const y = new Date(s.createdAt).getFullYear();
-        map[y] = (map[y] || 0) + Number(s.total || 0);
+        if (!map[y]) map[y] = { value: 0, profit: 0 };
+        map[y].value += Number(s.total || 0);
+        map[y].profit += Number(s.profit || 0);
       });
-      financialData = years.map((y) => ({ label: y.toString(), value: map[y] || 0 }));
-      if (financialData.length === 0) financialData = [{ label: now.getFullYear().toString(), value: 0 }];
+      financialData = years.map((y) => ({ label: y.toString(), value: map[y]?.value || 0, profit: map[y]?.profit || 0 }));
+      if (financialData.length === 0) financialData = [{ label: now.getFullYear().toString(), value: 0, profit: 0 }];
     }
 
     // Staff performance
