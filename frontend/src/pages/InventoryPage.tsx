@@ -68,7 +68,7 @@ const InventoryProductCard = React.memo(({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="overflow-hidden group transition-all flex flex-col glass-card border border-border/50 rounded-3xl hover:border-primary/20 duration-500"
+      className="overflow-hidden group transition-all flex flex-col bg-card shadow-sm border border-border rounded-3xl hover:border-primary/50 hover:shadow-md duration-500"
     >
       <div className="p-6 flex-1 flex flex-col">
         <div className="w-full aspect-square bg-surface-bg border border-surface-border rounded-2xl mb-4 overflow-hidden relative flex items-center justify-center">
