@@ -104,7 +104,7 @@ export const SyncService = {
         let count = 0;
         await table.where('synced').equals(0).each((item: any) => {
           // Skip permanently stuck records (too many retries)
-          if ((item.syncRetries ?? 0) >= 10) return;
+          if ((item.syncRetries ?? 0) >= 5000) return;
           results.push(item);
           count++;
           // Yield every 100 items to keep UI responsive
