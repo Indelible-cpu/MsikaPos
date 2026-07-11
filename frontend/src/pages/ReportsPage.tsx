@@ -44,7 +44,7 @@ const BarChart = ({
           </h3>
         </div>
       </div>
-      <div className="h-64 flex items-end justify-between gap-2 pt-4">
+      <div className="h-64 flex items-stretch justify-between gap-2 pt-4">
         {!data.some(d => d.value > 0) ? (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground/20 font-black text-xs tracking-widest uppercase text-center px-4">
             No data available for this period
