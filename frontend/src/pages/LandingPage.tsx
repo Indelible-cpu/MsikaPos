@@ -91,8 +91,8 @@ const LandingPage: React.FC = () => {
                 <ShoppingBag className="w-5 h-5" /> Live Demo Store
               </Link>
             </div>
-            <a href="mailto:indelibletechnologiesmw@gmail.com" className="w-full md:w-auto h-12 px-8 bg-surface-card border border-border text-foreground rounded-2xl font-black tracking-widest uppercase flex items-center justify-center hover:bg-muted/50 transition-all text-[10px]">
-              email: indelibletechnologiesmw@gmail.com to get msikapos system now
+            <a href="mailto:indelibletechnologiesmw@gmail.com" className="w-full md:w-auto h-12 px-8 bg-surface-card border border-border text-foreground rounded-2xl font-medium flex items-center justify-center hover:bg-muted/50 transition-all text-xs">
+              Email: indelibletechnologiesmw@gmail.com to get MsikaPOS system now
             </a>
           </div>
         </motion.div>
