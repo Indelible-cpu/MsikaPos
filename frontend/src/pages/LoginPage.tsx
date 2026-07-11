@@ -333,7 +333,7 @@ const LoginPage: React.FC = () => {
             token: userToken!
           });
         } catch (err: unknown) {
-          const loginError = err as { response?: { data?: { message?: string }, status?: number } };
+          const loginError = err as { response?: { data?: { message?: string }, status?: number }, code?: string, message?: string };
           
           if (loginError.response && loginError.response.status !== 500 && loginError.response.status !== 502 && loginError.response.status !== 503) {
             // True failure (wrong password, suspended, etc). Do not allow offline fallback.
