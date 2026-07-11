@@ -43,6 +43,18 @@ const BarChart = ({
             {label}
           </h3>
         </div>
+        {data.some(d => d.profit !== undefined) && (
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-success/80" />
+              <span className="text-[9px] font-black tracking-widest uppercase text-muted-foreground">Profit</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-sm bg-primary/30" />
+              <span className="text-[9px] font-black tracking-widest uppercase text-muted-foreground">Cost</span>
+            </div>
+          </div>
+        )}
       </div>
       <div className="h-64 flex items-stretch justify-between gap-2 pt-4">
         {!data.some(d => d.value > 0) ? (
