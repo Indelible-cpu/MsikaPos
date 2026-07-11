@@ -203,7 +203,7 @@ const ReportsPage: React.FC = () => {
     [activeSales]
   );
   const totalCostValue = useMemo(
-    () => localProducts.reduce((sum, p) => sum + (Number(p.costPrice || 0) * Number(p.quantity || 0)), 0),
+    () => localProducts.reduce((sum, p) => sum + (Number(p.costPrice || 0) * Math.max(0, Number(p.quantity || 0))), 0),
     [localProducts]
   );
   const avgSale = totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0;
