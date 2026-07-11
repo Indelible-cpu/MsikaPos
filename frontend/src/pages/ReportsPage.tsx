@@ -97,21 +97,23 @@ const BarChart = ({
 const isActiveTransaction = (s: LocalSale) =>
   s.status !== 'DELETED' && s.status !== 'REFUNDED';
 
-const getScopeInterval = (timeFilter: TimeFilter) => {
+const getScopeInterval = (timeFilter: TimeFilter, dailyDateStr: string) => {
   const now = new Date();
-  const end = endOfDay(now);
-  if (timeFilter === 'All') return { start: new Date(0), end };
-  if (timeFilter === 'Daily') return { start: new Date(now.setHours(0, 0, 0, 0)), end };
-  if (timeFilter === 'Weekly') return { start: startOfWeek(now), end };
-  if (timeFilter === 'Monthly') return { start: startOfMonth(now), end };
-  if (timeFilter === 'Quarterly') return { start: startOfQuarter(now), end };
-  return { start: startOfYear(now), end };
+  const targetDate = timeFilter === 'Daily' ? new Date(dailyDateStr) : now;
+  const end = endOfDay(targetDate);
+  if (timeFilter === 'All') return { start: new Date(0), end: endOfDay(now) };
+  if (timeFilter === 'Daily') return { start: new Date(targetDate.setHours(0, 0, 0, 0)), end };
+  if (timeFilter === 'Weekly') return { start: startOfWeek(now), end: endOfDay(now) };
+  if (timeFilter === 'Monthly') return { start: startOfMonth(now), end: endOfDay(now) };
+  if (timeFilter === 'Quarterly') return { start: startOfQuarter(now), end: endOfDay(now) };
+  return { start: startOfYear(now), end: endOfDay(now) };
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('Financial');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('Daily');
+  const [dailyDate, setDailyDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
 
   // ── 1. Local live DB (instant on any change) ─────────────────────────────
   const localSales = useLiveQuery(() => db.salesQueue.toArray(), []) ?? [];
@@ -120,23 +122,16 @@ const ReportsPage: React.FC = () => {
 
   // ── 2. Server transactions — polls every 30 s ─────────────────────────────
   const { data: serverSalesRaw } = useQuery({
-    queryKey: ['reports-transactions', timeFilter],
+    queryKey: ['reports-transactions', timeFilter, dailyDate],
     queryFn: async () => {
-      const scopeMap: Record<TimeFilter, string> = {
-        All: 'all',
-        Daily: 'daily',
-        Weekly: 'weekly',
-        Monthly: 'monthly',
-        Quarterly: 'quarterly',
-        Annual: 'annual',
-      };
+      const interval = getScopeInterval(timeFilter, dailyDate);
       const res = await api.get('/reports/transactions', {
-        params: { scope: scopeMap[timeFilter] },
+        params: { from: interval.start.toISOString(), to: interval.end.toISOString() },
       });
       return (res.data.success ? res.data.data : []) as LocalSale[];
     },
-    refetchInterval: 30_000,          // live-poll every 30 s
-    refetchIntervalInBackground: true, // keep polling even if tab is not focused
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: true,
     staleTime: 20_000,
   });
 
@@ -177,11 +172,11 @@ const ReportsPage: React.FC = () => {
 
   // ── 5. Filter by time scope ───────────────────────────────────────────────
   const scopedSales = useMemo(() => {
-    const interval = getScopeInterval(timeFilter);
+    const interval = getScopeInterval(timeFilter, dailyDate);
     return allSales.filter((s) =>
       isWithinInterval(new Date(s.createdAt), interval)
     );
-  }, [allSales, timeFilter]);
+  }, [allSales, timeFilter, dailyDate]);
 
   const allExpenses = useMemo(() => {
     const merged = [...localExpenses];
@@ -193,11 +188,11 @@ const ReportsPage: React.FC = () => {
   }, [localExpenses, serverExpensesRaw]);
 
   const scopedExpenses = useMemo(() => {
-    const interval = getScopeInterval(timeFilter);
+    const interval = getScopeInterval(timeFilter, dailyDate);
     return allExpenses.filter((e) =>
       isWithinInterval(new Date(e.date || e.createdAt), interval)
     );
-  }, [allExpenses, timeFilter]);
+  }, [allExpenses, timeFilter, dailyDate]);
 
   const totalExpenses = useMemo(
     () => scopedExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0),
@@ -242,9 +237,10 @@ const ReportsPage: React.FC = () => {
     if (timeFilter === 'Daily') {
       const map: Record<string, { value: number; profit: number }> = {};
       const hours = Array.from({ length: 6 }, (_, i) => `${i * 4}:00 - ${(i + 1) * 4}:00`);
+      const target = new Date(dailyDate);
       activeSales.forEach((s) => {
         const d = new Date(s.createdAt);
-        if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        if (d.getDate() === target.getDate() && d.getMonth() === target.getMonth() && d.getFullYear() === target.getFullYear()) {
           const slot = Math.floor(d.getHours() / 4);
           const label = hours[slot];
           if (!map[label]) map[label] = { value: 0, profit: 0 };
@@ -328,7 +324,7 @@ const ReportsPage: React.FC = () => {
     const payment = Object.entries(payMap).map(([label, value]) => ({ label, value }));
 
     return { financial: financialData, staff, payment };
-  }, [activeSales, serverStats, timeFilter]);
+  }, [activeSales, serverStats, timeFilter, dailyDate]);
 
 
 
@@ -425,20 +421,31 @@ const ReportsPage: React.FC = () => {
 
             {/* Time filter (Financial only) */}
             {activeTab === 'Financial' && (
-              <select
-                value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
-                title="Filter by time period"
-                aria-label="Filter by time period"
-                className="px-4 py-2 bg-card/50 border border-border/50 rounded-xl text-[10px] font-black tracking-widest uppercase text-primary outline-none cursor-pointer btn-press"
-              >
-                <option value="All">All</option>
-                <option value="Daily">Daily</option>
-                <option value="Weekly">Weekly</option>
-                <option value="Monthly">Monthly</option>
-                <option value="Quarterly">Quarterly</option>
-                <option value="Annual">Annual</option>
-              </select>
+              <>
+                {timeFilter === 'Daily' && (
+                  <input
+                    type="date"
+                    value={dailyDate}
+                    max={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setDailyDate(e.target.value)}
+                    className="px-3 py-2 bg-card/50 border border-border/50 rounded-xl text-[10px] font-black tracking-widest uppercase text-foreground outline-none cursor-pointer btn-press"
+                  />
+                )}
+                <select
+                  value={timeFilter}
+                  onChange={(e) => setTimeFilter(e.target.value as TimeFilter)}
+                  title="Filter by time period"
+                  aria-label="Filter by time period"
+                  className="px-4 py-2 bg-card/50 border border-border/50 rounded-xl text-[10px] font-black tracking-widest uppercase text-primary outline-none cursor-pointer btn-press"
+                >
+                  <option value="All">All</option>
+                  <option value="Daily">Daily</option>
+                  <option value="Weekly">Weekly</option>
+                  <option value="Monthly">Monthly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Annual">Annual</option>
+                </select>
+              </>
             )}
 
             {/* Print */}
