@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
   Package, 
@@ -65,7 +65,7 @@ const DashboardPage: React.FC = () => {
       const res = await api.get('/dashboard/stats');
       return res.data.data;
     },
-    staleTime: 0,            // always re-check when focus returns or sync fires
+    staleTime: 30_000,       // wait at least 30s before refetching on focus
     refetchInterval: 60_000, // auto-refresh every minute
     refetchOnWindowFocus: true,
   });
@@ -78,11 +78,11 @@ const DashboardPage: React.FC = () => {
   }, [refetch]);
 
   // ── Local DB — only for lists that are display-only (expenses, low-stock) ─
-  const localExpenses = useLiveQuery(() => db.expenses.toArray());
+  const localExpenses = useLiveQuery(() => db.expenses.orderBy('createdAt').reverse().limit(5).toArray());
   const localProducts = useLiveQuery(() =>
-    db.products.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active')).toArray()
+    db.products.where('status').equals('Active').filter(p => !p.deleted).toArray()
   );
-  const localCustomers = useLiveQuery(() => db.customers.toArray());
+  const localCustomers = useLiveQuery(() => db.customers.where('balance').above(0).limit(10).toArray());
 
   const lowStockItems = (localProducts || []).filter(p => !p.isService && p.quantity <= 5);
   const activeCredits = (localCustomers || [])
@@ -101,17 +101,13 @@ const DashboardPage: React.FC = () => {
   const totalCreditAmount  = serverStats?.total_credit_balance ?? 0;
   const chartData          = serverStats?.chart_data     ?? [];
 
-  const statCards = [
+  const statCards = useMemo(() => [
     { label: "Today's sales",    value: `MK ${totalRevenueToday.toLocaleString()}`,  icon: DollarSign, color: 'text-emerald-500', trend: '+Today' },
     { label: "Today's expenses", value: `MK ${totalExpensesToday.toLocaleString()}`, icon: Wallet,     color: 'text-rose-500',    trend: 'Daily outflow' },
     { label: 'Active credits',   value: `MK ${totalCreditAmount.toLocaleString()}`,  icon: Users,      color: 'text-amber-500',   trend: `${serverStats?.credit_customer_count ?? activeCredits.length} Customers` },
-  ];
+  ], [totalRevenueToday, totalExpensesToday, totalCreditAmount, serverStats?.credit_customer_count, activeCredits.length]);
 
-
-  const expenses = (localExpenses || [])
-    .slice()
-    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
-    .slice(0, 5);
+  const expenses = localExpenses || [];
 
   return (
     <div className="flex flex-col transition-all px-0">

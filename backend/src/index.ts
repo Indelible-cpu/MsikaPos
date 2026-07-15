@@ -1,6 +1,7 @@
 import dns from 'dns';
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 
@@ -69,7 +70,9 @@ app.options(/.*/, cors() as any); // Enable pre-flight for all routes (Express 5
 
 app.use(express.json({ limit: '10mb' })); 
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.use(morgan('dev'));
+// Gzip compress all responses — reduces API payload size by ~60-80%
+app.use(compression());
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'));
 
 // Health Check (Must be before any middleware that touches DB)
 app.get('/ping', (_req, res) => res.send('pong'));
@@ -115,6 +118,7 @@ app.get('/api/public/products', async (req, res) => {
 app.get('/api/public/settings', async (_req, res) => {
   try {
     const settings = await prisma.companySettings.findFirst();
+    res.set('Cache-Control', 'public, max-age=300'); // 5 minute cache
     res.json({ success: true, data: settings });
   } catch (e: any) {
     res.status(500).json({ success: false, message: e.message });

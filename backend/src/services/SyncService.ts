@@ -1,6 +1,10 @@
 import { prisma } from '../lib/prisma';
 import { AuditService } from './AuditService';
 
+// In-memory cache for rarely-changing category data
+let categoryCache: { data: any[]; ts: number } | null = null;
+const CATEGORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export class SyncService {
   /**
    * Main sync logic to process batch updates from offline clients.
@@ -311,7 +315,12 @@ export class SyncService {
           where: { updatedAt: { gt: syncCutoff } },
           include: { category: true },
         }),
-        prisma.category.findMany({}), // categories have no updatedAt; sync all (small table)
+        (categoryCache && Date.now() - categoryCache.ts < CATEGORY_CACHE_TTL
+          ? Promise.resolve(categoryCache.data)
+          : prisma.category.findMany({}).then(cats => {
+              categoryCache = { data: cats, ts: Date.now() };
+              return cats;
+            })) as Promise<any[]>,
         prisma.customer.findMany({ where: { updatedAt: { gt: syncCutoff } } }),
         prisma.expense.findMany({ where: { createdAt: { gt: syncCutoff } } }), // Expense has no updatedAt; use createdAt
         prisma.debtPayment.findMany({ where: { createdAt: { gt: syncCutoff } } }),
@@ -331,21 +340,25 @@ export class SyncService {
       totalCreditAmount: Number(c.totalDebt),
     }));
 
-    // â”€â”€â”€ 6. Log Sync â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    await prisma.syncLog.create({
-      data: {
-        deviceId: deviceId || 'unknown',
-        userId: userId,
-        action: 'BATCH_SYNC',
-        status: 'SUCCESS',
-        details: `Processed ${sales?.length || 0} sales, ${customers?.length || 0} customers. Downloaded ${updatedProducts.length} product updates.`,
-      },
-    });
+    // ——— 6. Log Sync ————————————————————————————————————————————————————————————
+    // Only log when actual data was exchanged to avoid DB bloat on empty polls
+    const hasMeaningfulActivity = (sales?.length || 0) + (customers?.length || 0) + (expenses?.length || 0) + (debtPayments?.length || 0) + updatedProducts.length > 0;
+    if (hasMeaningfulActivity) {
+      await prisma.syncLog.create({
+        data: {
+          deviceId: deviceId || 'unknown',
+          userId: userId,
+          action: 'BATCH_SYNC',
+          status: 'SUCCESS',
+          details: `Processed ${sales?.length || 0} sales, ${customers?.length || 0} customers. Downloaded ${updatedProducts.length} product updates.`,
+        },
+      }).catch(() => {}); // Non-fatal - never fail a sync because of logging
+    }
 
     return {
       serverTime: new Date().toISOString(),
       syncedSaleIds,
-      // Frontend uses this to remap local UUID customer IDs â†’ server Int IDs
+      // Frontend uses this to remap local UUID customer IDs → server Int IDs
       customerIdMap: Object.fromEntries(customerIdMap),
       updates: {
         products: mappedProducts,

@@ -252,18 +252,17 @@ const POSPage: React.FC = () => {
 
   const localProducts = useLiveQuery(
     async () => {
-      const all = await db.products.toArray();
-      const allActive = all.filter(p => !p.deleted && (!p.status || p.status.toLowerCase() === 'active'));
+      const base = db.products.where('status').equals('Active').filter(p => !p.deleted);
 
       if (searchTerm.length >= 1) {
         const term = searchTerm.toLowerCase();
-        return allActive.filter(p => 
+        return base.filter(p => 
           p.name.toLowerCase().includes(term) || 
           p.sku.toLowerCase().includes(term)
-        );
+        ).toArray();
       }
 
-      return allActive;
+      return base.toArray();
     },
     [searchTerm]
   );
@@ -319,21 +318,31 @@ const POSPage: React.FC = () => {
     });
   }, []);
 
-  const cartSubtotal = cart.reduce((sum, item) => sum + (item.product.sellPrice * item.quantity), 0);
-  const discountedSubtotal = Math.max(0, cartSubtotal - (Number(discount) || 0));
-  let finalTotal = discountedSubtotal;
-  let taxAmount = 0;
-
-  if (taxConfig.rate > 0) {
-    if (taxConfig.inclusive) {
-      taxAmount = discountedSubtotal - (discountedSubtotal / (1 + (taxConfig.rate / 100)));
-    } else {
-      taxAmount = discountedSubtotal * (taxConfig.rate / 100);
-      finalTotal = discountedSubtotal + taxAmount;
+  const cartSubtotal = useMemo(
+    () => cart.reduce((sum, item) => sum + (item.product.sellPrice * item.quantity), 0),
+    [cart]
+  );
+  
+  const { finalTotal, taxAmount } = useMemo(() => {
+    const discounted = Math.max(0, cartSubtotal - (Number(discount) || 0));
+    let tax = 0;
+    let total = discounted;
+    
+    if (taxConfig.rate > 0) {
+      if (taxConfig.inclusive) {
+        tax = discounted - (discounted / (1 + (taxConfig.rate / 100)));
+      } else {
+        tax = discounted * (taxConfig.rate / 100);
+        total = discounted + tax;
+      }
     }
-  }
+    return { finalTotal: total, taxAmount: tax };
+  }, [cartSubtotal, discount, taxConfig]);
 
-  const changeDue = Math.max(0, (parseFloat(amountReceived) || 0) - finalTotal);
+  const changeDue = useMemo(
+    () => Math.max(0, (parseFloat(amountReceived) || 0) - finalTotal),
+    [amountReceived, finalTotal]
+  );
 
   const handleCheckout = async () => {
     if (cart.length === 0 || isCheckingOut) return;
@@ -386,15 +395,16 @@ const POSPage: React.FC = () => {
 
       await db.salesQueue.add(saleData);
 
-      for (const item of cart) {
-        if (!item.product.isService) {
-          const product = await db.products.get(item.product.id);
-          if (product) {
-            await db.products.update(item.product.id, {
-              quantity: product.quantity - item.quantity
-            });
-          }
-        }
+      // Batch update product quantities to avoid N+1 queries
+      const physicalItems = cart.filter(i => !i.product.isService);
+      if (physicalItems.length > 0) {
+        const productIds = physicalItems.map(i => i.product.id);
+        const products = await db.products.bulkGet(productIds);
+        const updates = products.map((product, idx) => {
+          const cartItem = physicalItems.find(i => i.product.id === productIds[idx])!;
+          return { ...product!, quantity: product!.quantity - cartItem.quantity };
+        });
+        await db.products.bulkPut(updates);
       }
 
       setShowReceipt({
@@ -423,8 +433,8 @@ const POSPage: React.FC = () => {
     } finally {
       clearTimeout(safetyTimer);
       setIsCheckingOut(false);
-      // Force power sync after a cash sale
-      SyncService.pushSales().catch(console.error);
+      // Defer sync to allow UI to render the receipt instantly
+      setTimeout(() => SyncService.pushSales().catch(console.error), 2000);
     }
   };
 
@@ -508,15 +518,16 @@ const POSPage: React.FC = () => {
 
       await db.salesQueue.add(saleData);
 
-      for (const item of cart) {
-        if (!item.product.isService) {
-          const product = await db.products.get(item.product.id);
-          if (product) {
-            await db.products.update(item.product.id, {
-              quantity: product.quantity - item.quantity
-            });
-          }
-        }
+      // Batch update product quantities to avoid N+1 queries
+      const physicalItems = cart.filter(i => !i.product.isService);
+      if (physicalItems.length > 0) {
+        const productIds = physicalItems.map(i => i.product.id);
+        const products = await db.products.bulkGet(productIds);
+        const updates = products.map((product, idx) => {
+          const cartItem = physicalItems.find(i => i.product.id === productIds[idx])!;
+          return { ...product!, quantity: product!.quantity - cartItem.quantity };
+        });
+        await db.products.bulkPut(updates);
       }
 
       soundService.playSaleComplete();
@@ -544,8 +555,8 @@ const POSPage: React.FC = () => {
     } finally {
       clearTimeout(safetyTimer);
       setIsCheckingOut(false);
-      // Force power sync after a credit sale
-      SyncService.pushSales().catch(console.error);
+      // Defer sync to allow UI to respond instantly
+      setTimeout(() => SyncService.pushSales().catch(console.error), 2000);
     }
   };
 

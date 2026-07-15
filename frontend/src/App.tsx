@@ -1,28 +1,49 @@
-import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 
-import DashboardPage from './pages/DashboardPage';
-import POSPage from './pages/POSPage';
-import LoginPage from './pages/LoginPage';
-import SettingsPage from './pages/SettingsPage';
-import InventoryPage from './pages/InventoryPage';
-import OrdersPage from './pages/OrdersPage';
-import SalesPage from './pages/SalesPage';
-import DebtPage from './pages/DebtPage';
-import ExpensesPage from './pages/ExpensesPage';
-import TransactionsPage from './pages/TransactionsPage';
-import UsersPage from './pages/UsersPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import OnboardingPage from './pages/OnboardingPage';
-import LockedPage from './pages/LockedPage';
-import ReportsPage from './pages/ReportsPage';
-import BranchesPage from './pages/BranchesPage';
-import AboutPage from './pages/AboutPage';
-import PublicStorefront from './pages/PublicStorefront';
-import LandingPage from './pages/LandingPage';
-import AuditLogsPage from './pages/AuditLogsPage';
-import FeatureAccessPage from './pages/FeatureAccessPage';
+// Lazy-load every page so the initial bundle is tiny and fast
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const POSPage = lazy(() => import('./pages/POSPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const InventoryPage = lazy(() => import('./pages/InventoryPage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const SalesPage = lazy(() => import('./pages/SalesPage'));
+const DebtPage = lazy(() => import('./pages/DebtPage'));
+const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
+const TransactionsPage = lazy(() => import('./pages/TransactionsPage'));
+const UsersPage = lazy(() => import('./pages/UsersPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
+const LockedPage = lazy(() => import('./pages/LockedPage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const BranchesPage = lazy(() => import('./pages/BranchesPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const PublicStorefront = lazy(() => import('./pages/PublicStorefront'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const AuditLogsPage = lazy(() => import('./pages/AuditLogsPage'));
+const FeatureAccessPage = lazy(() => import('./pages/FeatureAccessPage'));
+
+const ProtectedStaffRoute = React.memo(({ children }: { children: React.ReactNode }) => {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (!token) return <Navigate to="/staff/login" replace />;
+
+  let u;
+  try {
+    u = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+  } catch {
+    return <Navigate to="/staff/login" replace />;
+  }
+  
+  // STRICT ROLE CHECK: Only Staff can access staff portal
+  const isStaff = ['SUPER_ADMIN', 'ADMIN', 'CASHIER'].includes(u.role);
+  if (!isStaff) return <Navigate to="/" replace />;
+
+  if (!u.isVerified || u.mustChangePassword) return <Navigate to="/staff/onboarding" replace />;
+
+  return <>{children}</>;
+});
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-surface-bg">
@@ -37,10 +58,11 @@ import MainLayout from './components/MainLayout';
 import FeatureGuard from './components/FeatureGuard';
 import { db } from './db/posDB';
 import { initDB } from './db/seedData';
-import { AuditService } from './services/AuditService';
+import { soundService } from './services/SoundService';
 import { getBase64Image } from './utils/imageUtils';
 import api from './api/client';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+
 
 // Removed BeforeInstallPromptEvent
 
@@ -194,24 +216,20 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleSync = useCallback(async () => {
-    if (navigator.onLine) {
-      try {
-        await SyncService.pushSales();
-        await AuditService.log('SYNC', 'Background sync completed successfully');
-      } catch {
-        await AuditService.log('SYNC_ERROR', 'Background sync failed', 'Error');
-      }
-    }
-  }, []);
+
 
   useEffect(() => {
+    // Throttle: only update lastActivity at most once per 30 seconds to avoid thrashing localStorage
+    let lastActivityWrite = 0;
     const handleActivity = () => {
-      localStorage.setItem('lastActivity', Date.now().toString());
+      const now = Date.now();
+      if (now - lastActivityWrite > 30000) {
+        lastActivityWrite = now;
+        localStorage.setItem('lastActivity', now.toString());
+      }
     };
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-    window.addEventListener('touchstart', handleActivity);
+    window.addEventListener('keydown', handleActivity, { passive: true });
+    window.addEventListener('touchstart', handleActivity, { passive: true });
 
     let lastFocusCheck = 0;
     const handleFocus = () => {
@@ -300,13 +318,13 @@ const App: React.FC = () => {
     window.addEventListener('focusin', handleFocusIn);
 
     return () => {
-      window.removeEventListener('mousemove', handleActivity);
       window.removeEventListener('keydown', handleActivity);
       window.removeEventListener('touchstart', handleActivity);
+      window.removeEventListener('focus', handleFocus);
       window.removeEventListener('focusin', handleFocusIn);
       clearInterval(lockInterval);
     };
-  }, [handleSync, checkSystemLock]);
+  }, [checkSystemLock]);
 
   const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -362,51 +380,28 @@ const App: React.FC = () => {
             <Route 
               path="/staff/*" 
               element={
-                (localStorage.getItem('token') || sessionStorage.getItem('token')) ? (
-                  (() => {
-                      let u;
-                      try {
-                        u = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
-                      } catch {
-                        return <Navigate to="/staff/login" replace />;
-                      }
-                      
-                      // STRICT ROLE CHECK: Only Staff can access staff portal
-                      const isStaff = ['SUPER_ADMIN', 'ADMIN', 'CASHIER'].includes(u.role);
-                      if (!isStaff) {
-                        return <Navigate to="/" replace />;
-                      }
-    
-                      if (!u.isVerified || u.mustChangePassword) {
-                        return <Navigate to="/staff/onboarding" replace />;
-                      }
-                    
-                    return (
-                      <MainLayout>
-                        <Routes>
-                          <Route element={<FeatureGuard featureKey="DASHBOARD" />}><Route path="dashboard" element={<DashboardPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="POS_TERMINAL" />}><Route path="pos" element={<POSPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="INVENTORY" />}><Route path="inventory" element={<InventoryPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="INVENTORY" />}><Route path="orders" element={<OrdersPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="SALES_HISTORY" />}><Route path="sales" element={<SalesPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="CUSTOMERS" />}><Route path="debt" element={<DebtPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="FINANCE" />}><Route path="expenses" element={<ExpensesPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="SALES_HISTORY" />}><Route path="transactions" element={<TransactionsPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="STAFF" />}><Route path="users" element={<UsersPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="SETTINGS" />}><Route path="settings" element={<SettingsPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="REPORTS" />}><Route path="reports" element={<ReportsPage />} /></Route>
-                          <Route element={<FeatureGuard featureKey="BRANCHES" />}><Route path="branches" element={<BranchesPage />} /></Route>
-                          <Route path="audit-logs" element={isSuperAdmin ? <AuditLogsPage /> : <Navigate to="/staff/dashboard" replace />} />
-                          <Route path="feature-access" element={isSuperAdmin ? <FeatureAccessPage /> : <Navigate to="/staff/dashboard" replace />} />
-                          <Route path="about" element={<AboutPage />} />
-                          <Route path="" element={<Navigate to="dashboard" replace />} />
-                        </Routes>
-                      </MainLayout>
-                    );
-                  })()
-                ) : (
-                  <Navigate to="/staff/login" replace />
-                )
+                <ProtectedStaffRoute>
+                  <MainLayout>
+                    <Routes>
+                      <Route element={<FeatureGuard featureKey="DASHBOARD" />}><Route path="dashboard" element={<DashboardPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="POS_TERMINAL" />}><Route path="pos" element={<POSPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="INVENTORY" />}><Route path="inventory" element={<InventoryPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="INVENTORY" />}><Route path="orders" element={<OrdersPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="SALES_HISTORY" />}><Route path="sales" element={<SalesPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="CUSTOMERS" />}><Route path="debt" element={<DebtPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="FINANCE" />}><Route path="expenses" element={<ExpensesPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="SALES_HISTORY" />}><Route path="transactions" element={<TransactionsPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="STAFF" />}><Route path="users" element={<UsersPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="SETTINGS" />}><Route path="settings" element={<SettingsPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="REPORTS" />}><Route path="reports" element={<ReportsPage />} /></Route>
+                      <Route element={<FeatureGuard featureKey="BRANCHES" />}><Route path="branches" element={<BranchesPage />} /></Route>
+                      <Route path="audit-logs" element={isSuperAdmin ? <AuditLogsPage /> : <Navigate to="/staff/dashboard" replace />} />
+                      <Route path="feature-access" element={isSuperAdmin ? <FeatureAccessPage /> : <Navigate to="/staff/dashboard" replace />} />
+                      <Route path="about" element={<AboutPage />} />
+                      <Route path="" element={<Navigate to="dashboard" replace />} />
+                    </Routes>
+                  </MainLayout>
+                </ProtectedStaffRoute>
               } 
             />
             

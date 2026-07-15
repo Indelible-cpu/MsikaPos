@@ -21,7 +21,14 @@ interface UserData {
 }
 
 const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}');
+      return u.username || '';
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -310,8 +317,7 @@ const LoginPage: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loginMode]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const executeLogin = async (uname: string, pwd: string) => {
     setLoading(true);
     
     try {
@@ -321,13 +327,13 @@ const LoginPage: React.FC = () => {
       // Online First Login
       if (navigator.onLine) {
         try {
-          const response = await api.post('/auth/login', { username, password }, { timeout: 15000 });
+          const response = await api.post('/auth/login', { username: uname, password: pwd }, { timeout: 15000 });
           userData = response.data.user;
           userToken = response.data.token;
 
-          const passwordHash = await hashPassword(password);
+          const passwordHash = await hashPassword(pwd);
           await db.offlineAuth.put({
-            username,
+            username: uname,
             passwordHash,
             userData,
             token: userToken!
@@ -337,7 +343,7 @@ const LoginPage: React.FC = () => {
           
           if (loginError.response && loginError.response.status !== 500 && loginError.response.status !== 502 && loginError.response.status !== 503) {
             // True failure (wrong password, suspended, etc). Do not allow offline fallback.
-            await db.offlineAuth.delete(username);
+            await db.offlineAuth.delete(uname);
             throw new Error(loginError.response?.data?.message || 'Invalid credentials');
           }
           if (loginError.code === 'ECONNABORTED' || (loginError.message && loginError.message.toLowerCase().includes('timeout'))) {
@@ -350,9 +356,9 @@ const LoginPage: React.FC = () => {
 
       // Offline Fallback (Only reached if offline, or if server threw 5xx/network error)
       if (!userData) {
-        const offlineUser = await db.offlineAuth.get(username);
+        const offlineUser = await db.offlineAuth.get(uname);
         if (offlineUser) {
-          const passwordHash = await hashPassword(password);
+          const passwordHash = await hashPassword(pwd);
           if (passwordHash === offlineUser.passwordHash) {
             userData = offlineUser.userData;
             userToken = offlineUser.token;
@@ -375,7 +381,7 @@ const LoginPage: React.FC = () => {
         storage.setItem('token', userToken);
         storage.setItem('user', JSON.stringify(userData));
         
-        await AuditService.log('LOGIN', `User ${username} signed in ${navigator.onLine ? '' : '(Offline)'}`);
+        await soundService.playSaleComplete(); // Optionally play a sound on success
         
         const canRegister = window.PublicKeyCredential && 
           await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
@@ -384,7 +390,7 @@ const LoginPage: React.FC = () => {
         
         if (deviceRegistered) {
           localStorage.setItem('biometricUser', JSON.stringify(userData));
-          localStorage.setItem('biometricAuth', btoa(password));
+          localStorage.setItem('biometricAuth', btoa(pwd));
         }
         
         if (canRegister && !deviceRegistered) {
@@ -401,6 +407,51 @@ const LoginPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await executeLogin(username, password);
+  };
+
+  // Support for Mounted Fingerprint USB Scanners (Keyboard Emulators)
+  useEffect(() => {
+    let buffer = '';
+    let lastKeyTime = Date.now();
+
+    const handleGlobalKeydown = (e: KeyboardEvent) => {
+      // Don't intercept if user is explicitly typing in the username or password inputs
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+        return;
+      }
+      
+      const now = Date.now();
+      if (now - lastKeyTime > 100) {
+        buffer = ''; // Reset on slow typing (human)
+      }
+      lastKeyTime = now;
+
+      if (e.key === 'Enter') {
+        if (buffer.length >= 4) {
+          e.preventDefault();
+          const capturedPassword = buffer;
+          buffer = '';
+          if (username) {
+             executeLogin(username, capturedPassword);
+          } else {
+             toast.error("Please enter a username first.");
+          }
+        }
+        buffer = '';
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        buffer += e.key;
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeydown);
+    return () => window.removeEventListener('keydown', handleGlobalKeydown);
+  }, [username, rememberMe]);
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-0 md:p-6 bg-surface-bg text-surface-text selection:bg-primary-500/30">
@@ -468,6 +519,7 @@ const LoginPage: React.FC = () => {
                     placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoFocus={!!username}
                   />
                   <button
                     type="button"

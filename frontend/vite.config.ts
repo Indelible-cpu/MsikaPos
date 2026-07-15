@@ -31,12 +31,6 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
           }
         ]
       },
@@ -95,6 +89,22 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    // Split vendor libraries into separate cached chunks
+    rollupOptions: {
+      output: {
+        // @ts-ignore
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['framer-motion', 'lucide-react', 'react-hot-toast'],
+          'vendor-db': ['dexie'],
+          'vendor-charts': ['recharts'],
+        }
+      }
+    },
+    // Raise the warning limit since we're now splitting properly
+    chunkSizeWarningLimit: 800,
+  },
   server: {
     proxy: {
       '/api': {
@@ -105,3 +115,4 @@ export default defineConfig({
     }
   }
 })
+
