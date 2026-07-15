@@ -196,6 +196,21 @@ export class POSDatabase extends Dexie {
       suppliers: 'id, name, synced',
       purchaseOrders: 'id, supplierId, status, synced, createdAt'
     });
+    // v18: add createdAt index to expenses
+    this.version(18).stores({
+      products: 'id, categoryId, sku, name, status, supplierId, updatedAt',
+      categories: 'id, slug',
+      salesQueue: 'id, customerId, status, synced, syncRetries, createdAt',
+      settings: 'key',
+      customers: 'id, name, phone, balance, idNumber, synced, syncRetries, updatedAt',
+      debtPayments: 'id, customerId, createdAt, synced, syncRetries',
+      expenses: 'id, category, date, synced, syncRetries, updatedAt, createdAt',
+      users: 'id, username, role',
+      auditLogs: 'id, userId, action, type, createdAt',
+      offlineAuth: 'username',
+      suppliers: 'id, name, synced',
+      purchaseOrders: 'id, supplierId, status, synced, createdAt'
+    });
   }
 }
 

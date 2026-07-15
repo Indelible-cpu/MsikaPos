@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { db } from '../db/posDB';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { isSameDay } from 'date-fns';
+import api from '../api/client';
 
 
 export default function MobileHeader() {
@@ -26,7 +27,6 @@ export default function MobileHeader() {
       // Try to get branch name if activeBranchId exists
       if (activeBranchId) {
         try {
-          const api = (await import('../api/client')).default;
           const res = await api.get('/branches?minimal=1');
           if (res.data.success) {
             const branches = res.data.data;

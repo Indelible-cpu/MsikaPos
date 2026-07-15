@@ -241,7 +241,12 @@
     padding: 8px 12px;
   }
   
-  .print-thermal-58 .text-\\[8px\\], .print-thermal-58 .text-\\[9px\\], .print-thermal-58 .text-\\[10px\\], .print-thermal-58 .text-\\[11px\\] {
+  .print-thermal-58 .receipt-text,
+  .print-thermal-58 p,
+  .print-thermal-58 span,
+  .print-thermal-58 td,
+  .print-thermal-58 th,
+  .print-thermal-58 div {
     font-size: 10px !important;
   }
 
