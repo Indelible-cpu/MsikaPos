@@ -252,17 +252,18 @@ const POSPage: React.FC = () => {
 
   const localProducts = useLiveQuery(
     async () => {
-      const base = db.products.where('status').equals('Active').filter(p => !p.deleted);
+      const all = await db.products.toArray();
+      const active = all.filter(p => !p.deleted && p.status === 'Active');
 
       if (searchTerm.length >= 1) {
         const term = searchTerm.toLowerCase();
-        return base.filter(p => 
-          p.name.toLowerCase().includes(term) || 
+        return active.filter(p =>
+          p.name.toLowerCase().includes(term) ||
           p.sku.toLowerCase().includes(term)
-        ).toArray();
+        );
       }
 
-      return base.toArray();
+      return active;
     },
     [searchTerm]
   );
