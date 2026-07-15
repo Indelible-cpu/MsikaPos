@@ -264,18 +264,60 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     const checkBiometrics = async () => {
-      if (window.PublicKeyCredential) {
-        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        const registered = localStorage.getItem('biometricRegistered') === 'true';
-        setIsBiometricAvailable(available);
-        if (registered) {
-          setLoginMode('biometric');
+      try {
+        // Step 1: WebAuthn API must exist
+        if (!window.PublicKeyCredential) {
+          setIsBiometricAvailable(false);
+          return;
         }
-      } else {
+
+        // Step 2: Platform authenticator must be available
+        const platformAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (!platformAvailable) {
+          setIsBiometricAvailable(false);
+          return;
+        }
+
+        // Step 3: Use getClientCapabilities (Chrome 132+) for precise biometric detection
+        // This tells us if a real biometric sensor (fingerprint, face) exists — not just a PIN
+        if (typeof (PublicKeyCredential as any).getClientCapabilities === 'function') {
+          try {
+            const caps = await (PublicKeyCredential as any).getClientCapabilities();
+            // hybridTransport = cross-device, relatedOrigins = passkeys
+            // userVerifyingPlatformAuthenticator = true only when real biometric exists
+            const hasRealBiometric = caps['uvm'] === true || caps['userVerifyingPlatformAuthenticator'] === true;
+            if (!hasRealBiometric) {
+              setIsBiometricAvailable(false);
+              return;
+            }
+          } catch {
+            // getClientCapabilities failed — fall through to heuristic
+          }
+        }
+
+        // Step 4: Heuristic for older browsers — hide on non-touch desktops
+        // Touch devices (phones/tablets) almost always have biometrics.
+        // Desktop PCs with no touch input almost never have a fingerprint reader.
+        const isTouchDevice = navigator.maxTouchPoints > 0;
+        const isDesktop = !isTouchDevice && window.innerWidth > 1024;
+        if (isDesktop) {
+          // Only show if user already registered biometrics on this machine
+          const registered = localStorage.getItem('biometricRegistered') === 'true';
+          setIsBiometricAvailable(registered);
+          if (registered) setLoginMode('biometric');
+          return;
+        }
+
+        // Step 5: Mobile/tablet with platform authenticator — show biometrics
+        const registered = localStorage.getItem('biometricRegistered') === 'true';
+        setIsBiometricAvailable(true);
+        if (registered) setLoginMode('biometric');
+      } catch {
         setIsBiometricAvailable(false);
       }
     };
     checkBiometrics();
+
     
     // Session Awareness: Only clear the token if it has actually expired.
     // Do NOT clear a valid token - the user may have been redirected back here
@@ -385,7 +427,9 @@ const LoginPage: React.FC = () => {
         await soundService.playSaleComplete(); // Optionally play a sound on success
         
         const canRegister = window.PublicKeyCredential && 
-          await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+          await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() &&
+          // Don't prompt on non-touch desktops (no fingerprint reader)
+          (navigator.maxTouchPoints > 0 || window.innerWidth <= 1024 || localStorage.getItem('biometricRegistered') === 'true');
           
         const deviceRegistered = localStorage.getItem('biometricRegistered') === 'true';
         
