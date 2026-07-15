@@ -1,6 +1,15 @@
 import React, { useEffect, useState, useCallback, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
+import { SyncService } from './services/SyncService';
+import { AuditService } from './services/AuditService';
+import MainLayout from './components/MainLayout';
+import FeatureGuard from './components/FeatureGuard';
+import { db } from './db/posDB';
+import { initDB } from './db/seedData';
+import { getBase64Image } from './utils/imageUtils';
+import api from './api/client';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 
 // Lazy-load every page so the initial bundle is tiny and fast
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -53,17 +62,6 @@ const PageLoader = () => (
     </div>
   </div>
 );
-import { SyncService } from './services/SyncService';
-import MainLayout from './components/MainLayout';
-import FeatureGuard from './components/FeatureGuard';
-import { db } from './db/posDB';
-import { initDB } from './db/seedData';
-import { getBase64Image } from './utils/imageUtils';
-import api from './api/client';
-import { useRegisterSW } from 'virtual:pwa-register/react';
-
-
-// Removed BeforeInstallPromptEvent
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
@@ -154,7 +152,6 @@ const App: React.FC = () => {
 
     const handleAppInstalled = () => {
       localStorage.setItem('pwa-installed', 'true');
-      // setDeferredPrompt(null); // Removed
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -216,7 +213,6 @@ const App: React.FC = () => {
   }, []);
 
 
-
   useEffect(() => {
     // Throttle: only update lastActivity at most once per 30 seconds to avoid thrashing localStorage
     let lastActivityWrite = 0;
@@ -239,7 +235,6 @@ const App: React.FC = () => {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then(registration => {
           if (registration) {
-            // Use requestIdleCallback if available to avoid blocking interaction
             const update = () => registration.update().catch(() => {});
             if ('requestIdleCallback' in window) {
               (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(update);
@@ -284,6 +279,7 @@ const App: React.FC = () => {
           console.error("Failed to sync remote settings", err);
         }
 
+        await AuditService.log('SYSTEM_START', 'Application initialized');
       } catch (e) {
         console.error("Seed failed", e);
       }
