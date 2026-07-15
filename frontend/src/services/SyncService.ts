@@ -136,12 +136,21 @@ export const SyncService = {
 
       const deviceId = localStorage.getItem('deviceId') || 'unknown';
       const rawTimestamp = localStorage.getItem('lastSyncTimestamp');
-      let lastSyncTimestamp = rawTimestamp;
+      let lastSyncTimestamp: string | null = rawTimestamp;
       
       if (rawTimestamp) {
         const date = new Date(rawTimestamp);
         date.setMinutes(date.getMinutes() - 5);
         lastSyncTimestamp = date.toISOString();
+      }
+
+      // CRITICAL: If the local product catalog is very small, force a FULL sync
+      // by resetting the timestamp. This handles fresh installs, cache clears,
+      // and DB migrations where the product index was wiped.
+      const localProductCount = await db.products.count();
+      if (localProductCount < 5) {
+        console.log('⚠️ Low product count detected — forcing full catalog sync');
+        lastSyncTimestamp = null;
       }
 
       const data = await apiFetch('/sync', {
@@ -156,6 +165,7 @@ export const SyncService = {
         }),
         timeout: 45000 
       });
+
 
       // YIELD to the browser to prevent long-task violations before processing response
       await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
