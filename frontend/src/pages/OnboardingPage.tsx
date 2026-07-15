@@ -35,9 +35,11 @@ const OnboardingPage: React.FC = () => {
 
   useEffect(() => {
     if (magicToken) {
-      if (localStorage.getItem('token') || sessionStorage.getItem('token')) {
-        return;
-      }
+      // Force clear any existing session to prevent resetting the logged-in user's password
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      
       const validateToken = async () => {
         setLoading(true);
         try {
