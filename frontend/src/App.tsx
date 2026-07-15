@@ -58,7 +58,6 @@ import MainLayout from './components/MainLayout';
 import FeatureGuard from './components/FeatureGuard';
 import { db } from './db/posDB';
 import { initDB } from './db/seedData';
-import { soundService } from './services/SoundService';
 import { getBase64Image } from './utils/imageUtils';
 import api from './api/client';
 import { useRegisterSW } from 'virtual:pwa-register/react';

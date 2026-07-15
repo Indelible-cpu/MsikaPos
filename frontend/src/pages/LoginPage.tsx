@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
-import { Lock, User as UserIcon, Eye, EyeOff, Fingerprint, ChevronRight, Info } from 'lucide-react';
+import { Fingerprint, Eye, EyeOff, User as UserIcon, Lock, ChevronRight, Info } from 'lucide-react';
+import { soundService } from '../services/SoundService';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { SyncService } from '../services/SyncService';

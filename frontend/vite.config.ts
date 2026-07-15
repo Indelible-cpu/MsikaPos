@@ -93,12 +93,11 @@ export default defineConfig({
     // Split vendor libraries into separate cached chunks
     rollupOptions: {
       output: {
-        // @ts-ignore
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['framer-motion', 'lucide-react', 'react-hot-toast'],
-          'vendor-db': ['dexie'],
-          'vendor-charts': ['recharts'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) return 'vendor-react';
+          if (id.includes('node_modules/framer-motion') || id.includes('node_modules/lucide-react') || id.includes('node_modules/react-hot-toast')) return 'vendor-ui';
+          if (id.includes('node_modules/dexie')) return 'vendor-db';
+          if (id.includes('node_modules/recharts')) return 'vendor-charts';
         }
       }
     },
