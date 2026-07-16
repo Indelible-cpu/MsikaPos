@@ -253,7 +253,7 @@ const POSPage: React.FC = () => {
   const localProducts = useLiveQuery(
     async () => {
       const all = await db.products.toArray();
-      const active = all.filter(p => !p.deleted && p.status === 'Active');
+      const active = all.filter(p => !p.deleted && (!p.status || p.status === 'Active'));
 
       if (searchTerm.length >= 1) {
         const term = searchTerm.toLowerCase();

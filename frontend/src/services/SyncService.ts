@@ -303,8 +303,25 @@ export const SyncService = {
         }
 
         // 2. Apply remote updates in tiny chunks
+        // Map server product shape → local DB shape. The server's Product model
+        // has no `status` field, so we derive it from `deleted`. Also normalise
+        // nullable fields so the POS filter (status === 'Active') always works.
         if (products && products.length > 0) {
-          await processInChunks(db.products, products);
+          const mappedLocalProducts = await mapInChunks(products, (p: any) => ({
+            ...p,
+            sku: p.sku ?? '',
+            costPrice: Number(p.costPrice ?? 0),
+            sellPrice: Number(p.sellPrice ?? 0),
+            quantity: Number(p.quantity ?? 0),
+            isService: Boolean(p.isService ?? false),
+            categoryId: Number(p.categoryId ?? 0),
+            discountValue: p.discountValue ? Number(p.discountValue) : 0,
+            status: p.deleted ? 'Inactive' : 'Active',
+            deleted: Boolean(p.deleted ?? false),
+            createdAt: p.createdAt ?? new Date().toISOString(),
+            updatedAt: p.updatedAt ?? new Date().toISOString(),
+          }));
+          await processInChunks(db.products, mappedLocalProducts);
         }
         
         if (categories && categories.length > 0) {
