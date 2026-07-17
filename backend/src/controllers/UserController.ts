@@ -98,14 +98,29 @@ export const fetchUsers = async (_req: Request, res: Response) => {
 };
 
 export const saveUser = async (req: Request, res: Response) => {
-  const { id, username, password, roleId, fullname, email, phone } = req.body;
+  // Accept roleName (e.g. 'CASHIER') instead of a hardcoded integer roleId
+  // to prevent ID-mismatch bugs where roleId=1 maps to the wrong role.
+  const { id, username, password, roleName, fullname, email, phone } = req.body;
+  const requestingUser = (req as any).user;
 
   try {
     if (phone && !isValidMalawianPhone(phone)) {
       return res.status(400).json({ success: false, message: 'Invalid Malawian phone number' });
     }
 
-    const rId = parseInt(roleId as any);
+    // Normalise the role name (frontend may send 'Super Admin' label, we want the enum)
+    const roleNameUpper = (roleName || 'CASHIER').toUpperCase().replace(' ', '_') as any;
+
+    // Strict RBAC: only SUPER_ADMIN can create/assign SUPER_ADMIN role
+    if (roleNameUpper === 'SUPER_ADMIN' && requestingUser?.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ success: false, message: 'Only a Super Admin can assign the Super Admin role' });
+    }
+
+    // Dynamic lookup — never trust a raw integer from the client
+    const roleRecord = await prisma.role.findUnique({ where: { name: roleNameUpper } });
+    if (!roleRecord) {
+      return res.status(400).json({ success: false, message: `Invalid role: ${roleNameUpper}` });
+    }
 
     if (id) {
       const data: any = {
@@ -113,7 +128,7 @@ export const saveUser = async (req: Request, res: Response) => {
         fullname,
         email,
         phone: normalizePhone(phone),
-        roleId: rId,
+        roleId: roleRecord.id,
       };
 
       if (password) {
@@ -145,7 +160,7 @@ export const saveUser = async (req: Request, res: Response) => {
             email,
             phone: normalizePhone(phone),
             password: hashedPassword,
-            roleId: rId,
+            roleId: roleRecord.id,
             mustChangePassword: true,
             isVerified: false,
             magicToken,

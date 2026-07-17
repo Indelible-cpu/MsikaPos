@@ -67,7 +67,7 @@ const UsersPage: React.FC = () => {
     fullname: '',
     email: '',
     phone: '',
-    roleId: 3
+    roleName: 'CASHIER' as 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER'
   });
 
   const resetForm = () => {
@@ -76,7 +76,7 @@ const UsersPage: React.FC = () => {
       fullname: '',
       email: '',
       phone: '',
-      roleId: 3
+      roleName: 'CASHIER'
     });
     setTempPassword(null);
     setMagicToken(null);
@@ -117,7 +117,7 @@ const UsersPage: React.FC = () => {
       });
       
       if (!editingUser && res.data.data?.tempPassword) {
-        await AuditService.log('USER_CREATE', `Created new user: ${formData.username} (Role: ${formData.roleId})`);
+        await AuditService.log('USER_CREATE', `Created new user: ${formData.username} (Role: ${formData.roleName})`);
         setTempPassword(res.data.data.tempPassword);
         setMagicToken(res.data.data.magicToken);
       } else {
@@ -217,7 +217,9 @@ const UsersPage: React.FC = () => {
       fullname: user.fullname || '',
       email: user.email || '',
       phone: user.phone || '',
-      roleId: user.role === 'SUPER_ADMIN' ? 1 : user.role === 'ADMIN' ? 2 : 3
+      roleName: (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'CASHIER')
+        ? user.role
+        : 'CASHIER'
     });
     setTempPassword(null);
     setMagicToken(null);
@@ -392,10 +394,14 @@ const UsersPage: React.FC = () => {
             <div className="grid grid-cols-1 gap-4">
                <div className="space-y-1">
                   <label htmlFor="role" className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Role</label>
-                  <select id="role" title="Select User Role" className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.roleId} onChange={(e) => setFormData({...formData, roleId: Number(e.target.value)})}>
-                     <option value={1}>Super Admin</option>
-                     <option value={2}>Admin</option>
-                     <option value={3}>Cashier</option>
+                  <select id="role" title="Select User Role" className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.roleName} onChange={(e) => setFormData({...formData, roleName: e.target.value as any})}>
+                     {currentUser?.role === 'SUPER_ADMIN' && (
+                       <option value="SUPER_ADMIN">Super Admin</option>
+                     )}
+                     {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN') && (
+                       <option value="ADMIN">Admin</option>
+                     )}
+                     <option value="CASHIER">Cashier</option>
                   </select>
                </div>
             </div>
