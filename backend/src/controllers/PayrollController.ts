@@ -5,7 +5,7 @@ import { prisma } from '../lib/prisma';
 export const getEmployees = async (_req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany({
-      where: { deleted: false, role: { name: { in: ['SUPER_ADMIN', 'ADMIN', 'CASHIER'] } } },
+      where: { deleted: false, role: { name: { in: ['SUPER_ADMIN', 'ADMIN', 'CASHIER', 'EMPLOYEE'] } } },
       select: {
         id: true, username: true, fullname: true, phone: true, role: { select: { name: true } },
         salaryConfig: true
@@ -91,6 +91,14 @@ export const updateAdvance = async (req: Request, res: Response) => {
         },
         update: { amount: advance.amount }
       });
+    }
+
+    if (status === 'REPAID') {
+      try {
+        await prisma.expense.delete({ where: { id: `ADVANCE-${advance.id}` } });
+      } catch (e) {
+        // Expense might not exist, ignore
+      }
     }
 
     return res.json({ success: true, data: advance });

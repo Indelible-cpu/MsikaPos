@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma';
 export const saveSettings = async (req: Request, res: Response) => {
   const { 
     companyName, logo, slogan, address, phone, email, 
-    primaryColor, currency, tax_config, global_discount 
+    primaryColor, currency, tax_config, global_discount, savingsPercentage
   } = req.body;
 
   try {
@@ -20,7 +20,8 @@ export const saveSettings = async (req: Request, res: Response) => {
       primaryColor: primaryColor !== undefined ? primaryColor : settings?.primaryColor,
       currency: currency !== undefined ? currency : settings?.currency,
       tax_config: tax_config !== undefined ? tax_config : settings?.tax_config,
-      global_discount: global_discount !== undefined ? Number(global_discount) : settings?.global_discount
+      global_discount: global_discount !== undefined ? Number(global_discount) : settings?.global_discount,
+      savingsPercentage: savingsPercentage !== undefined ? Number(savingsPercentage) : settings?.savingsPercentage
     };
 
     if (settings) {

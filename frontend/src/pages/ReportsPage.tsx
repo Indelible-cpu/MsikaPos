@@ -9,7 +9,8 @@ import {
   DollarSign,
   ArrowUpRight,
   BarChart3,
-  Package
+  Package,
+  Wallet
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -159,6 +160,19 @@ const ReportsPage: React.FC = () => {
     refetchInterval: 30_000,
     refetchIntervalInBackground: true,
     staleTime: 20_000,
+  });
+
+  const { data: publicSettings } = useQuery({
+    queryKey: ['reports-public-settings'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/public/settings');
+        return res.data.success ? res.data.data : null;
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 60_000,
   });
 
   const { data: serverExpensesRaw } = useQuery({
@@ -410,11 +424,14 @@ const ReportsPage: React.FC = () => {
     if (win) { win.document.write(html); win.document.close(); }
   };
 
+  const savingsPercentage = Number(publicSettings?.savingsPercentage || 0);
+  const savingsAmount = (totalProfit * savingsPercentage) / 100;
+
   const stats = [
     { label: 'Available Revenue', value: `MK ${netRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-500', sub: `Gross: MK ${totalRevenue.toLocaleString()} - Exp: MK ${totalExpenses.toLocaleString()}` },
     { label: 'Gross Sales', value: `MK ${totalRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-primary-500', sub: `${totalSalesCount} transaction${totalSalesCount !== 1 ? 's' : ''}` },
     { label: 'Total Profit', value: `MK ${totalProfit.toLocaleString()}`, icon: ArrowUpRight, color: 'text-blue-500', sub: 'excl. refunds' },
-    { label: 'Avg Sale', value: `MK ${avgSale.toLocaleString()}`, icon: Users, color: 'text-amber-500', sub: 'per transaction' },
+    { label: 'Savings', value: `MK ${savingsAmount.toLocaleString()}`, icon: Wallet, color: 'text-violet-500', sub: `${savingsPercentage}% of profit` },
     { label: 'Total Cost Value', value: `MK ${totalCostValue.toLocaleString()}`, icon: Package, color: 'text-rose-500', sub: 'active inventory value' },
   ];
 

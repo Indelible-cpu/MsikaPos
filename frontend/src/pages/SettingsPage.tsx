@@ -26,6 +26,7 @@ const SettingsPage: React.FC = () => {
   const [unlockTime, setUnlockTime] = React.useState('06:00');
   const [taxRate, setTaxRate] = React.useState<number | ''>(0);
   const [taxInclusive, setTaxInclusive] = React.useState(true);
+  const [savingsPercentage, setSavingsPercentage] = React.useState<number | ''>(0);
   const [companyName, setCompanyName] = React.useState('');
   const [businessType, setBusinessType] = React.useState('GENERAL');
   const [slogan, setSlogan] = React.useState('');
@@ -126,6 +127,16 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const saveSavingsConfig = async () => {
+    toast.loading('Saving savings settings...', { id: 'save-savings' });
+    try {
+      await api.post('/settings', { savingsPercentage });
+      toast.success('Savings configuration saved', { id: 'save-savings' });
+    } catch {
+      toast.error('Failed to save savings config', { id: 'save-savings' });
+    }
+  };
+
   const saveHours = async () => {
     toast.loading('Saving hours...', { id: 'save-hours' });
     try {
@@ -175,6 +186,7 @@ const SettingsPage: React.FC = () => {
           setFacebookPage(s.facebook || '');
           setPrimaryColor(s.primaryColor || '#6366f1');
           setCurrency(s.currency || 'MK');
+          setSavingsPercentage(s.savingsPercentage || 0);
           localStorage.setItem('companyName', s.companyName || '');
           localStorage.setItem('companyAddress', s.address || '');
           localStorage.setItem('companyPhone', s.phone || '');
@@ -609,6 +621,41 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <div className="w-full md:w-auto">
                   <button onClick={saveTaxConfig} className="h-14 btn-primary !px-8 text-[11px] font-black tracking-widest w-full md:w-auto shadow-xl shadow-primary/20 rounded-2xl shrink-0">
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isSuperAdmin && (
+              <div className="px-6 md:px-12 py-8 flex flex-col gap-4 group hover:bg-primary/5 transition-colors border-b border-border/30">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-background rounded-2xl flex items-center justify-center border border-border group-hover:border-primary/20 transition-all">
+                    <Wallet className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="font-black text-sm tracking-tight">Savings settings</div>
+                    <div className="text-xs text-muted-foreground font-bold">Configure automated savings percentage from profit</div>
+                  </div>
+                </div>
+                <div className="flex flex-col md:flex-row items-end gap-4 mt-2">
+                  <div className="flex-1 w-full">
+                    <label className="text-[10px] font-black text-muted-foreground ml-1 tracking-widest">Savings rate (%)</label>
+                    <div className="relative group">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-primary-500 opacity-40 group-focus-within:opacity-100 transition-opacity">%</span>
+                      <input
+                        title="Savings rate percentage"
+                        type="number"
+                        value={savingsPercentage}
+                        onChange={(e) => setSavingsPercentage(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="input-field w-full py-3 pl-10 pr-4 text-sm font-black shadow-inner"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full md:w-auto">
+                    <button onClick={saveSavingsConfig} className="h-14 btn-primary !px-8 text-[11px] font-black tracking-widest w-full md:w-auto shadow-xl shadow-primary/20 rounded-2xl shrink-0">
                       Save
                     </button>
                   </div>

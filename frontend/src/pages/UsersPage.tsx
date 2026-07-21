@@ -67,7 +67,7 @@ const UsersPage: React.FC = () => {
     fullname: '',
     email: '',
     phone: '',
-    roleName: 'CASHIER' as 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER'
+    roleName: 'CASHIER' as 'SUPER_ADMIN' | 'ADMIN' | 'CASHIER' | 'EMPLOYEE'
   });
 
   const resetForm = () => {
@@ -393,7 +393,7 @@ const UsersPage: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 gap-4">
                <div className="space-y-1">
-                  <label htmlFor="role" className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Role</label>
+                   <label htmlFor="role" className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Role</label>
                   <select id="role" title="Select User Role" className="input-field w-full appearance-none bg-surface-bg font-bold" value={formData.roleName} onChange={(e) => setFormData({...formData, roleName: e.target.value as any})}>
                      {currentUser?.role === 'SUPER_ADMIN' && (
                        <option value="SUPER_ADMIN">Super Admin</option>
@@ -402,7 +402,11 @@ const UsersPage: React.FC = () => {
                        <option value="ADMIN">Admin</option>
                      )}
                      <option value="CASHIER">Cashier</option>
+                     <option value="EMPLOYEE">Employee (No Login)</option>
                   </select>
+                  {formData.roleName === 'EMPLOYEE' && (
+                    <p className="text-[9px] font-black text-amber-500 mt-1">This role is for payroll purposes only and cannot login.</p>
+                  )}
                </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -436,7 +440,7 @@ const UsersPage: React.FC = () => {
             <div className="space-y-4">
               {/* Temporary Password intentionally hidden as requested by user to avoid confusion */}
 
-              {magicToken && (
+              {formData.roleName !== 'EMPLOYEE' && magicToken && (
                 <div className="space-y-1 text-left">
                   <label className="text-[9px] font-black tracking-widest text-surface-text/30 ml-1">Magic Invite Link</label>
                   <div className="p-4 bg-surface-bg rounded-2xl border border-surface-border flex items-center justify-between gap-3">
