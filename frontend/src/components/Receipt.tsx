@@ -30,12 +30,12 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
 
   const cashierName = user.fullname || user.username || 'System';
 
-  const shopName = branch?.name || localStorage.getItem('companyName') || 'MsikaPos';
-  const shopAddress = branch?.address || localStorage.getItem('companyAddress') || 'Excellence in Service'; 
-  const shopTel = branch?.phone || localStorage.getItem('companyPhone') || '+265 999 000 000';
-  const shopEmail = branch?.email || localStorage.getItem('companyEmail');
-  const shopSlogan = branch?.slogan || localStorage.getItem('companySlogan');
-  const shopFB = branch?.facebook || localStorage.getItem('companyFacebook');
+  const shopName    = branch?.name     || localStorage.getItem('companyName')    || 'MsikaPos';
+  const shopAddress = branch?.address  || localStorage.getItem('companyAddress') || '';
+  const shopTel     = branch?.phone    || localStorage.getItem('companyPhone')   || '';
+  const shopEmail   = branch?.email    || localStorage.getItem('companyEmail')   || '';
+  const shopSlogan  = branch?.slogan   || localStorage.getItem('companySlogan')  || '';
+  const shopFB      = branch?.facebook || localStorage.getItem('companyFacebook')|| '';
 
   const [customer, setCustomer] = React.useState<LocalCustomer | null>(null);
   const [history, setHistory] = React.useState<{ createdAt: string; amount: number; paymentMethod: string }[]>([]);
@@ -72,10 +72,10 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
           </div>
           <div className="text-right text-sm text-gray-600">
             <h2 className="text-3xl font-black text-gray-200 uppercase tracking-widest mb-2">{mode === 'Cash' ? 'RECEIPT' : 'INVOICE'}</h2>
-            <p className="font-bold text-gray-900">{shopAddress}</p>
-            <p>Tel: {shopTel}</p>
-            {shopEmail && <p>{shopEmail}</p>}
-            {shopFB && <p>FB: {shopFB}</p>}
+            {shopAddress && <p className="font-bold text-gray-900">{shopAddress}</p>}
+            {shopTel     && <p>Tel: {shopTel}</p>}
+            {shopEmail   && <p>{shopEmail}</p>}
+            {shopFB      && <p>FB: {shopFB}</p>}
           </div>
         </div>
 
@@ -212,10 +212,10 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
         <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="h-14 w-auto mx-auto mb-2 object-contain" />
         <h1 className="text-xl font-bold tracking-tight  uppercase">{shopName}</h1>
         {shopSlogan && <p className="text-[8px]  font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
-        <p className="text-[9px] tracking-widest">{shopAddress}</p>
-        <p className="text-[9px] font-bold mt-1">Tel: {shopTel}</p>
-        {shopEmail && <p className="text-[8px] font-bold opacity-60">{shopEmail}</p>}
-        {shopFB && <p className="text-[8px] font-bold opacity-60">FB: {shopFB}</p>}
+        {shopAddress && <p className="text-[9px] tracking-widest">{shopAddress}</p>}
+        {shopTel     && <p className="text-[9px] font-bold mt-1">Tel: {shopTel}</p>}
+        {shopEmail   && <p className="text-[8px] font-bold opacity-60">{shopEmail}</p>}
+        {shopFB      && <p className="text-[8px] font-bold opacity-60">FB: {shopFB}</p>}
       </div>
 
       <div className="flex flex-col gap-1 mb-4 font-bold text-[9px] w-full">

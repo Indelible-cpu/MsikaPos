@@ -257,9 +257,17 @@ const SalesPage: React.FC = () => {
                           await navigator.share({ files: [file], title: 'Transaction Receipt', text: `Receipt for ${selectedSale.invoiceNo}` });
                           toast.success('Shared successfully', { id: 'share' });
                         } else {
-                          const text = encodeURIComponent(`Transaction Receipt\nInvoice: ${selectedSale.invoiceNo}\nTotal: MK ${selectedSale.total.toLocaleString()}\nThank you for your business!`);
-                          window.open(`https://wa.me/?text=${text}`, '_blank');
-                          toast.success('WhatsApp opened', { id: 'share' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `receipt-${selectedSale.invoiceNo}.png`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                          const text = encodeURIComponent(`Transaction Receipt\nInvoice: ${selectedSale.invoiceNo}\nTotal: MK ${selectedSale.total.toLocaleString()}\n(Image saved — attach it to this WhatsApp chat)\nThank you for your business!`);
+                          setTimeout(() => window.open(`https://wa.me/?text=${text}`, '_blank'), 600);
+                          toast.success('Image saved! Attach it to WhatsApp.', { id: 'share', duration: 5000 });
                         }
                       }
                     } catch { 

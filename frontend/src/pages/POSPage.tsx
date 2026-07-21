@@ -726,7 +726,7 @@ const POSPage: React.FC = () => {
               <CheckCircle2 className="w-16 h-16 text-success mb-4" />
               <h2 className="text-xl font-black text-foreground uppercase tracking-tighter">Payment Successful</h2>
             </div>
-            <div className="max-h-[60vh] overflow-y-auto bg-card p-4 custom-scrollbar">
+            <div id="receipt-scroll-wrapper" className="max-h-[60vh] overflow-y-auto bg-card p-4 custom-scrollbar">
               <div id="receipt-print" className={`bg-white p-4 rounded-xl ${printSize}`}>
                 <Receipt {...showReceipt} isA4={printSize === 'print-a4'} />
               </div>

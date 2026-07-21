@@ -5,7 +5,6 @@ import { db, type LocalSale } from '../db/posDB';
 import api from '../api/client';
 import {
   TrendingUp,
-  Users,
   DollarSign,
   ArrowUpRight,
   BarChart3,
@@ -249,7 +248,6 @@ const ReportsPage: React.FC = () => {
     }, 0),
     [localProducts]
   );
-  const avgSale = totalSalesCount ? Math.round(totalRevenue / totalSalesCount) : 0;
   const refundCount = scopedSales.filter((s) => s.status === 'REFUNDED').length;
   
   const netRevenue = totalRevenue - totalExpenses;

@@ -19,10 +19,13 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
   const branch = currentBranchStr ? JSON.parse(currentBranchStr) : null;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const shopAddress = branch?.address || 'Excellence in Service'; 
-  const shopTel = branch?.phone || '+265 999 000 000';
-  const shopEmail = branch?.email;
-  const shopSlogan = branch?.slogan;
+  const shopName    = branch?.name    || localStorage.getItem('companyName')    || 'MsikaPos';
+  const shopAddress = branch?.address || localStorage.getItem('companyAddress') || '';
+  const shopTel     = branch?.phone   || localStorage.getItem('companyPhone')   || '';
+  const shopEmail   = branch?.email   || localStorage.getItem('companyEmail')   || '';
+  const shopSlogan  = branch?.slogan  || localStorage.getItem('companySlogan')  || '';
+  const shopFB      = branch?.facebook|| localStorage.getItem('companyFacebook')|| '';
+  const shopLogo    = branch?.logo    || localStorage.getItem('companyLogo')    || '/icon.png';
   const cashierName = user.fullname || user.username || 'System';
   
   const [customer, setCustomer] = React.useState<LocalCustomer | null>(null);
@@ -35,6 +38,14 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
     }
   }, [customerId]);
 
+  const displayDate = (() => {
+    if (!date) return new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+    const d = new Date(date);
+    return isNaN(d.getTime())
+      ? new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+      : d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+  })();
+
   return (
     <div className="invoice relative p-0 bg-white text-black font-mono w-full text-[11px] leading-tight shadow-sm flex flex-col items-center">
       <div className="absolute top-2 right-2 border border-black px-2 py-0.5 font-black text-[8px] tracking-tighter bg-black text-white">
@@ -43,23 +54,20 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
       
       <div className="text-center w-full border-b-2 border-black pb-4 mb-4">
         <div className="w-14 h-14 mx-auto mb-2 rounded-full border border-black/10 flex items-center justify-center overflow-hidden">
-           <img src={branch?.logo || localStorage.getItem('companyLogo') || "/icon.png"} alt="logo" className="w-full h-full object-contain grayscale" />
+           <img src={shopLogo} alt="logo" className="w-full h-full object-contain grayscale" />
         </div>
-        <h1 className="text-xl font-bold tracking-tight uppercase">{localStorage.getItem('companyName') || 'MsikaPos'}</h1>
+        <h1 className="text-xl font-bold tracking-tight uppercase">{shopName}</h1>
         {shopSlogan && <p className="text-[8px] font-bold mb-1 opacity-60">"{shopSlogan}"</p>}
-        <p className="text-[9px] tracking-widest">{shopAddress}</p>
-        <p className="text-[9px] font-bold mt-1">Tel: {shopTel}</p>
-        {shopEmail && <p className="text-[8px] font-bold opacity-60">{shopEmail}</p>}
+        {shopAddress && <p className="text-[9px] tracking-widest">{shopAddress}</p>}
+        {shopTel     && <p className="text-[9px] font-bold mt-1">Tel: {shopTel}</p>}
+        {shopEmail   && <p className="text-[8px] font-bold opacity-60">{shopEmail}</p>}
+        {shopFB      && <p className="text-[8px] font-bold opacity-60">FB: {shopFB}</p>}
       </div>
 
       <div className="mb-4 text-[9px] space-y-1 w-full px-2">
         <div className="font-bold flex justify-between">
            <span>Invoice: {invoiceNo}</span>
-           <span>{(() => {
-             if (!date) return new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-             const d = new Date(date);
-             return isNaN(d.getTime()) ? new Date().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-           })()}</span>
+           <span>{displayDate}</span>
         </div>
         <div className="flex justify-between uppercase font-bold">
           <span>Cashier: {cashierName}</span>
@@ -103,7 +111,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
         </div>
         {tax > 0 && (
           <div className="flex justify-between">
-            <span>Tax (vat)</span>
+            <span>Tax (VAT)</span>
             <span>Mk {tax.toLocaleString()}</span>
           </div>
         )}
@@ -149,7 +157,6 @@ export const Invoice: React.FC<InvoiceProps> = ({ items, total, subtotal, tax, d
       </div>
 
       <div className="text-center pt-4 mt-4 border-t border-black border-dashed w-full px-2">
-        <p className="text-[9px] font-bold leading-tight">Warning: Failure to settle the balance by the due date will attract a 2% daily interest rate (Mk {(total * 0.02).toLocaleString()} daily).</p>
         <p className="text-[11px] font-black mt-2">Thank you for your business!</p>
         <div className="mt-4 flex flex-col items-center gap-0.5 opacity-30">
           <div className="text-[6px] font-bold tracking-widest uppercase">Powered by MsikaPos</div>

@@ -45,6 +45,19 @@ const Modal: React.FC<ModalProps> = ({
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  /* ── Allow full content to print — temporarily lift overflow lock ── */
+  useEffect(() => {
+    if (!isOpen) return;
+    const beforePrint = () => { document.body.style.overflow = ''; };
+    const afterPrint  = () => { document.body.style.overflow = 'hidden'; };
+    window.addEventListener('beforeprint', beforePrint);
+    window.addEventListener('afterprint',  afterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', beforePrint);
+      window.removeEventListener('afterprint',  afterPrint);
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (

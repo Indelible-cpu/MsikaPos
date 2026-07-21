@@ -195,28 +195,98 @@
 
 
 
+
 @media print {
+  /* Hide everything except the receipt/invoice container */
   body * { visibility: hidden !important; }
-  #print-container, #print-container *, #printable-receipt, #printable-receipt *, #receipt-print, #receipt-print *, #printable-repayment-receipt, #printable-repayment-receipt *, .print-container, .print-container * { 
-    visibility: visible !important; 
-  }
-  
-  #print-container, #printable-receipt, #receipt-print, #printable-repayment-receipt, .print-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    margin: 0;
-    display: flex !important;
-    justify-content: center !important;
-    background: white;
-    z-index: 9999;
-    color: black !important;
+  #print-container, #print-container *,
+  #printable-receipt, #printable-receipt *,
+  #receipt-print, #receipt-print *,
+  #printable-repayment-receipt, #printable-repayment-receipt *,
+  .print-container, .print-container * {
+    visibility: visible !important;
   }
 
-  /* A4 Invoice Mode */
-  #print-container.print-a4, #printable-receipt.print-a4, #receipt-print.print-a4, #printable-repayment-receipt.print-a4, .print-container.print-a4 {
-    width: 100%;
-    padding: 0;
+  /* Reset any overflow/scroll so nothing is clipped or pushed down */
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Remove scroll constraints from any wrapper that contains a print container */
+  #receipt-scroll-wrapper,
+  [class*="overflow-y-auto"],
+  [class*="overflow-hidden"],
+  [class*="max-h-"],
+  [class*="max-h-["] {
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Reset modal panel height/overflow — prevents the 88vh/92svh cap from clipping */
+  [class*="rounded-t-"],
+  [class*="rounded-"],
+  [class*="flex-col"] {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Hide modal overlays / backdrops at print time */
+  [class*="backdrop-blur"],
+  [class*="bg-background/"] {
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Place the receipt at the very top-left; never let it overflow the page */
+  #print-container,
+  #printable-receipt,
+  #receipt-print,
+  #printable-repayment-receipt,
+  .print-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    background: white !important;
+    z-index: 99999 !important;
+    color: black !important;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    /* Keep content together — no forced page break */
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Ensure inner receipt/invoice content can breathe */
+  #print-container > *,
+  #printable-receipt > *,
+  #receipt-print > *,
+  #printable-repayment-receipt > *,
+  .print-container > * {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* ── A4 Invoice Mode ── */
+  #print-container.print-a4,
+  #printable-receipt.print-a4,
+  #receipt-print.print-a4,
+  #printable-repayment-receipt.print-a4,
+  .print-container.print-a4 {
+    width: 100% !important;
+    padding: 0 !important;
     justify-content: flex-start !important;
   }
 
@@ -229,18 +299,26 @@
     min-height: auto !important;
   }
 
-  /* Compact Thermal 80mm Mode */
-  #print-container.print-thermal-80, #printable-receipt.print-thermal-80, #receipt-print.print-thermal-80, #printable-repayment-receipt.print-thermal-80, .print-container.print-thermal-80 {
-    width: 80mm;
-    padding: 12px 16px;
+  /* ── Thermal 80mm Mode ── */
+  #print-container.print-thermal-80,
+  #printable-receipt.print-thermal-80,
+  #receipt-print.print-thermal-80,
+  #printable-repayment-receipt.print-thermal-80,
+  .print-container.print-thermal-80 {
+    width: 80mm !important;
+    padding: 4px 8px !important;
   }
 
-  /* Compact Thermal 58mm Mode */
-  #print-container.print-thermal-58, #printable-receipt.print-thermal-58, #receipt-print.print-thermal-58, #printable-repayment-receipt.print-thermal-58, .print-container.print-thermal-58 {
-    width: 58mm;
-    padding: 8px 12px;
+  /* ── Thermal 58mm Mode ── */
+  #print-container.print-thermal-58,
+  #printable-receipt.print-thermal-58,
+  #receipt-print.print-thermal-58,
+  #printable-repayment-receipt.print-thermal-58,
+  .print-container.print-thermal-58 {
+    width: 58mm !important;
+    padding: 4px 6px !important;
   }
-  
+
   .print-thermal-58 .receipt-text,
   .print-thermal-58 p,
   .print-thermal-58 span,
@@ -250,7 +328,18 @@
     font-size: 10px !important;
   }
 
+  /* Let the page size adapt to the content — prevents forced A4 blank page below thermal receipt */
   @page {
-    margin: 0;
+    margin: 4mm;
+    size: auto;
+  }
+
+  /* A4 mode gets proper margins */
+  .print-a4 {
+    @page {
+      margin: 15mm;
+      size: A4 portrait;
+    }
   }
 }
+

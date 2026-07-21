@@ -872,13 +872,21 @@ const DebtPage: React.FC = () => {
                     const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
                     if (blob) {
                       const file = new File([blob], `receipt-${clearedReceipt.invoiceNo}.png`, { type: 'image/png' });
-                      if (navigator.share) {
+                      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                         await navigator.share({ files: [file], title: 'Payment Receipt', text: `Repayment from ${clearedReceipt.customerName}` });
                         toast.success('Shared successfully', { id: 'share' });
                       } else {
-                        const text = encodeURIComponent(`Payment Receipt\nInvoice: ${clearedReceipt.invoiceNo}\nAmount: MK ${clearedReceipt.total.toLocaleString()}\nThank you, ${clearedReceipt.customerName}!`);
-                        window.open(`https://wa.me/?text=${text}`, '_blank');
-                        toast.success('WhatsApp opened', { id: 'share' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `receipt-${clearedReceipt.invoiceNo}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        const text = encodeURIComponent(`Payment Receipt\nAmount: MK ${clearedReceipt.total.toLocaleString()}\nDate: ${new Date(clearedReceipt.date).toLocaleString()}\n(Image saved — attach it to this WhatsApp chat)`);
+                        setTimeout(() => window.open(`https://wa.me/?text=${text}`, '_blank'), 600);
+                        toast.success('Image saved! Attach it to WhatsApp.', { id: 'share', duration: 5000 });
                       }
                     }
                   } catch { toast.error('Failed to share', { id: 'share' }); }
