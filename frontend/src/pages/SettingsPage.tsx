@@ -209,6 +209,15 @@ const SettingsPage: React.FC = () => {
     loadSettings();
   }, []);
 
+  // Camera cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+      }
+    };
+  }, []);
+
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
       (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());

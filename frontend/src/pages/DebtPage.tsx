@@ -240,6 +240,15 @@ const DebtPage: React.FC = () => {
     return combined;
   }, [allCredits, selectedCustomer, localCredits]);
 
+  // Camera cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+      }
+    };
+  }, []);
+
   const startCamera = async () => {
     setUseCamera(true);
     try {

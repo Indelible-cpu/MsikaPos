@@ -158,6 +158,15 @@ const POSPage: React.FC = () => {
     localStorage.setItem('posDiscount', discount.toString());
   }, [cart, discount]);
 
+  // Camera cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, []);
+
   const startCamera = async (mode = facingMode) => {
     try {
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
