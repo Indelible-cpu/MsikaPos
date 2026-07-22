@@ -208,6 +208,7 @@ const POSPage: React.FC = () => {
 
   const [taxConfig, setTaxConfig] = useState<TaxConfig>({ rate: 0, inclusive: false });
   const [currentInvoiceNo, setCurrentInvoiceNo] = useState(generateInvoiceNo());
+  const [shareType, setShareType] = useState<'Receipt' | 'Invoice'>('Receipt');
 
 
   const [showReceipt, setShowReceipt] = useState<{
@@ -728,11 +729,22 @@ const POSPage: React.FC = () => {
             </div>
             <div id="receipt-scroll-wrapper" className="max-h-[60vh] overflow-y-auto bg-card p-4 custom-scrollbar">
               <div id="receipt-print" className={`bg-white p-4 rounded-xl ${printSize}`}>
-                <Receipt {...showReceipt} isA4={printSize === 'print-a4'} />
+                <Receipt {...showReceipt} isA4={printSize === 'print-a4'} documentType={shareType} />
               </div>
             </div>
 
-            <div className="p-6 bg-muted/30 border-t border-border/50 flex gap-4">
+            <div className="p-6 bg-muted/30 border-t border-border/50 flex flex-col gap-4">
+              <div className="flex justify-center gap-6 pb-2">
+                <label className="flex items-center gap-2 cursor-pointer text-foreground">
+                  <input type="radio" name="shareType" checked={shareType === 'Receipt'} onChange={() => setShareType('Receipt')} className="accent-primary w-4 h-4" />
+                  <span className="text-xs font-bold uppercase tracking-widest">Receipt</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-foreground">
+                  <input type="radio" name="shareType" checked={shareType === 'Invoice'} onChange={() => setShareType('Invoice')} className="accent-primary w-4 h-4" />
+                  <span className="text-xs font-bold uppercase tracking-widest">Invoice</span>
+                </label>
+              </div>
+              <div className="flex gap-4">
               {/* Share via WhatsApp */}
               <button 
                 onClick={async () => {
@@ -767,7 +779,7 @@ const POSPage: React.FC = () => {
                     
                     // Try native share (Android/iOS)
                     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                      await navigator.share({ files: [file], title: 'Receipt', text: `Receipt from ${localStorage.getItem('companyName') || 'MsikaPos'}` });
+                      await navigator.share({ files: [file], title: shareType, text: `${shareType} from ${localStorage.getItem('companyName') || 'MsikaPos'}` });
                       toast.success('Shared!', { id: 'share' });
                     } else {
                       // Fallback: Download image + open WhatsApp with text
@@ -779,13 +791,17 @@ const POSPage: React.FC = () => {
                       a.click();
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
-                      const text = encodeURIComponent(`Receipt: ${showReceipt.invoiceNo}\nTotal: MK ${showReceipt.total.toLocaleString()}\n(Image saved — attach it to this WhatsApp chat)`);
+                      const text = encodeURIComponent(`${shareType}: ${showReceipt.invoiceNo}\nTotal: MK ${showReceipt.total.toLocaleString()}\n(Image saved — attach it to this WhatsApp chat)`);
                       setTimeout(() => window.open(`https://wa.me/?text=${text}`, '_blank'), 600);
                       toast.success('Image saved! Attach it to WhatsApp.', { id: 'share', duration: 5000 });
                     }
-                  } catch (err) {
+                  } catch (err: any) {
                     console.error('Share error:', err);
-                    toast.error('Failed to generate image. Try again.', { id: 'share' });
+                    if (err?.name === 'AbortError') {
+                      toast.dismiss('share');
+                    } else {
+                      toast.error('Failed to generate image. Try again.', { id: 'share' });
+                    }
                   }
                 }}
                 className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-bold tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 capitalize"
@@ -820,6 +836,7 @@ const POSPage: React.FC = () => {
                 🖨 Print
               </button>
               <button onClick={() => setShowReceipt(null)} className="flex-1 py-4 bg-primary text-primary-foreground rounded-2xl font-bold capitalize tracking-widest text-[11px] btn-press">New Sale</button>
+              </div>
             </div>
           </div>
         </div>

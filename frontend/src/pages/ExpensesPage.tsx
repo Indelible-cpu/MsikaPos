@@ -750,7 +750,11 @@ const PayrollTab: React.FC = () => {
                     }
                   } catch (err: any) {
                     console.error('Share error:', err);
-                    toast.error(err?.message || 'Failed to share', { id: tid });
+                    if (err?.name === 'AbortError') {
+                      toast.dismiss(tid);
+                    } else {
+                      toast.error(err?.message || 'Failed to share', { id: tid });
+                    }
                   }
                 }}
                 className="flex-1 min-w-[140px] py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 uppercase"
@@ -1075,7 +1079,14 @@ const ExpensesPage: React.FC = () => {
                     if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Expense voucher', text: `Voucher for ${formData.description}` }); toast.success('Shared successfully', { id: 'share' }); }
                     else { const text = encodeURIComponent(`Expense voucher\nRef: ${expenseReceipt.invoiceNo}\nAmount: MK ${expenseReceipt.total.toLocaleString()}\nDesc: ${formData.description}`); window.open(`https://wa.me/?text=${text}`, '_blank'); toast.success('WhatsApp opened', { id: 'share' }); }
                   }
-                } catch { toast.error('Failed to share', { id: 'share' }); }
+                } catch (err: any) { 
+                  console.error('Share error:', err);
+                  if (err?.name === 'AbortError') {
+                    toast.dismiss('share');
+                  } else {
+                    toast.error('Failed to share', { id: 'share' });
+                  }
+                }
               }} className="flex-1 py-5 bg-emerald-500 text-white rounded-[1.5rem] text-[10px] font-black tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 uppercase">
                 <MessageSquare className="w-5 h-5" /> Share WhatsApp
               </button>

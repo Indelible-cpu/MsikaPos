@@ -21,9 +21,10 @@ interface ReceiptProps {
   signature?: string;
   paymentHistory?: { date: string; amount: number; method: string }[];
   isA4?: boolean;
+  documentType?: 'Receipt' | 'Invoice';
 }
 
-export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, paid, change, mode, bankName, accountNumber, customerName, customerId, signature, isA4 }) => {
+export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, discount, invoiceNo, date, paid, change, mode, bankName, accountNumber, customerName, customerId, signature, isA4, documentType }) => {
   const currentBranchStr = localStorage.getItem('currentBranch');
   const branch = currentBranchStr ? JSON.parse(currentBranchStr) : null;
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -71,7 +72,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
             </div>
           </div>
           <div className="text-right text-sm text-gray-600">
-            <h2 className="text-3xl font-black text-gray-200 uppercase tracking-widest mb-2">{mode === 'Cash' ? 'RECEIPT' : 'INVOICE'}</h2>
+            <h2 className="text-3xl font-black text-gray-200 uppercase tracking-widest mb-2">{documentType ? documentType.toUpperCase() : (mode === 'Cash' ? 'RECEIPT' : 'INVOICE')}</h2>
             {shopAddress && <p className="font-bold text-gray-900">{shopAddress}</p>}
             {shopTel     && <p>Tel: {shopTel}</p>}
             {shopEmail   && <p>{shopEmail}</p>}

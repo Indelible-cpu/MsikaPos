@@ -314,7 +314,7 @@ const TransactionsPage: React.FC = () => {
       toast.loading('Generating shareable receipt...', { id: 'share' });
       
       // Temporarily make it visible for capture if it was hidden
-      const canvas = await html2canvas(receiptElement, { scale: 2, backgroundColor: '#ffffff' });
+      const canvas = await html2canvas(receiptElement, { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: false });
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
       
       if (!blob) throw new Error('Failed to generate image');
@@ -336,9 +336,13 @@ const TransactionsPage: React.FC = () => {
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         toast.success('WhatsApp opened (Text fallback)', { id: 'share' });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error('Failed to share', { id: 'share' });
+      if (err?.name === 'AbortError') {
+        toast.dismiss('share');
+      } else {
+        toast.error('Failed to share', { id: 'share' });
+      }
     }
   };
 

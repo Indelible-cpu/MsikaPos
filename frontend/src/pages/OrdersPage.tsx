@@ -203,9 +203,13 @@ const OrdersPage: React.FC = () => {
         URL.revokeObjectURL(url);
         toast.success('Downloaded successfully', { id: toastId });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Share error:', e);
-      toast.error('Failed to generate document', { id: toastId });
+      if (e?.name === 'AbortError') {
+        toast.dismiss(toastId);
+      } else {
+        toast.error('Failed to generate document', { id: toastId });
+      }
     } finally {
       // Always restore element position
       printElement.style.cssText = originalCss;

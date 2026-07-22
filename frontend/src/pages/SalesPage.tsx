@@ -270,8 +270,13 @@ const SalesPage: React.FC = () => {
                           toast.success('Image saved! Attach it to WhatsApp.', { id: 'share', duration: 5000 });
                         }
                       }
-                    } catch { 
-                      toast.error('Failed to share', { id: 'share' }); 
+                    } catch (err: any) { 
+                      console.error('Share error:', err);
+                      if (err?.name === 'AbortError') {
+                        toast.dismiss('share');
+                      } else {
+                        toast.error('Failed to share', { id: 'share' });
+                      }
                     }
                   }}
                   className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase"

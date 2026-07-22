@@ -60,7 +60,10 @@ interface ReceiptData {
 
 
 
+import { useAuthStore } from '../hooks/useAuth';
+
 const DebtPage: React.FC = () => {
+  const currentUser = useAuthStore(state => state.user);
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -771,32 +774,49 @@ const DebtPage: React.FC = () => {
                     }); 
                     setIsEditing(true); 
                   }} className="px-8 py-3 bg-primary-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-primary-500/20">Edit Details</button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toast(
-                        (t) => (
-                          <div className="flex flex-col gap-3">
-                            <p className="text-sm font-bold">Permanently delete <span className="text-red-500">{selectedCustomer.name}</span>? This cannot be undone.</p>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={async () => { toast.dismiss(t.id); await db.customers.delete(selectedCustomer.id); setSelectedCustomer(null); setIsProfileModalOpen(false); toast.success('Profile removed'); }}
-                                className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-black"
-                              >Yes, delete</button>
-                              <button
-                                type="button"
-                                onClick={() => toast.dismiss(t.id)}
-                                className="flex-1 py-2 btn-cancel text-[10px]"
-                              >Cancel</button>
+                  {currentUser?.role === 'ADMIN' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toast(
+                          (t) => (
+                            <div className="flex flex-col gap-3">
+                              <p className="text-sm font-bold">Permanently delete <span className="text-red-500">{selectedCustomer.name}</span>? This cannot be undone.</p>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    toast.dismiss(t.id);
+                                    try {
+                                      if (!navigator.onLine) {
+                                        toast.error('You must be online to delete a customer.');
+                                        return;
+                                      }
+                                      await api.delete(`/customers/${selectedCustomer.id}`);
+                                      await db.customers.delete(selectedCustomer.id);
+                                      setSelectedCustomer(null);
+                                      setIsProfileModalOpen(false);
+                                      toast.success('Profile removed');
+                                    } catch (e) {
+                                      toast.error('Failed to remove profile');
+                                    }
+                                  }}
+                                  className="flex-1 py-2 bg-red-500 text-white rounded-lg text-xs font-black"
+                                >Yes, delete</button>
+                                <button
+                                  type="button"
+                                  onClick={() => toast.dismiss(t.id)}
+                                  className="flex-1 py-2 btn-cancel text-[10px]"
+                                >Cancel</button>
+                              </div>
                             </div>
-                          </div>
-                        ),
-                        { duration: 8000 }
-                      );
-                    }}
-                    className="flex items-center gap-2 px-6 py-3 bg-red-500/5 text-red-500/40 hover:text-red-500 rounded-xl text-[9px] font-black uppercase transition-colors"
-                  ><Trash2 className="w-4 h-4" /> Delete Profile</button>
+                          ),
+                          { duration: 8000 }
+                        );
+                      }}
+                      className="flex items-center gap-2 px-6 py-3 bg-red-500/5 text-red-500/40 hover:text-red-500 rounded-xl text-[9px] font-black uppercase transition-colors"
+                    ><Trash2 className="w-4 h-4" /> Delete Profile</button>
+                  )}
                 </div>
               </div>
             )}
@@ -868,7 +888,7 @@ const DebtPage: React.FC = () => {
                   if (!el) return;
                   toast.loading('Preparing receipt...', { id: 'share' });
                   try {
-                    const canvas = await html2canvas(el);
+                    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: false });
                     const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
                     if (blob) {
                       const file = new File([blob], `receipt-${clearedReceipt.invoiceNo}.png`, { type: 'image/png' });
@@ -889,7 +909,14 @@ const DebtPage: React.FC = () => {
                         toast.success('Image saved! Attach it to WhatsApp.', { id: 'share', duration: 5000 });
                       }
                     }
-                  } catch { toast.error('Failed to share', { id: 'share' }); }
+                  } catch (err: any) { 
+                    console.error('Share error:', err);
+                    if (err?.name === 'AbortError') {
+                      toast.dismiss('share');
+                    } else {
+                      toast.error('Failed to share', { id: 'share' });
+                    }
+                  }
                 }}
                 className="flex-1 py-4 bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 uppercase"
               >
