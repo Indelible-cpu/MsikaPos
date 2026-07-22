@@ -458,14 +458,56 @@ const DebtPage: React.FC = () => {
         )}>
           {selectedCustomer ? (
             <div className="p-4 md:p-10 space-y-6 md:space-y-10 animate-slide-in stagger-children">
-              {/* Mobile Back Button */}
-              <button 
-                type="button" 
-                onClick={() => setSelectedCustomer(null)}
-                className="md:hidden flex items-center gap-2 mb-4 text-primary font-bold text-[10px] capitalize tracking-widest btn-press"
-              >
-                <ArrowLeft className="w-4 h-4" /> Back to list
-              </button>
+              {/* Header Actions */}
+              <div className="flex items-center justify-between mb-4">
+                <button 
+                  type="button" 
+                  onClick={() => setSelectedCustomer(null)}
+                  className="flex items-center gap-2 text-primary font-bold text-[10px] md:text-[12px] capitalize tracking-widest btn-press hover:opacity-80"
+                >
+                  <ArrowLeft className="w-4 h-4" /> <span className="md:hidden">Back</span><span className="hidden md:inline">Cancel / Go Back</span>
+                </button>
+
+                {isAdmin && (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      if (!selectedCustomer) return;
+                      toast(
+                        (t) => (
+                          <div className="p-4 flex flex-col gap-4">
+                            <div className="font-bold text-sm tracking-tighter">Delete Profile?</div>
+                            <p className="text-[10px] text-muted-foreground/80 font-bold uppercase leading-relaxed">This will permanently delete {selectedCustomer.name} and all their credit history.</p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  toast.dismiss(t.id);
+                                  try {
+                                    await db.customers.delete(selectedCustomer.id);
+                                    setSelectedCustomer(null);
+                                    toast.success('Profile deleted');
+                                  } catch { toast.error('Failed to delete'); }
+                                }}
+                                className="flex-1 py-2 bg-red-500/10 text-red-500 rounded-lg text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all"
+                              >Yes, delete</button>
+                              <button
+                                type="button"
+                                onClick={() => toast.dismiss(t.id)}
+                                className="flex-1 py-2 btn-cancel text-[10px]"
+                              >Cancel</button>
+                            </div>
+                          </div>
+                        ),
+                        { duration: 8000 }
+                      );
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl text-[9px] md:text-[10px] font-black uppercase transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete Profile
+                  </button>
+                )}
+              </div>
 
               <div className="glass-panel p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-border/50 shadow-xl flex flex-col xl:flex-row justify-between items-center gap-8">
                 <div className="flex items-center gap-6 w-full xl:w-auto">
@@ -517,14 +559,14 @@ const DebtPage: React.FC = () => {
                 </div>
                 <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[800px]">
+                    <table className="w-full text-left border-collapse min-w-full md:min-w-[800px]">
                       <thead>
-                        <tr className="bg-surface-bg/50 text-[9px] font-bold text-surface-text/40 tracking-widest border-b border-surface-border capitalize">
-                          <th className="px-8 py-5">Invoice #</th>
-                          <th className="px-8 py-5">Due date</th>
-                          <th className="px-8 py-5 text-right">Original amount</th>
-                          <th className="px-8 py-5 text-right">Current balance</th>
-                          <th className="px-8 py-5 text-right">Actions</th>
+                        <tr className="bg-surface-bg/50 text-[8px] md:text-[9px] font-bold text-surface-text/40 tracking-widest border-b border-surface-border capitalize">
+                          <th className="px-2 md:px-8 py-3 md:py-5">Invoice #</th>
+                          <th className="px-2 md:px-8 py-3 md:py-5">Due date</th>
+                          <th className="px-2 md:px-8 py-3 md:py-5 text-right">Original amount</th>
+                          <th className="px-2 md:px-8 py-3 md:py-5 text-right">Current balance</th>
+                          <th className="px-2 md:px-8 py-3 md:py-5 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-surface-border/50">
@@ -535,13 +577,13 @@ const DebtPage: React.FC = () => {
                         ) : (
                           filteredCredits.map(credit => (
                             <tr key={credit.id} className="hover:bg-primary-500/[0.01]">
-                              <td className="px-8 py-6"><span className="text-[11px] font-black font-mono">#{credit.invoice_no}</span></td>
-                              <td className="px-8 py-6">
-                                <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5 opacity-20" /><span className="text-[11px] font-black">{credit.due_date}</span></div>
+                              <td className="px-2 md:px-8 py-4 md:py-6"><span className="text-[10px] md:text-[11px] font-black font-mono">#{credit.invoice_no}</span></td>
+                              <td className="px-2 md:px-8 py-4 md:py-6">
+                                <div className="flex items-center gap-1 md:gap-2"><Calendar className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-20" /><span className="text-[10px] md:text-[11px] font-black">{credit.due_date}</span></div>
                               </td>
-                              <td className="px-8 py-6 text-right text-[11px] font-black">MK {Number(credit.original_amount || 0).toLocaleString()}</td>
-                              <td className="px-8 py-6 text-right"><div className="text-sm font-black text-rose-500">MK {(Number(credit.current_total || 0) - Number(credit.paid_amount || 0)).toLocaleString()}</div></td>
-                              <td className="px-8 py-6 text-right">
+                              <td className="px-2 md:px-8 py-4 md:py-6 text-right text-[10px] md:text-[11px] font-black">MK {Number(credit.original_amount || 0).toLocaleString()}</td>
+                              <td className="px-2 md:px-8 py-4 md:py-6 text-right"><div className="text-xs md:text-sm font-black text-rose-500">MK {(Number(credit.current_total || 0) - Number(credit.paid_amount || 0)).toLocaleString()}</div></td>
+                              <td className="px-2 md:px-8 py-4 md:py-6 text-right">
                                 {credit.status !== 'Paid' && (
                                   <button type="button" title="Pay This Invoice" aria-label="Pay This Invoice" onClick={() => { setPaymentModal({ id: String(credit.id), total: Number(credit.current_total) - Number(credit.paid_amount) }); setPayAmount(String(Number(credit.current_total) - Number(credit.paid_amount))); }} className="px-6 py-2.5 bg-primary-500 text-white rounded-xl text-[9px] font-black uppercase">Pay balance</button>
                                 )}
@@ -558,14 +600,14 @@ const DebtPage: React.FC = () => {
                   <h3 className="text-lg font-bold tracking-tighter flex items-center gap-3"><RotateCcw className="w-5 h-5 text-emerald-500" /> Repayment History</h3>
                   <div className="bg-surface-card rounded-3xl border border-surface-border overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse min-w-[800px]">
+                      <table className="w-full text-left border-collapse min-w-full md:min-w-[800px]">
                         <thead>
-                          <tr className="bg-surface-bg/50 text-[9px] font-bold text-surface-text/40 tracking-widest border-b border-surface-border capitalize">
-                            <th className="px-8 py-5">Date</th>
-                            <th className="px-8 py-5">Cashier</th>
-                            <th className="px-8 py-5 text-right">Amount paid</th>
-                            <th className="px-8 py-5 text-right">Method</th>
-                            <th className="px-8 py-5 text-center">Verification</th>
+                          <tr className="bg-surface-bg/50 text-[8px] md:text-[9px] font-bold text-surface-text/40 tracking-widest border-b border-surface-border capitalize">
+                            <th className="px-2 md:px-8 py-3 md:py-5">Date</th>
+                            <th className="px-2 md:px-8 py-3 md:py-5">Cashier</th>
+                            <th className="px-2 md:px-8 py-3 md:py-5 text-right">Amount paid</th>
+                            <th className="px-2 md:px-8 py-3 md:py-5 text-right">Method</th>
+                            <th className="px-2 md:px-8 py-3 md:py-5 text-center">Verification</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-surface-border/50">
@@ -574,12 +616,12 @@ const DebtPage: React.FC = () => {
                           ) : (
                             payments?.map(p => (
                               <tr key={p.id} className="hover:bg-emerald-500/[0.01]">
-                                <td className="px-8 py-5"><span className="text-[11px] font-black">{new Date(p.createdAt).toLocaleDateString()}</span></td>
-                                <td className="px-8 py-5"><span className="text-[11px] font-black uppercase">{p.cashierName || 'System'}</span></td>
-                                <td className="px-8 py-5 text-right font-black text-emerald-500">MK {Number(p.amount || 0).toLocaleString()}</td>
-                                <td className="px-8 py-5 text-right text-[11px] font-black uppercase opacity-40">{p.paymentMethod}</td>
-                                <td className="px-8 py-5 text-center">
-                                  {p.reference === 'INITIAL DEPOSIT' ? <span className="text-[9px] font-black text-primary px-3 py-1 bg-primary/10 rounded-full">DEPOSIT</span> : p.signature ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-rose-500 font-black text-[8px]">NO SIGN</span>}
+                                <td className="px-2 md:px-8 py-4 md:py-5"><span className="text-[10px] md:text-[11px] font-black">{new Date(p.createdAt).toLocaleDateString()}</span></td>
+                                <td className="px-2 md:px-8 py-4 md:py-5"><span className="text-[10px] md:text-[11px] font-black uppercase">{p.cashierName || 'System'}</span></td>
+                                <td className="px-2 md:px-8 py-4 md:py-5 text-right text-[10px] md:text-[11px] font-black text-emerald-500">MK {Number(p.amount || 0).toLocaleString()}</td>
+                                <td className="px-2 md:px-8 py-4 md:py-5 text-right text-[10px] md:text-[11px] font-black uppercase opacity-40">{p.paymentMethod}</td>
+                                <td className="px-2 md:px-8 py-4 md:py-5 text-center">
+                                  {p.reference === 'INITIAL DEPOSIT' ? <span className="text-[8px] md:text-[9px] font-black text-primary px-2 md:px-3 py-1 bg-primary/10 rounded-full">DEPOSIT</span> : p.signature ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" /> : <span className="text-rose-500 font-black text-[8px]">NO SIGN</span>}
                                 </td>
                               </tr>
                             ))
