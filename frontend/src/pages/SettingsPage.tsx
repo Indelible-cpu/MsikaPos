@@ -214,6 +214,7 @@ const SettingsPage: React.FC = () => {
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+        videoRef.current.srcObject = null;
       }
     };
   }, []);
@@ -221,6 +222,7 @@ const SettingsPage: React.FC = () => {
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
       (videoRef.current.srcObject as MediaStream).getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
     }
     setIsCameraOpen(false);
   };

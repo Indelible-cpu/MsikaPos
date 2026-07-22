@@ -278,6 +278,7 @@ const DebtPage: React.FC = () => {
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
       (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+      videoRef.current.srcObject = null;
     }
     setUseCamera(false);
   };
