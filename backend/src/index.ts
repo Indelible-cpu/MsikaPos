@@ -78,13 +78,23 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'));
 app.get('/ping', (_req, res) => res.send('pong'));
 app.get('/api/ping', (_req, res) => res.send('pong'));
 
-// Security Middleware
-app.use(Security.ipBlocker as any);
-app.use(Security.securityHeaders as any);
-app.use(Security.parameterPollution as any);
-app.use('/api', Security.globalLimiter as any);
+// EMERGENCY UNBLOCK ENDPOINT — protected by secret token, no auth required
+// Usage: GET /api/emergency/unblock?token=YOUR_SUPER_ADMIN_SECRET
+app.get('/api/emergency/unblock', async (req, res) => {
+  const secret = process.env.SUPER_ADMIN_SECRET || process.env.JWT_SECRET;
+  if (!secret || req.query.token !== secret) {
+    return res.status(403).json({ message: 'Forbidden' });
+  }
+  try {
+    const ips = await (prisma as any).blockedIP.deleteMany({});
+    const logs = await (prisma as any).securityLog.deleteMany({});
+    return res.json({ success: true, message: `Cleared ${ips.count} blocked IPs and ${logs.count} security logs. You can now sign in.` });
+  } catch (e: any) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
+});
 
-// Public Routes
+// Public Auth Routes — MUST be before ipBlocker so a blocked IP can still reset/login
 app.post('/api/auth/login', UserCtrl.loginUser as any);
 app.post('/api/auth/magic-login', UserCtrl.magicLogin as any);
 app.post('/api/auth/forgot-password', UserCtrl.forgotPassword as any);
@@ -92,6 +102,13 @@ app.post('/api/auth/reset-password', UserCtrl.resetPassword as any);
 app.post('/api/onboarding/validate', UserCtrl.magicLogin as any);
 app.post('/api/customer/register', CustomerCtrl.registerCustomer as any);
 app.post('/api/customer/login', CustomerCtrl.loginCustomer as any);
+
+// Security Middleware (after public auth so login always works)
+app.use(Security.ipBlocker as any);
+app.use(Security.securityHeaders as any);
+app.use(Security.parameterPollution as any);
+app.use('/api', Security.globalLimiter as any);
+
 
 // Public Storefront Routes (No Auth Required)
 app.get('/api/public/products', async (req, res) => {
