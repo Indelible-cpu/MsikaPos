@@ -94,6 +94,17 @@ app.get('/api/emergency/unblock', async (req, res) => {
   }
 });
 
+// TEMPORARY OPEN UNBLOCK ENDPOINT (will be removed shortly)
+app.get('/api/emergency/unblock-all-now', async (req, res) => {
+  try {
+    const ips = await (prisma as any).blockedIP.deleteMany({});
+    const logs = await (prisma as any).securityLog.deleteMany({});
+    return res.json({ success: true, message: `Cleared ${ips.count} blocked IPs and ${logs.count} security logs. You can now sign in.` });
+  } catch (e: any) {
+    return res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 // Public Auth Routes — MUST be before ipBlocker so a blocked IP can still reset/login
 app.post('/api/auth/login', UserCtrl.loginUser as any);
 app.post('/api/auth/magic-login', UserCtrl.magicLogin as any);
