@@ -1,49 +1,51 @@
 class SoundService {
-  private ctx: AudioContext | null = null;
+  private playTone(freq: number, duration: number, type: OscillatorType = 'sine', volume: number = 0.1): Promise<void> {
+    return new Promise((resolve) => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-  private init() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-  }
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-  private playTone(freq: number, duration: number, type: OscillatorType = 'sine', volume: number = 0.1) {
-    this.init();
-    if (!this.ctx) return;
+        gain.gain.setValueAtTime(volume, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
 
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
 
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-    
-    gain.gain.setValueAtTime(volume, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
 
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-
-    osc.start();
-    osc.stop(this.ctx.currentTime + duration);
+        // Close the context as soon as the sound is done — prevents
+        // Android from showing the persistent Chrome media notification
+        osc.onended = () => {
+          ctx.close().then(resolve).catch(resolve);
+        };
+      } catch {
+        resolve();
+      }
+    });
   }
 
   public playSuccess() {
-    this.playTone(880, 0.1, 'sine', 0.2); // A5
+    this.playTone(880, 0.1, 'sine', 0.2);
   }
 
   public playBeep() {
-    this.playTone(1200, 0.05, 'square', 0.1); // Scanner beep
+    this.playTone(1200, 0.05, 'square', 0.1);
   }
 
   public playError() {
-    this.playTone(200, 0.3, 'sawtooth', 0.2); // Low buzz
+    this.playTone(200, 0.3, 'sawtooth', 0.2);
     setTimeout(() => this.playTone(150, 0.3, 'sawtooth', 0.2), 100);
   }
 
   public playSaleComplete() {
-    this.playTone(523.25, 0.1); // C5
-    setTimeout(() => this.playTone(659.25, 0.1), 100); // E5
-    setTimeout(() => this.playTone(783.99, 0.2), 200); // G5
+    this.playTone(523.25, 0.1);
+    setTimeout(() => this.playTone(659.25, 0.1), 100);
+    setTimeout(() => this.playTone(783.99, 0.2), 200);
   }
 }
 
