@@ -186,12 +186,30 @@ const OrdersPage: React.FC = () => {
       const file = new File([blob], `Purchase-Order-${poRef}.png`, { type: 'image/png' });
 
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `Purchase Order - ${poRef}`,
-          text: 'Please find the attached purchase order.',
-        });
-        toast.success('Shared successfully', { id: toastId });
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Purchase Order - ${poRef}`,
+            text: 'Please find the attached purchase order.',
+          });
+          toast.success('Shared successfully', { id: toastId });
+        } catch (shareErr: any) {
+          if (shareErr?.name === 'AbortError' || shareErr?.message?.includes('Abort')) {
+            toast.dismiss(toastId);
+          } else if (shareErr?.name === 'NotAllowedError' || shareErr?.name === 'SecurityError') {
+            toast.success('File sharing unsupported, downloading instead...', { id: toastId });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Purchase-Order-${poRef}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          } else {
+            throw shareErr;
+          }
+        }
       } else {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -205,11 +223,7 @@ const OrdersPage: React.FC = () => {
       }
     } catch (e: any) {
       console.error('Share error:', e);
-      if (e?.name === 'AbortError') {
-        toast.dismiss(toastId);
-      } else {
-        toast.error('Failed to generate document', { id: toastId });
-      }
+      toast.error('Failed to share: ' + (e?.message || 'Unknown error'), { id: toastId });
     } finally {
       // Always restore element position
       printElement.style.cssText = originalCss;

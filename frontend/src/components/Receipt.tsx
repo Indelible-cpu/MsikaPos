@@ -221,7 +221,7 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
 
       <div className="flex flex-col gap-1 mb-4 font-bold text-[9px] w-full">
         <div className="flex justify-between">
-          <span>{mode === 'Cash' ? 'Receipt:' : 'Invoice:'} {invoiceNo}</span>
+          <span>{documentType ? documentType + ':' : (mode === 'Cash' ? 'Receipt:' : 'Invoice:')} {invoiceNo}</span>
 
           <span>{displayDate}</span>
         </div>

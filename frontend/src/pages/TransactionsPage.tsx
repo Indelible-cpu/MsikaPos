@@ -338,10 +338,19 @@ const TransactionsPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error(err);
-      if (err?.name === 'AbortError') {
-        toast.dismiss('share');
+      if (err?.name === 'AbortError' || err?.message?.includes('Abort') || err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+        if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+          // Fallback to text if user gesture lost
+          const itemsText = sale.items.map(i => `▫️ ${i.productName}\n   ${i.quantity} x MK ${i.unitPrice.toLocaleString()} = *MK ${i.lineTotal.toLocaleString()}*`).join('\n\n');
+          const companyName = localStorage.getItem('companyName') || 'MsikaPos';
+          const text = `*Receipt from ${companyName}*\n🧾 *Order #${sale.invoiceNo}*\n\n*Items:*\n${itemsText}\n\n*Total: MK ${sale.total.toLocaleString()}*\n\n_Thank you for your business!_`;
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+          toast.success('WhatsApp opened (Text fallback)', { id: 'share' });
+        } else {
+          toast.dismiss('share');
+        }
       } else {
-        toast.error('Failed to share', { id: 'share' });
+        toast.error('Failed to share: ' + (err?.message || 'Unknown error'), { id: 'share' });
       }
     }
   };
