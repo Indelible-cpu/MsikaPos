@@ -468,7 +468,7 @@ const DebtPage: React.FC = () => {
                   <ArrowLeft className="w-4 h-4" /> <span className="md:hidden">Back</span><span className="hidden md:inline">Cancel / Go Back</span>
                 </button>
 
-                {isAdmin && (
+                {currentUser?.role === 'ADMIN' && (
                   <button 
                     type="button"
                     onClick={() => {
