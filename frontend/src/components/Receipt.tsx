@@ -169,21 +169,30 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
         {/* Footer Info */}
         <div className="mt-auto grid grid-cols-2 gap-8 pt-8 border-t border-gray-200">
           <div>
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</h4>
-            <div className="space-y-1 text-sm font-medium text-gray-700">
-              <p>Method: <span className="font-bold text-gray-900">{mode}</span></p>
-              <p>Amount Paid: <span className="font-bold text-gray-900">Mk {paid.toLocaleString()}</span></p>
-              {mode === 'Cash' ? (
-                <p>Change: <span className="font-bold text-gray-900">Mk {change.toLocaleString()}</span></p>
-              ) : (
-                (bankName || accountNumber) && (
-                  <>
-                    <p>{mode === 'Momo' ? 'Provider' : 'Bank'}: <span className="font-bold">{bankName}</span></p>
-                    <p>Reference: <span className="font-bold">{accountNumber}</span></p>
-                  </>
-                )
-              )}
-            </div>
+            {documentType === 'Invoice' ? (
+              <>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Notice</h4>
+                <p className="text-sm font-medium text-gray-700">This is an invoice for the amount due. Please arrange payment.</p>
+              </>
+            ) : (
+              <>
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</h4>
+                <div className="space-y-1 text-sm font-medium text-gray-700">
+                  <p>Method: <span className="font-bold text-gray-900">{mode}</span></p>
+                  <p>Amount Paid: <span className="font-bold text-gray-900">Mk {paid.toLocaleString()}</span></p>
+                  {mode === 'Cash' ? (
+                    <p>Change: <span className="font-bold text-gray-900">Mk {change.toLocaleString()}</span></p>
+                  ) : (
+                    (bankName || accountNumber) && (
+                      <>
+                        <p>{mode === 'Momo' ? 'Provider' : 'Bank'}: <span className="font-bold">{bankName}</span></p>
+                        <p>Reference: <span className="font-bold">{accountNumber}</span></p>
+                      </>
+                    )
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex flex-col items-center justify-center">
@@ -279,32 +288,33 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
         </div>
       </div>
 
-      <div className="mt-4 pt-2 border-t border-black border-dotted space-y-1 text-[10px]">
-        <div className="flex justify-between font-bold">
-          <span>Paid ({mode})</span>
-          <span>Mk {paid.toLocaleString()}</span>
-        </div>
-        {mode === 'Cash' ? (
+      {documentType !== 'Invoice' && (
+        <div className="mt-4 pt-2 border-t border-black border-dotted space-y-1 text-[10px]">
           <div className="flex justify-between font-bold">
-            <span>Change</span>
-            <span>Mk {change.toLocaleString()}</span>
+            <span>Paid ({mode})</span>
+            <span>Mk {paid.toLocaleString()}</span>
           </div>
-        ) : (
-          (bankName || accountNumber) && (
-            <div className="pt-1 border-t border-black/10 mt-1">
-              <div className="flex justify-between ">
-                <span>{mode === 'Momo' ? 'Provider' : 'Bank'}</span>
-                <span>{bankName}</span>
-              </div>
-              <div className="flex justify-between ">
-                <span>Account or Reference</span>
-                <span>{accountNumber}</span>
-              </div>
-
+          {mode === 'Cash' ? (
+            <div className="flex justify-between font-bold">
+              <span>Change</span>
+              <span>Mk {change.toLocaleString()}</span>
             </div>
-          )
-        )}
-      </div>
+          ) : (
+            (bankName || accountNumber) && (
+              <div className="pt-1 border-t border-black/10 mt-1">
+                <div className="flex justify-between ">
+                  <span>{mode === 'Momo' ? 'Provider' : 'Bank'}</span>
+                  <span>{bankName}</span>
+                </div>
+                <div className="flex justify-between ">
+                  <span>Account or Reference</span>
+                  <span>{accountNumber}</span>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
 
       <div className="text-center mt-6 border-t border-black border-dashed pt-4 flex flex-col items-center w-full">
         {customer && (
@@ -330,10 +340,12 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
                 <span>Mk {(customer.totalCreditAmount || customer.balance).toLocaleString()}</span>
               </div>
               
-              <div className="flex justify-between font-black text-primary-600 border-b border-black/5 pb-1">
-                <span>AMOUNT PAID NOW</span>
-                <span>Mk {paid.toLocaleString()}</span>
-              </div>
+              {documentType !== 'Invoice' && (
+                <div className="flex justify-between font-black text-primary-600 border-b border-black/5 pb-1">
+                  <span>AMOUNT PAID NOW</span>
+                  <span>Mk {paid.toLocaleString()}</span>
+                </div>
+              )}
 
               {history.length > 0 && (
                 <div className="py-2 space-y-1 border-b border-black/5 mb-1">

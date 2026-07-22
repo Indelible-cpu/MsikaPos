@@ -267,6 +267,12 @@ const App: React.FC = () => {
               await db.settings.put({ key: 'company_config', value: { name: settings.companyName } });
               localStorage.setItem('companyName', settings.companyName);
             }
+            if (settings.address) localStorage.setItem('companyAddress', settings.address);
+            if (settings.phone) localStorage.setItem('companyPhone', settings.phone);
+            if (settings.email) localStorage.setItem('companyEmail', settings.email);
+            if (settings.slogan) localStorage.setItem('companySlogan', settings.slogan);
+            if (settings.facebook) localStorage.setItem('companyFacebook', settings.facebook);
+
             if (settings.logo) {
               const base64Logo = await getBase64Image(settings.logo);
               localStorage.setItem('companyLogo', base64Logo);
