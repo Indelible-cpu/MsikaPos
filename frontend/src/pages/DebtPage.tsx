@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../api/client';
 import { db, type LocalCustomer, type LocalProduct, type LocalDebtPayment, type LocalSale } from '../db/posDB';
 import { useLocation } from 'react-router-dom';
-import html2canvas from 'html2canvas';
+import { toBlob } from 'html-to-image';
 import toast from 'react-hot-toast';
 import { clsx } from 'clsx';
 import { Receipt } from '../components/Receipt';
@@ -897,8 +897,12 @@ const DebtPage: React.FC = () => {
                   if (!el) return;
                   toast.loading('Preparing receipt...', { id: 'share' });
                   try {
-                    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: false });
-                    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
+                    const blob = await toBlob(el, {
+                        pixelRatio: 3,
+                        backgroundColor: '#ffffff',
+                        width: 360,
+                        skipFonts: true
+                      });
                     if (blob) {
                       const file = new File([blob], `receipt-${clearedReceipt.invoiceNo}.png`, { type: 'image/png' });
                       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {

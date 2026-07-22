@@ -23,7 +23,7 @@ import { Invoice } from '../components/Invoice';
 import { useFeatureAccess } from '../hooks/useFeatureAccess';
 import { useAuthStore } from '../hooks/useAuth';
 import toast from 'react-hot-toast';
-import html2canvas from 'html2canvas';
+import { toBlob } from 'html-to-image';
 import { clsx } from 'clsx';
 
 type TimeFilter = 'All' | 'Daily' | 'Weekly' | 'Monthly' | 'Quarterly' | 'Annual';
@@ -314,8 +314,11 @@ const TransactionsPage: React.FC = () => {
       toast.loading('Generating shareable receipt...', { id: 'share' });
       
       // Temporarily make it visible for capture if it was hidden
-      const canvas = await html2canvas(receiptElement, { scale: 2, backgroundColor: '#ffffff', useCORS: true, allowTaint: false });
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      const blob = await toBlob(receiptElement, {
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+        skipFonts: true
+      });
       
       if (!blob) throw new Error('Failed to generate image');
 

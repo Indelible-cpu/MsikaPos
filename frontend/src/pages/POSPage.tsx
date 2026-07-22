@@ -32,7 +32,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import html2canvas from 'html2canvas';
+import { toBlob } from 'html-to-image';
 import { soundService } from '../services/SoundService';
 import clsx from 'clsx';
 import { Receipt } from '../components/Receipt';
@@ -773,16 +773,13 @@ const POSPage: React.FC = () => {
                     clone.style.background = '#ffffff';
                     document.body.appendChild(clone);
 
-                    const canvas = await html2canvas(clone, { 
-                      scale: 2.5, 
+                    const blob = await toBlob(clone, { 
+                      pixelRatio: 2.5, 
                       backgroundColor: '#ffffff',
-                      useCORS: true,
-                      logging: false,
                       width: isA4 ? 900 : 400,
+                      skipFonts: true,
                     });
                     document.body.removeChild(clone);
-
-                    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
                     if (!blob) throw new Error('Blob error');
                     const file = new File([blob], `Receipt-${showReceipt.invoiceNo}.png`, { type: 'image/png' });
                     

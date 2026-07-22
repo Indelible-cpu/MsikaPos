@@ -16,7 +16,7 @@ import toast from 'react-hot-toast';
 import Modal from '../components/Modal';
 import { Receipt } from '../components/Receipt';
 import { Invoice } from '../components/Invoice';
-import html2canvas from 'html2canvas';
+import { toBlob } from 'html-to-image';
 
 const SalesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -242,15 +242,12 @@ const SalesPage: React.FC = () => {
                     try {
                       // Wait a moment for barcode images to load
                       await new Promise(r => setTimeout(r, 800));
-                      const canvas = await html2canvas(el, {
-                        scale: 3,
+                      const blob = await toBlob(el, {
+                        pixelRatio: 3,
                         backgroundColor: '#ffffff',
-                        useCORS: true,
-                        allowTaint: false,
-                        logging: false,
-                        width: 360
+                        width: 360,
+                        skipFonts: true
                       });
-                      const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
                       if (blob) {
                         const file = new File([blob], `receipt-${selectedSale.invoiceNo}.png`, { type: 'image/png' });
                         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {

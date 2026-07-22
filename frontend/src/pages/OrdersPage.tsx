@@ -4,7 +4,7 @@ import { db } from '../db/posDB';
 import { generateUUID } from '../utils/cryptoUtils';
 import AppFooter from '../components/AppFooter';
 import Modal from '../components/Modal';
-import html2canvas from 'html2canvas';
+import { toBlob } from 'html-to-image';
 import { 
   Printer, 
   CheckCircle,
@@ -171,15 +171,11 @@ const OrdersPage: React.FC = () => {
     await new Promise(resolve => setTimeout(resolve, 150));
 
     try {
-      const canvas = await html2canvas(printElement, {
-        scale: 2,
-        useCORS: true,
+      const blob = await toBlob(printElement, {
+        pixelRatio: 2,
         backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: false,
-        foreignObjectRendering: false,
+        skipFonts: true
       });
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('Failed to generate image');
 
       const poRef = `PO-${Date.now().toString().slice(-6)}`;
