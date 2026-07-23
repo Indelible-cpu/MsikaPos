@@ -146,18 +146,14 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
                 <span>Subtotal</span>
                 <span>Mk {subtotal.toLocaleString()}</span>
               </div>
-              {tax > 0 && (
-                <div className="flex justify-between">
-                  <span>Tax (VAT)</span>
-                  <span>Mk {tax.toLocaleString()}</span>
-                </div>
-              )}
-              {discount > 0 && (
-                <div className="flex justify-between text-red-500">
-                  <span>Discount</span>
-                  <span>- Mk {discount.toLocaleString()}</span>
-                </div>
-              )}
+              <div className="flex justify-between">
+                <span>Tax (VAT)</span>
+                <span>Mk {tax.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-red-500">
+                <span>Discount</span>
+                <span>- Mk {discount.toLocaleString()}</span>
+              </div>
               <div className="flex justify-between text-xl font-black text-gray-900 border-t-2 border-gray-900 pt-3 mt-3">
                 <span>Total Due</span>
                 <span>Mk {total.toLocaleString()}</span>
@@ -169,14 +165,14 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
         {/* Footer Info */}
         <div className="mt-auto grid grid-cols-2 gap-8 pt-8 border-t border-gray-200">
           <div>
-            {documentType === 'Invoice' ? (
-              <>
+            {documentType === 'Invoice' && (
+              <div className="mb-4">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Notice</h4>
                 <p className="text-sm font-medium text-gray-700">This is an invoice for the amount due. Please arrange payment.</p>
-              </>
-            ) : (
-              <>
-                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</h4>
+              </div>
+            )}
+            <>
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</h4>
                 <div className="space-y-1 text-sm font-medium text-gray-700">
                   <p>Method: <span className="font-bold text-gray-900">{mode}</span></p>
                   <p>Amount Paid: <span className="font-bold text-gray-900">Mk {paid.toLocaleString()}</span></p>
@@ -191,8 +187,6 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
                     )
                   )}
                 </div>
-              </>
-            )}
           </div>
 
           <div className="flex flex-col items-center justify-center">
@@ -270,51 +264,45 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
           <span>Subtotal</span>
           <span>Mk {subtotal.toLocaleString()}</span>
         </div>
-        {tax > 0 && (
-          <div className="flex justify-between">
-            <span>Tax (VAT)</span>
-            <span>Mk {tax.toLocaleString()}</span>
-          </div>
-        )}
-        {discount > 0 && (
-          <div className="flex justify-between">
-            <span>Discount</span>
-            <span>- Mk {discount.toLocaleString()}</span>
-          </div>
-        )}
+        <div className="flex justify-between">
+          <span>Tax (VAT)</span>
+          <span>Mk {tax.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Discount</span>
+          <span>- Mk {discount.toLocaleString()}</span>
+        </div>
         <div className="flex justify-between text-base font-black border-t border-black pt-1 mt-1">
           <span>Total</span>
           <span>Mk {total.toLocaleString()}</span>
         </div>
       </div>
 
-      {documentType !== 'Invoice' && (
-        <div className="mt-4 pt-2 border-t border-black border-dotted space-y-1 text-[10px]">
-          <div className="flex justify-between font-bold">
-            <span>Paid ({mode})</span>
-            <span>Mk {paid.toLocaleString()}</span>
-          </div>
-          {mode === 'Cash' ? (
-            <div className="flex justify-between font-bold">
-              <span>Change</span>
-              <span>Mk {change.toLocaleString()}</span>
-            </div>
-          ) : (
-            (bankName || accountNumber) && (
-              <div className="pt-1 border-t border-black/10 mt-1">
-                <div className="flex justify-between ">
-                  <span>{mode === 'Momo' ? 'Provider' : 'Bank'}</span>
-                  <span>{bankName}</span>
-                </div>
-                <div className="flex justify-between ">
-                  <span>Account or Reference</span>
-                  <span>{accountNumber}</span>
-                </div>
-              </div>
-            )
-          )}
+      <div className="mt-4 pt-2 border-t border-black border-dotted space-y-1 text-[10px]">
+        <div className="flex justify-between font-bold">
+          <span>Paid ({mode})</span>
+          <span>Mk {paid.toLocaleString()}</span>
         </div>
-      )}
+        {mode === 'Cash' ? (
+          <div className="flex justify-between font-bold">
+            <span>Change</span>
+            <span>Mk {change.toLocaleString()}</span>
+          </div>
+        ) : (
+          (bankName || accountNumber) && (
+            <div className="pt-1 border-t border-black/10 mt-1">
+              <div className="flex justify-between ">
+                <span>{mode === 'Momo' ? 'Provider' : 'Bank'}</span>
+                <span>{bankName}</span>
+              </div>
+              <div className="flex justify-between ">
+                <span>Account or Reference</span>
+                <span>{accountNumber}</span>
+              </div>
+            </div>
+          )
+        )}
+      </div>
 
       <div className="text-center mt-6 border-t border-black border-dashed pt-4 flex flex-col items-center w-full">
         {customer && (

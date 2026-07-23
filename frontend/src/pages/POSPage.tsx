@@ -773,23 +773,19 @@ const POSPage: React.FC = () => {
                   try {
                     const isA4 = printSize === 'print-a4';
                     
-                    // Clone element to body so html2canvas can capture it fully (avoids overflow:hidden clipping)
-                    const clone = receiptElement.cloneNode(true) as HTMLElement;
-                    clone.style.position = 'fixed';
-                    clone.style.top = '-9999px';
-                    clone.style.left = '0';
-                    clone.style.zIndex = '-1';
-                    clone.style.width = isA4 ? '900px' : '400px';
-                    clone.style.background = '#ffffff';
-                    document.body.appendChild(clone);
-
-                    const blob = await toBlob(clone, { 
+                    // Directly capture the rendered element. 
+                    // No cloning needed since receiptElement is fully loaded and visible.
+                    // This fixes the blank image issue by ensuring images inside the DOM are ready.
+                    const blob = await toBlob(receiptElement, { 
                       pixelRatio: 2.5, 
                       backgroundColor: '#ffffff',
                       width: isA4 ? 900 : 400,
-                      skipFonts: true,
+                      style: {
+                        transform: 'none',
+                        margin: '0',
+                        padding: '16px'
+                      }
                     });
-                    document.body.removeChild(clone);
                     if (!blob) throw new Error('Blob error');
                     const file = new File([blob], `Receipt-${showReceipt.invoiceNo}.png`, { type: 'image/png' });
                     
