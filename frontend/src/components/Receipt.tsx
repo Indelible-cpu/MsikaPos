@@ -176,15 +176,12 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
                 <div className="space-y-1 text-sm font-medium text-gray-700">
                   <p>Method: <span className="font-bold text-gray-900">{mode}</span></p>
                   <p>Amount Paid: <span className="font-bold text-gray-900">Mk {paid.toLocaleString()}</span></p>
-                  {mode === 'Cash' ? (
-                    <p>Change: <span className="font-bold text-gray-900">Mk {change.toLocaleString()}</span></p>
-                  ) : (
-                    (bankName || accountNumber) && (
-                      <>
-                        <p>{mode === 'Momo' ? 'Provider' : 'Bank'}: <span className="font-bold">{bankName}</span></p>
-                        <p>Reference: <span className="font-bold">{accountNumber}</span></p>
-                      </>
-                    )
+                  <p>Change: <span className="font-bold text-gray-900">Mk {change.toLocaleString()}</span></p>
+                  {mode !== 'Cash' && (bankName || accountNumber) && (
+                    <>
+                      <p>{mode === 'Momo' ? 'Provider' : 'Bank'}: <span className="font-bold">{bankName}</span></p>
+                      <p>Reference: <span className="font-bold">{accountNumber}</span></p>
+                    </>
                   )}
                 </div>
               </div>
@@ -286,24 +283,21 @@ export const Receipt: React.FC<ReceiptProps> = ({ items, total, subtotal, tax, d
             <span>Paid ({mode})</span>
             <span>Mk {paid.toLocaleString()}</span>
           </div>
-          {mode === 'Cash' ? (
-            <div className="flex justify-between font-bold">
-              <span>Change</span>
-              <span>Mk {change.toLocaleString()}</span>
-            </div>
-          ) : (
-            (bankName || accountNumber) && (
-              <div className="pt-1 border-t border-black/10 mt-1">
-                <div className="flex justify-between ">
-                  <span>{mode === 'Momo' ? 'Provider' : 'Bank'}</span>
-                  <span>{bankName}</span>
-                </div>
-                <div className="flex justify-between ">
-                  <span>Account or Reference</span>
-                  <span>{accountNumber}</span>
-                </div>
+          <div className="flex justify-between font-bold">
+            <span>Change</span>
+            <span>Mk {change.toLocaleString()}</span>
+          </div>
+          {mode !== 'Cash' && (bankName || accountNumber) && (
+            <div className="pt-1 border-t border-black/10 mt-1">
+              <div className="flex justify-between ">
+                <span>{mode === 'Momo' ? 'Provider' : 'Bank'}</span>
+                <span>{bankName}</span>
               </div>
-            )
+              <div className="flex justify-between ">
+                <span>Account or Reference</span>
+                <span>{accountNumber}</span>
+              </div>
+            </div>
           )}
         </div>
       )}
